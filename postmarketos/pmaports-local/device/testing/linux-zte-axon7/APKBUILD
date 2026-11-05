@@ -1,0 +1,72 @@
+# Kernel config based on: linux-postmarketos-qcom-msm8996 (6.19.5) config,
+# updated with "make olddefconfig" for 7.3.1 + built-in USB gadget configfs.
+_flavor="zte-axon7"
+pkgname=linux-$_flavor
+pkgver=7.3.1
+pkgrel=0
+pkgdesc="Mainline kernel for ZTE Axon 7"
+arch="aarch64"
+_carch="arm64"
+url="https://kernel.org"
+license="GPL-2.0-only"
+options="!strip !check !tracedeps
+	pmb:cross-native
+	pmb:kconfigcheck-community
+"
+makedepends="
+	bison
+	clang
+	elfutils-dev
+	findutils
+	flex
+	linux-headers
+	lld
+	llvm
+	openssl-dev
+	pahole
+	perl
+	postmarketos-installkernel
+	python3
+	zstd
+"
+
+# Source
+_kernver=${pkgver%.0}
+source="
+	https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/linux-$_kernver.tar.xz
+	0001-arm64-dts-qcom-add-ZTE-Axon-7.patch
+	config-$_flavor.$arch
+"
+builddir="$srcdir/linux-$_kernver"
+
+prepare() {
+	default_prepare
+	cp "$srcdir/config-$_flavor.$CARCH" .config
+}
+
+build() {
+	unset LDFLAGS
+	make ARCH="$_carch" LLVM=1 \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-$_flavor"
+}
+
+package() {
+	install -Dm644 "$builddir/arch/$_carch/boot/Image.gz" \
+		"$pkgdir/boot/vmlinuz"
+
+	install -D "$builddir/include/config/kernel.release" \
+		"$pkgdir/usr/share/kernel/$_flavor/kernel.release"
+
+	make modules_install dtbs_install \
+		ARCH="$_carch" \
+		LLVM=1 \
+		INSTALL_MOD_PATH="$pkgdir"/usr \
+		INSTALL_MOD_STRIP=1 \
+		INSTALL_DTBS_PATH="$pkgdir"/boot/dtbs
+}
+
+sha512sums="
+eac8912be329999150a71257adc513e6a52891d122641943c3a440f775267705eff0b275b4d90d5298518ca638ab48fc2b7c3ee109d82f0bb34a1ac081e9c3a2  linux-7.3.1.tar.xz
+51a0e54326c3560b61ad04311cb32ef1965a621614062f7aeceb5522be128b65f3674c5539ad5c98cf21af52868bfc1536544133a8067df50101b09a05b5650f  0001-arm64-dts-qcom-add-ZTE-Axon-7.patch
+a1562f391d413d858a67afb17cfdcbbb16af2e585d84451da8d44ae29111d34192b2a75ed4c4b0228810dd7c5d3f1dd0026536d6d5122ddc64e69a2aec696773  config-zte-axon7.aarch64
+"

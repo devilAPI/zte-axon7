@@ -1,0 +1,29 @@
+# postmarketOS work trees, clones and build output (see postmarketos/README.md)
+postmarketos/build/
+postmarketos/linux/
+postmarketos/dl/
+postmarketos/out/
+postmarketos/firmware-out/
+postmarketos/pmaports/
+postmarketos/pmbootstrap/
+postmarketos/ref/
+# test initramfs: only the init script and the file list (no binaries)
+postmarketos/test-initramfs/*
+!postmarketos/test-initramfs/list.txt
+!postmarketos/test-initramfs/root/
+postmarketos/test-initramfs/root/*
+!postmarketos/test-initramfs/root/init
+# LineageOS ROM zips, recovery images and GApps
+lineageos/downloads/
+# never commit proprietary firmware, ROMs, Apple files or phone dumps
+*.tar.gz
+*.mbn
+*.mdt
+*.b0[0-9]
+*.fw
+*.img
+*.zip
+*.ipsw
+*.dmg
+*.dtb
+__pycache__/

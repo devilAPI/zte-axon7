@@ -1,0 +1,845 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * ZTE Axon 7 (A2017/A2017G/A2017U, "ailsa_ii")
+ *
+ * Written against mainline msm8996.dtsi. Hardware description derived from
+ * the device's downstream (3.18) device tree:
+ *   model "Qualcomm Technologies, Inc. MSM 8996 v3 + PMI8996 MTP"
+ * Board layout is very close to the Qualcomm MTP / Xiaomi msm8996 boards.
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+#include "msm8996.dtsi"
+#include "pm8994.dtsi"
+#include "pmi8994.dtsi"
+#include "pmi8996.dtsi"	/* sets qcom,pmic-id = <0x20009 0x10013 0 0>, as downstream */
+
+/ {
+	model = "ZTE Axon 7";
+	compatible = "zte,axon7", "qcom,msm8996";
+	chassis-type = "handset";
+
+	/* Must match what the ZTE LK expects (taken from the downstream DT) */
+	qcom,msm-id = <246 0x30001>;	/* MSM8996 v3.1 */
+	qcom,board-id = <100 0>;
+
+	aliases {
+		serial0 = &blsp2_uart2;
+		serial1 = &blsp1_uart2;
+	};
+
+	chosen {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		stdout-path = "serial0:115200n8";
+
+		/*
+		 * Bootloader continuous splash. Panel is a dual-DSI command-mode
+		 * Samsung S6E3HA3 (1440x2560), bpp 24 in the downstream panel node.
+		 * Format/stride are assumed (r8g8b8, 1440 * 3) as on other msm8996
+		 * LK splash setups - to be confirmed on device.
+		 */
+		framebuffer0: framebuffer@83401000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0x83401000 0x0 (1440 * 2560 * 3)>;
+			width = <1440>;
+			height = <2560>;
+			stride = <(1440 * 3)>;
+			format = "r8g8b8";
+
+			/* MDP, both DSI links and MDP SMMU clocks */
+			clocks = <&mmcc MDSS_MDP_CLK>,
+				 <&mmcc MMSS_MMAGIC_AHB_CLK>,
+				 <&mmcc MDSS_AHB_CLK>,
+				 <&mmcc MDSS_AXI_CLK>,
+				 <&mmcc MMSS_MISC_AHB_CLK>,
+				 <&mmcc MDSS_BYTE0_CLK>,
+				 <&mmcc MDSS_PCLK0_CLK>,
+				 <&mmcc MDSS_ESC0_CLK>,
+				 <&mmcc MDSS_BYTE1_CLK>,
+				 <&mmcc MDSS_PCLK1_CLK>,
+				 <&mmcc MDSS_ESC1_CLK>,
+				 <&mmcc SMMU_MDP_AHB_CLK>,
+				 <&mmcc SMMU_MDP_AXI_CLK>;
+
+			power-domains = <&mmcc MDSS_GDSC>;
+		};
+	};
+
+	reserved-memory {
+		/* dfps_data_mem@83400000 (0x1000) + cont_splash_mem@83401000 (0x23ff000) */
+		cont_splash_mem: memory@83400000 {
+			reg = <0x0 0x83400000 0x0 0x2400000>;
+			no-map;
+		};
+
+		/* Same location/layout as downstream pstore_mem, readable from TWRP */
+		ramoops@bfc00000 {
+			compatible = "ramoops";
+			reg = <0x0 0xbfc00000 0x0 0x400000>;
+			no-map;
+
+			record-size = <0x8000>;
+			console-size = <0x100000>;
+			ftrace-size = <0x100000>;
+			pmsg-size = <0x100000>;
+		};
+	};
+
+	divclk1_cdc: divclk1 {
+		compatible = "gpio-gate-clock";
+		clocks = <&rpmcc RPM_SMD_DIV_CLK1>;
+		#clock-cells = <0>;
+		enable-gpios = <&pm8994_gpios 15 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&divclk1_default>;
+	};
+
+	divclk4: divclk4 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <32768>;
+		clock-output-names = "divclk4";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&divclk4_pin_a>;
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&vol_keys_default>, <&hall_default>;
+
+		key-vol-up {
+			label = "Volume Up";
+			gpios = <&pm8994_gpios 2 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEUP>;
+			wakeup-source;
+			debounce-interval = <15>;
+		};
+
+		key-vol-down {
+			label = "Volume Down";
+			gpios = <&pm8994_gpios 3 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEDOWN>;
+			wakeup-source;
+			debounce-interval = <15>;
+		};
+
+		/*
+		 * Hall sensor (downstream "zte-hall", TLMM 124). Polarity is not
+		 * verified; a wrong polarity reports the lid as closed and makes
+		 * userspace blank/suspend, so it stays disabled until tested.
+		 */
+		event-hall-sensor {
+			label = "Hall Effect Sensor";
+			gpios = <&tlmm 124 GPIO_ACTIVE_LOW>;
+			linux,input-type = <EV_SW>;
+			linux,code = <SW_LID>;
+			linux,can-disable;
+			wakeup-source;
+			debounce-interval = <150>;
+			status = "disabled";
+		};
+	};
+
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-min-microvolt = <3700000>;
+		regulator-max-microvolt = <3700000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	/* downstream "rome_vreg", PM8994 GPIO 9 */
+	vdd_3v3: rome-vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		startup-delay-us = <4000>;
+		vin-supply = <&vph_pwr_bbyp>;
+
+		gpio = <&pm8994_gpios 9 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rome_enable_default>;
+
+		/* Required by QCA6174a - vddpe-3v3 */
+		regulator-always-on;
+	};
+
+	/* WL_EN pin (PM8994 GPIO 8) defined as a fixed regulator */
+	wlan_en: wlan-en-1-8v {
+		compatible = "regulator-fixed";
+		regulator-name = "wlan-en-regulator";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+
+		gpio = <&pm8994_gpios 8 GPIO_ACTIVE_HIGH>;
+		/* WLAN card specific delay */
+		startup-delay-us = <70000>;
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&wlan_en_default>;
+	};
+};
+
+&adsp_pil {
+	status = "okay";
+	firmware-name = "qcom/msm8996/zte/axon7/adsp.mbn";
+};
+
+&blsp1_uart2 {
+	status = "okay";
+	label = "QCA_UART";
+
+	bluetooth: bluetooth {
+		compatible = "qcom,qca6174-bt";
+
+		/* bt_disable_n */
+		enable-gpios = <&pm8994_gpios 19 GPIO_ACTIVE_HIGH>;
+		clocks = <&divclk4>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&bt_en_default>;
+	};
+};
+
+/* Debug UART (downstream ttyHSL0) */
+&blsp2_uart2 {
+	status = "okay";
+	label = "LS-UART1";
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&blsp2_uart2_2pins_default>;
+	pinctrl-1 = <&blsp2_uart2_2pins_sleep>;
+};
+
+/*
+ * i2c@7577000: isl98608@29 (hi-fi supply), ak4490@10 (AK4490 DAC)
+ * i2c@757a000: ak8157@11
+ * No mainline drivers yet, buses left disabled.
+ */
+
+/*
+ * i2c@75b5000: TI HD3SS3220 USB-C controller @47 (INT = PM8994 GPIO 14,
+ * ENn_CC = PM8994 MPP 5) and SMB1351 parallel charger @1d.
+ * USB is run as a fixed peripheral for now, which does not need the
+ * Type-C controller (LK fastboot works the same way).
+ */
+&blsp2_i2c1 {
+	status = "okay";
+};
+
+&blsp2_i2c2 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	/* downstream "qcom,nq-nci" (NXP PN5xx) */
+	nfc: nfc@28 {
+		compatible = "nxp,nxp-nci-i2c";
+		reg = <0x28>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <9 IRQ_TYPE_LEVEL_HIGH>;
+
+		enable-gpios = <&tlmm 12 GPIO_ACTIVE_HIGH>;
+		firmware-gpios = <&tlmm 96 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&nfc_default>;
+	};
+};
+
+&blsp2_i2c6 {
+	status = "okay";
+
+	/* Synaptics DSX (S3320-class) */
+	touchscreen: touchscreen@20 {
+		compatible = "syna,rmi4-i2c";
+		reg = <0x20>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		interrupts-extended = <&tlmm 125 IRQ_TYPE_LEVEL_LOW>;
+		reset-gpios = <&tlmm 89 GPIO_ACTIVE_LOW>;
+
+		/* downstream: vdd_ana = L14 (1.8 V), vcc_i2c = L22 (3.3 V) */
+		vdd-supply = <&vreg_l22a_3p3>;
+		vio-supply = <&vreg_l14a_1p8>;
+
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&touch_default>;
+		pinctrl-1 = <&touch_sleep>;
+
+		syna,reset-delay-ms = <100>;
+		syna,startup-delay-ms = <100>;
+
+		rmi4-f01@1 {
+			reg = <0x1>;
+			syna,nosleep-mode = <1>;
+		};
+
+		rmi4-f12@12 {
+			reg = <0x12>;
+			syna,sensor-type = <1>;
+			touchscreen-x-mm = <68>;
+			touchscreen-y-mm = <121>;
+		};
+	};
+
+	/* ndt,stress-i2c pressure sensor @50: no mainline driver */
+};
+
+&gpu {
+	status = "okay";
+};
+
+&gpu_zap_shader {
+	firmware-name = "qcom/msm8996/zte/axon7/a530_zap.mbn";
+};
+
+&hsusb_phy1 {
+	status = "okay";
+
+	vdd-supply = <&vreg_l28a_0p925>;
+	vdda-pll-supply = <&vreg_l12a_1p8>;
+	vdda-phy-dpdm-supply = <&vreg_l24a_3p075>;
+};
+
+&mdp_smmu {
+	/*
+	 * As on other msm8996 phones: probing this SMMU alters the
+	 * bootloader-configured scanout used by simplefb. Disabled until a
+	 * panel driver for the dual-DSI S6E3HA3 exists.
+	 */
+	status = "disabled";
+};
+
+&mdss {
+	/* See mdp_smmu. No mainline driver for the S6E3HA3 panel yet. */
+	status = "disabled";
+};
+
+&mmcc {
+	vdd-gfx-supply = <&vdd_gfx>;
+};
+
+&mss_pil {
+	status = "okay";
+
+	pll-supply = <&vreg_l12a_1p8>;
+
+	firmware-name = "qcom/msm8996/zte/axon7/mba.mbn",
+			"qcom/msm8996/zte/axon7/modem.mbn";
+};
+
+&pcie0 {
+	status = "okay";
+
+	/* Supplied by vdd_3v3, but choose wlan_en to drive enable pin high */
+	vddpe-3v3-supply = <&wlan_en>;
+	vdda-supply = <&vreg_l28a_0p925>;
+
+	perst-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
+	wake-gpios = <&tlmm 37 GPIO_ACTIVE_HIGH>;
+};
+
+&pcie_phy {
+	status = "okay";
+
+	vdda-phy-supply = <&vreg_l28a_0p925>;
+	vdda-pll-supply = <&vreg_l12a_1p8>;
+};
+
+&pm8994_gpios {
+	vol_keys_default: vol-keys-state {
+		pins = "gpio2", "gpio3";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		input-enable;
+		bias-pull-up;
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_NO>;
+		power-source = <PM8994_GPIO_S4>;
+	};
+
+	wlan_en_default: wlan-en-state {
+		pins = "gpio8";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		output-low;
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
+		power-source = <PM8994_GPIO_S4>;
+		bias-disable;
+	};
+
+	rome_enable_default: rome-enable-state {
+		pins = "gpio9";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		output-high;
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
+		power-source = <PM8994_GPIO_VPH>;
+	};
+
+	divclk1_default: divclk1-state {
+		pins = "gpio15";
+		function = PMIC_GPIO_FUNC_FUNC1;
+		bias-disable;
+		power-source = <PM8994_GPIO_S4>;
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
+	};
+
+	divclk4_pin_a: divclk4-state {
+		pins = "gpio18";
+		function = PMIC_GPIO_FUNC_FUNC2;
+		bias-disable;
+		power-source = <PM8994_GPIO_S4>;
+	};
+
+	bt_en_default: bt-en-state {
+		pins = "gpio19";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		output-low;
+		power-source = <PM8994_GPIO_S4>;
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
+		bias-pull-down;
+	};
+};
+
+&pm8994_lpg {
+	status = "okay";
+
+	qcom,power-source = <1>;
+};
+
+&pm8994_spmi_regulators {
+	qcom,saw-reg = <&saw3>;
+
+	s8 {
+		qcom,saw-slave;
+	};
+
+	s9 {
+		qcom,saw-slave;
+	};
+
+	s10 {
+		qcom,saw-slave;
+	};
+
+	vreg_apc_0p8: s11 {
+		qcom,saw-leader;
+		regulator-name = "vreg_apc_0p8";
+		regulator-min-microvolt = <470000>;
+		regulator-max-microvolt = <1140000>;
+		regulator-max-step-microvolt = <150000>;
+		regulator-always-on;
+	};
+};
+
+/* Notification LED, downstream qpnp RGB (ids 3/4/5 = R/G/B) */
+&pmi8994_lpg {
+	status = "okay";
+
+	qcom,power-source = <1>;
+
+	multi-led {
+		color = <LED_COLOR_ID_RGB>;
+		function = LED_FUNCTION_STATUS;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		led@1 {
+			reg = <1>;
+			color = <LED_COLOR_ID_BLUE>;
+		};
+
+		led@2 {
+			reg = <2>;
+			color = <LED_COLOR_ID_GREEN>;
+		};
+
+		led@3 {
+			reg = <3>;
+			color = <LED_COLOR_ID_RED>;
+		};
+	};
+};
+
+&pmi8994_spmi_regulators {
+	vdd_gfx: s2 {
+		regulator-name = "vdd_gfx";
+		regulator-min-microvolt = <400000>;
+		regulator-max-microvolt = <1015000>;
+		regulator-enable-ramp-delay = <500>;
+	};
+};
+
+&rpm_requests {
+	regulators-0 {
+		compatible = "qcom,rpm-pm8994-regulators";
+
+		vdd_s1-supply = <&vph_pwr>;
+		vdd_s2-supply = <&vph_pwr>;
+		vdd_s3-supply = <&vph_pwr>;
+		vdd_s4-supply = <&vph_pwr>;
+		vdd_s5-supply = <&vph_pwr>;
+		vdd_s6-supply = <&vph_pwr>;
+		vdd_s7-supply = <&vph_pwr>;
+		vdd_s8-supply = <&vph_pwr>;
+		vdd_s9-supply = <&vph_pwr>;
+		vdd_s10-supply = <&vph_pwr>;
+		vdd_s11-supply = <&vph_pwr>;
+		vdd_s12-supply = <&vph_pwr>;
+		vdd_l1-supply = <&vreg_s1b_1p025>;
+		vdd_l2_l26_l28-supply = <&vreg_s3a_1p3>;
+		vdd_l3_l11-supply = <&vreg_s3a_1p3>;
+		vdd_l4_l27_l31-supply = <&vreg_s3a_1p3>;
+		vdd_l5_l7-supply = <&vreg_s5a_2p15>;
+		vdd_l6_l12_l32-supply = <&vreg_s5a_2p15>;
+		vdd_l8_l16_l30-supply = <&vph_pwr>;
+		vdd_l9_l10_l18_l22-supply = <&vph_pwr_bbyp>;
+		vdd_l13_l19_l23_l24-supply = <&vph_pwr_bbyp>;
+		vdd_l14_l15-supply = <&vreg_s5a_2p15>;
+		vdd_l17_l29-supply = <&vph_pwr_bbyp>;
+		vdd_l20_l21-supply = <&vph_pwr_bbyp>;
+		vdd_l25-supply = <&vreg_s3a_1p3>;
+		vdd_lvs1_2-supply = <&vreg_s4a_1p8>;
+
+		/* Voltages below are from the downstream rpm-regulator nodes */
+		vreg_s3a_1p3: s3 {
+			regulator-name = "vreg_s3a_1p3";
+			regulator-min-microvolt = <1300000>;
+			regulator-max-microvolt = <1300000>;
+
+			/* Required by QCA6174a - vdd-core */
+			regulator-always-on;
+		};
+
+		vreg_s4a_1p8: s4 {
+			regulator-name = "vreg_s4a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-allow-set-load;
+
+			/* Required by QCA6174a - vddio, also UFS vccq2 */
+			regulator-always-on;
+		};
+
+		vreg_s5a_2p15: s5 {
+			regulator-name = "vreg_s5a_2p15";
+			regulator-min-microvolt = <2150000>;
+			regulator-max-microvolt = <2150000>;
+		};
+
+		vreg_s7a_0p8: s7 {
+			regulator-name = "vreg_s7a_0p8";
+			regulator-min-microvolt = <800000>;
+			regulator-max-microvolt = <800000>;
+		};
+
+		vreg_l1a_1p0: l1 {
+			regulator-name = "vreg_l1a_1p0";
+			regulator-min-microvolt = <1000000>;
+			regulator-max-microvolt = <1000000>;
+		};
+
+		vreg_l2a_1p25: l2 {
+			regulator-name = "vreg_l2a_1p25";
+			regulator-min-microvolt = <1250000>;
+			regulator-max-microvolt = <1250000>;
+		};
+
+		vreg_l3a_0p85: l3 {
+			regulator-name = "vreg_l3a_0p85";
+			regulator-min-microvolt = <850000>;
+			regulator-max-microvolt = <850000>;
+		};
+
+		vreg_l4a_1p225: l4 {
+			regulator-name = "vreg_l4a_1p225";
+			regulator-min-microvolt = <1225000>;
+			regulator-max-microvolt = <1225000>;
+		};
+
+		vreg_l6a_1p2: l6 {
+			regulator-name = "vreg_l6a_1p2";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+		};
+
+		vreg_l8a_1p8: l8 {
+			regulator-name = "vreg_l8a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		vreg_l9a_1p8: l9 {
+			regulator-name = "vreg_l9a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		vreg_l10a_1p8: l10 {
+			regulator-name = "vreg_l10a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		vreg_l11a_1p15: l11 {
+			regulator-name = "vreg_l11a_1p15";
+			regulator-min-microvolt = <1150000>;
+			regulator-max-microvolt = <1150000>;
+		};
+
+		vreg_l12a_1p8: l12 {
+			regulator-name = "vreg_l12a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-allow-set-load;
+		};
+
+		vreg_l13a_2p95: l13 {
+			regulator-name = "vreg_l13a_2p95";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <2950000>;
+		};
+
+		vreg_l14a_1p8: l14 {
+			regulator-name = "vreg_l14a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		vreg_l15a_1p8: l15 {
+			regulator-name = "vreg_l15a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		vreg_l16a_2p7: l16 {
+			regulator-name = "vreg_l16a_2p7";
+			regulator-min-microvolt = <2700000>;
+			regulator-max-microvolt = <2700000>;
+		};
+
+		vreg_l17a_2p9: l17 {
+			regulator-name = "vreg_l17a_2p9";
+			regulator-min-microvolt = <2900000>;
+			regulator-max-microvolt = <2900000>;
+		};
+
+		vreg_l18a_2p7: l18 {
+			regulator-name = "vreg_l18a_2p7";
+			regulator-min-microvolt = <2700000>;
+			regulator-max-microvolt = <2900000>;
+		};
+
+		vreg_l19a_3p0: l19 {
+			regulator-name = "vreg_l19a_3p0";
+			regulator-min-microvolt = <3000000>;
+			regulator-max-microvolt = <3000000>;
+		};
+
+		vreg_l20a_2p95: l20 {
+			regulator-name = "vreg_l20a_2p95";
+			regulator-min-microvolt = <2950000>;
+			regulator-max-microvolt = <2950000>;
+			regulator-allow-set-load;
+		};
+
+		vreg_l21a_2p95: l21 {
+			regulator-name = "vreg_l21a_2p95";
+			regulator-min-microvolt = <2950000>;
+			regulator-max-microvolt = <2950000>;
+			regulator-allow-set-load;
+		};
+
+		vreg_l22a_3p3: l22 {
+			regulator-name = "vreg_l22a_3p3";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+		};
+
+		vreg_l23a_2p8: l23 {
+			regulator-name = "vreg_l23a_2p8";
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <2800000>;
+		};
+
+		vreg_l24a_3p075: l24 {
+			regulator-name = "vreg_l24a_3p075";
+			regulator-min-microvolt = <3075000>;
+			regulator-max-microvolt = <3075000>;
+		};
+
+		vreg_l25a_1p2: l25 {
+			regulator-name = "vreg_l25a_1p2";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			regulator-allow-set-load;
+		};
+
+		vreg_l27a_1p0: l27 {
+			regulator-name = "vreg_l27a_1p0";
+			regulator-min-microvolt = <1000000>;
+			regulator-max-microvolt = <1000000>;
+		};
+
+		vreg_l28a_0p925: l28 {
+			regulator-name = "vreg_l28a_0p925";
+			regulator-min-microvolt = <925000>;
+			regulator-max-microvolt = <925000>;
+			regulator-allow-set-load;
+		};
+
+		vreg_l29a_2p8: l29 {
+			regulator-name = "vreg_l29a_2p8";
+			regulator-min-microvolt = <2800000>;
+			regulator-max-microvolt = <2800000>;
+		};
+
+		vreg_l30a_1p8: l30 {
+			regulator-name = "vreg_l30a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+
+			/* Required by QCA6174a - vddio-xtal */
+			regulator-always-on;
+		};
+
+		vreg_l32a_1p8: l32 {
+			regulator-name = "vreg_l32a_1p8";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		vreg_lvs1a_1p8: lvs1 {
+			regulator-name = "vreg_lvs1a_1p8";
+		};
+
+		vreg_lvs2a_1p8: lvs2 {
+			regulator-name = "vreg_lvs2a_1p8";
+		};
+	};
+
+	regulators-1 {
+		compatible = "qcom,rpm-pmi8994-regulators";
+
+		vdd_s1-supply = <&vph_pwr>;
+		vdd_s2-supply = <&vph_pwr>;
+		vdd_s3-supply = <&vph_pwr>;
+		vdd_bst_byp-supply = <&vph_pwr>;
+
+		vreg_s1b_1p025: s1 {
+			regulator-name = "vreg_s1b_1p025";
+			regulator-min-microvolt = <1025000>;
+			regulator-max-microvolt = <1025000>;
+		};
+
+		vph_pwr_bbyp: boost-bypass {
+			regulator-name = "vph_pwr_bbyp";
+			regulator-min-microvolt = <3150000>;
+			regulator-max-microvolt = <3600000>;
+		};
+	};
+};
+
+/* External microSD */
+&sdhc2 {
+	status = "okay";
+
+	/* card detect polarity unverified (downstream: tlmm 95): poll instead */
+	broken-cd;
+	vmmc-supply = <&vreg_l21a_2p95>;
+	vqmmc-supply = <&vreg_l13a_2p95>;
+};
+
+&tlmm {
+	/* blsp_spi5 (fingerprint) is owned by TZ */
+	gpio-reserved-ranges = <81 4>;
+
+	nfc_default: nfc-default-state {
+		pins = "gpio12", "gpio96";
+		function = "gpio";
+		drive-strength = <16>;
+		bias-pull-up;
+	};
+
+	hall_default: hall-default-state {
+		pins = "gpio124";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	touch_default: touch-default-state {
+		pins = "gpio89", "gpio125";
+		function = "gpio";
+		drive-strength = <16>;
+		bias-pull-up;
+	};
+
+	touch_sleep: touch-sleep-state {
+		pins = "gpio89", "gpio125";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+};
+
+&ufshc {
+	status = "okay";
+
+	vcc-supply = <&vreg_l20a_2p95>;
+	vccq-supply = <&vreg_l25a_1p2>;
+	vccq2-supply = <&vreg_s4a_1p8>;
+
+	vcc-max-microamp = <600000>;
+	vccq-max-microamp = <450000>;
+	vccq2-max-microamp = <450000>;
+};
+
+&ufsphy {
+	status = "okay";
+
+	vdda-phy-supply = <&vreg_l28a_0p925>;
+	vdda-pll-supply = <&vreg_l12a_1p8>;
+};
+
+/*
+ * USB-C port, USB 2.0 through QUSB2 PHY 1 on the USB3 (dwc3) controller.
+ * Fixed peripheral mode for initial bring-up (USB networking / SSH).
+ * Role switching needs the HD3SS3220 on blsp2_i2c1 (TODO).
+ */
+&usb3 {
+	status = "okay";
+
+	qcom,select-utmi-as-pipe-clk;
+};
+
+&usb3_dwc3 {
+	/* usb3-phy is not used for now */
+	phys = <&hsusb_phy1>;
+	phy-names = "usb2-phy";
+
+	dr_mode = "peripheral";
+	maximum-speed = "high-speed";
+	snps,is-utmi-l1-suspend;
+	snps,usb2-gadget-lpm-disable;
+	snps,hird-threshold = /bits/ 8 <0>;
+};
+
+&venus {
+	status = "okay";
+	firmware-name = "qcom/msm8996/zte/axon7/venus.mbn";
+};

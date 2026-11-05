@@ -1,0 +1,39 @@
+# Firmware for the ZTE Axon 7, extracted from the device itself
+# (modem/firmware partition + /vendor/firmware), split .mdt images squashed
+# into .mbn (scripts/pil-squasher.py in the port workspace).
+# The tarball is a local source and must not be redistributed.
+pkgname=firmware-zte-axon7
+pkgver=1
+pkgrel=0
+pkgdesc="Firmware for ZTE Axon 7"
+url="https://postmarketos.org"
+arch="aarch64"
+license="proprietary"
+options="!strip !check !archcheck !tracedeps pmb:cross-native"
+source="$pkgname-$pkgver.tar.gz"
+
+_mbns="
+	a530_zap.mbn
+	adsp.mbn
+	mba.mbn
+	modem.mbn
+	slpi.mbn
+	venus.mbn
+	"
+
+package() {
+	cd "$srcdir"
+
+	for _i in $_mbns; do
+		install -Dm644 qcom/msm8996/zte/axon7/$_i \
+			"$pkgdir/usr/lib/firmware/qcom/msm8996/zte/axon7/$_i"
+	done
+
+	# QCA6174 board data (device bdwlan30.bin)
+	install -Dm644 postmarketos/ath10k/QCA6174/hw3.0/board.bin \
+		"$pkgdir/usr/lib/firmware/postmarketos/ath10k/QCA6174/hw3.0/board.bin"
+}
+
+sha512sums="
+a34c0ad4276d26834437d063320f2705ae240cc8e7f1d404b435f8ba1192a052c34ccec2c27ad57fcebac16bcd66b15e3fdc7818b652b0a71349d7cc1ccd114f  firmware-zte-axon7-1.tar.gz
+"

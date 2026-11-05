@@ -1,0 +1,4 @@
+[submodule "ios"]
+	path = ios
+	url = https://github.com/devilAPI/ios-sailfish
+	branch = axon7

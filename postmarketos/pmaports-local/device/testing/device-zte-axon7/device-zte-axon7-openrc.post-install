@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Delay modem powerup (same as other msm8996 devices)
+rc-update del rmtfs boot 2>/dev/null
+rc-update add rmtfs default 2>/dev/null
+exit 0

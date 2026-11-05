@@ -1,0 +1,45 @@
+# Reference: <https://postmarketos.org/devicepkg>
+pkgname=device-zte-axon7
+pkgdesc="ZTE Axon 7"
+pkgver=1
+pkgrel=0
+url="https://postmarketos.org"
+license="MIT"
+arch="aarch64"
+options="!check !archcheck"
+depends="
+	firmware-zte-axon7
+	linux-firmware-ath10k
+	linux-firmware-qca
+	linux-firmware-qcom
+	linux-zte-axon7
+	mkbootimg
+	postmarketos-base
+	soc-qcom-msm8996
+	"
+makedepends="devicepkg-dev"
+subpackages="$pkgname-openrc"
+install="$pkgname-openrc.post-install"
+source="
+	deviceinfo
+	modules-initfs
+	"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+}
+
+openrc() {
+	default_openrc
+
+	mkdir "$subpkgdir"
+}
+
+sha512sums="
+d87b7491461579966ac843270e9b9a6098eb9103c6c486969df69de3600a9beb6e2c97e0230b3f6c3338fd6f5d7c7909a85db26009aca5eea3ed3e0ccc02c758  deviceinfo
+e5dd6e54ca7b33b3452655390e3ccecb183c3217422587df9e82c923683c662e487b35701accc19f7adddbbaddd22dfa6482082ec9057ce801e49e697a2ea01a  modules-initfs
+"
