@@ -18,7 +18,7 @@ below is for the user to run later.
 | gapps/MindTheGapps-11.0.0-arm64-20230922_081122.zip (194,494,611 B) | https://github.com/MindTheGapps/11.0.0-arm64/releases | size from the GitHub release |
 | TWRP 3.7.0_9-0 (download it yourself in a browser; dl.twrp.me blocks direct downloads) | https://dl.twrp.me/ailsa_ii/twrp-3.7.0_9-0-ailsa_ii.img.html | SHA256 d74410d0f82808901123609bad04d20362a30280dca03cac5e5c68b38380473b |
 
-`sha256sum -c` / `md5sum -c` lists are in `downloads/CHECKSUMS.*`.
+Verified 2026-11-05: all MD5s match SourceForge; SHA256 of every file is in `downloads/CHECKSUMS.sha256` (`cd downloads && md5sum -c CHECKSUMS.md5 && sha256sum -c CHECKSUMS.sha256`).
 
 ## What the ROM zip does (from its updater-script)
 
