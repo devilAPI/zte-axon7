@@ -145,12 +145,12 @@ one table on this phone (no speed-bin variants):
 
 | Corner | GPU clock | Ceiling | | Corner | GPU clock | Ceiling |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 133 MHz | 670 mV | | 5 | 401.8 MHz | 825 mV |
-| 2 | 214 MHz | 670 mV | | 6 | 510 MHz | 905 mV |
-| 3 | 315 MHz | 745 mV | | 7 | 560 MHz | 960 mV |
-| 4 | — | — | | 8 | 624 MHz | 1015 mV |
+| 1 | off | 400 mV | | 5 | 401.8 MHz | 825 mV |
+| 2 | 133 MHz | 670 mV | | 6 | 510 MHz | 905 mV |
+| 3 | 214 MHz | 670 mV | | 7 | 560 MHz | 960 mV |
+| 4 | 315 MHz | 745 mV | | 8 | 624 MHz | 1015 mV |
 
-(floor 520 mV for all corners; GFX rail = PMI8996 S2.)
+(floor 520 mV for corners 2-8; GFX rail = PMI8996 S2.)
 
 Bootloader leaves CPU at 1228 MHz (both clusters) and DDR at 1016 MHz
 (BIMC 508 MHz); DDR runs at 1804 MHz via an RPM vote. The panel refreshes
