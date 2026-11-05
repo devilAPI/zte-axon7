@@ -1,0 +1,756 @@
+From 7b4512ec338891efab46a61919bfd8587841f2e7 Mon Sep 17 00:00:00 2001
+From: axon7-port <axon7-port@localhost>
+Date: Thu, 5 Nov 2026 23:43:27 +0100
+Subject: [PATCH 1/6] axon7: BoardConfig, fstab and init for lineage-22.2
+
+As LineageOS/android_device_xiaomi_msm8996-common 18.1 -> 22.2: board flags
+dropped by newer Android removed; boot_devices cmdline; kernel: the 4.4
+msm8996 base (mi8996_defconfig + vendor/zte/axon7.config, to be written
+with the kernel port); qcom-caf framework matrices; product/system/vendor
+.prop files; vendor sepolicy dir; LOC HIDL 3.0; vendor RIL service; AVB
+off. rootdir/ -> init/ as Soong prebuilt_etc/sh_binary; fstab with
+first-stage mount and ext4 /data with FBE (needs a userdata format);
+libinit keeps the alarm boot detection and adds 4 GB dalvik heap props;
+init rc: writepid -> task_profiles, sys.powerctl -> sys.shutdown.requested,
+restricted cpuset. RIL/data daemon changes wait for the 22.2 blobs.
+---
+ BoardConfig.mk                           | 75 +++++++++++-------------
+ init/Android.bp                          | 68 +++++++++++++++------
+ init/fstab.qcom                          | 23 ++++++++
+ {rootdir/etc => init}/init.qcom.power.rc | 36 ++++++++----
+ {rootdir/etc => init}/init.qcom.rc       | 40 ++++++-------
+ init/init.qcom.recovery.rc               |  6 ++
+ {rootdir/etc => init}/init.qcom.sh       |  0
+ {rootdir/etc => init}/init.qcom.usb.rc   |  0
+ init/init_msm8996.cpp                    | 12 ++++
+ {rootdir/etc => init}/ueventd.qcom.rc    |  3 +
+ rootdir/Android.mk                       | 61 -------------------
+ rootdir/etc/fstab.qcom                   | 28 ---------
+ 12 files changed, 175 insertions(+), 177 deletions(-)
+ create mode 100644 init/fstab.qcom
+ rename {rootdir/etc => init}/init.qcom.power.rc (89%)
+ rename {rootdir/etc => init}/init.qcom.rc (94%)
+ create mode 100644 init/init.qcom.recovery.rc
+ rename {rootdir/etc => init}/init.qcom.sh (100%)
+ rename {rootdir/etc => init}/init.qcom.usb.rc (100%)
+ rename {rootdir/etc => init}/ueventd.qcom.rc (98%)
+ delete mode 100644 rootdir/Android.mk
+ delete mode 100644 rootdir/etc/fstab.qcom
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 0ff595c..a769bdf 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -1,5 +1,5 @@
+ # Copyright (C) 2016 The CyanogenMod Project
+-# Copyright (C) 2017-2019 The LineageOS Project
++# Copyright (C) 2017-2025 The LineageOS Project
+ #
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+@@ -21,6 +21,8 @@
+ # definition file).
+ #
+ 
++BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
++
+ PLATFORM_PATH := device/zte/axon7
+ 
+ TARGET_SPECIFIC_HEADER_PATH := $(PLATFORM_PATH)/include
+@@ -29,9 +31,6 @@ TARGET_SPECIFIC_HEADER_PATH := $(PLATFORM_PATH)/include
+ TARGET_BOARD_INFO_FILE ?= device/zte/axon7/board-info.txt
+ TARGET_OTA_ASSERT_DEVICE := ailsa_ii,axon7
+ 
+-# Use Snapdragon LLVM, if available
+-TARGET_USE_SDCLANG := true
+-
+ # Bootloader
+ TARGET_BOOTLOADER_BOARD_NAME := ailsa_ii
+ TARGET_NO_BOOTLOADER := true
+@@ -40,8 +39,8 @@ TARGET_NO_BOOTLOADER := true
+ TARGET_BOARD_PLATFORM := msm8996
+ TARGET_BOARD_PLATFORM_GPU := qcom-adreno530
+ 
+-# Properties
+-BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED := true
++# A/B
++AB_OTA_UPDATER := false
+ 
+ # Architecture
+ TARGET_ARCH := arm64
+@@ -58,29 +57,32 @@ TARGET_2ND_CPU_ABI2 := armeabi
+ TARGET_2ND_CPU_VARIANT := generic
+ TARGET_2ND_CPU_VARIANT_RUNTIME := kryo
+ 
+-TARGET_USES_64_BIT_BINDER := true
+-
+ # HIDL
+ DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
++    hardware/qcom-caf/common/vendor_framework_compatibility_matrix.xml \
++    hardware/qcom-caf/common/vendor_framework_compatibility_matrix_legacy.xml \
+     $(PLATFORM_PATH)/vendor_framework_compatibility_matrix.xml \
+     vendor/lineage/config/device_framework_matrix.xml
+ DEVICE_FRAMEWORK_MANIFEST_FILE := $(PLATFORM_PATH)/framework_manifest.xml
+ DEVICE_MANIFEST_FILE := $(PLATFORM_PATH)/manifest.xml
+-DEVICE_MATRIX_FILE := $(PLATFORM_PATH)/compatibility_matrix.xml
++DEVICE_MATRIX_FILE := hardware/qcom-caf/common/compatibility_matrix.xml
+ 
+ # Kernel
+ BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 cma=32M@0-0xffffffff
++BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc/624000.ufshc
+ BOARD_KERNEL_CMDLINE += loop.max_part=7
+ BOARD_KERNEL_BASE := 0x80000000
+ BOARD_KERNEL_PAGESIZE := 4096
+ BOARD_KERNEL_TAGS_OFFSET := 0x00000100
+ BOARD_RAMDISK_OFFSET     := 0x01000000
++BOARD_RAMDISK_USE_XZ := true
+ BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
+ TARGET_KERNEL_ARCH := arm64
+ TARGET_KERNEL_HEADER_ARCH := arm64
+-TARGET_KERNEL_CLANG_COMPILE := true
+ TARGET_KERNEL_SOURCE := kernel/zte/msm8996
+-TARGET_KERNEL_CONFIG := lineageos_axon7_defconfig
++# 4.4 kernel (gemini's msm8996 base, see lineageos/BUILD-PLAN-LOS22.md):
++# its msm8996 defconfig plus the axon7 fragment added with the DTS/drivers port
++TARGET_KERNEL_CONFIG := vendor/xiaomi/mi8996_defconfig vendor/zte/axon7.config
+ 
+ # Qualcomm support
+ BOARD_USES_QCOM_HARDWARE := true
+@@ -114,11 +116,9 @@ AUDIO_FEATURE_ENABLED_SPKR_PROTECTION := true
+ AUDIO_USE_LL_AS_PRIMARY_OUTPUT := false
+ BOARD_SUPPORTS_SOUND_TRIGGER := true
+ BOARD_USES_ALSA_AUDIO := true
+-USE_CUSTOM_AUDIO_POLICY := 1
+ USE_XML_AUDIO_POLICY_CONF := 1
+ 
+ # Bluetooth
+-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(PLATFORM_PATH)/bluetooth
+ BOARD_HAS_QCA_BT_ROME := true
+ BOARD_HAVE_BLUETOOTH := true
+ BOARD_HAVE_BLUETOOTH_QCOM := true
+@@ -126,8 +126,8 @@ QCOM_BT_USE_BTNV := true
+ QCOM_BT_USE_SMD_TTY := true
+ 
+ # Camera
+-TARGET_USES_MEDIA_EXTENSIONS := true
+-TARGET_USES_QTI_CAMERA_DEVICE := true
++BOARD_QTI_CAMERA_32BIT_ONLY := true
++TARGET_SUPPORT_HAL1 := false
+ 
+ # Charger
+ BOARD_CHARGER_DISABLE_INIT_BLANK := true
+@@ -138,45 +138,28 @@ TARGET_TAP_TO_WAKE_NODE := "/proc/touchscreen/wake_gesture"
+ # CNE and DPM
+ BOARD_USES_QCNE := true
+ 
+-# Crypto
+-TARGET_HW_DISK_ENCRYPTION := true
+-
+ # Display
+ BOARD_USES_ADRENO := true
+ TARGET_CONTINUOUS_SPLASH_ENABLED := true
+-TARGET_USES_C2D_COMPOSITION := true
+-TARGET_USES_GRALLOC1 := true
+-TARGET_USES_HWC2 := true
+-TARGET_USES_ION := true
+ TARGET_USES_OVERLAY := true
+ USE_OPENGL_RENDERER := true
+ MAX_EGL_CACHE_KEY_SIZE := 12*1024
+ MAX_EGL_CACHE_SIZE := 2048*1024
+-OVERRIDE_RS_DRIVER := libRSDriver_adreno.so
+ MAX_VIRTUAL_DISPLAY_DIMENSION := 4096
+ TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
+-VSYNC_EVENT_PHASE_OFFSET_NS := 2000000
+-SF_VSYNC_EVENT_PHASE_OFFSET_NS := 6000000
+-
+-# DRM
+-TARGET_ENABLE_MEDIADRM_64 := true
+ 
+ # GPS
+-TARGET_NO_RPC := true
+-USE_DEVICE_SPECIFIC_GPS := true
++BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := default
++LOC_HIDL_VERSION := 3.0
+ 
+ # Filesystem
+ TARGET_FS_CONFIG_GEN := $(PLATFORM_PATH)/config.fs
+ 
+-# Init
+-TARGET_INIT_VENDOR_LIB := //$(PLATFORM_PATH):libinit_msm8996
+-TARGET_RECOVERY_DEVICE_MODULES := libinit_msm8996
+-
+ # Keystore
+ TARGET_PROVIDES_KEYMASTER := true
+ 
+-# Lights
+-TARGET_PROVIDES_LIBLIGHT := true
++# Media
++TARGET_USES_ION := true
+ 
+ # Partitions
+ BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
+@@ -199,11 +182,18 @@ TARGET_USES_MKE2FS := true
+ # Power
+ TARGET_USES_INTERACTION_BOOST := true
+ 
++# Properties
++TARGET_PRODUCT_PROP += $(PLATFORM_PATH)/product.prop
++TARGET_SYSTEM_PROP += $(PLATFORM_PATH)/system.prop
++TARGET_VENDOR_PROP += $(PLATFORM_PATH)/vendor.prop
++
+ # RIL
+-TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
++ENABLE_VENDOR_RIL_SERVICE := true
+ 
+ # Recovery
+-TARGET_RECOVERY_FSTAB := $(PLATFORM_PATH)/rootdir/etc/fstab.qcom
++TARGET_RECOVERY_FSTAB := $(PLATFORM_PATH)/init/fstab.qcom
++TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
++TARGET_RECOVERY_UI_BLANK_UNBLANK_ON_INIT := true
+ TARGET_USERIMAGES_USE_EXT4 := true
+ TARGET_USERIMAGES_USE_F2FS := true
+ 
+@@ -217,12 +207,14 @@ VENDOR_SECURITY_PATCH := 2018-12-01
+ # SELinux
+ include device/qcom/sepolicy-legacy-um/SEPolicy.mk
+ 
+-BOARD_SEPOLICY_DIRS += $(PLATFORM_PATH)/sepolicy
++BOARD_VENDOR_SEPOLICY_DIRS += $(PLATFORM_PATH)/sepolicy/vendor
+ 
+ # Treble
+-BOARD_VNDK_RUNTIME_DISABLE := true
+-BOARD_VNDK_VERSION := current
+ PRODUCT_FULL_TREBLE_OVERRIDE := true
++BOARD_VNDK_VERSION := current
++
++# Verified Boot
++BOARD_AVB_ENABLE := false
+ 
+ # Wifi
+ BOARD_HAS_QCOM_WLAN := true
+@@ -230,6 +222,7 @@ BOARD_HAS_QCOM_WLAN_SDK := true
+ BOARD_WLAN_DEVICE := qcwcn
+ BOARD_HOSTAPD_DRIVER := NL80211
+ BOARD_HOSTAPD_PRIVATE_LIB := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
++HOSTAPD_VERSION := VER_0_8_X
+ BOARD_WPA_SUPPLICANT_DRIVER := NL80211
+ BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
+ WIFI_DRIVER_FW_PATH_AP := "ap"
+diff --git a/init/Android.bp b/init/Android.bp
+index 208e49a..692fe5f 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -1,17 +1,7 @@
+ //
+-// Copyright (C) 2019 The LineageOS Project
++// Copyright (C) 2019-2025 The LineageOS Project
+ //
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-// http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
++// SPDX-License-Identifier: Apache-2.0
+ //
+ 
+ cc_library_static {
+@@ -19,13 +9,57 @@ cc_library_static {
+     recovery_available: true,
+     srcs: ["init_msm8996.cpp"],
+     include_dirs: [
+-        "system/core/base/include",
+         "system/core/init",
+-        "external/selinux/libselinux/include",
+     ],
+-    static_libs: [
++    shared_libs: [
+         "libbase",
+-        "libselinux",
+     ],
+-    cflags: ["-Wall"]
++}
++
++prebuilt_etc {
++    name: "fstab.qcom",
++    src: "fstab.qcom",
++    soc_specific: true,
++    ramdisk_available: true,
++}
++
++prebuilt_etc {
++    name: "init.qcom.power.rc",
++    src: "init.qcom.power.rc",
++    sub_dir: "init/hw",
++    soc_specific: true,
++}
++
++prebuilt_etc {
++    name: "init.qcom.usb.rc",
++    src: "init.qcom.usb.rc",
++    sub_dir: "init/hw",
++    soc_specific: true,
++}
++
++prebuilt_etc {
++    name: "init.qcom.rc",
++    src: "init.qcom.rc",
++    sub_dir: "init/hw",
++    soc_specific: true,
++}
++
++prebuilt_etc {
++    name: "init.qcom.recovery.rc",
++    src: "init.qcom.recovery.rc",
++    sub_dir: "init",
++    recovery: true,
++}
++
++prebuilt_etc {
++    name: "ueventd.qcom.rc",
++    filename: "ueventd.rc",
++    src: "ueventd.qcom.rc",
++    soc_specific: true,
++}
++
++sh_binary {
++    name: "init.qcom.sh",
++    src: "init.qcom.sh",
++    soc_specific: true,
+ }
+diff --git a/init/fstab.qcom b/init/fstab.qcom
+new file mode 100644
+index 0000000..216c3c9
+--- /dev/null
++++ b/init/fstab.qcom
+@@ -0,0 +1,23 @@
++# Android fstab file.
++# The filesystem that contains the filesystem e2fsck binary (typically /system) cannot
++# specify 'check', and must come before any filesystems that do specify 'check'
++
++# 22.2 (as msm8996-common): system/vendor first-stage mounted from here (no
++# DT fstab), /data ext4 with file-based encryption: moving from 18.1's
++# footer encryption needs a format of userdata.
++#<src>                                       <mnt_point>        <type>  <mnt_flags and options>                                     <fs_mgr_flags>
++/dev/block/bootdevice/by-name/boot           /boot              emmc    defaults                                                    recoveryonly
++/dev/block/bootdevice/by-name/recovery       /recovery          emmc    defaults                                                    recoveryonly
++/dev/block/bootdevice/by-name/cache          /cache             ext4    nosuid,nodev,noatime,barrier=1                              wait,check,formattable
++/dev/block/bootdevice/by-name/userdata       /data              ext4    nosuid,nodev,noatime,barrier=1,noauto_da_alloc              latemount,wait,check,fileencryption=ice,quota,formattable
++/dev/block/by-name/system                    /system            ext4    ro,barrier=1                                                wait,first_stage_mount
++/dev/block/by-name/vendor                    /vendor            ext4    ro,barrier=1                                                wait,first_stage_mount
++/dev/block/bootdevice/by-name/persist        /mnt/vendor/persist     ext4    nosuid,nodev,noatime,barrier=1                                                                    wait
++/dev/block/bootdevice/by-name/dsp            /vendor/dsp             ext4    ro,nosuid,nodev,barrier=1,context=u:object_r:adsprpcd_file:s0                                     wait
++/dev/block/bootdevice/by-name/modem          /vendor/firmware_mnt    vfat    ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0      wait
++/dev/block/bootdevice/by-name/bluetooth      /vendor/bt_firmware     vfat    ro,shortname=lower,uid=1002,gid=3002,dmask=227,fmask=337,context=u:object_r:bt_firmware_file:s0   wait
++/dev/block/bootdevice/by-name/misc           /misc              emmc    defaults                                                    defaults
++/dev/block/zram0                             none               swap    defaults                                                    zramsize=536870912,max_comp_streams=4
++
++/devices/soc/74a4900.sdhci/mmc_host*                                auto               auto    defaults                                                    voldmanaged=sdcard1:auto
++/devices/soc/6a00000.ssusb/6a00000.dwc3/xhci-hcd.0.auto/usb*        auto               auto    defaults                                                    voldmanaged=usbdisk:auto
+diff --git a/rootdir/etc/init.qcom.power.rc b/init/init.qcom.power.rc
+similarity index 89%
+rename from rootdir/etc/init.qcom.power.rc
+rename to init/init.qcom.power.rc
+index dfdf979..bae4160 100644
+--- a/rootdir/etc/init.qcom.power.rc
++++ b/init/init.qcom.power.rc
+@@ -41,20 +41,12 @@ on boot
+     write /dev/cpuset/background/cpus 0-3
+     write /dev/cpuset/system-background/cpus 0-3
+     write /dev/cpuset/top-app/cpus 0-3
+-
+-    # Add a cpuset for the camera daemon
+-    # we want all cores for camera
+-    mkdir /dev/cpuset/camera-daemon
+-    write /dev/cpuset/camera-daemon/cpus 0-3
+-    write /dev/cpuset/camera-daemon/mems 0
+-    chown system system /dev/cpuset/camera-daemon
+-    chown system system /dev/cpuset/camera-daemon/tasks
+-    chmod 0664 /dev/cpuset/camera-daemon/tasks
++    write /dev/cpuset/restricted/cpus 0-3
+ 
+     # Enable sched boost
+     write /proc/sys/kernel/sched_boost 1
+ 
+-on charger
++on property:init.svc.vendor.charger=running
+     wait /dev/block/platform/soc/${ro.boot.bootdevice}
+     # Enable UFS powersaving
+     write /sys/devices/soc/${ro.boot.bootdevice}/clkscale_enable 1
+@@ -70,7 +62,24 @@ on charger
+     write /sys/devices/system/cpu/cpu2/online 0
+     write /sys/devices/system/cpu/cpu3/online 0
+     write /sys/module/msm_thermal/parameters/enabled "N"
++
++    mount configfs none /config
++    mkdir /config/usb_gadget/g1 0770
++    mkdir /config/usb_gadget/g1/strings/0x409 0770
++    write /config/usb_gadget/g1/bcdUSB 0x0200
++    write /config/usb_gadget/g1/strings/0x409/serialnumber ${ro.serialno}
++    write /config/usb_gadget/g1/strings/0x409/manufacturer ${ro.product.manufacturer}
++    mkdir /config/usb_gadget/g1/functions/mass_storage.0
++    mkdir /config/usb_gadget/g1/configs/b.1 0770
++    mkdir /config/usb_gadget/g1/configs/b.1/strings/0x409 0770
++    write /config/usb_gadget/g1/configs/b.1/MaxPower 900
++    symlink /config/usb_gadget/g1/configs/b.1 /config/usb_gadget/g1/os_desc/b.1
++    write /config/usb_gadget/g1/strings/0x409/product ${vendor.usb.product_string}
++    setprop sys.usb.config mass_storage
++    setprop sys.usb.configfs 1
++
+     start vendor.hvdcp_opti
++    start vendor.power_off_alarm
+     start thermal-engine
+ 
+ on enable-low-power
+@@ -181,6 +190,7 @@ on property:sys.boot_completed=1
+     write /dev/cpuset/foreground/cpus 0-2
+     write /dev/cpuset/background/cpus 0
+     write /dev/cpuset/system-background/cpus 0-2
++    write /dev/cpuset/restricted/cpus 0-1
+ 
+ on property:init.svc.recovery=running
+     trigger enable-low-power
+@@ -200,3 +210,9 @@ service vendor.hvdcp_opti /vendor/bin/hvdcp_opti
+     class main
+     user root
+     group system wakelock
++
++service vendor.power_off_alarm /vendor/bin/power_off_alarm
++    class core
++    group system
++    disabled
++    oneshot
+diff --git a/rootdir/etc/init.qcom.rc b/init/init.qcom.rc
+similarity index 94%
+rename from rootdir/etc/init.qcom.rc
+rename to init/init.qcom.rc
+index 1621a82..5f972ad 100755
+--- a/rootdir/etc/init.qcom.rc
++++ b/init/init.qcom.rc
+@@ -334,42 +334,42 @@ service vendor.rmt_storage /vendor/bin/rmt_storage
+     group system wakelock
+     shutdown critical
+     ioprio rt 0
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service vendor.tftp_server /vendor/bin/tftp_server
+     class core
+     user root
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service vendor.atfwd /vendor/bin/ATFWD-daemon
+     class late_start
+     user system
+     group system radio
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service vendor.netmgrd /vendor/bin/netmgrd
+     class main
+     user root
+     group root wifi wakelock radio inet
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service vendor.ipacm /vendor/bin/ipacm
+     class main
+     user radio
+     group radio inet
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service vendor.dataqti /vendor/bin/qti
+     class main
+     user radio
+     group radio oem_2901 diag usb
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service vendor.sensors.qti /vendor/bin/sensors.qti
+     class core
+     user system
+     group system
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ on property:ro.vendor.use_data_netmgrd=false
+     # netmgr not supported on specific target
+@@ -381,14 +381,14 @@ service cnss-daemon /vendor/bin/cnss-daemon -n -l
+     group system inet net_admin wifi
+     capabilities NET_ADMIN
+ 
+-on property:sys.powerctl=*
++on property:sys.shutdown.requested=*
+     stop cnss-daemon
+ 
+ service loc_launcher /vendor/bin/loc_launcher
+     class late_start
+     user gps
+     group gps
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service qcom-sh /vendor/bin/init.qcom.sh
+     class late_start
+@@ -408,41 +408,41 @@ service vendor.qseecomd /vendor/bin/qseecomd
+     class core
+     user root
+     group root
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service time_daemon /vendor/bin/time_daemon
+     class main
+     user system
+     group system
+     capabilities SYS_TIME
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ # Start camera server as daemon
+ service qcamerasvr /vendor/bin/mm-qcamera-daemon
+     class late_start
+     user camera
+     group camera system inet input graphics
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service msm_irqbalance /vendor/bin/msm_irqbalance -f /vendor/etc/msm_irqbalance.conf
+     class core
+     user root
+     group root
+     disabled
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ # Start up peripheral manager
+ service vendor.per_mgr /vendor/bin/pm-service
+     class core
+     user system
+     group system
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ service vendor.per_proxy /vendor/bin/pm-proxy
+     class core
+     user system
+     group system
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+     disabled
+ 
+ on property:init.svc.vendor.per_mgr=running
+@@ -460,7 +460,7 @@ service thermal-engine /vendor/bin/thermal-engine -c ${sys.qcom.thermalcfg:-/ven
+    socket thermal-recv-passive-client stream 0666 system system
+    socket thermal-send-rule stream 0660 system system
+    group root
+-   writepid /dev/cpuset/system-background/tasks
++   task_profiles ServiceCapacityLow
+ 
+ service adsprpcd /vendor/bin/adsprpcd
+     class main
+@@ -473,7 +473,7 @@ service vendor.imsqmidaemon /vendor/bin/imsqmidaemon
+     user system
+     socket ims_qmid stream 0660 system radio
+     group radio log diag
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ # imsdatadaemon starts with root and UID will be downgraded to SYSTEM.
+ service vendor.imsdatadaemon /vendor/bin/imsdatadaemon
+@@ -481,7 +481,7 @@ service vendor.imsdatadaemon /vendor/bin/imsdatadaemon
+     user system
+     socket ims_datad stream 0660 system radio
+     group system wifi radio inet log diag
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+     disabled
+ 
+ on property:vendor.ims.QMI_DAEMON_STATUS=1
+@@ -496,7 +496,7 @@ service vendor.imsrcsservice /vendor/bin/imsrcsd
+     class main
+     user system
+     group radio diag inet log
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ on property:vendor.ims.DATA_DAEMON_STATUS=1
+     restart vendor.ims_rtp_daemon
+@@ -518,7 +518,7 @@ service gx_fpd /vendor/bin/gx_fpd
+     class late_start
+     user system
+     group system
+-    writepid /dev/cpuset/system-background/tasks
++    task_profiles ServiceCapacityLow
+ 
+ on property:apexd.status=ready
+     mount none /system/etc/swcodec/ld.config.txt /apex/com.android.media.swcodec/etc/ld.config.txt bind
+diff --git a/init/init.qcom.recovery.rc b/init/init.qcom.recovery.rc
+new file mode 100644
+index 0000000..e8c06b6
+--- /dev/null
++++ b/init/init.qcom.recovery.rc
+@@ -0,0 +1,6 @@
++on fs
++    wait /dev/block/platform/soc/${ro.boot.bootdevice}
++    symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
++
++on init
++    setprop sys.usb.configfs 1
+diff --git a/rootdir/etc/init.qcom.sh b/init/init.qcom.sh
+similarity index 100%
+rename from rootdir/etc/init.qcom.sh
+rename to init/init.qcom.sh
+diff --git a/rootdir/etc/init.qcom.usb.rc b/init/init.qcom.usb.rc
+similarity index 100%
+rename from rootdir/etc/init.qcom.usb.rc
+rename to init/init.qcom.usb.rc
+diff --git a/init/init_msm8996.cpp b/init/init_msm8996.cpp
+index a5b4eeb..906698b 100644
+--- a/init/init_msm8996.cpp
++++ b/init/init_msm8996.cpp
+@@ -89,7 +89,19 @@ static void init_alarm_boot_properties()
+     }
+ }
+ 
++/* Dalvik heap for the Axon 7's 4 GB (phone-xxxhdpi-4096-dalvik-heap.mk), as msm8996-common 22.2 sets it. */
++static void init_dalvik_heap_properties()
++{
++    property_override("dalvik.vm.heapstartsize", "8m");
++    property_override("dalvik.vm.heapgrowthlimit", "256m");
++    property_override("dalvik.vm.heapsize", "512m");
++    property_override("dalvik.vm.heaptargetutilization", "0.75");
++    property_override("dalvik.vm.heapminfree", "4m");
++    property_override("dalvik.vm.heapmaxfree", "16m");
++}
++
+ void vendor_load_properties()
+ {
+     init_alarm_boot_properties();
++    init_dalvik_heap_properties();
+ }
+diff --git a/rootdir/etc/ueventd.qcom.rc b/init/ueventd.qcom.rc
+similarity index 98%
+rename from rootdir/etc/ueventd.qcom.rc
+rename to init/ueventd.qcom.rc
+index f77f72f..9f578b3 100644
+--- a/rootdir/etc/ueventd.qcom.rc
++++ b/init/ueventd.qcom.rc
+@@ -154,3 +154,6 @@ firmware_directories /vendor/firmware_mnt/image/
+ 
+ # Kmsg device
+ /dev/kmsg                 0620   root       system
++
++# Charger
++/sys/class/power_supply/battery  charging_enabled           0660    system  system
+diff --git a/rootdir/Android.mk b/rootdir/Android.mk
+deleted file mode 100644
+index bda55d0..0000000
+--- a/rootdir/Android.mk
++++ /dev/null
+@@ -1,61 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-
+-# Config scripts
+-include $(CLEAR_VARS)
+-LOCAL_MODULE       := init.qcom.sh
+-LOCAL_MODULE_TAGS  := optional
+-LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/init.qcom.sh
+-LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_EXECUTABLES)
+-include $(BUILD_PREBUILT)
+-
+-# Init scripts
+-include $(CLEAR_VARS)
+-LOCAL_MODULE       := fstab.qcom
+-LOCAL_MODULE_TAGS  := optional
+-LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/fstab.qcom
+-LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)
+-include $(BUILD_PREBUILT)
+-
+-include $(CLEAR_VARS)
+-LOCAL_MODULE       := init.qcom.rc
+-LOCAL_MODULE_TAGS  := optional
+-LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/init.qcom.rc
+-LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)/init/hw
+-include $(BUILD_PREBUILT)
+-
+-include $(CLEAR_VARS)
+-LOCAL_MODULE       := init.qcom.usb.rc
+-LOCAL_MODULE_TAGS  := optional
+-LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/init.qcom.usb.rc
+-LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)/init/hw
+-include $(BUILD_PREBUILT)
+-
+-include $(CLEAR_VARS)
+-LOCAL_MODULE       := init.qcom.power.rc
+-LOCAL_MODULE_TAGS  := optional
+-LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/init.qcom.power.rc
+-LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)/init/hw
+-include $(BUILD_PREBUILT)
+-
+-# Copy the power config for recovery too
+-include $(CLEAR_VARS)
+-LOCAL_MODULE       := init.recovery.qcom.rc
+-LOCAL_MODULE_TAGS  := optional
+-LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/init.qcom.power.rc
+-LOCAL_MODULE_PATH  := $(TARGET_ROOT_OUT)
+-include $(BUILD_PREBUILT)
+-
+-include $(CLEAR_VARS)
+-LOCAL_MODULE       := ueventd.qcom.rc
+-LOCAL_MODULE_STEM  := ueventd.rc
+-LOCAL_MODULE_TAGS  := optional
+-LOCAL_MODULE_CLASS := ETC
+-LOCAL_SRC_FILES    := etc/ueventd.qcom.rc
+-LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR)
+-include $(BUILD_PREBUILT)
+diff --git a/rootdir/etc/fstab.qcom b/rootdir/etc/fstab.qcom
+deleted file mode 100644
+index a2b584b..0000000
+--- a/rootdir/etc/fstab.qcom
++++ /dev/null
+@@ -1,28 +0,0 @@
+-# Android fstab file.
+-# The filesystem that contains the filesystem e2fsck binary (typically /system) cannot
+-# specify 'check', and must come before any filesystems that do specify 'check'
+-
+-# NOTE: /system and /vendor partitions are now early-mounted and the fstab entry is specified in device tree (duplicated below for recovery image purposes only):
+-#       /proc/device-tree/firmware/android/fstab/system
+-#       /proc/device-tree/firmware/android/fstab/vendor
+-
+-#<src>                                                       <mnt_point>       <type>  <mnt_flags and options>                                                                                         <fs_mgr_flags>
+-/dev/block/bootdevice/by-name/system                         /system           ext4    ro,barrier=1                                                                                                    wait,recoveryonly
+-/dev/block/bootdevice/by-name/vendor                         /vendor           ext4    ro,barrier=1                                                                                                    wait,recoveryonly
+-/dev/block/bootdevice/by-name/boot                           /boot             emmc    defaults                                                                                                        defaults
+-/dev/block/bootdevice/by-name/recovery                       /recovery         emmc    defaults                                                                                                        defaults
+-/dev/block/bootdevice/by-name/userdata                       /data             f2fs    nosuid,nodev,noatime,nodiratime,data_flush                                                                      wait,check,encryptable=/dev/block/bootdevice/by-name/cryptkey,quota
+-/dev/block/bootdevice/by-name/userdata                       /data             ext4    nosuid,nodev,noatime,nodiratime,barrier=1,noauto_da_alloc                                                       wait,check,encryptable=/dev/block/bootdevice/by-name/cryptkey,quota,formattable
+-/dev/block/bootdevice/by-name/cache                          /cache            f2fs    nosuid,nodev,noatime,nodiratime,inline_xattr,flush_merge,data_flush                                             wait,check
+-/dev/block/bootdevice/by-name/cache                          /cache            ext4    nosuid,nodev,noatime,nodiratime,barrier=1                                                                       wait,check,formattable
+-/dev/block/bootdevice/by-name/persist                        /mnt/vendor/persist          ext4    nosuid,nodev,noatime,barrier=1                                                                                  wait
+-/dev/block/bootdevice/by-name/dsp                            /vendor/dsp              ext4    ro,nosuid,nodev,barrier=1                                                                                       wait
+-/dev/block/bootdevice/by-name/modem                          /vendor/firmware_mnt         vfat    ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0            wait
+-/dev/block/bootdevice/by-name/bluetooth                      /vendor/bt_firmware      vfat    ro,shortname=lower,uid=1002,gid=3002,dmask=227,fmask=337,context=u:object_r:bt_firmware_file:s0          wait
+-/dev/block/bootdevice/by-name/misc                           /misc             emmc    defaults                                                                                                        defaults
+-
+-/dev/block/zram0                                             none              swap    defaults                                                                                                        zramsize=536870912,max_comp_streams=4
+-
+-/devices/soc/74a4900.sdhci/mmc_host*                         auto              auto    defaults                                                                                                        voldmanaged=sdcard1:auto,encryptable=footer
+-                                
+-/devices/soc/6a00000.ssusb/6a00000.dwc3/xhci-hcd.0.auto/usb* auto              auto    defaults                                                                                                        voldmanaged=usbdisk:auto
+-- 
+2.56.0
+

@@ -1,0 +1,200 @@
+From 1bd04b97ac283ade5501deaf014e7814459b51b6 Mon Sep 17 00:00:00 2001
+From: axon7-port <axon7-port@localhost>
+Date: Thu, 5 Nov 2026 23:47:51 +0100
+Subject: [PATCH 3/6] axon7: VINTF manifest for lineage-22.2 (target level 5)
+
+As msm8996-common 22.2: manifest version 2.0, target-level 5, audio 6.0;
+entries now declared by the HALs' own VINTF fragments or gone in Android
+15 removed (bluetooth.audio, configstore, drm, gnss + vendor.qti.gnss,
+health, memtrack, renderscript, cryptfshw). Radio/IMS versions stay until
+the 22.2 blob set is chosen.
+---
+ manifest.xml | 106 ++-------------------------------------------------
+ 1 file changed, 3 insertions(+), 103 deletions(-)
+
+diff --git a/manifest.xml b/manifest.xml
+index 4d7a7db..8d325b4 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -25,11 +25,11 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ -->
+-<manifest version="1.0" type="device" target-level="2">
++<manifest version="2.0" type="device" target-level="5">
+     <hal format="hidl">
+         <name>android.hardware.audio</name>
+         <transport>hwbinder</transport>
+-        <version>4.0</version>
++        <version>6.0</version>
+         <interface>
+             <name>IDevicesFactory</name>
+             <instance>default</instance>
+@@ -38,7 +38,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+     <hal format="hidl">
+         <name>android.hardware.audio.effect</name>
+         <transport>hwbinder</transport>
+-        <version>4.0</version>
++        <version>6.0</version>
+         <interface>
+             <name>IEffectsFactory</name>
+             <instance>default</instance>
+@@ -53,15 +53,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.bluetooth.audio</name>
+-        <transport>hwbinder</transport>
+-        <version>2.0</version>
+-        <interface>
+-            <name>IBluetoothAudioProvidersFactory</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.camera.provider</name>
+         <transport>hwbinder</transport>
+@@ -71,30 +62,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>legacy/0</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.configstore</name>
+-        <transport>hwbinder</transport>
+-        <version>1.1</version>
+-        <interface>
+-            <name>ISurfaceFlingerConfigs</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.drm</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>ICryptoFactory</name>
+-            <instance>default</instance>
+-        </interface>
+-        <interface>
+-            <name>IDrmFactory</name>
+-            <instance>default</instance>
+-        </interface>
+-        <fqname>@1.2::ICryptoFactory/widevine</fqname>
+-        <fqname>@1.2::IDrmFactory/widevine</fqname>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.gatekeeper</name>
+         <transport>hwbinder</transport>
+@@ -104,17 +71,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.gnss</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IGnss</name>
+-            <instance>default</instance>
+-        </interface>
+-        <fqname>@1.0::IGnss/default</fqname>
+-        <fqname>@1.0::IGnss/gnss_vendor</fqname>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.graphics.allocator</name>
+         <transport>hwbinder</transport>
+@@ -142,15 +98,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.health</name>
+-        <transport>hwbinder</transport>
+-        <version>2.0</version>
+-        <interface>
+-            <name>IHealth</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.keymaster</name>
+         <transport>hwbinder</transport>
+@@ -173,15 +120,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.memtrack</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IMemtrack</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.nfc</name>
+         <transport>hwbinder</transport>
+@@ -216,15 +154,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>slot2</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.renderscript</name>
+-        <transport arch="32+64">passthrough</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IDevice</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.sensors</name>
+         <transport>hwbinder</transport>
+@@ -377,26 +306,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>vendor.qti.gnss</name>
+-        <transport>hwbinder</transport>
+-        <version>1.2</version>
+-        <interface>
+-            <name>ILocHidlGnss</name>
+-            <instance>gnss_vendor</instance>
+-        </interface>
+-        <fqname>@1.2::ILocHidlGnss/gnss_vendor</fqname>
+-    </hal>
+-    <hal format="hidl">
+-        <name>vendor.qti.gnss</name>
+-        <transport>hwbinder</transport>
+-        <version>2.0</version>
+-        <interface>
+-            <name>ILocHidlGnss</name>
+-            <instance>gnss_vendor</instance>
+-        </interface>
+-        <fqname>@2.0::ILocHidlGnss/gnss_vendor</fqname>
+-    </hal>
+     <hal format="hidl">
+         <name>vendor.qti.hardware.alarm</name>
+         <transport>hwbinder</transport>
+@@ -424,15 +333,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>vendor.qti.hardware.cryptfshw</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>ICryptfsHw</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>vendor.qti.hardware.data.latency</name>
+         <transport>hwbinder</transport>
+-- 
+2.56.0
+

@@ -1,0 +1,174 @@
+From 6a81c094c0c1494e5d2f16c131b1775cea15afcf Mon Sep 17 00:00:00 2001
+From: axon7-port <axon7-port@localhost>
+Date: Thu, 5 Nov 2026 23:50:53 +0100
+Subject: [PATCH 6/6] axon7: extract scripts and dependencies for lineage-22.2,
+ port status
+
+extract-files.sh: msm8996-common 22.2's fixups for the blobs axon7 shares
+(libhidlbase-v32, libutils-v33, libgui/libui shims for IMS and camera,
+libgui_vendor, crypto shim for widevine), no prebuilts/vndk/v28 renames;
+both scripts with TARGET_ENABLE_CHECKELF=false. lineage.dependencies was
+invalid JSON and pointed at repos LineageOS doesn't have: empty now (the
+kernel comes from the local manifest, FlipFlap from the default one).
+PORTING-22.2.md: what's done and what's next.
+---
+ PORTING-22.2.md      | 36 ++++++++++++++++++++++++++++++++++++
+ extract-files.sh     | 39 ++++++++++++++++++++++++++++++++-------
+ lineage.dependencies | 11 +----------
+ setup-makefiles.sh   |  2 ++
+ 4 files changed, 71 insertions(+), 17 deletions(-)
+ create mode 100644 PORTING-22.2.md
+
+diff --git a/PORTING-22.2.md b/PORTING-22.2.md
+new file mode 100644
+index 0000000..99593f6
+--- /dev/null
++++ b/PORTING-22.2.md
+@@ -0,0 +1,36 @@
++# axon7: lineage-18.1 -> lineage-22.2 port status
++
++Forward-port of blueyfish/android_device_zte_axon7 (lineage-18.1) along
++LineageOS/android_device_xiaomi_msm8996-common lineage-18.1..22.2, the
++nearest msm8996 tree that runs 22.2 (see zte-axon7 lineageos/BUILD-PLAN-LOS22.md).
++
++## Done (not built yet)
++- BoardConfig: 22.2 flags, boot_devices cmdline, qcom-caf matrices, .prop
++  files, vendor sepolicy dir, LOC HIDL 3.0, vendor RIL, AVB off; kernel
++  config = mi8996_defconfig + vendor/zte/axon7.config (the 4.4 port).
++- init/: rootdir moved to Soong prebuilt_etc/sh_binary; fstab with
++  first-stage mount and ext4 /data with FBE (format of userdata needed);
++  libinit keeps alarm boot, adds 4 GB dalvik heap; rc: task_profiles,
++  sys.shutdown.requested, restricted cpuset.
++- device.mk / lineage_axon7.mk: 22.2 HAL set (AIDL health, light, memtrack,
++  usb, wifi, drm clearkey, bt audio; gnss 2.0; audio 6.0; camera
++  provider 2.5), .vendor variants, vendor compat libs, cgroups, mountpoints;
++  vendor_prop.mk -> vendor.prop / system.prop, product.prop.
++- manifest.xml: target-level 5, self-declaring HALs removed.
++- sepolicy -> sepolicy/vendor.
++- Android.mk: only the include; Wi-Fi firmware links as install_symlink.
++- extract-files.sh: msm8996-common's 22.2 fixups for the shared blobs,
++  no vndk v28; setup-makefiles.sh: CHECKELF off.
++- lineage.dependencies: empty (kernel via the local manifest).
++
++## Next
++1. `breakfast axon7` / `m nothing` once `repo sync` is done; fix what kati,
++   soong and sepolicy (neverallows) report.
++2. Blobs (vendor/zte from blueyfish 18.1): re-extract with the 22.2
++   proprietary-files.txt; RIL/IMS versions in manifest.xml and the
++   netmgrd/qcrild choice in init.qcom.rc follow the chosen blobs.
++3. touch/: key disabler to the AIDL vendor.lineage.touch.
++4. ZteDoze (Android.mk app) for API 35, or LineageOS's own doze.
++5. sepolicy property context for persist.axon7.amp_hal_device_map.
++6. Vendor image size: gemini's is 832 MiB, axon7's partition 512 MiB.
++7. Kernel: the 4.4 port (DTS, synaptics_dsx, AK4961/AK4490 audio, panel).
+diff --git a/extract-files.sh b/extract-files.sh
+index 5c038cd..5ada0fb 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -1,7 +1,7 @@
+ #!/bin/bash
+ #
+ # Copyright (C) 2016 The CyanogenMod Project
+-# Copyright (C) 2017-2020 The LineageOS Project
++# Copyright (C) 2017-2025 The LineageOS Project
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ #
+@@ -17,6 +17,8 @@ if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
+ 
+ ANDROID_ROOT="${MY_DIR}/../../.."
+ 
++export TARGET_ENABLE_CHECKELF=false
++
+ HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
+ if [ ! -f "${HELPER}" ]; then
+     echo "Unable to find helper script at ${HELPER}"
+@@ -55,6 +57,31 @@ fi
+ 
+ function blob_fixup() {
+     case "${1}" in
++    # 22.2: blobs built against the 18.1-era libhidlbase / libutils (as msm8996-common)
++    system/lib64/com.qualcomm.qti.ant@1.0.so|vendor/bin/hw/android.hardware.bluetooth@1.0-service-qti|vendor/bin/hw/vendor.display.color@1.0-service)
++        "${PATCHELF}" --replace-needed "libhidlbase.so" "libhidlbase-v32.so" "${2}"
++        ;;
++    vendor/bin/pm-service)
++        grep -q libutils-v33.so "${2}" || "${PATCHELF}" --add-needed "libutils-v33.so" "${2}"
++        ;;
++    vendor/lib64/hw/android.hardware.bluetooth@1.0-impl-qti.so)
++        sed -i "s/libhidltransport.so/libbase_shim.so\x00\x00\x00\x00/" "${2}"
++        ;;
++    # 22.2: IMS video and camera blobs need the libgui/libui shims from hardware/lineage/compat
++    system_ext/lib64/lib-imscamera.so)
++        grep -q "libgui_shim.so" "${2}" || "${PATCHELF}" --add-needed "libgui_shim.so" "${2}"
++        ;;
++    system_ext/lib64/lib-imsvideocodec.so)
++        grep -q "libgui_shim.so" "${2}" || "${PATCHELF}" --add-needed "libgui_shim.so" "${2}"
++        grep -q "libui_shim.so" "${2}" || "${PATCHELF}" --add-needed "libui_shim.so" "${2}"
++        ;;
++    vendor/lib/libmmcamera2_sensor_modules.so)
++        sed -i "s/\/system\/etc\/camera\//\/vendor\/etc\/camera\//g" "${2}"
++        ;;
++    vendor/lib/libmmcamera2_stats_modules.so)
++        "${PATCHELF}" --remove-needed "libandroid.so" "${2}"
++        "${PATCHELF}" --replace-needed "libgui.so" "libgui_vendor.so" "${2}"
++        ;;
+     # Move telephony packages to /system_ext
+     system_ext/etc/init/dpmd.rc)
+         sed -i "s/\/system\/product\/bin\//\/system\/system_ext\/bin\//g" "${2}"
+@@ -98,7 +125,7 @@ function blob_fixup() {
+         "${PATCHELF}" --add-needed "libbase_shim.so" "${2}"
+         ;;
+     # Shim libui GraphicBuffer lock functions
+-    lib/lib-imsvideocodec.so|lib64/lib-imsvideocodec.so|vendor/lib/libFNVfbEngineHAL.so|vendor/lib/libZEffectLib.so)
++    lib/lib-imsvideocodec.so|vendor/lib/libFNVfbEngineHAL.so|vendor/lib/libZEffectLib.so)
+         "${PATCHELF}" --add-needed "libui_shim.so" "${2}"
+         ;;
+     # Patch service.bootanim.exit in camera HAL
+@@ -122,12 +149,10 @@ function blob_fixup() {
+     vendor/lib/hw/vulkan.msm8996.so|vendor/lib64/hw/vulkan.msm8996.so)
+         "${PATCHELF}" --set-soname "vulkan.msm8996.so" "${2}"
+         ;;
+-    # Fix protobuf missing symbol
++    # 22.2: no prebuilts/vndk/v28 anymore; protobuf comes from the vendorcompat packages,
++    # widevine needs the crypto shim (as msm8996-common)
+     vendor/lib64/libwvhidl.so)
+-        "${PATCHELF}" --replace-needed "libprotobuf-cpp-lite.so" "libprotobuf-cpp-lite-v28.so" "${2}"
+-        ;;
+-    vendor/lib64/libsettings.so)
+-        "${PATCHELF}" --replace-needed "libprotobuf-cpp-full.so" "libprotobuf-cpp-full-v28.so" "${2}"
++        grep -q libcrypto_shim.so "${2}" || "${PATCHELF}" --add-needed "libcrypto_shim.so" "${2}"
+         ;;
+     esac
+ }
+diff --git a/lineage.dependencies b/lineage.dependencies
+index 8434c03..fe51488 100644
+--- a/lineage.dependencies
++++ b/lineage.dependencies
+@@ -1,10 +1 @@
+-[
+-  {
+-    "repository": "android_kernel_zte_msm8996",
+-    "target_path": "kernel/zte/msm8996"
+-  },
+-  {
+-    "repository": "android_packages_apps_FlipFlap",
+-    "target_path": "packages/apps/FlipFlap"
+-  },
+-]
++[]
+diff --git a/setup-makefiles.sh b/setup-makefiles.sh
+index 64494fe..09fd4bc 100755
+--- a/setup-makefiles.sh
++++ b/setup-makefiles.sh
+@@ -17,6 +17,8 @@ if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
+ 
+ ANDROID_ROOT="${MY_DIR}/../../.."
+ 
++export TARGET_ENABLE_CHECKELF=false
++
+ HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
+ if [ ! -f "${HELPER}" ]; then
+     echo "Unable to find helper script at ${HELPER}"
+-- 
+2.56.0
+

@@ -1,0 +1,1870 @@
+From ff03d3e8781b9cab7a817bf126f04c5f31ebb105 Mon Sep 17 00:00:00 2001
+From: axon7-port <axon7-port@localhost>
+Date: Thu, 5 Nov 2026 23:47:09 +0100
+Subject: [PATCH 2/6] axon7: device.mk, product and props for lineage-22.2
+
+As msm8996-common 22.2: non_ab_device + qcom-caf common.mk, VINTF kernel
+requirements, product inherits moved from lineage_axon7.mk, shipping API
+level 25. HALs: audio 6.0 + bluetooth.audio AIDL, camera provider 2.5,
+gnss 2.0 qti, health/memtrack/light/usb/wifi on their AIDL services,
+drm clearkey AIDL, .vendor variants and vendor compat libs (hidlbase-v32,
+protobuf vendorcompat, cutils-v29, utils-v33), cgroups/task profiles,
+mountpoint packages, Lineage health. axon7 keeps its amplifier, NFC (NXP)
+configs, keylayout, display calibration, FlipFlap, ZteDoze, CNE.
+Removed: libhidl/ (22.2 provides android.hidl.base), bluetooth/
+(bdroid_buildcfg unused), light/ (HIDL light@2.0; generic Lineage AIDL HAL
+drives lcd-backlight and red/green), compatibility_matrix.xml (qcom-caf's),
+libui_shim from shims/ (Lineage compat ships it). Touch key disabler HAL
+left out until ported to AIDL. vendor_prop.mk split into vendor.prop
+(vendor namespaces) and system.prop; product.prop from msm8996-common.
+Fingerprint: BuildDesc/BuildFingerprint/DeviceName overrides.
+---
+ bluetooth/bdroid_buildcfg.h                   |  37 ---
+ compatibility_matrix.xml                      |  71 -----
+ device.mk                                     | 300 +++++++++---------
+ libhidl/Android.mk                            |  36 ---
+ light/Android.bp                              |  31 --
+ light/Light.cpp                               | 244 --------------
+ light/Light.h                                 |  85 -----
+ ...oid.hardware.light@2.0-service.zte_8996.rc |  30 --
+ ...id.hardware.light@2.0-service.zte_8996.xml |  11 -
+ light/service.cpp                             | 191 -----------
+ lineage_axon7.mk                              |  11 +-
+ product.prop                                  |  13 +
+ shims/Android.bp                              |   7 -
+ shims/GraphicBuffer.cpp                       |   8 -
+ system.prop                                   |  99 ++++++
+ vendor.prop                                   |  85 +++++
+ vendor_prop.mk                                | 192 -----------
+ 17 files changed, 351 insertions(+), 1100 deletions(-)
+ delete mode 100644 bluetooth/bdroid_buildcfg.h
+ delete mode 100644 compatibility_matrix.xml
+ delete mode 100644 libhidl/Android.mk
+ delete mode 100644 light/Android.bp
+ delete mode 100644 light/Light.cpp
+ delete mode 100644 light/Light.h
+ delete mode 100644 light/android.hardware.light@2.0-service.zte_8996.rc
+ delete mode 100644 light/android.hardware.light@2.0-service.zte_8996.xml
+ delete mode 100644 light/service.cpp
+ create mode 100644 product.prop
+ delete mode 100644 shims/GraphicBuffer.cpp
+ create mode 100644 system.prop
+ create mode 100644 vendor.prop
+ delete mode 100644 vendor_prop.mk
+
+diff --git a/bluetooth/bdroid_buildcfg.h b/bluetooth/bdroid_buildcfg.h
+deleted file mode 100644
+index ccb05d4..0000000
+--- a/bluetooth/bdroid_buildcfg.h
++++ /dev/null
+@@ -1,37 +0,0 @@
+-/*
+- *
+- *  Copyright (c) 2013, The Linux Foundation. All rights reserved.
+- *  Not a Contribution, Apache license notifications and license are retained
+- *  for attribution purposes only.
+- *
+- * Copyright (C) 2012 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#ifndef _BDROID_BUILDCFG_H
+-#define _BDROID_BUILDCFG_H
+-
+-#pragma push_macro("PROPERTY_VALUE_MAX")
+-
+-#define BTM_DEF_LOCAL_NAME   "Axon 7"
+-#define MAX_ACL_CONNECTIONS   16
+-#define MAX_L2CAP_CHANNELS    16
+-#define BLE_VND_INCLUDED   TRUE
+-
+-/* Increasing SEPs to 12 from 6 to support SHO/MCast i.e. two streams per codec */
+-#define AVDT_NUM_SEPS 12
+-
+-#pragma pop_macro("PROPERTY_VALUE_MAX")
+-
+-#endif
+diff --git a/compatibility_matrix.xml b/compatibility_matrix.xml
+deleted file mode 100644
+index 24b2761..0000000
+--- a/compatibility_matrix.xml
++++ /dev/null
+@@ -1,71 +0,0 @@
+-<compatibility-matrix version="1.0" type="device">
+-    <hal format="hidl" optional="false">
+-        <name>android.frameworks.schedulerservice</name>
+-        <version>1.0</version>
+-        <interface>
+-            <name>ISchedulingPolicyService</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl" optional="false">
+-        <name>android.frameworks.sensorservice</name>
+-        <version>1.0</version>
+-        <interface>
+-            <name>ISensorManager</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl" optional="false">
+-        <name>android.hidl.allocator</name>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IAllocator</name>
+-            <instance>ashmem</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl" optional="false">
+-        <name>android.hidl.manager</name>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IServiceManager</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl" optional="false">
+-        <name>android.hidl.memory</name>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IMapper</name>
+-            <instance>ashmem</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl" optional="false">
+-        <name>android.hidl.token</name>
+-        <version>1.0</version>
+-        <interface>
+-            <name>ITokenManager</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl" optional="false">
+-        <name>android.system.wifi.keystore</name>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IKeystore</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="native" optional="false">
+-        <name>netutils-wrapper</name>
+-        <!--
+-            netutils-wrapper should only list a single version x.0.
+-            netutils-wrapper next version has less functionalities than
+-            previous versions, so unlike a HAL, netutils-wrapper are not
+-            backwards compatible. Hence the major version must be bumped for
+-            each update.
+-            Vendor code should switch to (x+1).0 completely before when the
+-            requirement is updated here.
+-        -->
+-        <version>1.0</version>
+-    </hal>
+-</compatibility-matrix>
+diff --git a/device.mk b/device.mk
+index bcc0f8d..c7d9e06 100644
+--- a/device.mk
++++ b/device.mk
+@@ -1,5 +1,5 @@
+ # Copyright (C) 2016 The CyanogenMod Project
+-# Copyright (C) 2017-2019 The LineageOS Project
++# Copyright (C) 2017-2025 The LineageOS Project
+ #
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+@@ -21,17 +21,40 @@
+ # definition file).
+ #
+ 
++# Inherit from those products. Most specific first.
++$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
++$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
++$(call inherit-product, $(SRC_TARGET_DIR)/product/non_ab_device.mk)
++$(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_m.mk)
++
++# Add common definitions for Qualcomm
++$(call inherit-product, hardware/qcom-caf/common/common.mk)
++
++# Get non-open-source specific aspects
+ $(call inherit-product-if-exists, vendor/zte/axon7/axon7-vendor.mk)
+ 
++PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := true
++
+ # Overlays
+-DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
+-DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay-lineage
++DEVICE_PACKAGE_OVERLAYS += \
++    $(LOCAL_PATH)/overlay \
++    $(LOCAL_PATH)/overlay-lineage
+ 
+ PRODUCT_ENFORCE_RRO_TARGETS := *
+ 
++# Screen density
++PRODUCT_AAPT_CONFIG := normal
++PRODUCT_AAPT_PREF_CONFIG := xxxhdpi
++
++# Boot animation
++TARGET_SCREEN_HEIGHT := 2560
++TARGET_SCREEN_WIDTH := 1440
++
++# First api level, device has been commercially launched
++PRODUCT_SHIPPING_API_LEVEL := 25
++
+ # Permissions
+ PRODUCT_COPY_FILES += \
+-    external/ant-wireless/antradio-library/com.dsi.ant.antradio_library.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/com.dsi.ant.antradio_library.xml \
+     frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
+     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml \
+     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.flash-autofocus.xml \
+@@ -61,55 +84,41 @@ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/android.hardware.vr.high_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vr.high_performance.xml \
+     frameworks/native/data/etc/android.hardware.wifi.direct.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.direct.xml \
+     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
++    frameworks/native/data/etc/android.software.ipsec_tunnels.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.ipsec_tunnels.xml \
++    frameworks/native/data/etc/android.software.opengles.deqp.level-2020-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.opengles.deqp.level.xml \
++    frameworks/native/data/etc/android.software.vulkan.deqp.level-2020-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml \
+     frameworks/native/data/etc/android.software.midi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.midi.xml \
+     frameworks/native/data/etc/android.software.sip.voip.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.sip.voip.xml \
+     frameworks/native/data/etc/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/com.android.nfc_extras.xml \
+     frameworks/native/data/etc/com.nxp.mifare.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/com.nxp.mifare.xml \
+     frameworks/native/data/etc/handheld_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/handheld_core_hardware.xml
+ 
+-# Vendor properties
+--include $(LOCAL_PATH)/vendor_prop.mk
+-
+ # Additional native libraries
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/public.libraries.txt:$(TARGET_COPY_OUT_VENDOR)/etc/public.libraries.txt
+ 
+-# Device uses high-density artwork where available
+-PRODUCT_AAPT_CONFIG := normal
+-PRODUCT_AAPT_PREF_CONFIG := xxxhdpi
+-
+-# First api level, device has been commercially launched
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.product.first_api_level=25
+-
+-# Boot animation
+-TARGET_SCREEN_HEIGHT := 2560
+-TARGET_SCREEN_WIDTH := 1440
+-
+-# setup dalvik vm configs.
+-$(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
+-
+-# APEX
+-PRODUCT_COPY_FILES += \
+-    $(LOCAL_PATH)/configs/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/etc/swcodec/ld.config.txt
++# ANT+
++PRODUCT_PACKAGES += \
++    AntHalService
+ 
+ # Audio
+ PRODUCT_PACKAGES += \
+-    android.hardware.audio@4.0-impl \
+-    android.hardware.audio.effect@4.0-impl \
++    android.hardware.audio@6.0-impl:32 \
++    android.hardware.audio.effect@6.0-impl:32 \
+     android.hardware.audio.service \
+-    android.hardware.soundtrigger@2.1-impl \
+-    audio.a2dp.default \
++    android.hardware.bluetooth.audio-impl \
++    android.hardware.soundtrigger@2.1-impl:32 \
++    audio.bluetooth.default \
+     audio_amplifier.msm8996 \
+     audio.primary.msm8996 \
+     audio.r_submix.default \
+     audio.usb.default \
+     libaudio-resampler \
++    libaudioroute \
+     libqcompostprocbundle \
+     libqcomvisualizer \
+     libqcomvoiceprocessing \
+-    libvolumelistener \
+-    tinymix
++    libvolumelistener
+ 
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/audio/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
+@@ -117,8 +126,6 @@ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/audio/audio_output_policy.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_output_policy.conf \
+     $(LOCAL_PATH)/audio/audio_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info.xml \
+     $(LOCAL_PATH)/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+-    $(LOCAL_PATH)/audio/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
+-    $(LOCAL_PATH)/audio/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
+     $(LOCAL_PATH)/audio/listen_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/listen_platform_info.xml \
+     $(LOCAL_PATH)/audio/mixer_paths.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths.xml \
+     $(LOCAL_PATH)/audio/sound_trigger_mixer_paths_wcd9330.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_mixer_paths_wcd9330.xml \
+@@ -126,37 +133,47 @@ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/audio/sound_trigger_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_platform_info.xml
+ 
+ PRODUCT_COPY_FILES += \
+-    frameworks/av/services/audiopolicy/config/a2dp_in_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_in_audio_policy_configuration.xml \
++    frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
+     frameworks/av/services/audiopolicy/config/bluetooth_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_audio_policy_configuration.xml \
++    frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
+     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
+     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml
+ 
+-# ANT+
+-PRODUCT_PACKAGES += \
+-    AntHalService \
+-    com.dsi.ant.antradio_library
+-
+ # Bluetooth
+ PRODUCT_PACKAGES += \
+-    android.hardware.bluetooth.audio@2.0-impl \
+-    audio.bluetooth.default \
++    android.hardware.bluetooth@1.0 \
++    android.hardware.bluetooth@1.0.vendor \
+     vendor.qti.hardware.btconfigstore@1.0.vendor
+ 
++# Camera
++PRODUCT_PACKAGES += \
++    android.hardware.camera.device@3.4:64 \
++    android.hardware.camera.provider@2.4-impl:32 \
++    android.hardware.camera.provider@2.4-service \
++    android.hardware.camera.provider@2.5:64 \
++    libgui_vendor \
++    libion.vendor \
++    libstdc++_vendor \
++    Snap \
++    vendor.qti.hardware.camera.device@1.0
++
+ # Charger
+ PRODUCT_PACKAGES += \
+     charger_res_images
+ 
+-# Camera
++# Common init scripts
+ PRODUCT_PACKAGES += \
+-    camera.device@1.0-impl \
+-    android.hardware.camera.device@3.2 \
+-    android.hardware.camera.provider@2.4 \
+-    android.hardware.camera.provider@2.4-impl \
+-    android.hardware.camera.provider@2.4-service \
+-    camera.device@3.2-impl \
+-    Snap \
+-    vendor.qti.hardware.camera.device@1.0 \
+-    vendor.qti.hardware.camera.device@1.0_vendor
++    fstab.qcom \
++    init.qcom.rc \
++    init.qcom.sh \
++    init.qcom.power.rc \
++    init.qcom.recovery.rc \
++    init.qcom.usb.rc \
++    ueventd.qcom.rc
++
++# Configstore
++PRODUCT_PACKAGES += \
++    disable_configstore
+ 
+ # Connectivity Engine support (CNE)
+ PRODUCT_PACKAGES += \
+@@ -170,52 +187,52 @@ PRODUCT_COPY_FILES += \
+ 
+ # Display
+ PRODUCT_PACKAGES += \
+-    android.hardware.graphics.allocator@2.0-impl \
++    android.hardware.graphics.allocator@2.0-impl:64 \
+     android.hardware.graphics.allocator@2.0-service \
+     android.hardware.graphics.composer@2.1-service \
+     android.hardware.graphics.mapper@2.0-impl \
+-    android.hardware.memtrack@1.0-impl \
+-    android.hardware.memtrack@1.0-service \
+     calib.cfg \
+-    copybit.msm8996 \
+     gralloc.msm8996 \
+-    hwcomposer.msm8996 \
++    hwcomposer.qcom \
++    libdisplayconfig \
+     libqdMetaData.system \
+     libtinyxml \
+-    memtrack.msm8996 \
+-    libdisplayconfig \
+-    qdcm_calib_data_zteSAM_S6E3HA3_SAM_25601440_5P5Inch.xml
++    qdcm_calib_data_zteSAM_S6E3HA3_SAM_25601440_5P5Inch.xml \
++    vendor.qti.hardware.memtrack-service
+ 
+ # Doze mode
+ PRODUCT_PACKAGES += \
+     ZteDoze
+ 
+-# Flip Cover App
++# DRM
+ PRODUCT_PACKAGES += \
+-    FlipFlap
++    android.hardware.drm@1.2.vendor \
++    android.hardware.drm-service.clearkey \
++    libcrypto_shim.vendor
+ 
+-# DRM
++# Fingerprint
+ PRODUCT_PACKAGES += \
+-    android.hardware.drm@1.0-impl \
+-    android.hardware.drm@1.0-service \
+-    android.hardware.drm@1.3-service.clearkey
++    android.hardware.biometrics.fingerprint@2.1-service
+ 
+-# For config.fs
++# Flip Cover App
+ PRODUCT_PACKAGES += \
+-    fs_config_files
++    FlipFlap
+ 
+ # Gatekeeper
+ PRODUCT_PACKAGES += \
+-    android.hardware.gatekeeper@1.0-impl \
++    android.hardware.gatekeeper@1.0-impl:64 \
+     android.hardware.gatekeeper@1.0-service
+ 
+ # GPS
+ PRODUCT_PACKAGES += \
+-    android.hardware.gnss@1.0-impl-qti \
+-    libcurl \
++    android.hardware.gnss@2.0-impl-qti \
++    android.hardware.gnss@2.0-service-qti \
++    libbatching \
++    libgeofencing \
+     libgnss \
+     libgnsspps \
+-    libsensorndkbridge
++    libsensorndkbridge \
++    libwifi-hal-ctrl
+ 
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/gps/etc/flp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/flp.conf \
+@@ -227,26 +244,27 @@ PRODUCT_COPY_FILES += \
+ 
+ # Healthd
+ PRODUCT_PACKAGES += \
+-    android.hardware.health@2.0-impl \
+-    android.hardware.health@2.0-service
++    android.hardware.health-service.qti \
++    android.hardware.health-service.qti_recovery
+ 
+ # HIDL
+ PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
+ 
+ PRODUCT_PACKAGES += \
++    android.hidl.allocator@1.0.vendor \
+     android.hidl.base@1.0 \
+-    android.hidl.base@1.0_vendor \
++    android.hidl.base@1.0.vendor \
+     android.hidl.manager@1.0 \
++    android.hidl.memory@1.0.vendor \
++    libhidlbase-v32 \
++    libhidlbase-v32.vendor \
++    libhidlmemory.vendor \
+     libhidltransport \
+     libhidltransport.vendor \
+     libhwbinder \
+     libhwbinder.vendor
+ 
+-# HW crypto
+-PRODUCT_PACKAGES += \
+-    vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee
+-
+-# IMS
++# IMS / Telephony
+ PRODUCT_PACKAGES += \
+     ims-ext-common \
+     ims_ext_common.xml \
+@@ -254,7 +272,9 @@ PRODUCT_PACKAGES += \
+     qti_telephony_hidl_wrapper.xml \
+     qti-telephony-utils \
+     qti_telephony_utils.xml \
+-    telephony-ext
++    telephony-ext \
++    libgui_shim \
++    libui_shim
+ 
+ PRODUCT_BOOT_JARS += \
+     telephony-ext
+@@ -264,11 +284,6 @@ PRODUCT_PACKAGES += \
+     ipacm \
+     IPACM_cfg.xml
+ 
+-# IPv6
+-PRODUCT_PACKAGES += \
+-    ebtables \
+-    ethertypes
+-
+ # IRQ balance
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/msm_irqbalance.conf:$(TARGET_COPY_OUT_VENDOR)/etc/msm_irqbalance.conf
+@@ -283,20 +298,22 @@ PRODUCT_COPY_FILES += \
+ 
+ # Keymaster
+ PRODUCT_PACKAGES += \
+-    android.hardware.keymaster@3.0-impl \
++    android.hardware.keymaster@3.0-impl:64 \
+     android.hardware.keymaster@3.0-service
+ 
+-# Lights
++# Lights (lcd-backlight, red/green LEDs: the generic Lineage AIDL HAL; was light@2.0-service.zte_8996)
+ PRODUCT_PACKAGES += \
+-    android.hardware.light@2.0-service.zte_8996
++    android.hardware.light-service.lineage
+ 
+-# LiveDisplay
++# Lineage Health
+ PRODUCT_PACKAGES += \
+-    vendor.lineage.livedisplay@2.0-service-sdm
++    vendor.lineage.health-service.default
+ 
+-# Fingerprint
++$(call soong_config_set,lineage_health,charging_control_supports_bypass,false)
++
++# LiveDisplay
+ PRODUCT_PACKAGES += \
+-    android.hardware.biometrics.fingerprint@2.1-service
++    vendor.lineage.livedisplay@2.0-service-sdm
+ 
+ # Media
+ PRODUCT_COPY_FILES += \
+@@ -307,21 +324,18 @@ PRODUCT_COPY_FILES += \
+ PRODUCT_COPY_FILES += \
+     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
+     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
+-    frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video_le.xml \
+     frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml
+ 
+ # Net
+ PRODUCT_PACKAGES += \
+     android.system.net.netd@1.0 \
+-    libandroid_net \
+-    netutils-wrapper-1.0
++    android.system.net.netd@1.1.vendor \
++    libandroid_net
+ 
+-# NFC
++# NFC (NXP PN5xx)
+ PRODUCT_PACKAGES += \
+     android.hardware.nfc@1.1-service \
+     com.android.nfc_extras \
+-    NfcNci \
+-    SecureElement \
+     Tag
+ 
+ PRODUCT_COPY_FILES += \
+@@ -332,30 +346,33 @@ PRODUCT_COPY_FILES += \
+ # OMX
+ PRODUCT_PACKAGES += \
+     libc2dcolorconvert \
+-    libextmedia_jni \
+-    libOmxAacEnc \
+-    libOmxAmrEnc \
+     libOmxCore \
+-    libOmxEvrcEnc \
+-    libOmxG711Enc \
+-    libOmxQcelp13Enc \
+     libOmxVdec \
+     libOmxVenc \
+     libstagefrighthw
+ 
+-# Power HAL
++# Partitions
++PRODUCT_PACKAGES += \
++    vendor_bt_firmware_mountpoint \
++    vendor_dsp_mountpoint \
++    vendor_firmware_mnt_mountpoint
++
++# Power
+ PRODUCT_PACKAGES += \
+     android.hardware.power-service-qti \
+-    android.hardware.power.stats@1.0-service.mock \
+     vendor.qti.hardware.perf@1.0.vendor
+ 
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/powerhint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.xml
+ 
+-# Protobuf
+ PRODUCT_COPY_FILES += \
+-    prebuilts/vndk/v28/arm64/arch-arm64-armv8-a/shared/vndk-core/libprotobuf-cpp-lite.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-lite-v28.so \
+-    prebuilts/vndk/v28/arm64/arch-arm64-armv8-a/shared/vndk-core/libprotobuf-cpp-full.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-full-v28.so
++    system/core/libprocessgroup/profiles/cgroups_28.json:$(TARGET_COPY_OUT_VENDOR)/etc/cgroups.json \
++    system/core/libprocessgroup/profiles/task_profiles_28.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json
++
++# Protobuf
++PRODUCT_PACKAGES += \
++    libprotobuf-cpp-full-vendorcompat \
++    libprotobuf-cpp-lite-vendorcompat
+ 
+ # QMI
+ PRODUCT_PACKAGES += \
+@@ -363,36 +380,26 @@ PRODUCT_PACKAGES += \
+ 
+ # QTI
+ PRODUCT_PACKAGES += \
+-    libqti_vndfwk_detect
++    libqti_vndfwk_detect.vendor
+ 
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/system-privapp-permissions-qti.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-qti.xml \
+     $(LOCAL_PATH)/configs/system_ext-privapp-permissions-qti.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/privapp-permissions-qti.xml \
+     $(LOCAL_PATH)/configs/qti_whitelist.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/sysconfig/qti_whitelist.xml
+ 
+-# Ramdisk
+-PRODUCT_PACKAGES += \
+-    fstab.qcom \
+-    init.qcom.power.rc \
+-    init.qcom.rc \
+-    init.qcom.sh \
+-    init.qcom.usb.rc \
+-    init.recovery.qcom.rc \
+-    ueventd.qcom.rc
+-
+ # Recovery
+ PRODUCT_PACKAGES += \
+     librecovery_updater_axon7
+ 
+-# RenderScript
+-PRODUCT_PACKAGES += \
+-    android.hardware.renderscript@1.0-impl
+-
+ # RIL
+ PRODUCT_PACKAGES += \
+-    android.hardware.radio@1.4 \
+-    libprotobuf-cpp-full \
++    android.hardware.radio@1.4.vendor \
++    android.hardware.radio.config@1.2.vendor \
++    android.hardware.radio.deprecated@1.0.vendor \
++    android.hardware.secure_element@1.0.vendor \
++    libnetutils.vendor \
+     librmnetctl \
++    libsqlite.vendor \
+     libxml2
+ 
+ # Seccomp policy
+@@ -401,13 +408,14 @@ PRODUCT_COPY_FILES += \
+ 
+ # Sensors
+ PRODUCT_PACKAGES += \
+-    android.hardware.sensors@1.0-impl \
+-    android.hardware.sensors@1.0-service
++    android.frameworks.sensorservice@1.0.vendor \
++    android.hardware.sensors@1.0-impl:64 \
++    android.hardware.sensors@1.0-service \
++    libpower.vendor
+ 
+-# Shims
++# Shims (libui_shim, libgui_shim, libcrypto_shim come from hardware/lineage/compat now)
+ PRODUCT_PACKAGES += \
+     libbase_shim \
+-    libui_shim \
+     libcutils_shim
+ 
+ # Soong namespaces
+@@ -418,42 +426,36 @@ PRODUCT_SOONG_NAMESPACES += \
+ PRODUCT_PACKAGES += \
+     TetheringConfigOverlay
+ 
+-# TextClassifier
+-PRODUCT_PACKAGES += \
+-    textclassifier.bundle1
+-
+ # Thermal
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/thermal-engine.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine.conf
+ 
+-# Touch HAL
+-PRODUCT_PACKAGES += \
+-    vendor.lineage.touch@1.0-service.zte_8996
+-
+-# Trust HAL
+-PRODUCT_PACKAGES += \
+-    vendor.lineage.trust@1.0-service
++# Touch HAL: TODO port touch/ (key disabler, vendor.lineage.touch@1.0 HIDL) to the AIDL vendor.lineage.touch
++#PRODUCT_PACKAGES += \
++#    vendor.lineage.touch@1.0-service.zte_8996
+ 
+ # USB
+ PRODUCT_PACKAGES += \
+-    android.hardware.usb@1.0-service.basic
++    android.hardware.usb@1.3-service.basic
+ 
+-# VNDK
+-PRODUCT_PACKAGES += \
+-    libicuuc.vendor \
+-    libstdc++.vendor \
+-    vndk_package
++# Vendor init
++$(call soong_config_set,libinit,vendor_init_lib,//$(LOCAL_PATH):libinit_msm8996)
+ 
+ # Vibrator
+ PRODUCT_PACKAGES += \
+     android.hardware.vibrator@1.0-impl \
+     android.hardware.vibrator@1.0-service
+ 
+-# Wifi
++# VNDK
+ PRODUCT_PACKAGES += \
+-    android.hardware.wifi@1.0-service
++    libcutils-v29 \
++    libicuuc.vendor \
++    libstdc++.vendor \
++    libutils-v33
+ 
++# WiFi
+ PRODUCT_PACKAGES += \
++    android.hardware.wifi-service \
+     libqsap_sdk \
+     libQWiFiSoftApCfg \
+     libwpa_client \
+diff --git a/libhidl/Android.mk b/libhidl/Android.mk
+deleted file mode 100644
+index 6599243..0000000
+--- a/libhidl/Android.mk
++++ /dev/null
+@@ -1,36 +0,0 @@
+-#
+-# Copyright (C) 2017 The LineageOS Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-include $(CLEAR_VARS)
+-LOCAL_SHARED_LIBRARIES := libhidlbase
+-LOCAL_MODULE := android.hidl.base@1.0
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+-include $(BUILD_SHARED_LIBRARY)
+-
+-include $(CLEAR_VARS)
+-LOCAL_SHARED_LIBRARIES := libhidlbase
+-LOCAL_MODULE := android.hidl.base@1.0_vendor
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+-LOCAL_VENDOR_MODULE := true
+-include $(BUILD_SHARED_LIBRARY)
+-
+-include $(CLEAR_VARS)
+-LOCAL_SHARED_LIBRARIES := libhidlbase
+-LOCAL_MODULE := android.hidl.manager@1.0
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+-include $(BUILD_SHARED_LIBRARY)
+diff --git a/light/Android.bp b/light/Android.bp
+deleted file mode 100644
+index 75e2e5e..0000000
+--- a/light/Android.bp
++++ /dev/null
+@@ -1,31 +0,0 @@
+-//
+-// Copyright (C) 2018,2020 The LineageOS Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-cc_binary {
+-    name: "android.hardware.light@2.0-service.zte_8996",
+-    relative_install_path: "hw",
+-    init_rc: ["android.hardware.light@2.0-service.zte_8996.rc"],
+-    vintf_fragments: ["android.hardware.light@2.0-service.zte_8996.xml"],
+-    srcs: ["service.cpp", "Light.cpp"],
+-    shared_libs: [
+-        "libbase",
+-        "libcutils",
+-        "libhardware",
+-        "libhidlbase",
+-        "libutils",
+-        "android.hardware.light@2.0",
+-    ],
+-    proprietary: true,
+-}
+diff --git a/light/Light.cpp b/light/Light.cpp
+deleted file mode 100644
+index a91fcb0..0000000
+--- a/light/Light.cpp
++++ /dev/null
+@@ -1,244 +0,0 @@
+-/*
+- * Copyright (C) 2018 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#define LOG_TAG "LightService"
+-
+-#include "Light.h"
+-
+-#include <android-base/logging.h>
+-
+-namespace {
+-using android::hardware::light::V2_0::LightState;
+-
+-static constexpr int RAMP_SIZE = 8;
+-static constexpr int RAMP_STEP_DURATION = 50;
+-
+-static constexpr int BRIGHTNESS_RAMP[RAMP_SIZE] = {0, 12, 25, 37, 50, 72, 85, 100};
+-static constexpr int DEFAULT_MAX_BRIGHTNESS = 255;
+-
+-static uint32_t rgbToBrightness(const LightState& state) {
+-    uint32_t color = state.color & 0x00ffffff;
+-    return ((77 * ((color >> 16) & 0xff)) + (150 * ((color >> 8) & 0xff)) +
+-            (29 * (color & 0xff))) >> 8;
+-}
+-
+-static bool isLit(const LightState& state) {
+-    return (state.color & 0x00ffffff);
+-}
+-
+-static std::string getScaledDutyPcts(int brightness) {
+-    std::string buf, pad;
+-
+-    for (auto i : BRIGHTNESS_RAMP) {
+-        buf += pad;
+-        buf += std::to_string(i * brightness / 255);
+-        pad = ",";
+-    }
+-
+-    return buf;
+-}
+-}  // anonymous namespace
+-
+-namespace android {
+-namespace hardware {
+-namespace light {
+-namespace V2_0 {
+-namespace implementation {
+-
+-Light::Light(std::pair<std::ofstream, uint32_t>&& lcd_backlight,
+-             std::ofstream&& red_led, std::ofstream&& green_led,
+-             std::ofstream&& red_duty_pcts, std::ofstream&& green_duty_pcts,
+-             std::ofstream&& red_start_idx, std::ofstream&& green_start_idx,
+-             std::ofstream&& red_pause_lo, std::ofstream&& green_pause_lo,
+-             std::ofstream&& red_pause_hi, std::ofstream&& green_pause_hi,
+-             std::ofstream&& red_ramp_step_ms, std::ofstream&& green_ramp_step_ms,
+-             std::ofstream&& red_blink, std::ofstream&& green_blink)
+-    : mLcdBacklight(std::move(lcd_backlight)),
+-      mRedLed(std::move(red_led)),
+-      mGreenLed(std::move(green_led)),
+-      mRedDutyPcts(std::move(red_duty_pcts)),
+-      mGreenDutyPcts(std::move(green_duty_pcts)),
+-      mRedStartIdx(std::move(red_start_idx)),
+-      mGreenStartIdx(std::move(green_start_idx)),
+-      mRedPauseLo(std::move(red_pause_lo)),
+-      mGreenPauseLo(std::move(green_pause_lo)),
+-      mRedPauseHi(std::move(red_pause_hi)),
+-      mGreenPauseHi(std::move(green_pause_hi)),
+-      mRedRampStepMs(std::move(red_ramp_step_ms)),
+-      mGreenRampStepMs(std::move(green_ramp_step_ms)),
+-      mRedBlink(std::move(red_blink)),
+-      mGreenBlink(std::move(green_blink)) {
+-    auto attnFn(std::bind(&Light::setAttentionLight, this, std::placeholders::_1));
+-    auto backlightFn(std::bind(&Light::setLcdBacklight, this, std::placeholders::_1));
+-    auto batteryFn(std::bind(&Light::setBatteryLight, this, std::placeholders::_1));
+-    auto notifFn(std::bind(&Light::setNotificationLight, this, std::placeholders::_1));
+-    mLights.emplace(std::make_pair(Type::ATTENTION, attnFn));
+-    mLights.emplace(std::make_pair(Type::BACKLIGHT, backlightFn));
+-    mLights.emplace(std::make_pair(Type::BATTERY, batteryFn));
+-    mLights.emplace(std::make_pair(Type::NOTIFICATIONS, notifFn));
+-}
+-
+-// Methods from ::android::hardware::light::V2_0::ILight follow.
+-Return<Status> Light::setLight(Type type, const LightState& state) {
+-    auto it = mLights.find(type);
+-
+-    if (it == mLights.end()) {
+-        return Status::LIGHT_NOT_SUPPORTED;
+-    }
+-
+-    it->second(state);
+-
+-    return Status::SUCCESS;
+-}
+-
+-Return<void> Light::getSupportedTypes(getSupportedTypes_cb _hidl_cb) {
+-    std::vector<Type> types;
+-
+-    for (auto const& light : mLights) {
+-        types.push_back(light.first);
+-    }
+-
+-    _hidl_cb(types);
+-
+-    return Void();
+-}
+-
+-void Light::setAttentionLight(const LightState& state) {
+-    std::lock_guard<std::mutex> lock(mLock);
+-    mAttentionState = state;
+-    setSpeakerBatteryLightLocked();
+-}
+-
+-void Light::setLcdBacklight(const LightState& state) {
+-    std::lock_guard<std::mutex> lock(mLock);
+-
+-    uint32_t brightness = rgbToBrightness(state);
+-
+-    // If max panel brightness is not the default (255),
+-    // apply linear scaling across the accepted range.
+-    if (mLcdBacklight.second != DEFAULT_MAX_BRIGHTNESS) {
+-        int old_brightness = brightness;
+-        brightness = brightness * mLcdBacklight.second / DEFAULT_MAX_BRIGHTNESS;
+-        LOG(VERBOSE) << "scaling brightness " << old_brightness << " => " << brightness;
+-    }
+-
+-    mLcdBacklight.first << brightness << std::endl;
+-}
+-
+-void Light::setBatteryLight(const LightState& state) {
+-    std::lock_guard<std::mutex> lock(mLock);
+-    mBatteryState = state;
+-    setSpeakerBatteryLightLocked();
+-}
+-
+-void Light::setNotificationLight(const LightState& state) {
+-    std::lock_guard<std::mutex> lock(mLock);
+-    mNotificationState = state;
+-    setSpeakerBatteryLightLocked();
+-}
+-
+-void Light::setSpeakerBatteryLightLocked() {
+-    if (isLit(mNotificationState)) {
+-        setSpeakerLightLocked(mNotificationState);
+-    } else if (isLit(mAttentionState)) {
+-        setSpeakerLightLocked(mAttentionState);
+-    } else if (isLit(mBatteryState)) {
+-        setSpeakerLightLocked(mBatteryState);
+-    } else {
+-        // Lights off
+-        mRedLed << 0 << std::endl;
+-        mGreenLed << 0 << std::endl;
+-        mRedBlink << 0 << std::endl;
+-        mGreenBlink << 0 << std::endl;
+-    }
+-}
+-
+-void Light::setSpeakerLightLocked(const LightState& state) {
+-    int red, green, blink;
+-    int onMs, offMs, stepDuration, pauseHi;
+-    uint32_t alpha;
+-
+-    // Extract brightness from AARRGGBB
+-    alpha = (state.color >> 24) & 0xff;
+-
+-    // Retrieve each of the RGB colors
+-    red = (state.color >> 16) & 0xff;
+-    green = (state.color >> 8) & 0xff;
+-
+-    // Scale RGB colors if a brightness has been applied by the user
+-    if (alpha != 0xff) {
+-        red = (red * alpha) / 0xff;
+-        green = (green * alpha) / 0xff;
+-    }
+-
+-    switch (state.flashMode) {
+-        case Flash::TIMED:
+-            onMs = state.flashOnMs;
+-            offMs = state.flashOffMs;
+-            break;
+-        case Flash::NONE:
+-        default:
+-            onMs = 0;
+-            offMs = 0;
+-            break;
+-    }
+-    blink = onMs > 0 && offMs > 0;
+-
+-    // Disable all blinking to start
+-    mRedBlink << 0 << std::endl;
+-    mGreenBlink << 0 << std::endl;
+-
+-    if (blink) {
+-        stepDuration = RAMP_STEP_DURATION;
+-        pauseHi = onMs - (stepDuration * RAMP_SIZE * 2);
+-
+-        if (stepDuration * RAMP_SIZE * 2 > onMs) {
+-            stepDuration = onMs / (RAMP_SIZE * 2);
+-            pauseHi = 0;
+-        }
+-
+-        // Red
+-        mRedStartIdx << 0 << std::endl;
+-        mRedDutyPcts << getScaledDutyPcts(red) << std::endl;
+-        mRedPauseLo << offMs << std::endl;
+-        mRedPauseHi << pauseHi << std::endl;
+-        mRedRampStepMs << stepDuration << std::endl;
+-
+-        // Green
+-        mGreenStartIdx << RAMP_SIZE << std::endl;
+-        mGreenDutyPcts << getScaledDutyPcts(green) << std::endl;
+-        mGreenPauseLo << offMs << std::endl;
+-        mGreenPauseHi << pauseHi << std::endl;
+-        mGreenRampStepMs << stepDuration << std::endl;
+-
+-        // Start the party
+-        mRedBlink << 1 << std::endl;
+-        mGreenBlink << 1 << std::endl;
+-    } else {
+-        if (red == 0 && green == 0) {
+-            mRedBlink << 0 << std::endl;
+-            mGreenBlink << 0 << std::endl;
+-        }
+-        mRedLed << red << std::endl;
+-        mGreenLed << green << std::endl;
+-    }
+-}
+-
+-}  // namespace implementation
+-}  // namespace V2_0
+-}  // namespace light
+-}  // namespace hardware
+-}  // namespace android
+diff --git a/light/Light.h b/light/Light.h
+deleted file mode 100644
+index 703ed83..0000000
+--- a/light/Light.h
++++ /dev/null
+@@ -1,85 +0,0 @@
+-/*
+- * Copyright (C) 2018 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#ifndef ANDROID_HARDWARE_LIGHT_V2_0_LIGHT_H
+-#define ANDROID_HARDWARE_LIGHT_V2_0_LIGHT_H
+-
+-#include <android/hardware/light/2.0/ILight.h>
+-#include <hidl/Status.h>
+-
+-#include <fstream>
+-#include <mutex>
+-#include <unordered_map>
+-
+-namespace android {
+-namespace hardware {
+-namespace light {
+-namespace V2_0 {
+-namespace implementation {
+-
+-struct Light : public ILight {
+-    Light(std::pair<std::ofstream, uint32_t>&& lcd_backlight,
+-          std::ofstream&& red_led, std::ofstream&& green_led,
+-          std::ofstream&& red_duty_pcts, std::ofstream&& green_duty_pcts,
+-          std::ofstream&& red_start_idx, std::ofstream&& green_start_idx,
+-          std::ofstream&& red_pause_lo, std::ofstream&& green_pause_lo,
+-          std::ofstream&& red_pause_hi, std::ofstream&& green_pause_hi,
+-          std::ofstream&& red_ramp_step_ms, std::ofstream&& green_ramp_step_ms,
+-          std::ofstream&& red_blink, std::ofstream&& green_blink);
+-
+-    // Methods from ::android::hardware::light::V2_0::ILight follow.
+-    Return<Status> setLight(Type type, const LightState& state) override;
+-    Return<void> getSupportedTypes(getSupportedTypes_cb _hidl_cb) override;
+-
+-  private:
+-    void setAttentionLight(const LightState& state);
+-    void setBatteryLight(const LightState& state);
+-    void setLcdBacklight(const LightState& state);
+-    void setNotificationLight(const LightState& state);
+-    void setSpeakerBatteryLightLocked();
+-    void setSpeakerLightLocked(const LightState& state);
+-
+-    std::pair<std::ofstream, uint32_t> mLcdBacklight;
+-    std::ofstream mRedLed;
+-    std::ofstream mGreenLed;
+-    std::ofstream mRedDutyPcts;
+-    std::ofstream mGreenDutyPcts;
+-    std::ofstream mRedStartIdx;
+-    std::ofstream mGreenStartIdx;
+-    std::ofstream mRedPauseLo;
+-    std::ofstream mGreenPauseLo;
+-    std::ofstream mRedPauseHi;
+-    std::ofstream mGreenPauseHi;
+-    std::ofstream mRedRampStepMs;
+-    std::ofstream mGreenRampStepMs;
+-    std::ofstream mRedBlink;
+-    std::ofstream mGreenBlink;
+-
+-    LightState mAttentionState;
+-    LightState mBatteryState;
+-    LightState mNotificationState;
+-
+-    std::unordered_map<Type, std::function<void(const LightState&)>> mLights;
+-    std::mutex mLock;
+-};
+-
+-}  // namespace implementation
+-}  // namespace V2_0
+-}  // namespace light
+-}  // namespace hardware
+-}  // namespace android
+-
+-#endif  // ANDROID_HARDWARE_LIGHT_V2_0_LIGHT_H
+diff --git a/light/android.hardware.light@2.0-service.zte_8996.rc b/light/android.hardware.light@2.0-service.zte_8996.rc
+deleted file mode 100644
+index a9e6a62..0000000
+--- a/light/android.hardware.light@2.0-service.zte_8996.rc
++++ /dev/null
+@@ -1,30 +0,0 @@
+-on init
+-    # RG lights
+-    chown system system /sys/class/leds/red/pause_lo
+-    chown system system /sys/class/leds/green/pause_lo
+-
+-    chown system system /sys/class/leds/red/pause_hi
+-    chown system system /sys/class/leds/green/pause_hi
+-
+-    chown system system /sys/class/leds/red/blink
+-    chown system system /sys/class/leds/green/blink
+-
+-    chown system system /sys/class/leds/red/ramp_step_ms
+-    chown system system /sys/class/leds/green/ramp_step_ms
+-    chown system system /sys/class/leds/red/duty_pcts
+-    chown system system /sys/class/leds/green/duty_pcts
+-    chown system system /sys/class/leds/red/start_idx
+-    chown system system /sys/class/leds/green/start_idx
+-
+-    chmod 660 /sys/class/leds/red/ramp_step_ms
+-    chmod 660 /sys/class/leds/green/ramp_step_ms
+-    chmod 660 /sys/class/leds/red/duty_pcts
+-    chmod 660 /sys/class/leds/green/duty_pcts
+-    chmod 660 /sys/class/leds/red/start_idx
+-    chmod 660 /sys/class/leds/green/start_idx
+-
+-service vendor.light-hal-2-0 /vendor/bin/hw/android.hardware.light@2.0-service.zte_8996
+-    interface android.hardware.light@2.0::ILight default
+-    class hal
+-    user system
+-    group system
+diff --git a/light/android.hardware.light@2.0-service.zte_8996.xml b/light/android.hardware.light@2.0-service.zte_8996.xml
+deleted file mode 100644
+index 6bf62e9..0000000
+--- a/light/android.hardware.light@2.0-service.zte_8996.xml
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<manifest version="1.0" type="device">
+-    <hal format="hidl">
+-        <name>android.hardware.light</name>
+-        <transport>hwbinder</transport>
+-        <version>2.0</version>
+-        <interface>
+-            <name>ILight</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-</manifest>
+diff --git a/light/service.cpp b/light/service.cpp
+deleted file mode 100644
+index 74b2c4f..0000000
+--- a/light/service.cpp
++++ /dev/null
+@@ -1,191 +0,0 @@
+-/*
+- * Copyright (C) 2018 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#define LOG_TAG "android.hardware.light@2.0-service.zte_8996"
+-
+-#include <android-base/logging.h>
+-#include <hidl/HidlTransportSupport.h>
+-#include <utils/Errors.h>
+-
+-#include "Light.h"
+-
+-// libhwbinder:
+-using android::hardware::configureRpcThreadpool;
+-using android::hardware::joinRpcThreadpool;
+-
+-// Generated HIDL files
+-using android::hardware::light::V2_0::ILight;
+-using android::hardware::light::V2_0::implementation::Light;
+-
+-const static std::string kLcdBacklightPath = "/sys/class/leds/lcd-backlight/brightness";
+-const static std::string kLcdMaxBacklightPath = "/sys/class/leds/lcd-backlight/max_brightness";
+-const static std::string kRedLedPath = "/sys/class/leds/red/brightness";
+-const static std::string kGreenLedPath = "/sys/class/leds/green/brightness";
+-const static std::string kRedDutyPctsPath = "/sys/class/leds/red/duty_pcts";
+-const static std::string kGreenDutyPctsPath = "/sys/class/leds/green/duty_pcts";
+-const static std::string kRedStartIdxPath = "/sys/class/leds/red/start_idx";
+-const static std::string kGreenStartIdxPath = "/sys/class/leds/green/start_idx";
+-const static std::string kRedPauseLoPath = "/sys/class/leds/red/pause_lo";
+-const static std::string kGreenPauseLoPath = "/sys/class/leds/green/pause_lo";
+-const static std::string kRedPauseHiPath = "/sys/class/leds/red/pause_hi";
+-const static std::string kGreenPauseHiPath = "/sys/class/leds/green/pause_hi";
+-const static std::string kRedRampStepMsPath = "/sys/class/leds/red/ramp_step_ms";
+-const static std::string kGreenRampStepMsPath = "/sys/class/leds/green/ramp_step_ms";
+-const static std::string kRedBlinkPath = "/sys/class/leds/red/blink";
+-const static std::string kGreenBlinkPath = "/sys/class/leds/green/blink";
+-
+-int main() {
+-    uint32_t lcdMaxBrightness = 255;
+-
+-    std::ofstream lcdBacklight(kLcdBacklightPath);
+-    if (!lcdBacklight) {
+-        LOG(ERROR) << "Failed to open " << kLcdBacklightPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ifstream lcdMaxBacklight(kLcdMaxBacklightPath);
+-    if (!lcdMaxBacklight) {
+-        LOG(ERROR) << "Failed to open " << kLcdMaxBacklightPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    } else {
+-        lcdMaxBacklight >> lcdMaxBrightness;
+-    }
+-
+-    std::ofstream redLed(kRedLedPath);
+-    if (!redLed) {
+-        LOG(ERROR) << "Failed to open " << kRedLedPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream greenLed(kGreenLedPath);
+-    if (!greenLed) {
+-        LOG(ERROR) << "Failed to open " << kGreenLedPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream redDutyPcts(kRedDutyPctsPath);
+-    if (!redDutyPcts) {
+-        LOG(ERROR) << "Failed to open " << kRedDutyPctsPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream greenDutyPcts(kGreenDutyPctsPath);
+-    if (!greenDutyPcts) {
+-        LOG(ERROR) << "Failed to open " << kGreenDutyPctsPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream redStartIdx(kRedStartIdxPath);
+-    if (!redStartIdx) {
+-        LOG(ERROR) << "Failed to open " << kRedStartIdxPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream greenStartIdx(kGreenStartIdxPath);
+-    if (!greenStartIdx) {
+-        LOG(ERROR) << "Failed to open " << kGreenStartIdxPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream redPauseLo(kRedPauseLoPath);
+-    if (!redPauseLo) {
+-        LOG(ERROR) << "Failed to open " << kRedPauseLoPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream greenPauseLo(kGreenPauseLoPath);
+-    if (!greenPauseLo) {
+-        LOG(ERROR) << "Failed to open " << kGreenPauseLoPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream redPauseHi(kRedPauseHiPath);
+-    if (!redPauseHi) {
+-        LOG(ERROR) << "Failed to open " << kRedPauseHiPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream greenPauseHi(kGreenPauseHiPath);
+-    if (!greenPauseHi) {
+-        LOG(ERROR) << "Failed to open " << kGreenPauseHiPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream redRampStepMs(kRedRampStepMsPath);
+-    if (!redRampStepMs) {
+-        LOG(ERROR) << "Failed to open " << kRedRampStepMsPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream greenRampStepMs(kGreenRampStepMsPath);
+-    if (!greenRampStepMs) {
+-        LOG(ERROR) << "Failed to open " << kGreenRampStepMsPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream redBlink(kRedBlinkPath);
+-    if (!redBlink) {
+-        LOG(ERROR) << "Failed to open " << kRedBlinkPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    std::ofstream greenBlink(kGreenBlinkPath);
+-    if (!greenBlink) {
+-        LOG(ERROR) << "Failed to open " << kGreenBlinkPath << ", error=" << errno
+-                   << " (" << strerror(errno) << ")";
+-        return -errno;
+-    }
+-
+-    android::sp<ILight> service = new Light(
+-            {std::move(lcdBacklight), lcdMaxBrightness},
+-            std::move(redLed), std::move(greenLed),
+-            std::move(redDutyPcts), std::move(greenDutyPcts),
+-            std::move(redStartIdx), std::move(greenStartIdx),
+-            std::move(redPauseLo), std::move(greenPauseLo),
+-            std::move(redPauseHi), std::move(greenPauseHi),
+-            std::move(redRampStepMs), std::move(greenRampStepMs),
+-            std::move(redBlink), std::move(greenBlink));
+-
+-    configureRpcThreadpool(1, true);
+-
+-    android::status_t status = service->registerAsService();
+-
+-    if (status != android::OK) {
+-        LOG(ERROR) << "Cannot register Light HAL service";
+-        return 1;
+-    }
+-
+-    LOG(INFO) << "Light HAL Ready.";
+-    joinRpcThreadpool();
+-    // Under normal cases, execution will not reach this line.
+-    LOG(ERROR) << "Light HAL failed to join thread pool.";
+-    return 1;
+-}
+diff --git a/lineage_axon7.mk b/lineage_axon7.mk
+index 9642b7c..aebcde4 100644
+--- a/lineage_axon7.mk
++++ b/lineage_axon7.mk
+@@ -16,9 +16,6 @@
+ #
+ 
+ # Inherit from those products. Most specific first.
+-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+-$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
+-$(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_m.mk)
+ 
+ # Inherit from ailsa_ii device
+ $(call inherit-product, device/zte/axon7/device.mk)
+@@ -34,10 +31,8 @@ PRODUCT_MODEL := ZTE Axon 7
+ PRODUCT_MANUFACTURER := ZTE
+ 
+ PRODUCT_BUILD_PROP_OVERRIDES += \
+-    PRODUCT_DEVICE="ailsa_ii" \
+-    PRIVATE_BUILD_DESC="P996A03_O-user 8.0.0 OPR1.170623.032 520 release-keys"
+-
+-# Set BUILD_FINGERPRINT variable to be picked up by both system and vendor build.prop
+-BUILD_FINGERPRINT := "ZTE/P996A03_O/msm8996:8.0.0/OPR1.170623.032/520:user/release-keys"
++    DeviceName=ailsa_ii \
++    BuildDesc="P996A03_O-user 8.0.0 OPR1.170623.032 520 release-keys" \
++    BuildFingerprint=ZTE/P996A03_O/msm8996:8.0.0/OPR1.170623.032/520:user/release-keys
+ 
+ PRODUCT_GMS_CLIENTID_BASE := android-zte
+diff --git a/product.prop b/product.prop
+new file mode 100644
+index 0000000..bc93efe
+--- /dev/null
++++ b/product.prop
+@@ -0,0 +1,13 @@
++# IMS
++ro.telephony.block_binder_thread_on_incoming_calls=false
++
++# LMKD
++ro.lmk.low=1001
++ro.lmk.medium=800
++ro.lmk.critical=0
++ro.lmk.critical_upgrade=false
++ro.lmk.upgrade_pressure=100
++ro.lmk.downgrade_pressure=100
++ro.lmk.kill_heaviest_task=true
++ro.lmk.kill_timeout_ms=100
++ro.lmk.use_minfree_levels=true
+diff --git a/shims/Android.bp b/shims/Android.bp
+index 3065b58..d51c283 100644
+--- a/shims/Android.bp
++++ b/shims/Android.bp
+@@ -21,13 +21,6 @@ cc_library {
+     vendor: true
+ }
+ 
+-cc_library_shared {
+-    name: "libui_shim",
+-
+-    srcs: ["GraphicBuffer.cpp"],
+-    shared_libs: ["libui"],
+-    vendor_available: true,
+-}
+ 
+ cc_library {
+     name: "libcutils_shim",
+diff --git a/shims/GraphicBuffer.cpp b/shims/GraphicBuffer.cpp
+deleted file mode 100644
+index 7c406e9..0000000
+--- a/shims/GraphicBuffer.cpp
++++ /dev/null
+@@ -1,8 +0,0 @@
+-#include <stdint.h>
+-
+-extern "C" void _ZN7android13GraphicBuffer4lockEjPPvPiS3_(uint32_t inUsage, void** vaddr,
+-        int32_t* outBytesPerPixel, int32_t* outBytesPerStride);
+-
+-extern "C" void _ZN7android13GraphicBuffer4lockEjPPv(uint32_t inUsage, void** vaddr) {
+-    _ZN7android13GraphicBuffer4lockEjPPvPiS3_(inUsage, vaddr, nullptr, nullptr);
+-}
+diff --git a/system.prop b/system.prop
+new file mode 100644
+index 0000000..8c0dd3d
+--- /dev/null
++++ b/system.prop
+@@ -0,0 +1,99 @@
++# System properties (from 18.1 vendor_prop.mk)
++
++# Audio
++af.fast_track_multiplier=1
++audio.deep_buffer.media=true
++audio.offload.disable=1
++audio.offload.video=true
++persist.axon7.amp_hal_device_map="16,2;17,2;18,2;19,2"
++ro.config.media_vol_steps=25
++ro.config.vc_call_vol_steps=7
++
++# Bluetooth
++bt.max.hfpclient.connections=1
++ro.bluetooth.emb_wp_mode=true
++ro.bluetooth.wipower=true
++
++# Camera
++camera.disable_zsl_mode=1
++persist.camera.gyro.disable=0
++persist.ts.postmakeup=false
++persist.ts.rtmakeup=false
++
++# Charger
++PRODUCT_PRODUCT_PROPERTIES +=
++ro.charger.enable_suspend=true
++
++# Data modules
++persist.data.iwlan.enable=true
++persist.data.mode=concurrent
++persist.data.netmgrd.qos.enable=true
++ro.use_data_netmgrd=true
++
++# DRM
++drm.service.enabled=1
++vidc.debug.perf.mode=2
++vidc.enc.dcvs.extra-buff-count=2
++vidc.enc.disable.pq=true
++
++# FRP
++ro.frp.pst=/dev/block/platform/soc/624000.ufshc/by-name/frp
++
++# Graphics
++debug.egl.hw=1
++debug.gralloc.gfx_ubwc_disable=0
++debug.sf.enable_hwc_vds=1
++debug.hwui.use_buffer_age=false
++debug.sf.hw=1
++debug.sf.latch_unsignaled=1
++debug.sf.recomputecrop=0
++dev.pm.dyn_samplingrate=1
++persist.debug.wfd.enable=1
++persist.demo.hdmirotationlock=false
++persist.hwc.enable_vds=1
++ro.opengles.version=196610
++ro.qualcomm.display.paneltype=1
++ro.sf.lcd_density=640
++
++# IMS
++persist.dbg.volte_avail_ovr=1
++persist.dbg.vt_avail_ovr=1
++
++# NFC
++persist.nfc.smartcard.config=SIM1,eSE1
++ro.nfc.port=I2C
++
++# Radio
++DEVICE_PROVISIONED=1
++persist.net.doxlat=true
++persist.radio.apm_sim_not_pwdn=1
++persist.radio.multisim.config=dsds
++rild.libpath=/vendor/lib64/libril-qc-qmi-1.so
++ril.subscription.types=NV,RUIM
++ro.carrier.openmarket=true
++ro.telephony.call_ring.multiple=false
++ro.telephony.default_cdma_sub=0
++ro.telephony.default_network=10,10
++ro.telephony.use_old_mnc_mcc_format=true
++persist.sys.fflag.override.settings_network_and_internet_v2=true
++
++# RmNet Data
++persist.data.df.agg.dl_pkt=10
++persist.data.df.agg.dl_size=4096
++persist.data.df.dev_name=rmnet_usb0
++persist.data.df.dl_mode=5
++persist.data.df.iwlan_mux=9
++persist.data.df.mux_count=8
++persist.data.df.ul_mode=5
++persist.data.wda.enable=true
++persist.rmnet.data.enable=true
++
++# TimeService
++persist.timed.enable=true
++
++# VNDK
++PRODUCT_DEFAULT_PROPERTY_OVERRIDES +=
++ro.vndk.version=28
++
++# Voice assistant
++ro.opa.eligible_device=true
+diff --git a/vendor.prop b/vendor.prop
+new file mode 100644
+index 0000000..95396ad
+--- /dev/null
++++ b/vendor.prop
+@@ -0,0 +1,85 @@
++# Vendor properties (from 18.1 vendor_prop.mk)
++
++# Audio
++persist.vendor.audio.fluence.speaker=true
++persist.vendor.audio.fluence.voicecall=true
++persist.vendor.audio.fluence.voicerec=false
++persist.vendor.bt.enable.splita2dp=false
++ro.vendor.audio.sdk.fluencetype=fluence
++ro.vendor.audio.sdk.ssr=false
++vendor.audio.dolby.ds2.enabled=false
++vendor.audio.dolby.ds2.hardbypass=false
++vendor.audio.flac.sw.decoder.24bit=true
++vendor.audio_hal.period_size=192
++vendor.audio.hw.aac.encoder=true
++vendor.audio.offload.buffer.size.kb=64
++vendor.audio.offload.gapless.enabled=true
++vendor.audio.offload.multiaac.enable=true
++vendor.audio.offload.multiple.enabled=true
++vendor.audio.offload.passthrough=false
++vendor.audio.offload.track.enable=true
++vendor.audio.parser.ip.buffer.size=262144
++vendor.audio.safx.pbe.enabled=true
++vendor.audio.tunnel.encode=false
++vendor.audio.use.sw.alac.decoder=true
++vendor.audio.use.sw.ape.decoder=true
++vendor.voice.path.for.pcm.voip=true
++
++# Bluetooth
++vendor.qcom.bluetooth.soc=rome
++
++# Camera
++persist.vendor.camera.HAL3.system.enabled=1
++persist.vendor.camera.HAL3.zte.enabled=1
++persist.vendor.camera.preview.ubwc=0
++persist.vendor.camera.stats.test=5
++persist.vendor.camera.video.ubwc=0
++
++# CNE
++persist.vendor.cne.feature=1
++
++# Display (Qualcomm AD)
++vendor.display.enable_default_color_mode=1
++ro.vendor.display.cabl=0
++
++# Graphics
++vendor.display.disable_rotator_split=1
++vendor.display.disable_skip_validate=1
++vendor.display.enable_default_color_mode=1
++vendor.display.perf_hint_window=50
++vendor.gralloc.enable_fb_ubwc=1
++
++# IMS
++persist.vendor.qti.telephony.vt_cam_interface=1
++
++# Media
++vendor.vidc.enc.disable.pq=true
++vendor.video.disable.ubwc=1
++
++# Memory optimizations
++ro.vendor.qti.sys.fw.bservice_enable=true
++
++# Perf
++ro.vendor.extension_library=libqti-perfd-client.so
++ro.vendor.qti.sys.fw.bg_apps_limit=32
++
++# Radio
++persist.vendor.radio.add_power_save=1
++persist.vendor.radio.apm_sim_not_pwdn=1
++persist.vendor.radio.block_allow_data=1
++persist.vendor.radio.custom_ecc=1
++persist.vendor.radio.data_con_rprt=1
++persist.vendor.radio.data_ltd_sys_ind=1
++persist.vendor.radio.hw_mbn_update=0
++persist.vendor.radio.rat_on=combine
++persist.vendor.radio.sap_silent_pin=true
++persist.vendor.radio.sib16_support=1
++persist.vendor.radio.sw_mbn_update=0
++
++# Sensors
++ro.vendor.sensors.dev_ori=false
++ro.vendor.sensors.dpc=false
++ro.vendor.sensors.mot_detect=false
++ro.vendor.sensors.pmd=false
++ro.vendor.sensors.smd=false
++ro.vendor.sensors.sta_detect=false
+diff --git a/vendor_prop.mk b/vendor_prop.mk
+deleted file mode 100644
+index 4b754b4..0000000
+--- a/vendor_prop.mk
++++ /dev/null
+@@ -1,192 +0,0 @@
+-#
+-# Vendor properties for axon7
+-#
+-
+-# Audio
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    af.fast_track_multiplier=1 \
+-    audio.deep_buffer.media=true \
+-    audio.offload.disable=1 \
+-    audio.offload.video=true \
+-    persist.axon7.amp_hal_device_map=\"16,2;17,2;18,2;19,2\" \
+-    persist.vendor.audio.fluence.speaker=true \
+-    persist.vendor.audio.fluence.voicecall=true \
+-    persist.vendor.audio.fluence.voicerec=false \
+-    persist.vendor.bt.enable.splita2dp=false \
+-    ro.config.media_vol_steps=25 \
+-    ro.config.vc_call_vol_steps=7 \
+-    ro.vendor.audio.sdk.fluencetype=fluence \
+-    ro.vendor.audio.sdk.ssr=false \
+-    vendor.audio.dolby.ds2.enabled=false \
+-    vendor.audio.dolby.ds2.hardbypass=false \
+-    vendor.audio.flac.sw.decoder.24bit=true \
+-    vendor.audio_hal.period_size=192 \
+-    vendor.audio.hw.aac.encoder=true \
+-    vendor.audio.offload.buffer.size.kb=64 \
+-    vendor.audio.offload.gapless.enabled=true \
+-    vendor.audio.offload.multiaac.enable=true \
+-    vendor.audio.offload.multiple.enabled=true \
+-    vendor.audio.offload.passthrough=false \
+-    vendor.audio.offload.track.enable=true \
+-    vendor.audio.parser.ip.buffer.size=262144 \
+-    vendor.audio.safx.pbe.enabled=true \
+-    vendor.audio.tunnel.encode=false \
+-    vendor.audio.use.sw.alac.decoder=true \
+-    vendor.audio.use.sw.ape.decoder=true \
+-    vendor.voice.path.for.pcm.voip=true
+-
+-# Bluetooth
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    bt.max.hfpclient.connections=1 \
+-    vendor.qcom.bluetooth.soc=rome \
+-    ro.bluetooth.emb_wp_mode=true \
+-    ro.bluetooth.wipower=true
+-
+-# Camera
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    camera.disable_zsl_mode=1 \
+-    persist.camera.gyro.disable=0 \
+-    persist.ts.postmakeup=false \
+-    persist.ts.rtmakeup=false \
+-    persist.vendor.camera.HAL3.system.enabled=1 \
+-    persist.vendor.camera.HAL3.zte.enabled=1 \
+-    persist.vendor.camera.preview.ubwc=0 \
+-    persist.vendor.camera.stats.test=5 \
+-    persist.vendor.camera.video.ubwc=0
+-
+-# Charger
+-PRODUCT_PRODUCT_PROPERTIES += \
+-    ro.charger.enable_suspend=true
+-
+-# CNE
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    persist.vendor.cne.feature=1
+-
+-# Data modules
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    persist.data.iwlan.enable=true \
+-    persist.data.mode=concurrent \
+-    persist.data.netmgrd.qos.enable=true \
+-    ro.use_data_netmgrd=true
+-
+-# Display (Qualcomm AD)
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    vendor.display.enable_default_color_mode=1 \
+-    ro.vendor.display.cabl=0
+-
+-# DRM
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    drm.service.enabled=1 \
+-    vidc.debug.perf.mode=2 \
+-    vidc.enc.dcvs.extra-buff-count=2 \
+-    vidc.enc.disable.pq=true
+-
+-# FRP
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.frp.pst=/dev/block/platform/soc/624000.ufshc/by-name/frp
+-
+-# Graphics
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    debug.egl.hw=1 \
+-    debug.gralloc.gfx_ubwc_disable=0 \
+-    debug.sf.enable_hwc_vds=1 \
+-    debug.hwui.use_buffer_age=false \
+-    debug.sf.hw=1 \
+-    debug.sf.latch_unsignaled=1 \
+-    debug.sf.recomputecrop=0 \
+-    dev.pm.dyn_samplingrate=1 \
+-    persist.debug.wfd.enable=1 \
+-    persist.demo.hdmirotationlock=false \
+-    persist.hwc.enable_vds=1 \
+-    ro.opengles.version=196610 \
+-    ro.qualcomm.display.paneltype=1 \
+-    ro.sf.lcd_density=640 \
+-    vendor.display.disable_rotator_split=1 \
+-    vendor.display.disable_skip_validate=1 \
+-    vendor.display.enable_default_color_mode=1 \
+-    vendor.display.perf_hint_window=50 \
+-    vendor.gralloc.enable_fb_ubwc=1
+-
+-# IMS
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    persist.dbg.volte_avail_ovr=1 \
+-    persist.dbg.vt_avail_ovr=1 \
+-    persist.vendor.qti.telephony.vt_cam_interface=1
+-
+-# Media
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    vendor.vidc.enc.disable.pq=true \
+-    vendor.video.disable.ubwc=1
+-
+-# Memory optimizations
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.vendor.qti.sys.fw.bservice_enable=true
+-
+-# NFC
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    persist.nfc.smartcard.config=SIM1,eSE1 \
+-    ro.nfc.port=I2C
+-
+-# Perf
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.vendor.extension_library=libqti-perfd-client.so \
+-    ro.vendor.qti.sys.fw.bg_apps_limit=32
+-
+-# Radio
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    DEVICE_PROVISIONED=1 \
+-    persist.net.doxlat=true \
+-    persist.radio.apm_sim_not_pwdn=1 \
+-    persist.radio.multisim.config=dsds \
+-    persist.vendor.radio.add_power_save=1 \
+-    persist.vendor.radio.apm_sim_not_pwdn=1 \
+-    persist.vendor.radio.block_allow_data=1 \
+-    persist.vendor.radio.custom_ecc=1 \
+-    persist.vendor.radio.data_con_rprt=1 \
+-    persist.vendor.radio.data_ltd_sys_ind=1 \
+-    persist.vendor.radio.hw_mbn_update=0 \
+-    persist.vendor.radio.rat_on=combine \
+-    persist.vendor.radio.sap_silent_pin=true \
+-    persist.vendor.radio.sib16_support=1 \
+-    persist.vendor.radio.sw_mbn_update=0 \
+-    rild.libpath=/vendor/lib64/libril-qc-qmi-1.so \
+-    ril.subscription.types=NV,RUIM \
+-    ro.carrier.openmarket=true \
+-    ro.telephony.call_ring.multiple=false \
+-    ro.telephony.default_cdma_sub=0 \
+-    ro.telephony.default_network=10,10 \
+-    ro.telephony.use_old_mnc_mcc_format=true \
+-    persist.sys.fflag.override.settings_network_and_internet_v2=true
+-
+-# RmNet Data
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    persist.data.df.agg.dl_pkt=10 \
+-    persist.data.df.agg.dl_size=4096 \
+-    persist.data.df.dev_name=rmnet_usb0 \
+-    persist.data.df.dl_mode=5 \
+-    persist.data.df.iwlan_mux=9 \
+-    persist.data.df.mux_count=8 \
+-    persist.data.df.ul_mode=5 \
+-    persist.data.wda.enable=true \
+-    persist.rmnet.data.enable=true
+-
+-# Sensors
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.vendor.sensors.dev_ori=false \
+-    ro.vendor.sensors.dpc=false \
+-    ro.vendor.sensors.mot_detect=false \
+-    ro.vendor.sensors.pmd=false \
+-    ro.vendor.sensors.smd=false \
+-    ro.vendor.sensors.sta_detect=false
+-
+-# TimeService
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    persist.timed.enable=true
+-
+-# VNDK
+-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+-    ro.vndk.version=28
+-
+-# Voice assistant
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.opa.eligible_device=true
+-- 
+2.56.0
+
