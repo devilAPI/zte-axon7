@@ -5,7 +5,7 @@ Three ways of running something new on the ZTE Axon 7 (Snapdragon 820,
 
 | Project | Status (2026-11-05) |
 | --- | --- |
-| [**iOS 16 on the Axon 7**](ios/) (XNU port, submodule: [devilAPI/ios-sailfish](https://github.com/devilAPI/ios-sailfish/tree/axon7), branch `axon7`) | iOS 16.7.16 (iPhone 8 userland) boots to the lock and home screen, GPU-accelerated (Adreno 530 via Mesa freedreno), touch, Home on Volume Down, rootless jailbreak with Sileo. Wi-Fi scans and associates, WPA2 handshake not finished yet. Details: [ios/PORTING-AXON7.md](ios/PORTING-AXON7.md) |
+| [**iOS 16 on the Axon 7**](ios/) (XNU port, submodule: [devilAPI/ios-sailfish](https://github.com/devilAPI/ios-sailfish/tree/axon7), branch `axon7`) | iOS 16.7.16 (iPhone 8 userland) boots to the lock and home screen, GPU-accelerated (Adreno 530 via Mesa freedreno), touch, Home on Volume Down, rootless jailbreak with Sileo. Wi-Fi works (WPA2-PSK, DHCP, Safari) with the phone's own QCA6174 firmware. Details: [ios/PORTING-AXON7.md](ios/PORTING-AXON7.md) |
 | [**postmarketOS**](postmarketos/) (mainline Linux 7.3.1) | device tree, kernel and device packages written, rootfs built with pmbootstrap (on microSD); first boot test pending |
 | [**LineageOS**](lineageos/) | 18.1 (Android 11) is the newest that exists; plan for porting 22.2 (Android 15) |
 
