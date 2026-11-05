@@ -138,6 +138,46 @@ sends a frame to both halves; ping-pong done bits are MDP INTR_STATUS bit 8
 | Hi-Fi clock / mux | AKM AK8157 at I2C 0x11 on BLSP1 QUP6 (0x757a000) | |
 | Hi-Fi supply | Intersil ISL98608 at I2C 0x29 on BLSP1 QUP3 | |
 
+## Clocks and voltages (measured / from the live device tree)
+
+GPU (Adreno 530) corners from the GFX CPR controller (`cpr3-ctrl@838000`),
+one table on this phone (no speed-bin variants):
+
+| Corner | GPU clock | Ceiling | | Corner | GPU clock | Ceiling |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 133 MHz | 670 mV | | 5 | 401.8 MHz | 825 mV |
+| 2 | 214 MHz | 670 mV | | 6 | 510 MHz | 905 mV |
+| 3 | 315 MHz | 745 mV | | 7 | 560 MHz | 960 mV |
+| 4 | — | — | | 8 | 624 MHz | 1015 mV |
+
+(floor 520 mV for all corners; GFX rail = PMI8996 S2.)
+
+Bootloader leaves CPU at 1228 MHz (both clusters) and DDR at 1016 MHz
+(BIMC 508 MHz); DDR runs at 1804 MHz via an RPM vote. The panel refreshes
+through MDP command-mode kickoffs (one CTL0 START sends both DSI halves).
+
+## Wi-Fi details
+
+- QCA6174 rev 3.2 (chip id 0x340aff), firmware from the modem partition:
+  `qwlan30.bin` reports **HTT 3.28** (the Pixel 1's firmware: HTT 3.50).
+- OTP board id 0, so `bdwlan30.bin` is the board file in use (the `.b01`-`.b1c`
+  variants are for other board ids).
+- PCIe RC0 legacy INTA = GIC SPI 244 (INTID 276); MSI on SPI 405.
+- Tx path: auth/assoc (management frames) and EAPOL 2/4 complete; EAPOL 4/4
+  on the data path gets no tx completion with this firmware (open issue in
+  the iOS port).
+
+## HFS+ on this phone (iOS root)
+
+If Linux writes to an iOS HFS+ image (loop mount), two things matter before
+XNU mounts it again:
+- Linux `fsck.hfsplus` does **not** replay the journal; replay it first
+  (`ios/tools/hfs-journal-replay.py`) when iOS was force-reset.
+- Linux `hfsplus` can grow a B-tree (the catalog) by an odd number of 4 KiB
+  blocks with 8 KiB nodes. XNU refuses such a B-tree on a journaled volume
+  (`BTOpenPath returned (5)`, root not mounted) once it has stamped the volume
+  `HFSJ`; `ios/tools/hfs-btree-fix.py --fix` trims it.
+
 ## GPU firmware
 
 From `/vendor/firmware`: `a530_pm4.fw`, `a530_pfp.fw`, `a530_zap.mdt` +
