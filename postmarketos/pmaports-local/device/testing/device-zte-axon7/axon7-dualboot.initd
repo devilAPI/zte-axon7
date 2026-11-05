@@ -1,0 +1,16 @@
+#!/sbin/openrc-run
+# Once per boot: make the boot partition's postmarketOS bundle match /boot
+# (catches an update whose apk trigger ran before the new initramfs existed).
+
+description="Keep the iOS + postmarketOS boot image's postmarketOS half current"
+
+depend() {
+	need localmount
+	after bootmisc
+}
+
+start() {
+	ebegin "Checking the iOS + postmarketOS boot image"
+	/usr/libexec/axon7-dualboot-update >/dev/null
+	eend 0
+}

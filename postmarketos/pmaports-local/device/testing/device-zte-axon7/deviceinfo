@@ -9,7 +9,10 @@ deviceinfo_year="2016"
 deviceinfo_dtb="qcom/msm8996-zte-axon7"
 deviceinfo_append_dtb="true"
 deviceinfo_arch="aarch64"
-deviceinfo_flash_kernel_on_update="true"
+# iOS + postmarketOS dual boot: the boot partition holds the iOS loader shim
+# with a postmarketOS bundle in its ramdisk (Volume Down at boot); updates go
+# through axon7-dualboot-update (/boot trigger), never a plain boot.img write.
+deviceinfo_flash_kernel_on_update="false"
 
 # Device related
 deviceinfo_chassis="handset"

@@ -56,6 +56,24 @@ The `.mdt` + `.bNN` sources are in the `modem` partition (FAT, `image/`) and
 in `/vendor/firmware`; join each with `scripts/pil-squasher.py OUT.mbn IN.mdt`.
 Then put the tarball's sha512 into the firmware APKBUILD.
 
+## Dual boot with iOS (Volume Down)
+
+The boot partition can hold the iOS port and postmarketOS together
+(ios/PORTING-AXON7.md, "Dual boot"): iOS boots by default, holding
+**Volume Down after the ZTE logo appears** starts postmarketOS. With the
+rootfs on the microSD card (below) and the phone in TWRP:
+
+```sh
+cd ../ios && tools/axon7-dualboot-flash.sh   # bundle from pmbootstrap's chroot, iOS half kept
+```
+
+On the phone, kernel and initramfs updates rebuild the postmarketOS half
+themselves (`deviceinfo_flash_kernel_on_update="false"`;
+`/usr/libexec/axon7-dualboot-update` from the /boot apk trigger and the
+`axon7-dualboot` OpenRC service, log `/var/log/axon7-dualboot.log`). It only
+writes when the boot partition already has the iOS shim, so it never
+overwrites iOS.
+
 ## Installing (no fastboot on this phone)
 
 The Axon 7's LK has no `fastboot boot` and `pmbootstrap flasher` won't work.
