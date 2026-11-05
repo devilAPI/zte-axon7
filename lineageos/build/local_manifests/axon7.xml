@@ -14,22 +14,26 @@
   whose vendor repos are missing can break the build.
 -->
 <manifest>
-  <remote name="github" fetch="https://github.com/" />
+  <!-- remote "github" (https://github.com/) comes from LineageOS's default
+       manifest; declaring it again here makes `repo sync` fail with "remote
+       github already exists with different attributes". -->
 
   <!-- Device tree to forward-port from 18.1 to 22.2. Model it on
        LineageOS/android_device_xiaomi_msm8996-common lineage-22.2. -->
   <project path="device/zte/axon7"
            name="blueyfish/android_device_zte_axon7"
-           remote="github" revision="lineage-18.1" clone-depth="0" />
+           remote="github" revision="lineage-18.1" />
 
   <!-- Kernel: the 3.18 axon7 kernel cannot run LineageOS 19.1+. Start from the
        msm8996 4.4 kernel that gemini/LG use on 22.2, then port in the axon7
        DTS and drivers. Keeping the path kernel/zte/msm8996 leaves the device
-       tree's TARGET_KERNEL_SOURCE valid. clone-depth=0 keeps full history for
-       rebasing and cherry-picking. -->
+       tree's TARGET_KERNEL_SOURCE valid. repo rejects clone-depth="0", so
+       with a depth-1 repo init these two come shallow too: unshallow them
+       (git fetch, option unshallow) in device/zte/axon7 and
+       kernel/zte/msm8996 after the sync for the full history. -->
   <project path="kernel/zte/msm8996"
            name="LineageOS/android_kernel_xiaomi_msm8996"
-           remote="github" revision="lineage-22.2" clone-depth="0" />
+           remote="github" revision="lineage-22.2" />
 
   <!-- Proprietary blobs from the 18.1 port (Oreo A2017G based) -->
   <project path="vendor/zte"
