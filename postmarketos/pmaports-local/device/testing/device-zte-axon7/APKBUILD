@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=7
+pkgrel=8
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -29,6 +29,7 @@ source="
 	axon7-dualboot
 	axon7-dualboot-update
 	axon7-bootmenu
+	axon7-tripleboot-gpt
 	axon7-dualboot.initd
 	axon7-dualboot.service
 	80-axon7-dualboot.preset
@@ -50,6 +51,7 @@ package() {
 	install -Dm755 "$srcdir"/axon7-dualboot "$pkgdir"/usr/bin/axon7-dualboot
 	install -Dm755 "$srcdir"/axon7-dualboot-update "$pkgdir"/usr/libexec/axon7-dualboot-update
 	install -Dm755 "$srcdir"/axon7-bootmenu "$pkgdir"/usr/bin/axon7-bootmenu
+	install -Dm755 "$srcdir"/axon7-tripleboot-gpt "$pkgdir"/usr/bin/axon7-tripleboot-gpt
 	# systemd images (the OpenRC service is in $pkgname-openrc)
 	install -Dm644 "$srcdir"/axon7-dualboot.service "$pkgdir"/usr/lib/systemd/system/axon7-dualboot.service
 	install -Dm644 "$srcdir"/80-axon7-dualboot.preset "$pkgdir"/usr/lib/systemd/system-preset/80-axon7-dualboot.preset
@@ -75,6 +77,7 @@ e5dd6e54ca7b33b3452655390e3ccecb183c3217422587df9e82c923683c662e487b35701accc19f
 4744e7ad563b04c57f7adc0833d97bfb428183d454adb76398b73c555cd0f1a99cc1eb709f4ab54e8ff59a8037ec20fba8a1fb2d8f130812eee207ba67a0d496  axon7-dualboot
 cf4153b45cf3254b9085f6d19cdcc710a65d622f0020f24ead1c25da356ca2aa3f597ccf9104361f48212bffb77c25fb9d65a8774b1e1dea857eb827a8f44004  axon7-dualboot-update
 708701f0a1d1b3d2df23d73fa26e537a0dc514c6ec8ece6851e89a7e2470c8dbd841e5e99e39e7167d69a61aaeb3abea9bfe8e197fdcf5de9e9c393fcebc4cd4  axon7-bootmenu
+d26ea20b2477eae37500f30c2843d980d4363a0a5ab2dab00b1133890088754765a31913af325eb4d937637fadbc2415d690c40cf335b9f2a0bdb3010a12eaaf  axon7-tripleboot-gpt
 ff013477448430d39343516f17d5b2fdae60c4cf8473f34ad3a7808c73453349684548d8ef8a1be194afe3f6c9ef78ea071e8849fdaf31a049cbd294122c85bd  axon7-dualboot.initd
 0faa1c586fe4a7d18bad58ed722fb698c59c6c5b52d655c9f37368d992a52c8f5d7d94332c76836266f717d0b8c43364b4fc46b4260527b71328279b12def7e4  axon7-dualboot.service
 d0227abe931876a0c12984fb58fe8e7c8ee3a265aedb31f2a932bb824aca48ffe993280d24d8346e0c1dad489bfdba383695c87c507631db0b27545a01e79f4f  80-axon7-dualboot.preset
