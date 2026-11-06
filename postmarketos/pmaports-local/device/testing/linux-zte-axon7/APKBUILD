@@ -5,7 +5,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=2
+pkgrel=3
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -41,6 +41,8 @@ source="
 	0003-regulator-add-Qualcomm-PMI8994-PMI8996-SMBCHG-OTG-bo.patch
 	0004-arm64-dts-qcom-msm8996-zte-axon7-display-and-USB-OTG.patch
 	0005-drm-msm-dpu-msm8996-CTL_0-and-CTL_1-support-split-di.patch
+	0006-usb-typec-add-Pericom-PI5USB302-CC-logic-driver.patch
+	0007-arm64-dts-qcom-msm8996-zte-axon7-PI5USB302-Type-C-va.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -78,5 +80,7 @@ eac8912be329999150a71257adc513e6a52891d122641943c3a440f775267705eff0b275b4d90d52
 7fa33dd2ec1f7111a0d57541ad450f58628c6802977537f501981007282d1b0f5b21d6b096c7030d09a1c3491a97cdf593682ce5a03369668bb582dd25e72b0d  0003-regulator-add-Qualcomm-PMI8994-PMI8996-SMBCHG-OTG-bo.patch
 123ec1aa2ed5bf6cc5d80521d9be9c7f5d1e9468cdc116a42ce409bac4937160edec8f3e131b35648217fa94eafc637ddcd9799eaf5ff920da0e02589be9fa43  0004-arm64-dts-qcom-msm8996-zte-axon7-display-and-USB-OTG.patch
 e06b7ffcff5fd34e60bf5de8d36c39bc36aee74fd754cd6e2be88bc331e21354b4e4a998443dbd2f2e6f5cf8433cb8105c6f46ddc85aee7c1bc8bf4d77655648  0005-drm-msm-dpu-msm8996-CTL_0-and-CTL_1-support-split-di.patch
-dabcd6b2a3729645ecb410182fc1e1cc25749c6d9142812c292a7b8c4eb6367f8a54c4a7abbb75bfbfb99e816924a8e6af9f8aec69ac246eca105aa0e567b180  config-zte-axon7.aarch64
+b7e2e1892cc6e9294edc36d7ae2c7f5b1d3f8c5ca42d15549993d2fe4b959d8811e49d2c4d1a91b8fb726e4ced2e051af5b90b63272eddcb8c4fab868f01222b  config-zte-axon7.aarch64
+8a20dd5c6b0fdbc60f5c53fac3c73100f4667c48335b6bddb1d3bebe5272da4157f64f6946e408fed89d00132ed07d539302314bb20a169a4a6f0455126da9cf  0006-usb-typec-add-Pericom-PI5USB302-CC-logic-driver.patch
+3e5cbf8783f005193e25ca96d47400cf9913553d607ea83778ee686ff5ece7eca5d9dbae447d86922444b23aa9b6716cc50e32611b3eb28c4c11c51aefe8486e  0007-arm64-dts-qcom-msm8996-zte-axon7-PI5USB302-Type-C-va.patch
 "

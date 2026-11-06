@@ -85,6 +85,20 @@ preset). It finds the Synaptics touchscreen and /dev/uinput, but draws nothing
 on the 24 bpp simple-framebuffer yet; with the msm DRM driver's 32 bpp fbdev
 it is to be checked again.
 
+## USB OTG
+
+Some Axon 7s have a TI HD3SS3220 Type-C chip, others (this one) a Pericom
+PI5USB302 (I2C 0x0d, `pi5usb302` driver); the DTS describes both. Host
+mode, the PMI8994 OTG boost (VBUS) and USB devices work, but detecting an
+attached device does not yet: CC_STAT and the PMI8994 USBID stay idle
+without VBUS. Until then host mode is switched by hand (never with a PC on
+the cable, both would drive VBUS):
+
+```sh
+echo 1 | sudo tee /sys/module/pi5usb302/parameters/force_host   # host + VBUS
+echo 0 | sudo tee /sys/module/pi5usb302/parameters/force_host   # device again
+```
+
 ## Boot menu default
 
 `axon7-bootmenu default pmos 5` makes the shim start postmarketOS after 5 s
