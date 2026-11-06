@@ -1,1 +1,2 @@
 enable axon7-dualboot.service
+enable buffyboard.service

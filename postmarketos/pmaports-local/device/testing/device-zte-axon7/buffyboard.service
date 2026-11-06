@@ -1,0 +1,13 @@
+[Unit]
+Description=Buffyboard on-screen keyboard for the framebuffer console
+Documentation=https://gitlab.postmarketos.org/postmarketOS/buffybox
+ConditionPathExists=/dev/fb0
+After=systemd-udevd.service getty@tty1.service
+
+[Service]
+ExecStart=/usr/bin/buffyboard
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

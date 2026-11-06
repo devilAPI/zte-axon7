@@ -76,6 +76,22 @@ themselves (`deviceinfo_flash_kernel_on_update="false"`;
 writes when the boot partition already has the iOS shim, so it never
 overwrites iOS.
 
+## On-screen keyboard (buffyboard)
+
+The console image ships buffyboard; device-zte-axon7 adds its config
+(`/usr/share/buffyboard/buffyboard.conf.d/50-zte-axon7.conf`: breezy-dark,
+touchscreen only, `fbdev_force_refresh`) and `buffyboard.service` (enabled by
+preset). It finds the Synaptics touchscreen and /dev/uinput, but draws nothing
+on the 24 bpp simple-framebuffer yet; with the msm DRM driver's 32 bpp fbdev
+it is to be checked again.
+
+## Boot menu default
+
+`axon7-bootmenu default pmos 5` makes the shim start postmarketOS after 5 s
+without a key (`axon7-bootmenu clear` goes back to iOS). The bundle lives in
+the `pmos_boot` partition on LUN 0: LUNs 1-4 (boot, system, vendor) are write
+protected while the phone runs normally.
+
 ## Installing (no fastboot on this phone)
 
 The Axon 7's LK has no `fastboot boot` and `pmbootstrap flasher` won't work.
