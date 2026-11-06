@@ -1,0 +1,13 @@
+[Unit]
+Description=Keep the iOS + postmarketOS boot image's postmarketOS half current
+# catches an update whose apk trigger ran before the new initramfs existed
+RequiresMountsFor=/boot
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/axon7-dualboot-update
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

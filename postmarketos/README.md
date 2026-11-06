@@ -71,7 +71,8 @@ cd ../ios && tools/axon7-dualboot-flash.sh   # bundle from pmbootstrap's chroot,
 On the phone, kernel and initramfs updates rebuild the postmarketOS half
 themselves (`deviceinfo_flash_kernel_on_update="false"`;
 `/usr/libexec/axon7-dualboot-update` from the /boot apk trigger and the
-`axon7-dualboot` OpenRC service, log `/var/log/axon7-dualboot.log`). It only
+`axon7-dualboot` service at boot, systemd unit or OpenRC script, log
+`/var/log/axon7-dualboot.log`). It only
 writes when the boot partition already has the iOS shim, so it never
 overwrites iOS.
 

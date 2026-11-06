@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=3
+pkgrel=4
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -29,6 +29,8 @@ source="
 	axon7-dualboot
 	axon7-dualboot-update
 	axon7-dualboot.initd
+	axon7-dualboot.service
+	80-axon7-dualboot.preset
 	"
 
 build() {
@@ -40,6 +42,9 @@ package() {
 	# iOS + postmarketOS dual boot (axon7-dualboot is ios/tools/axon7-dualboot.py)
 	install -Dm755 "$srcdir"/axon7-dualboot "$pkgdir"/usr/bin/axon7-dualboot
 	install -Dm755 "$srcdir"/axon7-dualboot-update "$pkgdir"/usr/libexec/axon7-dualboot-update
+	# systemd images (the OpenRC service is in $pkgname-openrc)
+	install -Dm644 "$srcdir"/axon7-dualboot.service "$pkgdir"/usr/lib/systemd/system/axon7-dualboot.service
+	install -Dm644 "$srcdir"/80-axon7-dualboot.preset "$pkgdir"/usr/lib/systemd/system-preset/80-axon7-dualboot.preset
 }
 
 openrc() {
@@ -54,4 +59,6 @@ e5dd6e54ca7b33b3452655390e3ccecb183c3217422587df9e82c923683c662e487b35701accc19f
 6dc2abbabce860892f41248640c0ed45026eec3d34e9ba5e152803357bfbf360c3758d647874c6755dd3176d6f08dcd09782c74c6d3ff23a64745b7b9cb5e6fb  axon7-dualboot
 da606a7ca6c789029b298a92be115aa5b68fe74e23e59c01be8b7415e56663deef3cbefb2afe9a778d9ba56fc86a66fbee0816499dd9a564d9f5968d5e5ba27a  axon7-dualboot-update
 ff013477448430d39343516f17d5b2fdae60c4cf8473f34ad3a7808c73453349684548d8ef8a1be194afe3f6c9ef78ea071e8849fdaf31a049cbd294122c85bd  axon7-dualboot.initd
+0faa1c586fe4a7d18bad58ed722fb698c59c6c5b52d655c9f37368d992a52c8f5d7d94332c76836266f717d0b8c43364b4fc46b4260527b71328279b12def7e4  axon7-dualboot.service
+4f0a7f68f1a44ce72cf222d808eb59f8bd2e639019c3d2ce0d505e20b78bc46f2f360bd3a10c088a29c81ebc7dd0f4e5b2865fe30a65b95d03d5e3517223861e  80-axon7-dualboot.preset
 "
