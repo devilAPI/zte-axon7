@@ -56,11 +56,12 @@ The `.mdt` + `.bNN` sources are in the `modem` partition (FAT, `image/`) and
 in `/vendor/firmware`; join each with `scripts/pil-squasher.py OUT.mbn IN.mdt`.
 Then put the tarball's sha512 into the firmware APKBUILD.
 
-## Dual boot with iOS (Volume Down)
+## Dual boot with iOS (boot menu)
 
 The boot partition can hold the iOS port and postmarketOS together
-(ios/PORTING-AXON7.md, "Dual boot"): iOS boots by default, holding
-**Volume Down after the ZTE logo appears** starts postmarketOS. With the
+(ios/PORTING-AXON7.md, "Dual boot"): after the ZTE logo a menu comes up,
+**Vol+/Vol- choose, Power starts** the entry, and iOS starts after 10 s
+without a key. postmarketOS needs its rootfs installed first. With the
 rootfs on the microSD card (below) and the phone in TWRP:
 
 ```sh

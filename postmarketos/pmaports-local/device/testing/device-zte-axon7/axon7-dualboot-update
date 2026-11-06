@@ -1,6 +1,6 @@
 #!/bin/sh
 # Rebuild the postmarketOS half of the Axon 7's iOS + postmarketOS boot image
-# (Volume Down at boot starts postmarketOS, see axon7-dualboot): a new bundle
+# (the boot menu starts postmarketOS, see axon7-dualboot): a new bundle
 # from /boot (vmlinuz, initramfs, DTB) goes into the boot partition's ramdisk
 # slot, the iOS loader shim + XNU in the kernel slot stay as they are. Run by
 # the /boot apk trigger after kernel or initramfs updates and once per boot
