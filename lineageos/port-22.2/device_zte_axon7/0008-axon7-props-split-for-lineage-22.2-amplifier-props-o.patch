@@ -1,0 +1,404 @@
+From 602bb0cf1ce5287f7f9fd34d7722d86f9d5c5c49 Mon Sep 17 00:00:00 2001
+From: devilAPI <felixseiboldt@gmail.com>
+Date: Fri, 6 Nov 2026 07:20:55 +0100
+Subject: [PATCH 8/9] axon7: props split for lineage-22.2, amplifier props on
+ persist.vendor
+
+system.prop keeps the framework props only; vendor-read props move to
+vendor.prop as in msm8996-common 22.2, with its Bluetooth profile props.
+Drops the makefile lines that ended up in system.prop and ro.vndk.version.
+
+The 18.1 persist.axon7.amp_hal_device_map default named snd_device
+numbers that are off by one on the 22.2 audio HAL (VOICE_SPEAKER_STEREO
+was added); the mono speakerphone devices are named in the default table
+now. Overrides read persist.vendor.axon7.amp_hal_* with its own property
+context, and an out-of-range snd_device is rejected.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+---
+ PORTING-22.2.md                      | 12 +++-
+ audio_amplifier/audio_amplifier.c    | 24 +++++---
+ product.prop                         |  3 +
+ sepolicy/vendor/hal_audio_default.te |  2 +
+ sepolicy/vendor/property.te          |  2 +
+ sepolicy/vendor/property_contexts    |  3 +
+ system.prop                          | 78 +++---------------------
+ vendor.prop                          | 88 +++++++++++++++++++++++++++-
+ 8 files changed, 127 insertions(+), 85 deletions(-)
+ create mode 100644 sepolicy/vendor/property.te
+
+diff --git a/PORTING-22.2.md b/PORTING-22.2.md
+index 38380ee..0d594cb 100644
+--- a/PORTING-22.2.md
++++ b/PORTING-22.2.md
+@@ -21,6 +21,13 @@ nearest msm8996 tree that runs 22.2 (see zte-axon7 lineageos/BUILD-PLAN-LOS22.md
+ - Android.mk: only the include; Wi-Fi firmware links as install_symlink.
+ - extract-files.sh: msm8996-common's 22.2 fixups for the shared blobs,
+   no vndk v28; setup-makefiles.sh: CHECKELF off.
++- Props: system.prop holds only framework props, the rest moved to
++  vendor.prop (msm8996-common 22.2 split; Bluetooth profile props added);
++  the stray makefile lines and ro.vndk.version=28 are gone.
++- audio_amplifier: the mono speakerphone devices are named in the default
++  table (the 18.1 prop's snd_device numbers are off by one on the 22.2
++  audio HAL), override prop persist.vendor.axon7.amp_hal_* with its own
++  context (vendor_axon7_amp_prop), out-of-range snd_device rejected.
+ - touch/: key disabler as AIDL vendor.lineage.touch V1 (NDK),
+   vendor.lineage.touch-service.axon7, same 0dbutton node.
+ - lineage.dependencies: empty (kernel via the local manifest).
+@@ -32,6 +39,5 @@ nearest msm8996 tree that runs 22.2 (see zte-axon7 lineageos/BUILD-PLAN-LOS22.md
+    proprietary-files.txt; RIL/IMS versions in manifest.xml and the
+    netmgrd/qcrild choice in init.qcom.rc follow the chosen blobs.
+ 3. ZteDoze (Android.mk app) for API 35, or LineageOS's own doze.
+-4. sepolicy property context for persist.axon7.amp_hal_device_map.
+-5. Vendor image size: gemini's is 832 MiB, axon7's partition 512 MiB.
+-6. Kernel: the 4.4 port (DTS, synaptics_dsx, AK4961/AK4490 audio, panel).
++4. Vendor image size: gemini's is 832 MiB, axon7's partition 512 MiB.
++5. Kernel: the 4.4 port (DTS, synaptics_dsx, AK4961/AK4490 audio, panel).
+diff --git a/audio_amplifier/audio_amplifier.c b/audio_amplifier/audio_amplifier.c
+index 75b41a6..7a12497 100644
+--- a/audio_amplifier/audio_amplifier.c
++++ b/audio_amplifier/audio_amplifier.c
+@@ -207,7 +207,7 @@ void tfa9890_set_amp_state_bypass(void *device, tfa9890_state_t rstate, __attrib
+ 
+ void tfa9890_switch_amp_control_mode(void *device) {
+     tfa9890_device_t *tfa9890 = (tfa9890_device_t*) device;
+-    int32_t amp_control_mode = property_get_int32("persist.axon7.amp_hal_control", 0);
++    int32_t amp_control_mode = property_get_int32("persist.vendor.axon7.amp_hal_control", 0);
+     switch(amp_control_mode) {
+         default:
+         case AMP_CONTROL_NORMAL:
+@@ -302,12 +302,15 @@ const int device_to_amp_device_default[] = {
+     [SND_DEVICE_OUT_SPEAKER_AND_HEADPHONES]         = STEREO_SPEAKER,
+     [SND_DEVICE_OUT_SPEAKER_AND_LINE]               = STEREO_SPEAKER,
+     [SND_DEVICE_OUT_VOICE_HANDSET]                  = MONO_SPEAKER,
+-    // Example: setprop persist.axon7.amp_hal_device_map "16,2;17,2;18,2;19,2"
+-    //     sets the 4 annotated use cases below to MONO_SPEAKER
+-    [SND_DEVICE_OUT_VOICE_SPEAKER]                  = STEREO_SPEAKER, //16
+-    [SND_DEVICE_OUT_VOICE_SPEAKER_VBAT]             = STEREO_SPEAKER, //17
+-    [SND_DEVICE_OUT_VOICE_SPEAKER_2]                = STEREO_SPEAKER, //18
+-    [SND_DEVICE_OUT_VOICE_SPEAKER_2_VBAT]           = STEREO_SPEAKER, //19
++    // Speakerphone calls on one amp, as 18.1 set through the
++    // persist.axon7.amp_hal_device_map default. Overrides go in
++    // persist.vendor.axon7.amp_hal_device_map ("<snd_device>,<mode>;...");
++    // snd_device numbers come from hal/msm8974/platform.h and shift between
++    // audio HAL versions, so the defaults are named here.
++    [SND_DEVICE_OUT_VOICE_SPEAKER]                  = MONO_SPEAKER,
++    [SND_DEVICE_OUT_VOICE_SPEAKER_VBAT]             = MONO_SPEAKER,
++    [SND_DEVICE_OUT_VOICE_SPEAKER_2]                = MONO_SPEAKER,
++    [SND_DEVICE_OUT_VOICE_SPEAKER_2_VBAT]           = MONO_SPEAKER,
+     [SND_DEVICE_OUT_SPEAKER_AND_HDMI]               = STEREO_SPEAKER,
+     [SND_DEVICE_OUT_SPEAKER_AND_DISPLAY_PORT]       = STEREO_SPEAKER,
+     [SND_DEVICE_OUT_SPEAKER_AND_BT_A2DP]            = STEREO_SPEAKER,
+@@ -358,7 +361,7 @@ static void tfa9890_populate_device_map(tfa9890_device_t *tfa9890) {
+     memcpy(dev_map, device_to_amp_device_default, len);
+     tfa9890->device_to_amp_device = dev_map;
+ 
+-    if (property_get("persist.axon7.amp_hal_device_map", buffer, "")) {
++    if (property_get("persist.vendor.axon7.amp_hal_device_map", buffer, "")) {
+         // Gross hacks, don't judge this.
+         char *end, *ptr = buffer;
+         while (*ptr != '\0') {
+@@ -375,7 +378,10 @@ static void tfa9890_populate_device_map(tfa9890_device_t *tfa9890) {
+                     ALOGE("Error parsing mode.  Remaining string was %s", ptr);
+                     return;
+                 }
+-                // Should sanity check here.  #YOLO
++                if (adevice <= SND_DEVICE_NONE || (size_t) adevice >= len / sizeof(int)) {
++                    ALOGE("snd_device %d out of range", adevice);
++                    return;
++                }
+                 ALOGD("Overriding device(%d): mode(%d->%d)\n", adevice, dev_map[adevice], mode);
+                 dev_map[adevice] = mode;
+             } else {
+diff --git a/product.prop b/product.prop
+index bc93efe..8d8b4b0 100644
+--- a/product.prop
++++ b/product.prop
+@@ -11,3 +11,6 @@ ro.lmk.downgrade_pressure=100
+ ro.lmk.kill_heaviest_task=true
+ ro.lmk.kill_timeout_ms=100
+ ro.lmk.use_minfree_levels=true
++
++# Voice assistant
++ro.opa.eligible_device=true
+diff --git a/sepolicy/vendor/hal_audio_default.te b/sepolicy/vendor/hal_audio_default.te
+index 46ee87a..df3eab3 100644
+--- a/sepolicy/vendor/hal_audio_default.te
++++ b/sepolicy/vendor/hal_audio_default.te
+@@ -1 +1,3 @@
+ allow hal_audio_default i2c_device:chr_file { ioctl open read write };
++
++get_prop(hal_audio_default, vendor_axon7_amp_prop)
+diff --git a/sepolicy/vendor/property.te b/sepolicy/vendor/property.te
+new file mode 100644
+index 0000000..b4b9bba
+--- /dev/null
++++ b/sepolicy/vendor/property.te
+@@ -0,0 +1,2 @@
++# TFA9890 amplifier glue (audio_amplifier/)
++vendor_internal_prop(vendor_axon7_amp_prop)
+diff --git a/sepolicy/vendor/property_contexts b/sepolicy/vendor/property_contexts
+index 084c374..3c90c0b 100644
+--- a/sepolicy/vendor/property_contexts
++++ b/sepolicy/vendor/property_contexts
+@@ -3,3 +3,6 @@ persist.camera.            u:object_r:camera_prop:s0
+ sys.listeners.registered   u:object_r:vendor_tee_listener_prop:s0
+ 
+ persist.net.doxlat         u:object_r:vendor_xlat_prop:s0
++
++# TFA9890 amplifier glue
++persist.vendor.axon7.amp_hal_   u:object_r:vendor_axon7_amp_prop:s0
+diff --git a/system.prop b/system.prop
+index 8c0dd3d..54d2ba0 100644
+--- a/system.prop
++++ b/system.prop
+@@ -1,99 +1,35 @@
+-# System properties (from 18.1 vendor_prop.mk)
++# System properties (framework side; split as in msm8996-common lineage-22.2)
+ 
+ # Audio
+ af.fast_track_multiplier=1
+ audio.deep_buffer.media=true
+ audio.offload.disable=1
+ audio.offload.video=true
+-persist.axon7.amp_hal_device_map="16,2;17,2;18,2;19,2"
+ ro.config.media_vol_steps=25
+ ro.config.vc_call_vol_steps=7
+ 
+-# Bluetooth
+-bt.max.hfpclient.connections=1
+-ro.bluetooth.emb_wp_mode=true
+-ro.bluetooth.wipower=true
+-
+ # Camera
+-camera.disable_zsl_mode=1
+ persist.camera.gyro.disable=0
+-persist.ts.postmakeup=false
+-persist.ts.rtmakeup=false
+ 
+ # Charger
+-PRODUCT_PRODUCT_PROPERTIES +=
+ ro.charger.enable_suspend=true
+ 
+-# Data modules
+-persist.data.iwlan.enable=true
+-persist.data.mode=concurrent
+-persist.data.netmgrd.qos.enable=true
+-ro.use_data_netmgrd=true
+-
+ # DRM
+-drm.service.enabled=1
+-vidc.debug.perf.mode=2
+-vidc.enc.dcvs.extra-buff-count=2
+-vidc.enc.disable.pq=true
++drm.service.enabled=true
+ 
+ # FRP
+-ro.frp.pst=/dev/block/platform/soc/624000.ufshc/by-name/frp
++ro.frp.pst=/dev/block/bootdevice/by-name/frp
+ 
+ # Graphics
+-debug.egl.hw=1
+-debug.gralloc.gfx_ubwc_disable=0
+-debug.sf.enable_hwc_vds=1
+-debug.hwui.use_buffer_age=false
+-debug.sf.hw=1
+-debug.sf.latch_unsignaled=1
+-debug.sf.recomputecrop=0
+-dev.pm.dyn_samplingrate=1
+-persist.debug.wfd.enable=1
+ persist.demo.hdmirotationlock=false
+-persist.hwc.enable_vds=1
+-ro.opengles.version=196610
+-ro.qualcomm.display.paneltype=1
+-ro.sf.lcd_density=640
+-
+-# IMS
+-persist.dbg.volte_avail_ovr=1
+-persist.dbg.vt_avail_ovr=1
+-
+-# NFC
+-persist.nfc.smartcard.config=SIM1,eSE1
+-ro.nfc.port=I2C
+ 
+ # Radio
+ DEVICE_PROVISIONED=1
+-persist.net.doxlat=true
+-persist.radio.apm_sim_not_pwdn=1
+ persist.radio.multisim.config=dsds
+-rild.libpath=/vendor/lib64/libril-qc-qmi-1.so
+ ril.subscription.types=NV,RUIM
+-ro.carrier.openmarket=true
+-ro.telephony.call_ring.multiple=false
+-ro.telephony.default_cdma_sub=0
+-ro.telephony.default_network=10,10
+-ro.telephony.use_old_mnc_mcc_format=true
+-persist.sys.fflag.override.settings_network_and_internet_v2=true
+-
+-# RmNet Data
+-persist.data.df.agg.dl_pkt=10
+-persist.data.df.agg.dl_size=4096
+-persist.data.df.dev_name=rmnet_usb0
+-persist.data.df.dl_mode=5
+-persist.data.df.iwlan_mux=9
+-persist.data.df.mux_count=8
+-persist.data.df.ul_mode=5
+-persist.data.wda.enable=true
+-persist.rmnet.data.enable=true
+-
+-# TimeService
+-persist.timed.enable=true
+ 
+-# VNDK
+-PRODUCT_DEFAULT_PROPERTY_OVERRIDES +=
+-ro.vndk.version=28
++# USB
++sys.usb.controller=6a00000.dwc3
+ 
+-# Voice assistant
+-ro.opa.eligible_device=true
++# Wi-Fi
++wifi.interface=wlan0
+diff --git a/vendor.prop b/vendor.prop
+index 95396ad..d6f355e 100644
+--- a/vendor.prop
++++ b/vendor.prop
+@@ -1,6 +1,7 @@
+-# Vendor properties (from 18.1 vendor_prop.mk)
++# Vendor properties (18.1 vendor_prop.mk, split as in msm8996-common lineage-22.2)
+ 
+ # Audio
++persist.vendor.axon7.amp_hal_control=0
+ persist.vendor.audio.fluence.speaker=true
+ persist.vendor.audio.fluence.voicecall=true
+ persist.vendor.audio.fluence.voicerec=false
+@@ -26,9 +27,34 @@ vendor.audio.use.sw.ape.decoder=true
+ vendor.voice.path.for.pcm.voip=true
+ 
+ # Bluetooth
++bluetooth.device.class_of_device=90,2,12
++bluetooth.hardware.power.operating_voltage_mv=3300
++bluetooth.le.disable_apcf_extended_features=1
++bluetooth.profile.a2dp.source.enabled?=true
++bluetooth.profile.asha.central.enabled?=true
++bluetooth.profile.avrcp.target.enabled?=true
++bluetooth.profile.bas.client.enabled?=true
++bluetooth.profile.gatt.enabled?=true
++bluetooth.profile.hfp.ag.enabled?=true
++bluetooth.profile.hid.device.enabled?=true
++bluetooth.profile.hid.host.enabled?=true
++bluetooth.profile.map.server.enabled?=true
++bluetooth.profile.opp.enabled?=true
++bluetooth.profile.pan.nap.enabled?=true
++bluetooth.profile.pan.panu.enabled?=true
++bluetooth.profile.pbap.server.enabled?=true
++bluetooth.profile.sap.server.enabled?=true
++bt.max.hfpclient.connections=1
++qcom.bluetooth.soc=rome
++ro.bluetooth.emb_wp_mode=true
++ro.bluetooth.wipower=true
+ vendor.qcom.bluetooth.soc=rome
+ 
+ # Camera
++camera.disable_zsl_mode=1
++persist.camera.imglib.fddsp=1
++persist.ts.postmakeup=false
++persist.ts.rtmakeup=false
+ persist.vendor.camera.HAL3.system.enabled=1
+ persist.vendor.camera.HAL3.zte.enabled=1
+ persist.vendor.camera.preview.ubwc=0
+@@ -39,10 +65,25 @@ persist.vendor.camera.video.ubwc=0
+ persist.vendor.cne.feature=1
+ 
+ # Display (Qualcomm AD)
+-vendor.display.enable_default_color_mode=1
+ ro.vendor.display.cabl=0
+ 
+ # Graphics
++debug.egl.hw=1
++debug.gralloc.gfx_ubwc_disable=0
++debug.hwui.use_buffer_age=false
++debug.renderengine.backend=threaded
++debug.sf.enable_hwc_vds=1
++debug.sf.hw=1
++debug.sf.latch_unsignaled=1
++debug.sf.recomputecrop=0
++dev.pm.dyn_samplingrate=1
++persist.debug.wfd.enable=1
++persist.hwc.enable_vds=1
++ro.hardware.egl=adreno
++ro.opengles.version=196610
++ro.qualcomm.display.paneltype=1
++ro.sf.lcd_density=640
++vendor.display.disable_scaler=1
+ vendor.display.disable_rotator_split=1
+ vendor.display.disable_skip_validate=1
+ vendor.display.enable_default_color_mode=1
+@@ -50,9 +91,14 @@ vendor.display.perf_hint_window=50
+ vendor.gralloc.enable_fb_ubwc=1
+ 
+ # IMS
++persist.dbg.volte_avail_ovr=1
++persist.dbg.vt_avail_ovr=1
+ persist.vendor.qti.telephony.vt_cam_interface=1
+ 
+ # Media
++vidc.debug.perf.mode=2
++vidc.enc.dcvs.extra-buff-count=2
++vidc.enc.disable.pq=true
+ vendor.vidc.enc.disable.pq=true
+ vendor.video.disable.ubwc=1
+ 
+@@ -64,6 +110,14 @@ ro.vendor.extension_library=libqti-perfd-client.so
+ ro.vendor.qti.sys.fw.bg_apps_limit=32
+ 
+ # Radio
++persist.net.doxlat=true
++persist.vendor.radio.mt_sms_ack=30
++ro.carrier.openmarket=true
++ro.telephony.call_ring.multiple=false
++ro.telephony.default_cdma_sub=0
++ro.telephony.default_network=10,10
++ro.telephony.use_old_mnc_mcc_format=true
++vendor.rild.libpath=/vendor/lib64/libril-qc-qmi-1.so
+ persist.vendor.radio.add_power_save=1
+ persist.vendor.radio.apm_sim_not_pwdn=1
+ persist.vendor.radio.block_allow_data=1
+@@ -83,3 +137,33 @@ ro.vendor.sensors.mot_detect=false
+ ro.vendor.sensors.pmd=false
+ ro.vendor.sensors.smd=false
+ ro.vendor.sensors.sta_detect=false
++
++# Data modules
++persist.data.iwlan.enable=true
++persist.data.mode=concurrent
++persist.data.netmgrd.qos.enable=true
++persist.vendor.data.mode=concurrent
++ro.use_data_netmgrd=true
++ro.vendor.use_data_netmgrd=true
++
++# NFC
++persist.nfc.smartcard.config=SIM1,eSE1
++ro.nfc.port=I2C
++
++# RmNet Data
++persist.data.df.agg.dl_pkt=10
++persist.data.df.agg.dl_size=4096
++persist.data.df.dev_name=rmnet_usb0
++persist.data.df.dl_mode=5
++persist.data.df.iwlan_mux=9
++persist.data.df.mux_count=8
++persist.data.df.ul_mode=5
++persist.data.wda.enable=true
++persist.rmnet.data.enable=true
++
++# SoC
++ro.soc.manufacturer=Qualcomm
++ro.soc.model=MSM8996
++
++# TimeService
++persist.timed.enable=true
+-- 
+2.56.0
+

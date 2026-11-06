@@ -1,0 +1,424 @@
+From d18ffd87aac6c07094ccdc2ced3402d0d484b0e4 Mon Sep 17 00:00:00 2001
+From: devilAPI <felixseiboldt@gmail.com>
+Date: Fri, 6 Nov 2026 07:18:21 +0100
+Subject: [PATCH 7/9] axon7: touch key disabler on AIDL vendor.lineage.touch
+
+The HIDL vendor.lineage.touch@1.0 service becomes
+vendor.lineage.touch-service.axon7 on the NDK backend of
+vendor.lineage.touch V1. Same Synaptics 0dbutton node.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+---
+ PORTING-22.2.md                               | 11 ++--
+ device.mk                                     |  6 +-
+ sepolicy/vendor/file_contexts                 |  2 +-
+ touch/Android.bp                              | 30 +++------
+ touch/KeyDisabler.cpp                         | 49 ++++++--------
+ touch/KeyDisabler.h                           | 39 ++++-------
+ touch/service.cpp                             | 66 +++++--------------
+ touch/vendor.lineage.touch-service.axon7.rc   |  4 ++
+ touch/vendor.lineage.touch-service.axon7.xml  |  7 ++
+ ...ndor.lineage.touch@1.0-service.zte_8996.rc |  5 --
+ ...dor.lineage.touch@1.0-service.zte_8996.xml | 11 ----
+ 11 files changed, 75 insertions(+), 155 deletions(-)
+ create mode 100644 touch/vendor.lineage.touch-service.axon7.rc
+ create mode 100644 touch/vendor.lineage.touch-service.axon7.xml
+ delete mode 100644 touch/vendor.lineage.touch@1.0-service.zte_8996.rc
+ delete mode 100644 touch/vendor.lineage.touch@1.0-service.zte_8996.xml
+
+diff --git a/PORTING-22.2.md b/PORTING-22.2.md
+index 99593f6..38380ee 100644
+--- a/PORTING-22.2.md
++++ b/PORTING-22.2.md
+@@ -21,6 +21,8 @@ nearest msm8996 tree that runs 22.2 (see zte-axon7 lineageos/BUILD-PLAN-LOS22.md
+ - Android.mk: only the include; Wi-Fi firmware links as install_symlink.
+ - extract-files.sh: msm8996-common's 22.2 fixups for the shared blobs,
+   no vndk v28; setup-makefiles.sh: CHECKELF off.
++- touch/: key disabler as AIDL vendor.lineage.touch V1 (NDK),
++  vendor.lineage.touch-service.axon7, same 0dbutton node.
+ - lineage.dependencies: empty (kernel via the local manifest).
+ 
+ ## Next
+@@ -29,8 +31,7 @@ nearest msm8996 tree that runs 22.2 (see zte-axon7 lineageos/BUILD-PLAN-LOS22.md
+ 2. Blobs (vendor/zte from blueyfish 18.1): re-extract with the 22.2
+    proprietary-files.txt; RIL/IMS versions in manifest.xml and the
+    netmgrd/qcrild choice in init.qcom.rc follow the chosen blobs.
+-3. touch/: key disabler to the AIDL vendor.lineage.touch.
+-4. ZteDoze (Android.mk app) for API 35, or LineageOS's own doze.
+-5. sepolicy property context for persist.axon7.amp_hal_device_map.
+-6. Vendor image size: gemini's is 832 MiB, axon7's partition 512 MiB.
+-7. Kernel: the 4.4 port (DTS, synaptics_dsx, AK4961/AK4490 audio, panel).
++3. ZteDoze (Android.mk app) for API 35, or LineageOS's own doze.
++4. sepolicy property context for persist.axon7.amp_hal_device_map.
++5. Vendor image size: gemini's is 832 MiB, axon7's partition 512 MiB.
++6. Kernel: the 4.4 port (DTS, synaptics_dsx, AK4961/AK4490 audio, panel).
+diff --git a/device.mk b/device.mk
+index 829a8ff..00ae38b 100644
+--- a/device.mk
++++ b/device.mk
+@@ -430,9 +430,9 @@ PRODUCT_PACKAGES += \
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/thermal-engine.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine.conf
+ 
+-# Touch HAL: TODO port touch/ (key disabler, vendor.lineage.touch@1.0 HIDL) to the AIDL vendor.lineage.touch
+-#PRODUCT_PACKAGES += \
+-#    vendor.lineage.touch@1.0-service.zte_8996
++# Touch HAL (capacitive key disabler)
++PRODUCT_PACKAGES += \
++    vendor.lineage.touch-service.axon7
+ 
+ # USB
+ PRODUCT_PACKAGES += \
+diff --git a/sepolicy/vendor/file_contexts b/sepolicy/vendor/file_contexts
+index c07b23f..5a75732 100644
+--- a/sepolicy/vendor/file_contexts
++++ b/sepolicy/vendor/file_contexts
+@@ -32,4 +32,4 @@
+ # HALs
+ /(vendor|system/vendor)/bin/hw/android\.hardware\.light@2\.0-service\.zte_8996    u:object_r:hal_light_default_exec:s0
+ /(vendor|system/vendor)/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock u:object_r:hal_power_stats_default_exec:s0
+-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch@1\.0-service\.zte_8996      u:object_r:hal_lineage_touch_default_exec:s0
++/(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch-service\.axon7             u:object_r:hal_lineage_touch_default_exec:s0
+diff --git a/touch/Android.bp b/touch/Android.bp
+index 2f65bcf..167466c 100644
+--- a/touch/Android.bp
++++ b/touch/Android.bp
+@@ -1,35 +1,21 @@
+-// Copyright (C) 2019-2020 The LineageOS Project
+ //
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
++// SPDX-FileCopyrightText: 2019-2026 The LineageOS Project
++// SPDX-License-Identifier: Apache-2.0
+ //
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+ 
+ cc_binary {
+-    name: "vendor.lineage.touch@1.0-service.zte_8996",
+-    init_rc: ["vendor.lineage.touch@1.0-service.zte_8996.rc"],
+-    vintf_fragments: ["vendor.lineage.touch@1.0-service.zte_8996.xml"],
+-    defaults: ["hidl_defaults"],
++    name: "vendor.lineage.touch-service.axon7",
++    init_rc: ["vendor.lineage.touch-service.axon7.rc"],
++    vintf_fragments: ["vendor.lineage.touch-service.axon7.xml"],
+     relative_install_path: "hw",
+     vendor: true,
+     srcs: [
+         "KeyDisabler.cpp",
+-        "service.cpp"
++        "service.cpp",
+     ],
+     shared_libs: [
+         "libbase",
+-        "libhidlbase",
+-        "libutils",
+-        "vendor.lineage.touch@1.0",
+-    ],
+-    header_libs: [
+-        "libbinder_headers",
++        "libbinder_ndk",
++        "vendor.lineage.touch-V1-ndk",
+     ],
+ }
+diff --git a/touch/KeyDisabler.cpp b/touch/KeyDisabler.cpp
+index 2baa96d..53fab05 100644
+--- a/touch/KeyDisabler.cpp
++++ b/touch/KeyDisabler.cpp
+@@ -1,68 +1,59 @@
+ /*
+- * Copyright (C) 2019,2021 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
++ * SPDX-FileCopyrightText: 2019-2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
+  */
+ 
++#include "KeyDisabler.h"
++
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
+ #include <android-base/strings.h>
+-
+-#include "KeyDisabler.h"
++#include <unistd.h>
+ 
+ using ::android::base::ReadFileToString;
+ using ::android::base::Trim;
+ using ::android::base::WriteStringToFile;
+ 
++namespace aidl {
+ namespace vendor {
+ namespace lineage {
+ namespace touch {
+-namespace V1_0 {
+-namespace implementation {
+ 
+-constexpr const char kControlPath[] = "/sys/devices/soc/75ba000.i2c/i2c-12/12-0020/input/input1/0dbutton";
++static constexpr const char kControlPath[] =
++        "/sys/devices/soc/75ba000.i2c/i2c-12/12-0020/input/input1/0dbutton";
+ 
+ KeyDisabler::KeyDisabler() {
+     has_key_disabler_ = !access(kControlPath, F_OK);
++    if (!has_key_disabler_) LOG(WARNING) << kControlPath << " missing, key disabler unavailable";
+ }
+ 
+-// Methods from ::vendor::lineage::touch::V1_0::IKeyDisabler follow.
+-Return<bool> KeyDisabler::isEnabled() {
++ndk::ScopedAStatus KeyDisabler::getEnabled(bool* _aidl_return) {
+     std::string buf;
+ 
+-    if (!has_key_disabler_) return false;
++    *_aidl_return = false;
++    if (!has_key_disabler_) return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+ 
+     if (!ReadFileToString(kControlPath, &buf, true)) {
+         LOG(ERROR) << "Failed to read " << kControlPath;
+-        return false;
++        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+     }
+ 
+-    return Trim(buf) == "0";
++    *_aidl_return = Trim(buf) == "0";
++    return ndk::ScopedAStatus::ok();
+ }
+ 
+-Return<bool> KeyDisabler::setEnabled(bool enabled) {
+-    if (!has_key_disabler_) return false;
++ndk::ScopedAStatus KeyDisabler::setEnabled(bool enabled) {
++    if (!has_key_disabler_) return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+ 
+     if (!WriteStringToFile(enabled ? "0" : "1", kControlPath, true)) {
+         LOG(ERROR) << "Failed to write " << kControlPath;
+-        return false;
++        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+     }
+ 
+-    return true;
++    return ndk::ScopedAStatus::ok();
+ }
+ 
+-}  // namespace implementation
+-}  // namespace V1_0
+ }  // namespace touch
+ }  // namespace lineage
+ }  // namespace vendor
++}  // namespace aidl
+diff --git a/touch/KeyDisabler.h b/touch/KeyDisabler.h
+index 8aba763..57457fd 100644
+--- a/touch/KeyDisabler.h
++++ b/touch/KeyDisabler.h
+@@ -1,48 +1,31 @@
+ /*
+- * Copyright (C) 2019,2021 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
++ * SPDX-FileCopyrightText: 2019-2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
+  */
+ 
+-#ifndef VENDOR_LINEAGE_TOUCH_V1_0_KEYDISABLER_H
+-#define VENDOR_LINEAGE_TOUCH_V1_0_KEYDISABLER_H
++#pragma once
+ 
+-#include <vendor/lineage/touch/1.0/IKeyDisabler.h>
++#include <aidl/vendor/lineage/touch/BnKeyDisabler.h>
+ 
++namespace aidl {
+ namespace vendor {
+ namespace lineage {
+ namespace touch {
+-namespace V1_0 {
+-namespace implementation {
+ 
+-using ::android::hardware::Return;
+-
+-class KeyDisabler : public IKeyDisabler {
++// Capacitive key (back/home/recents) switch of the Synaptics S3320 driver:
++// 0dbutton = 1 keys on, 0 keys off. "Key disabler enabled" means keys off.
++class KeyDisabler : public BnKeyDisabler {
+   public:
+     KeyDisabler();
+ 
+-    // Methods from ::vendor::lineage::touch::V1_0::IKeyDisabler follow.
+-    Return<bool> isEnabled() override;
+-    Return<bool> setEnabled(bool enabled) override;
++    ndk::ScopedAStatus getEnabled(bool* _aidl_return) override;
++    ndk::ScopedAStatus setEnabled(bool enabled) override;
+ 
+   private:
+     bool has_key_disabler_;
+ };
+ 
+-}  // namespace implementation
+-}  // namespace V1_0
+ }  // namespace touch
+ }  // namespace lineage
+ }  // namespace vendor
+-
+-#endif  // VENDOR_LINEAGE_TOUCH_V1_0_KEYDISABLER_H
++}  // namespace aidl
+diff --git a/touch/service.cpp b/touch/service.cpp
+index 13a14e5..14e81e6 100644
+--- a/touch/service.cpp
++++ b/touch/service.cpp
+@@ -1,63 +1,27 @@
+ /*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
++ * SPDX-FileCopyrightText: 2019-2026 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
+  */
+ 
+-#define LOG_TAG "vendor.lineage.touch@1.0-service.zte_8996"
+-
+-#include <android-base/logging.h>
+-#include <binder/ProcessState.h>
+-#include <hidl/HidlTransportSupport.h>
++#define LOG_TAG "vendor.lineage.touch-service.axon7"
+ 
+ #include "KeyDisabler.h"
+ 
+-using android::OK;
+-using android::sp;
+-using android::status_t;
+-using android::hardware::configureRpcThreadpool;
+-using android::hardware::joinRpcThreadpool;
++#include <android-base/logging.h>
++#include <android/binder_manager.h>
++#include <android/binder_process.h>
+ 
+-using ::vendor::lineage::touch::V1_0::IKeyDisabler;
+-using ::vendor::lineage::touch::V1_0::implementation::KeyDisabler;
++using aidl::vendor::lineage::touch::KeyDisabler;
+ 
+ int main() {
+-    sp<KeyDisabler> keyDisabler;
+-    status_t status;
+-
+-    LOG(INFO) << "Touch HAL service is starting.";
+-
+-    keyDisabler = new KeyDisabler();
+-    if (keyDisabler == nullptr) {
+-        LOG(ERROR) << "Can not create an instance of Touch HAL KeyDisabler Iface, exiting.";
+-        goto shutdown;
+-    }
+-
+-    configureRpcThreadpool(1, true /*callerWillJoin*/);
+-
+-    status = keyDisabler->registerAsService();
+-    if (status != OK) {
+-        LOG(ERROR) << "Could not register service for Touch HAL KeyDisabler Iface ("
+-                   << status << ")";
+-        goto shutdown;
+-    }
++    ABinderProcess_setThreadPoolMaxThreadCount(0);
+ 
+-    LOG(INFO) << "Touch HAL service is ready.";
+-    joinRpcThreadpool();
+-    // Should not pass this line
++    std::shared_ptr<KeyDisabler> key_disabler = ndk::SharedRefBase::make<KeyDisabler>();
++    const std::string instance = std::string(KeyDisabler::descriptor) + "/default";
++    binder_status_t status =
++            AServiceManager_addService(key_disabler->asBinder().get(), instance.c_str());
++    CHECK_EQ(status, STATUS_OK) << "Failed to register " << instance;
+ 
+-shutdown:
+-    // In normal operation, we don't expect the thread pool to shutdown
+-    LOG(ERROR) << "Touch HAL service is shutting down.";
+-    return 1;
++    ABinderProcess_joinThreadPool();
++    return EXIT_FAILURE;  // should not reach
+ }
+diff --git a/touch/vendor.lineage.touch-service.axon7.rc b/touch/vendor.lineage.touch-service.axon7.rc
+new file mode 100644
+index 0000000..3a8e390
+--- /dev/null
++++ b/touch/vendor.lineage.touch-service.axon7.rc
+@@ -0,0 +1,4 @@
++service vendor.touch-hal /vendor/bin/hw/vendor.lineage.touch-service.axon7
++    class hal
++    user system
++    group system
+diff --git a/touch/vendor.lineage.touch-service.axon7.xml b/touch/vendor.lineage.touch-service.axon7.xml
+new file mode 100644
+index 0000000..c7878bd
+--- /dev/null
++++ b/touch/vendor.lineage.touch-service.axon7.xml
+@@ -0,0 +1,7 @@
++<manifest version="1.0" type="device">
++    <hal format="aidl">
++        <name>vendor.lineage.touch</name>
++        <version>1</version>
++        <fqname>IKeyDisabler/default</fqname>
++    </hal>
++</manifest>
+diff --git a/touch/vendor.lineage.touch@1.0-service.zte_8996.rc b/touch/vendor.lineage.touch@1.0-service.zte_8996.rc
+deleted file mode 100644
+index 8cfabc9..0000000
+--- a/touch/vendor.lineage.touch@1.0-service.zte_8996.rc
++++ /dev/null
+@@ -1,5 +0,0 @@
+-service vendor.touch-hal-1-0-zte_8996 /vendor/bin/hw/vendor.lineage.touch@1.0-service.zte_8996
+-    interface vendor.lineage.touch@1.0::IKeyDisabler default
+-    class hal
+-    user system
+-    group system
+diff --git a/touch/vendor.lineage.touch@1.0-service.zte_8996.xml b/touch/vendor.lineage.touch@1.0-service.zte_8996.xml
+deleted file mode 100644
+index c8bebbc..0000000
+--- a/touch/vendor.lineage.touch@1.0-service.zte_8996.xml
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<manifest version="1.0" type="device">
+-    <hal format="hidl">
+-        <name>vendor.lineage.touch</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IKeyDisabler</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-</manifest>
+-- 
+2.56.0
+

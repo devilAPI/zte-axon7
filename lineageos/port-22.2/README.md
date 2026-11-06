@@ -2,7 +2,7 @@
 
 `device_zte_axon7/`: the device tree forward-port as a patch series on top
 of blueyfish/android_device_zte_axon7 `lineage-18.1` (commit ccdff3a).
-Status and next steps: `PORTING-22.2.md` in the tree (added by the last patch).
+Status and next steps: `PORTING-22.2.md` in the tree (added by 0006, kept current by the later patches).
 
 Apply:
 
