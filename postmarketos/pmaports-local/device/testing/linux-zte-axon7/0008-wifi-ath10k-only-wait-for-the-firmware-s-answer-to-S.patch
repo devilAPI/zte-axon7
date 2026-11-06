@@ -1,0 +1,46 @@
+From 0d8f86cdbcba28f37f980de64383c284e3ed5564 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 13:44:53 +0100
+Subject: [PATCH] wifi: ath10k: only wait for the firmware's answer to SET_KEY
+
+The QCA6174 firmware (WLAN.RM.4.4.1-00309, hw3.2) often sends no
+security indication for a key deletion. ath10k then blocks for 3 s with
+conf_mutex held: on a roam the old AP's key removal times out before
+the new authentication, and after such a stall the router (WPA3-SAE,
+PMF) rejected the reassociation temporarily and every 4-way handshake
+timed out for minutes. Group rekeys hit the same timeout.
+
+Do not wait for DISABLE_KEY, as in Richard Acayan's RFC "wifi: ath10k:
+only wait for response to SET_KEY"
+(https://lists.infradead.org/pipermail/ath10k/2026-February/016785.html).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+---
+ drivers/net/wireless/ath/ath10k/mac.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
+index 8e604697d..565664a2d 100644
+--- a/drivers/net/wireless/ath/ath10k/mac.c
++++ b/drivers/net/wireless/ath/ath10k/mac.c
+@@ -324,9 +324,13 @@ static int ath10k_install_key(struct ath10k_vif *arvif,
+ 	if (ret)
+ 		return ret;
+ 
+-	time_left = wait_for_completion_timeout(&ar->install_key_done, 3 * HZ);
+-	if (time_left == 0)
+-		return -ETIMEDOUT;
++	/* QCA6174 firmware often sends no security indication for a key
++	 * deletion: waiting for it stalls disconnects and roams for 3 s */
++	if (cmd != DISABLE_KEY) {
++		time_left = wait_for_completion_timeout(&ar->install_key_done, 3 * HZ);
++		if (time_left == 0)
++			return -ETIMEDOUT;
++	}
+ 
+ 	return 0;
+ }
+-- 
+2.56.0
+
