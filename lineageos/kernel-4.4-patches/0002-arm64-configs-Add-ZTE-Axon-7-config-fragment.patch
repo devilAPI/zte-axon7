@@ -1,0 +1,57 @@
+From 7c32ea97b0139ede8a3f2bf8f5c7899880def5f4 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Fri, 6 Nov 2026 13:50:25 +0000
+Subject: [PATCH 2/5] arm64: configs: Add ZTE Axon 7 config fragment
+
+vendor/zte/axon7.config goes on top of vendor/xiaomi/mi8996_defconfig:
+
+  TARGET_KERNEL_CONFIG := vendor/xiaomi/mi8996_defconfig vendor/zte/axon7.config
+
+It selects the Axon 7 board (only its DTB is built), appends only that
+DTB to Image.gz-dtb, turns off drivers for Xiaomi-only hardware
+(TouchSense, TUSB320, LP5562, PN548, serial number, hall switch, the
+second Synaptics driver) and enables the Synaptics RMI4 touch driver and
+the qpnp-haptics vibrator driver the Axon 7 uses.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+---
+ arch/arm64/configs/vendor/zte/axon7.config | 26 ++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+ create mode 100644 arch/arm64/configs/vendor/zte/axon7.config
+
+diff --git a/arch/arm64/configs/vendor/zte/axon7.config b/arch/arm64/configs/vendor/zte/axon7.config
+new file mode 100644
+index 000000000000..0a5e659ee761
+--- /dev/null
++++ b/arch/arm64/configs/vendor/zte/axon7.config
+@@ -0,0 +1,26 @@
++# ZTE Axon 7 (A2017G, ailsa_ii)
++# Fragment applied on top of vendor/xiaomi/mi8996_defconfig:
++#   TARGET_KERNEL_CONFIG := vendor/xiaomi/mi8996_defconfig vendor/zte/axon7.config
++
++# Board: build only the Axon 7 DTB and append only it to Image.gz-dtb
++CONFIG_MACH_ZTE_AXON7=y
++CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES="qcom/msm8996-v3-pmi8996-zte-axon7"
++
++# Xiaomi-only hardware
++# CONFIG_TSPDRV is not set
++# CONFIG_TYPEC_TI_TUSB320 is not set
++# CONFIG_LEDS_LP5562 is not set
++# CONFIG_NFC_PN548 is not set
++# CONFIG_SERIAL_NUM is not set
++# CONFIG_HALL_SWITCH is not set
++# CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_FORCE is not set
++
++# Touch screen and capacitive keys: Synaptics RMI4 on BLSP2 QUP6
++CONFIG_TOUCHSCREEN_SYNAPTICS_DSX=y
++CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_I2C=y
++CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_CORE=y
++CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_RMI_DEV=y
++
++# Vibrator: PMI8996 LRA haptics (qcom,qpnp-haptics binding)
++# CONFIG_QPNP_HAPTIC is not set
++CONFIG_LEDS_QPNP_HAPTICS=y
+-- 
+2.47.3
+

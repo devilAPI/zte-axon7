@@ -1,0 +1,250 @@
+From 73752555d8407c730fba406b1fbd798fa7616fd0 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Fri, 6 Nov 2026 13:53:14 +0000
+Subject: [PATCH 3/5] input: misc: Add AH1898 hall sensor driver
+
+Port the AH1898 hall sensor driver from ZTE's Axon 7 3.18 kernel. The
+sensor output (gpio 124 on the Axon 7) is reported as the SW_LID switch,
+which Android uses for flip covers (config_lidControlsSleep).
+
+Changes from the 3.18 driver: drop the ZTE-only KEY_HALL_SENSOR_UP/DOWN
+key codes and the call into ZTE's Synaptics driver, handle the IRQ in a
+threaded handler, use device managed resources, report the state at
+probe and fix the error paths.
+
+Enable it in the Axon 7 config fragment.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+---
+ arch/arm64/configs/vendor/zte/axon7.config |   3 +
+ drivers/input/misc/Kconfig                 |  11 ++
+ drivers/input/misc/Makefile                |   1 +
+ drivers/input/misc/ah1898.c                | 172 +++++++++++++++++++++
+ 4 files changed, 187 insertions(+)
+ create mode 100644 drivers/input/misc/ah1898.c
+
+diff --git a/arch/arm64/configs/vendor/zte/axon7.config b/arch/arm64/configs/vendor/zte/axon7.config
+index 0a5e659ee761..6ac65aec3d2f 100644
+--- a/arch/arm64/configs/vendor/zte/axon7.config
++++ b/arch/arm64/configs/vendor/zte/axon7.config
+@@ -24,3 +24,6 @@ CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_RMI_DEV=y
+ # Vibrator: PMI8996 LRA haptics (qcom,qpnp-haptics binding)
+ # CONFIG_QPNP_HAPTIC is not set
+ CONFIG_LEDS_QPNP_HAPTICS=y
++
++# Hall sensor (flip cover)
++CONFIG_SENSORS_HALL_AH1898=y
+diff --git a/drivers/input/misc/Kconfig b/drivers/input/misc/Kconfig
+index bc50eef5e819..efdb2046198a 100644
+--- a/drivers/input/misc/Kconfig
++++ b/drivers/input/misc/Kconfig
+@@ -844,6 +844,17 @@ config INPUT_STMVL53L0
+ 	 To compile this driver as a module, choose M here: the
+ 	 module will be called stmvl53l0.
+ 
++config SENSORS_HALL_AH1898
++	tristate "AH1898 hall sensor"
++	depends on OF_GPIO
++	help
++	  Say Y here to enable the AH1898 hall sensor used for flip cover
++	  detection on the ZTE Axon 7. The sensor GPIO is reported as the
++	  SW_LID input switch.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called ah1898.
++
+ config HALL_SWITCH
+ 	tristate "hall sensor for ZUK devices"
+ 	default y
+diff --git a/drivers/input/misc/Makefile b/drivers/input/misc/Makefile
+index b5c0e8704bfa..afac16802d56 100644
+--- a/drivers/input/misc/Makefile
++++ b/drivers/input/misc/Makefile
+@@ -81,4 +81,5 @@ obj-$(CONFIG_INPUT_YEALINK)		+= yealink.o
+ obj-$(CONFIG_INPUT_IDEAPAD_SLIDEBAR)	+= ideapad_slidebar.o
+ obj-$(CONFIG_INPUT_PIXART_OTS_PAT9125_SWITCH)	+= ots_pat9125/
+ obj-$(CONFIG_INPUT_STMVL53L0)                 += vl53L0/
++obj-$(CONFIG_SENSORS_HALL_AH1898)	+= ah1898.o
+ obj-$(CONFIG_HALL_SWITCH)				+= hall_switch.o
+diff --git a/drivers/input/misc/ah1898.c b/drivers/input/misc/ah1898.c
+new file mode 100644
+index 000000000000..b6526946d7bd
+--- /dev/null
++++ b/drivers/input/misc/ah1898.c
+@@ -0,0 +1,172 @@
++/*
++ * AH1898 hall sensor (flip cover detection)
++ *
++ * Ported from the ZTE Axon 7 3.18 kernel (drivers/input/misc/ah1898.c,
++ * author chenhui). The sensor output is a GPIO that is low while a magnet
++ * (cover) is near. It is reported as the SW_LID input switch.
++ *
++ * Changes from the 3.18 driver: the ZTE-only KEY_HALL_SENSOR_UP/DOWN key
++ * events and the hook into ZTE's Synaptics driver are dropped, the IRQ is
++ * handled in a threaded handler instead of a work item, resources are
++ * device managed, and the initial state is reported at probe.
++ *
++ * Licensed under the GPL, like the original driver (MODULE_LICENSE "GPL").
++ */
++
++#include <linux/gpio.h>
++#include <linux/input.h>
++#include <linux/interrupt.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/of_gpio.h>
++#include <linux/platform_device.h>
++
++/* 1 = closed (magnet near), 0 = open; read-only mirror of the switch state */
++static int hall_status;
++module_param(hall_status, int, 0444);
++MODULE_PARM_DESC(hall_status, "Current hall state (1 = cover closed)");
++
++struct ah1898_chip {
++	struct input_dev *input;
++	int gpio;
++	int irq;
++};
++
++static void ah1898_report(struct ah1898_chip *chip)
++{
++	/* the output is pulled low while the magnet is near */
++	hall_status = gpio_get_value(chip->gpio) ? 0 : 1;
++
++	input_report_switch(chip->input, SW_LID, hall_status);
++	input_sync(chip->input);
++}
++
++static irqreturn_t ah1898_irq_thread(int irq, void *data)
++{
++	struct ah1898_chip *chip = data;
++
++	ah1898_report(chip);
++	dev_dbg(chip->input->dev.parent, "cover %s\n",
++		hall_status ? "closed" : "open");
++
++	return IRQ_HANDLED;
++}
++
++static int ah1898_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct ah1898_chip *chip;
++	int ret;
++
++	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
++	if (!chip)
++		return -ENOMEM;
++
++	chip->gpio = of_get_named_gpio(dev->of_node, "ah,gpio_irq", 0);
++	if (!gpio_is_valid(chip->gpio)) {
++		dev_err(dev, "invalid ah,gpio_irq %d\n", chip->gpio);
++		return chip->gpio == -EPROBE_DEFER ? -EPROBE_DEFER : -EINVAL;
++	}
++
++	ret = devm_gpio_request_one(dev, chip->gpio, GPIOF_IN, "ah1898_irq");
++	if (ret) {
++		dev_err(dev, "failed to request gpio %d: %d\n", chip->gpio, ret);
++		return ret;
++	}
++
++	chip->irq = gpio_to_irq(chip->gpio);
++	if (chip->irq < 0) {
++		dev_err(dev, "no irq for gpio %d: %d\n", chip->gpio, chip->irq);
++		return chip->irq;
++	}
++
++	chip->input = devm_input_allocate_device(dev);
++	if (!chip->input)
++		return -ENOMEM;
++
++	chip->input->name = "ah1898";
++	chip->input->phys = "ah1898/input0";
++	chip->input->id.bustype = BUS_HOST;
++	input_set_capability(chip->input, EV_SW, SW_LID);
++
++	ret = input_register_device(chip->input);
++	if (ret) {
++		dev_err(dev, "failed to register input device: %d\n", ret);
++		return ret;
++	}
++
++	platform_set_drvdata(pdev, chip);
++
++	/* report the state at boot so the switch bitmap is valid */
++	ah1898_report(chip);
++
++	ret = devm_request_threaded_irq(dev, chip->irq, NULL,
++					ah1898_irq_thread,
++					IRQF_TRIGGER_RISING |
++					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
++					"ah1898_irq", chip);
++	if (ret) {
++		dev_err(dev, "failed to request irq %d: %d\n", chip->irq, ret);
++		return ret;
++	}
++
++	device_init_wakeup(dev, true);
++
++	dev_info(dev, "hall sensor on gpio %d, cover %s\n", chip->gpio,
++		 hall_status ? "closed" : "open");
++
++	return 0;
++}
++
++static int ah1898_remove(struct platform_device *pdev)
++{
++	device_init_wakeup(&pdev->dev, false);
++	return 0;
++}
++
++#ifdef CONFIG_PM_SLEEP
++static int ah1898_suspend(struct device *dev)
++{
++	struct ah1898_chip *chip = dev_get_drvdata(dev);
++
++	if (device_may_wakeup(dev))
++		enable_irq_wake(chip->irq);
++
++	return 0;
++}
++
++static int ah1898_resume(struct device *dev)
++{
++	struct ah1898_chip *chip = dev_get_drvdata(dev);
++
++	if (device_may_wakeup(dev))
++		disable_irq_wake(chip->irq);
++
++	return 0;
++}
++#endif
++
++static SIMPLE_DEV_PM_OPS(ah1898_pm_ops, ah1898_suspend, ah1898_resume);
++
++static const struct of_device_id ah1898_of_match[] = {
++	{ .compatible = "ah,hall_ic", },
++	{ },
++};
++MODULE_DEVICE_TABLE(of, ah1898_of_match);
++
++static struct platform_driver ah1898_driver = {
++	.probe = ah1898_probe,
++	.remove = ah1898_remove,
++	.driver = {
++		.name = "hall_ic",
++		.of_match_table = ah1898_of_match,
++		.pm = &ah1898_pm_ops,
++	},
++};
++module_platform_driver(ah1898_driver);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("chenhui");
++MODULE_DESCRIPTION("AH1898 hall sensor driver");
++MODULE_ALIAS("platform:hall_ic");
+-- 
+2.47.3
+

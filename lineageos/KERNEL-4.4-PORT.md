@@ -13,6 +13,8 @@ an Axon 7 device tree and config fragment and is wired into the LineageOS
 
 ## Commits (branch `axon7`)
 
+A copy of the series is in `kernel-4.4-patches/` (`git am` on LineageOS/android_kernel_xiaomi_msm8996 lineage-22.2 at 535079d2fa36).
+
 | Commit | Subject |
 |---|---|
 | `73201443d4ae` | ARM: dts: msm8996: Add ZTE Axon 7 (ailsa_ii) device tree |
