@@ -29,8 +29,8 @@ and wasn't used.
 
 - LK match: `qcom,msm-id = <246 0x30001>`, `qcom,board-id = <100 0>`, PMIC id via `pmi8996.dtsi`.
 - Memory: standard msm8996 reserved-memory, the splash at 0x83400000 kept, ramoops at 0xbfc00000 as downstream (readable from TWRP).
-- Enabled: UFS, microSD (`broken-cd`: the card-detect polarity is unverified, so the slot is polled), USB 2.0 peripheral (dwc3), touch (RMI4 on `blsp2_i2c6`), volume keys (PM8994 GPIO 2/3), NFC, Wi-Fi (ath10k, QCA6174 on PCIe0), Bluetooth, RGB LED, GPU, Venus, ADSP and modem remoteprocs, all regulators with downstream voltages.
-- Display: `simple-framebuffer` on the splash buffer (1440x2560 r8g8b8). TLMM 81-84 reserved (TrustZone owns the fingerprint SPI).
+- Enabled: UFS, microSD (`broken-cd`: the card-detect polarity is unverified, so the slot is polled), USB 2.0 dual role (dwc3 + HD3SS3220 Type-C controller on `blsp2_i2c1`, VBUS for host mode from the PMI8994 SMBCHG OTG boost, `qcom_smbchg_otg-regulator`, patch 0003; default role peripheral), touch (RMI4 on `blsp2_i2c6`), volume keys (PM8994 GPIO 2/3), NFC, Wi-Fi (ath10k, QCA6174 on PCIe0; board data = the phone's `bdwlan30.bin` from firmware-zte-axon7; the kernel has no firmware user-helper fallback, which used to stall ath10k for ~3 minutes), Bluetooth, RGB LED, GPU, Venus, ADSP and modem remoteprocs, all regulators with downstream voltages.
+- Display: MDSS with both DSI links bonded (DSI0 master) to the Samsung S6E3HA3 command-mode panel (`panel-samsung-s6e3ha3`, patch 0002: downstream init sequence, reset, DCS brightness as `/sys/class/backlight`). Bonded DSI needs the DPU driver: kernel command line `msm.prefer_mdp5=0` (MDP5 does single DSI only). `simple-framebuffer` on the splash buffer covers early boot. TLMM 81-84 reserved (TrustZone owns the fingerprint SPI).
 - Hall sensor left disabled until its polarity is known.
 
 ## Building (needs sudo for pmbootstrap's chroots)
@@ -109,5 +109,6 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 
 ## Known gaps
 
-- **Display**: no mainline driver for the dual-DSI S6E3HA3 command-mode panel yet, so the screen likely stays on the boot logo (a command-mode panel needs frames to be started, see `../docs/display.md`). A reference panel driver exists in ungeskriptet's msm8996 tree.
-- Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), USB-C role switching (HD3SS3220), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
+- **Display**: the S6E3HA3 driver and the bonded-DSI setup (patches 0002, 0004) are built but not yet tested on the phone; without `msm.prefer_mdp5=0` the MDP5 driver takes MDSS and cannot drive two links.
+- **USB OTG**: HD3SS3220 + SMBCHG boost untested on the phone. Units with a Pericom PI5USB302 (@0x0d) instead of the HD3SS3220 stay in peripheral mode.
+- Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).

@@ -1,0 +1,343 @@
+From 9e9705fe2a34cd5494680a99e7640bb4b27f4472 Mon Sep 17 00:00:00 2001
+From: postmarketOS port <local>
+Date: Fri, 6 Nov 2026 09:02:12 +0100
+Subject: [PATCH 4/4] arm64: dts: qcom: msm8996-zte-axon7: display and USB OTG
+
+Display: MDSS, both DSI links bonded (DSI0 master) to the S6E3HA3 panel,
+panel VDDIO on GPIO 40, TE on GPIO 10; mdp_smmu enabled as on the other
+msm8996 phones with DRM. Needs the DPU driver (msm.prefer_mdp5=0).
+USB: dwc3 dual role through the HD3SS3220 on blsp2_i2c1 (INT PM8994
+GPIO 14, enables on PM8994 MPP 5/7 and PMI8994 GPIO 8/9 as downstream),
+VBUS from the PMI8994 SMBCHG OTG boost; default role peripheral.
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 245 ++++++++++++++++--
+ 1 file changed, 228 insertions(+), 17 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 982363690..200a67f9b 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -180,6 +180,21 @@ vdd_3v3: rome-vreg {
+ 	};
+ 
+ 	/* WL_EN pin (PM8994 GPIO 8) defined as a fixed regulator */
++	/* panel VDD3 (1.8 V), downstream zte,lcd-3v-vsp-enable-gpio */
++	panel_vddio: regulator-panel-vddio {
++		compatible = "regulator-fixed";
++		regulator-name = "panel_vddio";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++
++		gpio = <&tlmm 40 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++		regulator-boot-on;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&panel_vddio_default>;
++	};
++
+ 	wlan_en: wlan-en-1-8v {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "wlan-en-regulator";
+@@ -232,13 +247,50 @@ &blsp2_uart2 {
+  */
+ 
+ /*
+- * i2c@75b5000: TI HD3SS3220 USB-C controller @47 (INT = PM8994 GPIO 14,
+- * ENn_CC = PM8994 MPP 5) and SMB1351 parallel charger @1d.
+- * USB is run as a fixed peripheral for now, which does not need the
+- * Type-C controller (LK fastboot works the same way).
++ * i2c@75b5000: TI HD3SS3220 USB-C controller @47 and SMB1351 parallel
++ * charger @1d (no driver). Downstream zte-usb-type-c.dtsi: INT = PM8994
++ * GPIO 14, EN_CC/mux = PM8994 MPP 5, SS re-driver = MPP 7, chip supplies
++ * from PMI8994 GPIO 8 (VCONN 5 V) and GPIO 9 (3.3 V), all driven high.
++ * Some units carry a Pericom PI5USB302 @0d instead: then this probe fails
++ * and dwc3 stays in its default peripheral role (USB networking keeps
++ * working). VBUS for host mode comes from the PMI8994 SMBCHG OTG boost.
+  */
+ &blsp2_i2c1 {
+ 	status = "okay";
++
++	usb-typec@47 {
++		compatible = "ti,hd3ss3220";
++		reg = <0x47>;
++
++		interrupts-extended = <&pm8994_gpios 14 IRQ_TYPE_EDGE_FALLING>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&typec_int_default>, <&typec_en_default>, <&typec_vreg_default>;
++
++		connector {
++			compatible = "usb-c-connector";
++			label = "USB-C";
++			data-role = "dual";
++			power-role = "dual";
++			try-power-role = "sink";
++			typec-power-opmode = "default";
++
++			vbus-supply = <&smbchg_otg_vbus>;
++
++			ports {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				port@0 {
++					reg = <0>;
++
++					typec_hs_out: endpoint {
++						remote-endpoint = <&usb3_dwc3_role_in>;
++					};
++				};
++			};
++		};
++	};
+ };
+ 
+ &blsp2_i2c2 {
+@@ -317,18 +369,97 @@ &hsusb_phy1 {
+ 	vdda-phy-dpdm-supply = <&vreg_l24a_3p075>;
+ };
+ 
+-&mdp_smmu {
+-	/*
+-	 * As on other msm8996 phones: probing this SMMU alters the
+-	 * bootloader-configured scanout used by simplefb. Disabled until a
+-	 * panel driver for the dual-DSI S6E3HA3 exists.
+-	 */
+-	status = "disabled";
++/*
++ * Display: Samsung S6E3HA3 1440x2560 AMOLED, command mode, over both DSI
++ * links (bonded DSI, DSI0 master, each link one 720x2560 half). Bonded DSI
++ * needs the DPU driver (msm.prefer_mdp5=0); MDP5 drives single DSI only.
++ * simplefb above keeps LK's splash until the DRM driver takes over.
++ */
++&mdss {
++	status = "okay";
+ };
+ 
+-&mdss {
+-	/* See mdp_smmu. No mainline driver for the S6E3HA3 panel yet. */
+-	status = "disabled";
++&mdss_dsi0 {
++	status = "okay";
++
++	vdda-supply = <&vreg_l2a_1p25>;
++	vcca-supply = <&vreg_l28a_0p925>;
++	vddio-supply = <&vreg_l14a_1p8>;
++
++	qcom,dual-dsi-mode;
++	qcom,master-dsi;
++	qcom,sync-dual-dsi;
++
++	pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&mdss_dsi_default &mdss_te_default>;
++	pinctrl-1 = <&mdss_dsi_sleep &mdss_te_default>;
++
++	panel: panel@0 {
++		compatible = "samsung,s6e3ha3";
++		reg = <0>;
++
++		vddio-supply = <&panel_vddio>;
++		vdda-supply = <&vreg_l19a_3p0>;
++		reset-gpios = <&tlmm 8 GPIO_ACTIVE_LOW>;
++
++		ports {
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			port@0 {
++				reg = <0>;
++
++				panel_in0: endpoint {
++					remote-endpoint = <&mdss_dsi0_out>;
++				};
++			};
++
++			port@1 {
++				reg = <1>;
++
++				panel_in1: endpoint {
++					remote-endpoint = <&mdss_dsi1_out>;
++				};
++			};
++		};
++	};
++};
++
++&mdss_dsi0_out {
++	remote-endpoint = <&panel_in0>;
++	data-lanes = <0 1 2 3>;
++};
++
++&mdss_dsi0_phy {
++	status = "okay";
++
++	vcca-supply = <&vreg_l28a_0p925>;
++};
++
++&mdss_dsi1 {
++	status = "okay";
++
++	vdda-supply = <&vreg_l2a_1p25>;
++	vcca-supply = <&vreg_l28a_0p925>;
++	vddio-supply = <&vreg_l14a_1p8>;
++
++	qcom,dual-dsi-mode;
++	qcom,sync-dual-dsi;
++
++	/* bonded: DSI1 runs from DSI0's PLL */
++	assigned-clock-parents = <&mdss_dsi0_phy DSI_BYTE_PLL_CLK>,
++				 <&mdss_dsi0_phy DSI_PIXEL_PLL_CLK>;
++};
++
++&mdss_dsi1_out {
++	remote-endpoint = <&panel_in1>;
++	data-lanes = <0 1 2 3>;
++};
++
++&mdss_dsi1_phy {
++	status = "okay";
++
++	vcca-supply = <&vreg_l28a_0p925>;
+ };
+ 
+ &mmcc {
+@@ -404,6 +535,14 @@ divclk4_pin_a: divclk4-state {
+ 		power-source = <PM8994_GPIO_S4>;
+ 	};
+ 
++	typec_int_default: typec-int-state {
++		pins = "gpio14";
++		function = PMIC_GPIO_FUNC_NORMAL;
++		input-enable;
++		bias-disable;
++		power-source = <PM8994_GPIO_S4>;
++	};
++
+ 	bt_en_default: bt-en-state {
+ 		pins = "gpio19";
+ 		function = PMIC_GPIO_FUNC_NORMAL;
+@@ -414,6 +553,16 @@ bt_en_default: bt-en-state {
+ 	};
+ };
+ 
++&pm8994_mpps {
++	typec_en_default: typec-en-state {
++		/* MPP 5: EN_CC / USB 3.0 mux, MPP 7: SS re-driver; enabled high */
++		pins = "mpp5", "mpp7";
++		function = "digital";
++		output-high;
++		power-source = <2>;
++	};
++};
++
+ &pm8994_lpg {
+ 	status = "okay";
+ 
+@@ -446,6 +595,30 @@ vreg_apc_0p8: s11 {
+ };
+ 
+ /* Notification LED, downstream qpnp RGB (ids 3/4/5 = R/G/B) */
++&pmi8994_gpios {
++	typec_vreg_default: typec-vreg-state {
++		/* GPIO 8: VCONN 5 V regulator enable, GPIO 9: HD3SS3220 3.3 V */
++		pins = "gpio8", "gpio9";
++		function = PMIC_GPIO_FUNC_NORMAL;
++		output-high;
++		power-source = <PM8994_GPIO_VPH>;
++		qcom,drive-strength = <PMIC_GPIO_STRENGTH_LOW>;
++	};
++};
++
++&spmi_bus {
++	pmic@2 {
++		/* SMBCHG OTG (0x1100) and BAT_IF (0x1200) peripherals */
++		smbchg_otg_vbus: usb-vbus-regulator@1100 {
++			compatible = "qcom,pmi8994-smbchg-otg";
++			reg = <0x1100>, <0x1200>;
++			regulator-name = "smbchg_otg_vbus";
++			regulator-min-microvolt = <5000000>;
++			regulator-max-microvolt = <5000000>;
++		};
++	};
++};
++
+ &pmi8994_lpg {
+ 	status = "okay";
+ 
+@@ -782,6 +955,34 @@ hall_default: hall-default-state {
+ 		bias-disable;
+ 	};
+ 
++	mdss_dsi_default: mdss-dsi-default-state {
++		pins = "gpio8";
++		function = "gpio";
++		drive-strength = <8>;
++		bias-disable;
++	};
++
++	mdss_dsi_sleep: mdss-dsi-sleep-state {
++		pins = "gpio8";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-pull-down;
++	};
++
++	mdss_te_default: mdss-te-state {
++		pins = "gpio10";
++		function = "mdp_vsync";
++		drive-strength = <2>;
++		bias-pull-down;
++	};
++
++	panel_vddio_default: panel-vddio-default-state {
++		pins = "gpio40";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
+ 	touch_default: touch-default-state {
+ 		pins = "gpio89", "gpio125";
+ 		function = "gpio";
+@@ -818,8 +1019,8 @@ &ufsphy {
+ 
+ /*
+  * USB-C port, USB 2.0 through QUSB2 PHY 1 on the USB3 (dwc3) controller.
+- * Fixed peripheral mode for initial bring-up (USB networking / SSH).
+- * Role switching needs the HD3SS3220 on blsp2_i2c1 (TODO).
++ * Dual role: the HD3SS3220 (blsp2_i2c1) switches between device (USB
++ * networking / SSH) and host (OTG, VBUS from the SMBCHG boost).
+  */
+ &usb3 {
+ 	status = "okay";
+@@ -828,15 +1029,25 @@ &usb3 {
+ };
+ 
+ &usb3_dwc3 {
++	/* role from the HD3SS3220; device mode until it says otherwise */
++	usb-role-switch;
++	role-switch-default-mode = "peripheral";
++
+ 	/* usb3-phy is not used for now */
+ 	phys = <&hsusb_phy1>;
+ 	phy-names = "usb2-phy";
+ 
+-	dr_mode = "peripheral";
++	dr_mode = "otg";
+ 	maximum-speed = "high-speed";
+ 	snps,is-utmi-l1-suspend;
+ 	snps,usb2-gadget-lpm-disable;
+ 	snps,hird-threshold = /bits/ 8 <0>;
++
++	port {
++		usb3_dwc3_role_in: endpoint {
++			remote-endpoint = <&typec_hs_out>;
++		};
++	};
+ };
+ 
+ &venus {
+-- 
+2.56.0
+

@@ -1,9 +1,11 @@
 # Kernel config based on: linux-postmarketos-qcom-msm8996 (6.19.5) config,
-# updated with "make olddefconfig" for 7.3.1 + built-in USB gadget configfs.
+# updated with "make olddefconfig" for 7.3.1 + built-in USB gadget configfs;
+# no firmware user-helper fallback (each missing file cost 60 s), S6E3HA3
+# panel and SMBCHG OTG boost as modules.
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=0
+pkgrel=1
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -35,6 +37,9 @@ _kernver=${pkgver%.0}
 source="
 	https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/linux-$_kernver.tar.xz
 	0001-arm64-dts-qcom-add-ZTE-Axon-7.patch
+	0002-drm-panel-add-Samsung-S6E3HA3-dual-DSI-command-mode-.patch
+	0003-regulator-add-Qualcomm-PMI8994-PMI8996-SMBCHG-OTG-bo.patch
+	0004-arm64-dts-qcom-msm8996-zte-axon7-display-and-USB-OTG.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -68,5 +73,8 @@ package() {
 sha512sums="
 eac8912be329999150a71257adc513e6a52891d122641943c3a440f775267705eff0b275b4d90d5298518ca638ab48fc2b7c3ee109d82f0bb34a1ac081e9c3a2  linux-7.3.1.tar.xz
 51a0e54326c3560b61ad04311cb32ef1965a621614062f7aeceb5522be128b65f3674c5539ad5c98cf21af52868bfc1536544133a8067df50101b09a05b5650f  0001-arm64-dts-qcom-add-ZTE-Axon-7.patch
-a1562f391d413d858a67afb17cfdcbbb16af2e585d84451da8d44ae29111d34192b2a75ed4c4b0228810dd7c5d3f1dd0026536d6d5122ddc64e69a2aec696773  config-zte-axon7.aarch64
+37fac0499e9b4acdef5561be7f345dce9295ed62a21af7db18e27bc2f2c4b140e514b997ea08d1b44e082de680e7279e09c3119f49e8c63fabb6881b111c9c8a  0002-drm-panel-add-Samsung-S6E3HA3-dual-DSI-command-mode-.patch
+7fa33dd2ec1f7111a0d57541ad450f58628c6802977537f501981007282d1b0f5b21d6b096c7030d09a1c3491a97cdf593682ce5a03369668bb582dd25e72b0d  0003-regulator-add-Qualcomm-PMI8994-PMI8996-SMBCHG-OTG-bo.patch
+123ec1aa2ed5bf6cc5d80521d9be9c7f5d1e9468cdc116a42ce409bac4937160edec8f3e131b35648217fa94eafc637ddcd9799eaf5ff920da0e02589be9fa43  0004-arm64-dts-qcom-msm8996-zte-axon7-display-and-USB-OTG.patch
+dabcd6b2a3729645ecb410182fc1e1cc25749c6d9142812c292a7b8c4eb6367f8a54c4a7abbb75bfbfb99e816924a8e6af9f8aec69ac246eca105aa0e567b180  config-zte-axon7.aarch64
 "
