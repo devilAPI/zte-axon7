@@ -1,7 +1,7 @@
-From 24a689551f02b1da4f97b83d2cf6033c715a3b02 Mon Sep 17 00:00:00 2001
+From 657d51f3571f5f3bbf125edfe4a729411165d8cf Mon Sep 17 00:00:00 2001
 From: devilAPI <felixseiboldt@gmail.com>
 Date: Fri, 6 Nov 2026 10:51:16 +0100
-Subject: [PATCH 7/7] arm64: dts: qcom: msm8996-zte-axon7: PI5USB302 Type-C
+Subject: [PATCH 3/3] arm64: dts: qcom: msm8996-zte-axon7: PI5USB302 Type-C
  variant
 
 Units carry either a TI HD3SS3220 (0x47) or a Pericom PI5USB302 (0x0d)

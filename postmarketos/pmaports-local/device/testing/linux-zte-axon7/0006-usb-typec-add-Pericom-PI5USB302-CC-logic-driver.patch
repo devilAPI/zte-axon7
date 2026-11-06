@@ -1,13 +1,19 @@
-From 122dfd5b954ffc309ed71bf94c77e1364538d59b Mon Sep 17 00:00:00 2001
+From 5722e8f688e5459f70f34a10adbcc7cb60d3a9bd Mon Sep 17 00:00:00 2001
 From: devilAPI <felixseiboldt@gmail.com>
 Date: Fri, 6 Nov 2026 10:51:16 +0100
-Subject: [PATCH 6/7] usb: typec: add Pericom PI5USB302 CC logic driver
+Subject: [PATCH 2/3] usb: typec: add Pericom PI5USB302 CC logic driver
 
 Dual role CC logic fitted to some ZTE Axon 7 units instead of the TI
 HD3SS3220. Four byte registers without an address phase (reads start at
 0x01 and clear INT, writes start at 0x01). Sets the USB role switch and
-VBUS from CC_STAT, registers a Type-C port, polls when the interrupt is
-unusable, and has a force_host parameter for host mode without CC
+VBUS from CC_STAT and registers a Type-C port; polls when the interrupt
+is unusable.
+
+With nothing attached the port stays in host role (VBUS off): on the
+Axon 7 the chip never reports an attached device while dwc3 is in
+device role, but does within a fraction of a second in host role. A
+host partner switches to device role, an attached device turns VBUS
+on. A force_host parameter gives host mode and VBUS without CC
 detection.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
@@ -15,8 +21,8 @@ Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
 ---
  drivers/usb/typec/Kconfig     |  13 ++
  drivers/usb/typec/Makefile    |   1 +
- drivers/usb/typec/pi5usb302.c | 301 ++++++++++++++++++++++++++++++++++
- 3 files changed, 315 insertions(+)
+ drivers/usb/typec/pi5usb302.c | 313 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 327 insertions(+)
  create mode 100644 drivers/usb/typec/pi5usb302.c
 
 diff --git a/drivers/usb/typec/Kconfig b/drivers/usb/typec/Kconfig
@@ -57,10 +63,10 @@ index 8a6a1c663..49f768847 100644
  obj-$(CONFIG_TYPEC_WUSB3801)	+= wusb3801.o
 diff --git a/drivers/usb/typec/pi5usb302.c b/drivers/usb/typec/pi5usb302.c
 new file mode 100644
-index 000000000..17115f55a
+index 000000000..cf986c47e
 --- /dev/null
 +++ b/drivers/usb/typec/pi5usb302.c
-@@ -0,0 +1,301 @@
+@@ -0,0 +1,313 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Pericom (Diodes) PI5USB302 USB Type-C CC logic (dual role port).
@@ -71,10 +77,14 @@ index 000000000..17115f55a
 + * clears it. Behaviour follows the vendor driver in ZTE's Axon 7 kernel:
 + * dual role with Try.SNK, interrupt line active low.
 + *
-+ * The driver sets the USB role from the attached partner (a device: host
-+ * role and VBUS on; a host, accessory or nothing: device role, VBUS off)
-+ * and registers a Type-C port for userspace. Without a usable interrupt it
-+ * polls the chip instead.
++ * The driver sets the USB role from the attached partner and registers a
++ * Type-C port for userspace: a device attached gives host role with VBUS on,
++ * a host (PC, charger) gives device role, nothing attached gives host role
++ * with VBUS off. That idle host role is needed on the Axon 7: while dwc3 is
++ * in device role the chip never reports an attached device (sink), whatever
++ * is plugged in; in host role it does, within a fraction of a second. VBUS
++ * is only switched on for an attached device (or force_host). Without a
++ * usable interrupt the driver polls the chip.
 + */
 +
 +
@@ -102,6 +112,7 @@ index 000000000..17115f55a
 +static bool force_host;
 +module_param(force_host, bool, 0644);
 +MODULE_PARM_DESC(force_host, "host role and VBUS without an attached device (default: off)");
++
 +
 +#define PI5USB302_NREGS			4	/* ID, CTL, INT, CC_STAT */
 +#define PI5USB302_ID			0
@@ -139,6 +150,7 @@ index 000000000..17115f55a
 +	enum usb_role role;
 +	struct delayed_work poll;
 +	bool polling;
++	enum usb_role last_logged;
 +};
 +
 +static int pi5usb302_read(struct pi5usb302 *pi, u8 *regs)
@@ -183,6 +195,7 @@ index 000000000..17115f55a
 +static void pi5usb302_update(struct pi5usb302 *pi)
 +{
 +	enum usb_role role;
++	bool vbus;
 +	u8 regs[PI5USB302_NREGS];
 +	unsigned int attached;
 +	int ret;
@@ -194,29 +207,33 @@ index 000000000..17115f55a
 +		goto out;
 +	}
 +	attached = FIELD_GET(PI5USB302_CC_ATTACHED, regs[PI5USB302_CC_STAT]);
-+	role = attached == PI5USB302_DEVICE || READ_ONCE(force_host) ? USB_ROLE_HOST : USB_ROLE_DEVICE;
++	/* device role only for a host partner; idle stays host (see top) */
++	role = attached == PI5USB302_HOST && !READ_ONCE(force_host) ? USB_ROLE_DEVICE : USB_ROLE_HOST;
++	vbus = attached == PI5USB302_DEVICE || READ_ONCE(force_host);
 +
 +	dev_dbg(pi->dev, "ctl %#x int %#x cc_stat %#x: attached %u\n",
 +		regs[PI5USB302_CTL], regs[PI5USB302_INT], regs[PI5USB302_CC_STAT], attached);
 +
++	if (!vbus)
++		pi5usb302_set_vbus(pi, false);
 +	if (role != pi->role) {
-+		/* VBUS off before leaving host, on only once host */
-+		if (role != USB_ROLE_HOST)
-+			pi5usb302_set_vbus(pi, false);
 +		ret = usb_role_switch_set_role(pi->role_sw, role);
 +		if (ret)
 +			dev_err(pi->dev, "role switch failed: %d\n", ret);
 +		pi->role = role;
-+		if (role == USB_ROLE_HOST)
-+			pi5usb302_set_vbus(pi, true);
-+		dev_info(pi->dev, "%s\n", role == USB_ROLE_HOST ?
-+			 (attached == PI5USB302_DEVICE ? "host (device attached)" : "host (forced)") :
-+			 attached == PI5USB302_HOST ? "device (host attached)" : "device (idle)");
 +	}
++	if (vbus && !pi->vbus_on) {
++		pi5usb302_set_vbus(pi, true);
++		dev_info(pi->dev, "host, VBUS on (%s)\n",
++			 attached == PI5USB302_DEVICE ? "device attached" : "forced");
++	} else if (!vbus && role != pi->last_logged) {
++		dev_info(pi->dev, "%s\n", role == USB_ROLE_DEVICE ? "device (host attached)" : "host, idle");
++	}
++	pi->last_logged = vbus ? USB_ROLE_NONE : role;
 +
 +	if (pi->port) {
 +		typec_set_data_role(pi->port, role == USB_ROLE_HOST ? TYPEC_HOST : TYPEC_DEVICE);
-+		typec_set_pwr_role(pi->port, role == USB_ROLE_HOST ? TYPEC_SOURCE : TYPEC_SINK);
++		typec_set_pwr_role(pi->port, vbus ? TYPEC_SOURCE : TYPEC_SINK);
 +		typec_set_orientation(pi->port,
 +			!attached ? TYPEC_ORIENTATION_NONE :
 +			FIELD_GET(PI5USB302_CC_POLARITY, regs[PI5USB302_CC_STAT]) == 2 ?
@@ -255,6 +272,7 @@ index 000000000..17115f55a
 +	pi->dev = dev;
 +	pi->client = client;
 +	pi->role = USB_ROLE_NONE;
++	pi->last_logged = USB_ROLE_NONE;
 +	mutex_init(&pi->lock);
 +	i2c_set_clientdata(client, pi);
 +

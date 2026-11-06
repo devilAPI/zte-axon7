@@ -29,7 +29,7 @@ and wasn't used.
 
 - LK match: `qcom,msm-id = <246 0x30001>`, `qcom,board-id = <100 0>`, PMIC id via `pmi8996.dtsi`.
 - Memory: standard msm8996 reserved-memory, the splash at 0x83400000 kept, ramoops at 0xbfc00000 as downstream (readable from TWRP).
-- Enabled: UFS, microSD (`broken-cd`: the card-detect polarity is unverified, so the slot is polled), USB 2.0 dual role (dwc3 + HD3SS3220 Type-C controller on `blsp2_i2c1`, VBUS for host mode from the PMI8994 SMBCHG OTG boost, `qcom_smbchg_otg-regulator`, patch 0003; default role peripheral), touch (RMI4 on `blsp2_i2c6`), volume keys (PM8994 GPIO 2/3), NFC, Wi-Fi (ath10k, QCA6174 on PCIe0; board data = the phone's `bdwlan30.bin` from firmware-zte-axon7; the kernel has no firmware user-helper fallback, which used to stall ath10k for ~3 minutes), Bluetooth, RGB LED, GPU, Venus, ADSP and modem remoteprocs, all regulators with downstream voltages.
+- Enabled: UFS, microSD (`broken-cd`: the card-detect polarity is unverified, so the slot is polled), USB 2.0 dual role (dwc3 + HD3SS3220 or PI5USB302 Type-C controller on `blsp2_i2c1`, VBUS for host mode from the PMI8994 SMBCHG OTG boost, `qcom_smbchg_otg-regulator`, patch 0003; automatic role, see *USB OTG*), touch (RMI4 on `blsp2_i2c6`), volume keys (PM8994 GPIO 2/3), NFC, Wi-Fi (ath10k, QCA6174 on PCIe0; board data = the phone's `bdwlan30.bin` from firmware-zte-axon7; the kernel has no firmware user-helper fallback, which used to stall ath10k for ~3 minutes), Bluetooth, RGB LED, GPU, Venus, ADSP and modem remoteprocs, all regulators with downstream voltages.
 - Display: MDSS with both DSI links bonded (DSI0 master) to the Samsung S6E3HA3 command-mode panel (`panel-samsung-s6e3ha3`, patch 0002: downstream init sequence, reset, DCS brightness as `/sys/class/backlight`). Bonded DSI needs the DPU driver: kernel command line `msm.prefer_mdp5=0` (MDP5 does single DSI only). `simple-framebuffer` on the splash buffer covers early boot. TLMM 81-84 reserved (TrustZone owns the fingerprint SPI).
 - Hall sensor left disabled until its polarity is known.
 
@@ -88,15 +88,23 @@ it is to be checked again.
 ## USB OTG
 
 Some Axon 7s have a TI HD3SS3220 Type-C chip, others (this one) a Pericom
-PI5USB302 (I2C 0x0d, `pi5usb302` driver); the DTS describes both. Host
-mode, the PMI8994 OTG boost (VBUS) and USB devices work, but detecting an
-attached device does not yet: CC_STAT and the PMI8994 USBID stay idle
-without VBUS. Until then host mode is switched by hand (never with a PC on
-the cable, both would drive VBUS):
+PI5USB302 (I2C 0x0d, `pi5usb302` driver, patch 0006); the DTS describes
+both. OTG is automatic: plug a device in and VBUS (PMI8994 OTG boost) comes
+on within about a second, plug a PC in and the phone is a USB gadget again.
+
+How: with nothing attached the driver keeps dwc3 in **host** role (VBUS
+off). The PI5USB302 only reports an attached device (CC_STAT attached=1)
+while dwc3 is in host role; in device role it never does, which is why the
+first version (idle = device role) never saw a mouse. A host partner
+(attached=2) switches to device role. The interrupt (PM8994 GPIO 14) fails
+with -EIO, so the driver polls CC_STAT every 500 ms.
+
+For accessories that present no Rd (some cheap adapters), host mode and
+VBUS can still be forced (never with a PC on the cable):
 
 ```sh
 echo 1 | sudo tee /sys/module/pi5usb302/parameters/force_host   # host + VBUS
-echo 0 | sudo tee /sys/module/pi5usb302/parameters/force_host   # device again
+echo 0 | sudo tee /sys/module/pi5usb302/parameters/force_host   # automatic again
 ```
 
 ## Boot menu default
@@ -124,5 +132,6 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 ## Known gaps
 
 - **Display**: the S6E3HA3 driver and the bonded-DSI setup (patches 0002, 0004) are built but not yet tested on the phone; without `msm.prefer_mdp5=0` the MDP5 driver takes MDSS and cannot drive two links.
-- **USB OTG**: HD3SS3220 + SMBCHG boost untested on the phone. Units with a Pericom PI5USB302 (@0x0d) instead of the HD3SS3220 stay in peripheral mode.
+- **USB OTG**: works on PI5USB302 units (automatic host/device); the HD3SS3220 variant is untested on a phone. The PI5USB302 interrupt is unusable (polled).
+- **Wi-Fi roaming**: switching between two access points of the same network once left ath10k unable to install keys (`failed to install key ... -110`, then 4WAY_HANDSHAKE_TIMEOUT); `nmcli con up NAME` fixed it.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
