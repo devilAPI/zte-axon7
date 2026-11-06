@@ -1,0 +1,49 @@
+From c362e212387da210ef14f1aa00b26a1b33871be6 Mon Sep 17 00:00:00 2001
+From: devilAPI <felixseiboldt@gmail.com>
+Date: Fri, 6 Nov 2026 09:34:55 +0000
+Subject: [PATCH 15/15] axon7: PORTING-22.2: m nothing passes, what it took
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: Ic7206ef341e40301c428948c880fb5d3e91a9476
+---
+ PORTING-22.2.md | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/PORTING-22.2.md b/PORTING-22.2.md
+index 6157aa8..523140b 100644
+--- a/PORTING-22.2.md
++++ b/PORTING-22.2.md
+@@ -35,9 +35,27 @@ nearest msm8996 tree that runs 22.2 (see zte-axon7 lineageos/BUILD-PLAN-LOS22.md
+   vendor.lineage.touch-service.axon7, same 0dbutton node.
+ - lineage.dependencies: empty (kernel via the local manifest).
+ 
++- First `m nothing` that passes (2026-11-06): the soong errors were
++  - a frameworks/base worktree left half checked out by an interrupted
++    force-sync (57k staged deletions; `git reset --hard HEAD` there);
++  - Android 15 fsgen: PRODUCT_COPY_FILES under lib/ become
++    prebuilt_renderscript_bitcode modules installed at lib64, so blobs in
++    both lib and lib64 collided; those 105 libraries are now `-` modules
++    with DISABLE_DEPS (as msm8996-common); vr.default dropped (AOSP builds it);
++  - shims/ duplicated hardware/lineage/compat's libbase_shim and
++    libcutils_shim (the IMS blobs only need LogMessage C1, compat has it);
++  - gps/ replaced by msm8996-common's 22.2 GPS HAL (gnss@2.0 service,
++    batching, geofence), axon7's gps/etc kept;
++  - PRODUCT_PACKAGES gone in 22.2 removed: Snap, CNE client, services-ext,
++    libqsap_sdk, libQWiFiSoftApCfg, libicuuc.vendor, libstdc++.vendor.
++  vendor/zte needs its makefiles regenerated with this tree's
++  setup-makefiles.sh (committed on branch axon7-lineage-22.2 in the build
++  tree's vendor/zte). Soong analysis peaks at ~28 GB RAM + ~5 GB swap: one
++  run on the 31 GB + 7 GB swap container was OOM-killed.
++
+ ## Next
+-1. `breakfast axon7` / `m nothing` once `repo sync` is done; fix what kati,
+-   soong and sepolicy (neverallows) report.
++1. Full build (`m bacon`): fix what the compile, sepolicy (neverallows)
++   and image steps report; needs the 4.4 kernel config (item 4).
+ 2. Blobs (vendor/zte from blueyfish 18.1): re-extract with the 22.2
+    proprietary-files.txt; RIL/IMS versions in manifest.xml and the
+    netmgrd/qcrild choice in init.qcom.rc follow the chosen blobs.
+-- 
+2.56.0
+

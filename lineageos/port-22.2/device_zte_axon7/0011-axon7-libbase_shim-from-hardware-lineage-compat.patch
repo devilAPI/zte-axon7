@@ -1,0 +1,84 @@
+From a139b7df2825b54aa5d85c2d665a8fa98c3d2373 Mon Sep 17 00:00:00 2001
+From: devilAPI <felixseiboldt@gmail.com>
+Date: Fri, 6 Nov 2026 08:15:27 +0000
+Subject: [PATCH 11/15] axon7: libbase_shim from hardware/lineage/compat
+
+hardware/lineage/compat defines libbase_shim (LogMessage C1 without the tag
+argument, plus strings); the device copy made kati fail with
+MODULE.TARGET.STATIC_LIBRARIES.libbase_shim already defined. The blobs only
+import the C1 symbol (lib-imsrcs-v2, lib-uceservice, imsrcsd), which the
+compat library provides.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: I3ef5f1af94444c443e73362b61fdaf4ac85d93eb
+---
+ device.mk         |  2 +-
+ shims/Android.bp  |  8 ++------
+ shims/logging.cpp | 22 ----------------------
+ 3 files changed, 3 insertions(+), 29 deletions(-)
+ delete mode 100644 shims/logging.cpp
+
+diff --git a/device.mk b/device.mk
+index 00ae38b..9ef6516 100644
+--- a/device.mk
++++ b/device.mk
+@@ -413,7 +413,7 @@ PRODUCT_PACKAGES += \
+     android.hardware.sensors@1.0-service \
+     libpower.vendor
+ 
+-# Shims (libui_shim, libgui_shim, libcrypto_shim come from hardware/lineage/compat now)
++# Shims (libbase_shim, libui_shim, libgui_shim, libcrypto_shim come from hardware/lineage/compat)
+ PRODUCT_PACKAGES += \
+     libbase_shim \
+     libcutils_shim
+diff --git a/shims/Android.bp b/shims/Android.bp
+index d51c283..476dd73 100644
+--- a/shims/Android.bp
++++ b/shims/Android.bp
+@@ -14,12 +14,8 @@
+ // limitations under the License.
+ //
+ 
+-cc_library {
+-    name: "libbase_shim",
+-    srcs: ["logging.cpp"],
+-    shared_libs: ["libbase"],
+-    vendor: true
+-}
++// libbase_shim (LogMessage C1 without tag for the IMS blobs) comes from
++// hardware/lineage/compat.
+ 
+ 
+ cc_library {
+diff --git a/shims/logging.cpp b/shims/logging.cpp
+deleted file mode 100644
+index df563b6..0000000
+--- a/shims/logging.cpp
++++ /dev/null
+@@ -1,22 +0,0 @@
+-#include <android-base/logging.h>
+-
+-extern "C" void _ZN7android4base10LogMessageC1EPKcjNS0_5LogIdENS0_11LogSeverityES3_i(
+-        void* logMessage, const char* file, unsigned int line,
+-        android::base::LogId id, android::base::LogSeverity severity,
+-        const char* tag, int error);
+-
+-extern "C" void _ZN7android4base10LogMessageC1EPKcjNS0_5LogIdENS0_11LogSeverityEi(
+-        void* logMessage, const char* file, unsigned int line,
+-        android::base::LogId id, android::base::LogSeverity severity,
+-        int error) {
+-    _ZN7android4base10LogMessageC1EPKcjNS0_5LogIdENS0_11LogSeverityES3_i(
+-            logMessage, file, line, id, severity, nullptr, error);
+-}
+-
+-extern "C" void _ZN7android4base10LogMessageC2EPKcjNS0_5LogIdENS0_11LogSeverityEi(
+-        void* logMessage, const char* file, unsigned int line,
+-        android::base::LogId id, android::base::LogSeverity severity,
+-        int error) {
+-    _ZN7android4base10LogMessageC1EPKcjNS0_5LogIdENS0_11LogSeverityES3_i(
+-            logMessage, file, line, id, severity, nullptr, error);
+-}
+-- 
+2.56.0
+

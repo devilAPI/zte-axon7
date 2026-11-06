@@ -1,0 +1,32 @@
+From fb551a08d06bb95823c06fb2c65b933321015f3b Mon Sep 17 00:00:00 2001
+From: devilAPI <felixseiboldt@gmail.com>
+Date: Fri, 6 Nov 2026 08:44:45 +0000
+Subject: [PATCH 13/15] axon7: no vr.default blob
+
+AOSP builds vr.default from hardware/libhardware/modules/vr; as a blob
+module it clashed (kati: MODULE.TARGET.SHARED_LIBRARIES.vr.default already
+defined by vendor/zte/axon7). msm8996-common ships no vr.default either.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: Ib5257825c327784a8a56d26e3814354822a7a53a
+---
+ proprietary-files.txt | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/proprietary-files.txt b/proprietary-files.txt
+index 0eb09d0..89eab5c 100644
+--- a/proprietary-files.txt
++++ b/proprietary-files.txt
+@@ -884,8 +884,6 @@ vendor/bin/time_daemon|fa1b87481313fc039d969c1ac7c06c77422ff38e
+ vendor/lib64/libtime_genoff.so|06df52867790cdbbcc674a3a28d7ad7c8cc161ac
+ 
+ # VR - from B32
+--system/lib64/hw/vr.default.so;DISABLE_DEPS|02bacbcce3501df81cbc9e1d1eb7e1c6314dd26b
+--system/lib/hw/vr.default.so;DISABLE_DEPS|c17c6814b921f212e2dfbb2045a4fe3a9ced5493
+ 
+ # WiFi - from daisy - PKQ1.180917.001
+ vendor/bin/cnss-daemon|badadcc672341e36228301b02c2bfaa36be09233
+-- 
+2.56.0
+
