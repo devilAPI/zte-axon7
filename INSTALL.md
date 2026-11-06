@@ -9,7 +9,7 @@ developers. Every step is a button press or a command you can copy.
 > |---|---|
 > | Boot menu (choose the OS at power-on) | works |
 > | iOS 16.7.16 | boots to the home screen, touch, Wi-Fi, GPU, Sileo (jailbreak). No calls/mobile data, no camera, no audio. |
-> | postmarketOS (Linux) | boots from the microSD card: display, touch, on-screen keyboard, Wi-Fi, SSH, USB OTG (mouse, keyboard, stick). No calls, no audio, no camera. |
+> | postmarketOS (Linux) | boots from the microSD card: display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG (mouse, keyboard, stick). No calls, no audio, no camera. |
 > | LineageOS 22 (Android 15) | **not available yet** (being ported). The menu entry is there but has nothing to boot. |
 >
 > There are **no ready-made downloads** yet: Apple's iOS and the phone's
@@ -200,6 +200,7 @@ Change the default from postmarketOS: `sudo axon7-bootmenu default pmos 5`
 
 - **USB OTG** (mouse, keyboard, stick): just plug it in (USB-C plug or an OTG adapter); it works after about a second. A PC cable works as before (USB network, SSH).
 - **OTG device not detected** (rare, some cheap adapters): `echo 1 | sudo tee /sys/module/pi5usb302/parameters/force_host`. Switch it **off again (`echo 0`) before connecting a PC**: otherwise both power the cable.
+- **Bluetooth** (mouse, keyboard): `bluetoothctl`, then `scan on`, wait for the device, `pair XX:XX:...`, `trust XX:XX:...`, `connect XX:XX:...`, `exit`. The phone uses its original Bluetooth address from the factory. No Bluetooth audio yet (postmarketOS has no sound on this phone).
 - **Wi-Fi gone** (console still works): `sudo nmcli con up "YOUR_WIFI"`.
 - **SSH:** over USB `ssh user@172.16.42.1`, over Wi-Fi to the phone's address.
 - The screen of postmarketOS is the text console with an on-screen keyboard (no graphical desktop yet).

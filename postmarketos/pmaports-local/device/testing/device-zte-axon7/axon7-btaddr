@@ -1,0 +1,69 @@
+#!/bin/sh
+# Give the Axon 7's Bluetooth controller (QCA6174 on UART, hci0) its address.
+#
+# The chip has no address of its own: the kernel keeps hci0 "unconfigured"
+# (btmgmt config: missing public-address) until userspace sets one. ZTE
+# stores the factory address in the persist partition, /.bt_nv.bin, in
+# Qualcomm's NV format: records of [item id] [0] [length] [data]; item 1 is
+# the BD address, 6 bytes, least significant byte first. persist is mounted
+# read-only without journal replay, so it is never written.
+#
+# Without that file the address is derived from the SoC serial number
+# (stable across reflashing), as a locally administered address.
+#
+# Usage: axon7-btaddr [hci0]       (run by udev/systemd when hci0 appears)
+set -eu
+hci=${1:-hci0}
+persist=/dev/disk/by-partlabel/persist
+log() { echo "axon7-btaddr: $*"; }
+
+from_persist() {
+	[ -b "$persist" ] || return 0
+	m=$(mktemp -d /run/axon7-persist.XXXXXX)
+	if mount -t ext4 -o ro,noload "$persist" "$m" 2>/dev/null; then
+		if [ -f "$m/.bt_nv.bin" ]; then
+			# decimal bytes; walk the records
+			set -- $(od -An -tu1 -v "$m/.bt_nv.bin")
+			while [ $# -ge 3 ]; do
+				id=$1 len=$3
+				shift 3
+				[ $# -ge "$len" ] || break
+				if [ "$id" = 1 ] && [ "$len" = 6 ]; then
+					printf '%02X:%02X:%02X:%02X:%02X:%02X' "$6" "$5" "$4" "$3" "$2" "$1"
+					break
+				fi
+				shift "$len"
+			done
+		fi
+		umount "$m"
+	fi
+	rmdir "$m"
+}
+
+from_serial() {
+	s=$(cat /sys/devices/soc0/serial_number 2>/dev/null || true)
+	[ -n "$s" ] || s=$(cat /etc/machine-id)
+	echo "$s-axon7-bt" | sha256sum |
+		sed 's/^\(..\)\(..\)\(..\)\(..\)\(..\).*/02:\1:\2:\3:\4:\5/' | tr a-f A-F
+}
+
+addr=$(from_persist)
+case "$addr" in
+""|00:00:00:00:00:00|FF:FF:FF:FF:FF:FF)
+	addr=$(from_serial)
+	log "no factory address in persist, using $addr (from the SoC serial)" ;;
+*)
+	log "factory address $addr" ;;
+esac
+
+# the controller needs a moment after hci0 appears; btmgmt waits for input
+# when stdin is a terminal, so feed it nothing
+for i in 1 2 3 4 5 6 7 8 9 10; do
+	if btmgmt -i "$hci" public-addr "$addr" </dev/null | grep -q "Set Public Address complete"; then
+		log "$hci: address set"
+		exit 0
+	fi
+	sleep 1
+done
+log "$hci: setting the address failed"
+exit 1

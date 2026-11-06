@@ -107,6 +107,20 @@ echo 1 | sudo tee /sys/module/pi5usb302/parameters/force_host   # host + VBUS
 echo 0 | sudo tee /sys/module/pi5usb302/parameters/force_host   # automatic again
 ```
 
+## Bluetooth
+
+QCA6174 Bluetooth on `blsp1_uart2` (`qcom,qca6174-bt`, hci_uart + btqca,
+rampatch/nvm `qca/*_00440302.bin` from linux-firmware). The chip has no
+address of its own: the kernel keeps hci0 *unconfigured* (`btmgmt config`:
+missing public-address) until userspace sets one. `axon7-btaddr` (udev +
+`axon7-btaddr.service`) reads ZTE's factory address from the persist
+partition, `/.bt_nv.bin` (Qualcomm NV records `[id][0][len][data]`, item 1 =
+BD address, LSB first; persist mounted `ro,noload`), falling back to an
+address derived from the SoC serial. The kernel needs `CONFIG_BT_LE` for LE
+connections (HID over GATT), RFCOMM and BNEP are modules (r6). Tested: scan
+(BR/EDR + LE), LE connection with GATT service discovery to a PC.
+`Frame reassembly failed (-84)` once during the rampatch download is harmless.
+
 ## Boot menu default
 
 `axon7-bootmenu default pmos 5` makes the shim start postmarketOS after 5 s

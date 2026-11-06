@@ -1,0 +1,9 @@
+[Unit]
+Description=Set the Axon 7 Bluetooth address (factory address from persist)
+BindsTo=sys-subsystem-bluetooth-devices-hci0.device
+After=sys-subsystem-bluetooth-devices-hci0.device
+Before=bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/axon7-btaddr hci0
