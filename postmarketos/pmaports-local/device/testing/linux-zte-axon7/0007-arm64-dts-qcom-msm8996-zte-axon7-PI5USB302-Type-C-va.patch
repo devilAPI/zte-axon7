@@ -1,0 +1,100 @@
+From 24a689551f02b1da4f97b83d2cf6033c715a3b02 Mon Sep 17 00:00:00 2001
+From: devilAPI <felixseiboldt@gmail.com>
+Date: Fri, 6 Nov 2026 10:51:16 +0100
+Subject: [PATCH 7/7] arm64: dts: qcom: msm8996-zte-axon7: PI5USB302 Type-C
+ variant
+
+Units carry either a TI HD3SS3220 (0x47) or a Pericom PI5USB302 (0x0d)
+on blsp2_i2c1, sharing INT (PM8994 GPIO 14) and the enables; describe
+both, each with its own connector and dwc3 role endpoint. Both map the
+INT with the same trigger (level low), otherwise the second mapping fails.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 53 ++++++++++++++++++-
+ 1 file changed, 51 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 200a67f9b..2f2b3d73b 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -262,7 +262,8 @@ usb-typec@47 {
+ 		compatible = "ti,hd3ss3220";
+ 		reg = <0x47>;
+ 
+-		interrupts-extended = <&pm8994_gpios 14 IRQ_TYPE_EDGE_FALLING>;
++		/* same trigger as the PI5USB302 node: both map PM8994 GPIO 14 */
++		interrupts-extended = <&pm8994_gpios 14 IRQ_TYPE_LEVEL_LOW>;
+ 
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&typec_int_default>, <&typec_en_default>, <&typec_vreg_default>;
+@@ -291,6 +292,44 @@ typec_hs_out: endpoint {
+ 			};
+ 		};
+ 	};
++
++	/*
++	 * Other units carry a Pericom PI5USB302 instead (downstream lists
++	 * both, same INT and enables); this phone answers at 0x0d only.
++	 */
++	usb-typec@d {
++		compatible = "pericom,pi5usb302";
++		reg = <0x0d>;
++
++		interrupts-extended = <&pm8994_gpios 14 IRQ_TYPE_LEVEL_LOW>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&typec_int_default>, <&typec_en_default>, <&typec_vreg_default>;
++
++		connector {
++			compatible = "usb-c-connector";
++			label = "USB-C";
++			data-role = "dual";
++			power-role = "dual";
++			try-power-role = "sink";
++			typec-power-opmode = "default";
++
++			vbus-supply = <&smbchg_otg_vbus>;
++
++			ports {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				port@0 {
++					reg = <0>;
++
++					pi5usb_hs_out: endpoint {
++						remote-endpoint = <&usb3_dwc3_role_pi>;
++					};
++				};
++			};
++		};
++	};
+ };
+ 
+ &blsp2_i2c2 {
+@@ -1044,9 +1083,19 @@ &usb3_dwc3 {
+ 	snps,hird-threshold = /bits/ 8 <0>;
+ 
+ 	port {
+-		usb3_dwc3_role_in: endpoint {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		/* one per Type-C chip variant; only the fitted one probes */
++		usb3_dwc3_role_in: endpoint@0 {
++			reg = <0>;
+ 			remote-endpoint = <&typec_hs_out>;
+ 		};
++
++		usb3_dwc3_role_pi: endpoint@1 {
++			reg = <1>;
++			remote-endpoint = <&pi5usb_hs_out>;
++		};
+ 	};
+ };
+ 
+-- 
+2.56.0
+
