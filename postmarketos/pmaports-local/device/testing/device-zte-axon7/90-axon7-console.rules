@@ -1,0 +1,2 @@
+# The msm DRM framebuffer comes up late (module): set the console up again then.
+ACTION=="add", SUBSYSTEM=="graphics", KERNEL=="fb0", TAG+="systemd", ENV{SYSTEMD_WANTS}+="axon7-console.service"

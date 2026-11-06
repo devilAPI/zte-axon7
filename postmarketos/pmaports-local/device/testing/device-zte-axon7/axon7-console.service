@@ -1,0 +1,11 @@
+[Unit]
+Description=Axon 7 console font and on-screen keyboard fit
+After=systemd-vconsole-setup.service buffyboard.service
+ConditionPathExists=/dev/fb0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/axon7-console
+
+[Install]
+WantedBy=multi-user.target

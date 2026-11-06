@@ -1,0 +1,27 @@
+#!/bin/sh
+# Console on the Axon 7's 1440x2560 (534 ppi) panel: a doubled font (24x44
+# from LatGrkCyr-12x22: 60 columns), each terminal sized to the space above
+# buffyboard's keyboard (the bottom third), then SIGUSR1 to buffyboard so it
+# redraws the keyboard the console repaint covered. buffyboard 3.6 cannot
+# size terminals itself with fonts over 32 px (KD_FONT_OP_GET: ENOSPC).
+# Run when the framebuffer appears and after every getty start: systemd's
+# getty@.service gives each start a fresh VT (TTYVTDisallocate), back to the
+# default font and full height.
+font=${AXON7_CONSOLE_FONT:-LatGrkCyr-12x22}
+font_h=${AXON7_CONSOLE_FONT_HEIGHT:-44}
+[ -e /dev/fb0 ] || exit 0
+h=$(cut -d, -f2 /sys/class/graphics/fb0/virtual_size 2>/dev/null)
+[ -n "$h" ] || exit 0
+rows=$(( (h - h / 3 - 8) / font_h ))
+# fonts first: fbcon resizes every VT sharing a font when one is loaded
+for n in 1 2 3 4 5 6; do
+	[ -e /dev/tty$n ] && setfont -C /dev/tty$n -d "$font" 2>/dev/null
+done
+if pidof buffyboard >/dev/null; then
+	for n in 1 2 3 4 5 6; do
+		[ -e /dev/tty$n ] && stty -F /dev/tty$n rows "$rows" 2>/dev/null
+	done
+fi
+sleep 0.3
+pkill -USR1 -x buffyboard 2>/dev/null
+exit 0

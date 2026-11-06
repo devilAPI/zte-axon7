@@ -1,0 +1,36 @@
+From ccb2095f23f0e380fca980e52f0902ef41741ac6 Mon Sep 17 00:00:00 2001
+From: devilAPI <felixseiboldt@gmail.com>
+Date: Fri, 6 Nov 2026 09:37:03 +0100
+Subject: [PATCH] drm/msm/dpu: msm8996: CTL_0 and CTL_1 support split display
+
+Bonded DSI (one panel over DSI0+DSI1, as on the ZTE Axon 7) needs two
+CTLs with DPU_CTL_SPLIT_DISPLAY on DPU < 5.0; the msm8996 catalog marked
+none, so dpu_rm failed with "unable to find appropriate CTL". On this
+hardware CTL0/CTL1 drive INTF1/INTF2 in split mode (the bootloader's
+splash uses exactly these, and MDP5 used to book them for INTF1/2).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+---
+ drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_1_7_msm8996.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_1_7_msm8996.h b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_1_7_msm8996.h
+index 67910a2f6..6118695c1 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_1_7_msm8996.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/catalog/dpu_1_7_msm8996.h
+@@ -43,9 +43,11 @@ static const struct dpu_ctl_cfg msm8996_ctl[] = {
+ 	{
+ 		.name = "ctl_0", .id = CTL_0,
+ 		.base = 0x1000, .len = 0x64,
++		.features = BIT(DPU_CTL_SPLIT_DISPLAY),
+ 	}, {
+ 		.name = "ctl_1", .id = CTL_1,
+ 		.base = 0x1200, .len = 0x64,
++		.features = BIT(DPU_CTL_SPLIT_DISPLAY),
+ 	}, {
+ 		.name = "ctl_2", .id = CTL_2,
+ 		.base = 0x1400, .len = 0x64,
+-- 
+2.56.0
+
