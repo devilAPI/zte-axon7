@@ -17,6 +17,10 @@ grep -q 'zte,axon7' /proc/device-tree/compatible 2>/dev/null || { echo "axon7-du
 
 . /usr/share/deviceinfo/deviceinfo 2>/dev/null || . /etc/deviceinfo 2>/dev/null || true
 
+# Where the bundle goes: the pmos_boot partition (LUN 0) when it exists. The
+# boot partition (LUN 4) is write protected while the phone runs normally, so
+# it only serves as the fallback the shim reads when pmos_boot is empty.
+pmos=/dev/disk/by-partlabel/pmos_boot
 part=/dev/disk/by-partlabel/boot
 if [ ! -b "$part" ]; then
 	part=
@@ -38,9 +42,13 @@ done
 tmp=$(mktemp -d) || exit 0
 trap 'rm -rf "$tmp"' EXIT
 dd if="$part" of="$tmp/current.img" bs=1M 2>/dev/null || { say "cannot read $part"; exit 0; }
+[ -b "$pmos" ] && dd if="$pmos" of="$tmp/pmos_boot.bin" bs=1M 2>/dev/null
 
-# The kernel command line (root partition UUIDs): from the bundle on the partition, else the running one.
-cmdline=$(axon7-dualboot cmdline "$tmp/current.img" 2>/dev/null) || cmdline=
+# The kernel command line (root partition UUIDs): from the current bundle
+# (pmos_boot, else the boot partition's), else the running one.
+cmdline=
+[ -f "$tmp/pmos_boot.bin" ] && cmdline=$(axon7-dualboot cmdline "$tmp/pmos_boot.bin" 2>/dev/null)
+[ -n "$cmdline" ] || cmdline=$(axon7-dualboot cmdline "$tmp/current.img" 2>/dev/null) || cmdline=
 if [ -z "$cmdline" ]; then
 	cmdline=$(cat /proc/cmdline)
 	case "$cmdline" in
@@ -51,6 +59,22 @@ fi
 
 if ! axon7-dualboot bundle --image /boot/vmlinuz --dtb "$dtb" --initrd /boot/initramfs --cmdline "$cmdline" -o "$tmp/pmos.bundle" >/dev/null 2>"$tmp/err"; then
 	say "bundle failed: $(cat "$tmp/err")"; exit 0
+fi
+if [ -b "$pmos" ]; then
+	size=$(stat -c %s "$tmp/pmos.bundle")
+	psize=$(blockdev --getsize64 "$pmos" 2>/dev/null || echo 0)
+	[ "$size" -le "$psize" ] || { say "bundle ($size bytes) larger than $pmos, not updated"; exit 0; }
+	if [ -f "$tmp/pmos_boot.bin" ] && head -c "$size" "$tmp/pmos_boot.bin" | cmp -s - "$tmp/pmos.bundle"; then
+		echo "axon7-dualboot: $pmos is up to date"
+		exit 0
+	fi
+	if dd if="$tmp/pmos.bundle" of="$pmos" bs=1M conv=fsync 2>/dev/null; then
+		sync
+		say "updated $pmos ($size bytes, postmarketOS from /boot)"
+		exit 0
+	fi
+	say "WRITING $pmos FAILED"
+	exit 1
 fi
 if ! axon7-dualboot combine "$tmp/current.img" "$tmp/pmos.bundle" -o "$tmp/new.img" >/dev/null 2>"$tmp/err"; then
 	say "not updated: $(cat "$tmp/err")"; exit 0

@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Default entry of the Axon 7 boot menu (iOS / postmarketOS / LineageOS).
+
+The shim (ios/shim/axon7.c, boot_setting) reads the last 4 KiB block of the
+`misc` partition at every boot: "AX7BOOT1", u32 entry, u32 countdown seconds,
+u32 entry ^ 0xa5a5a5a5 (little endian). With a stored default the menu still
+comes up and any key stops the countdown; without one it defaults to iOS.
+
+  axon7-bootmenu                      show the setting
+  axon7-bootmenu default pmos [SECS]  start postmarketOS after SECS (default 10)
+  axon7-bootmenu default ios|los [SECS]
+  axon7-bootmenu clear                back to iOS after 10 s
+"""
+import os
+import struct
+import sys
+
+MISC = '/dev/disk/by-partlabel/misc'
+MAGIC = b'AX7BOOT1'
+BLOCK = 4096
+ENTRIES = {'ios': 0, 'pmos': 1, 'postmarketos': 1, 'los': 2, 'lineageos': 2}
+NAMES = ['iOS', 'postmarketOS', 'LineageOS']
+
+
+def offset(fd):
+    size = os.lseek(fd, 0, os.SEEK_END)
+    if size < 64 * 1024 + BLOCK:
+        sys.exit(f'{MISC}: {size} bytes, too small')
+    return size - BLOCK
+
+
+def read():
+    fd = os.open(MISC, os.O_RDONLY)
+    os.lseek(fd, offset(fd), os.SEEK_SET)
+    b = os.read(fd, BLOCK)
+    os.close(fd)
+    if b[:8] != MAGIC:
+        return None
+    e, t, c = struct.unpack_from('<III', b, 8)
+    if e >= len(NAMES) or c != e ^ 0xa5a5a5a5:
+        return None
+    return e, t
+
+
+def write(block):
+    fd = os.open(MISC, os.O_RDWR)
+    os.lseek(fd, offset(fd), os.SEEK_SET)
+    os.write(fd, block)
+    os.fsync(fd)
+    os.close(fd)
+
+
+def main():
+    a = sys.argv[1:]
+    if not a:
+        s = read()
+        print('default: iOS after 10 s (nothing stored)' if s is None else
+              f'default: {NAMES[s[0]]} after {s[1] or 10} s')
+    elif a[0] == 'default' and len(a) in (2, 3) and a[1].lower() in ENTRIES:
+        e = ENTRIES[a[1].lower()]
+        t = int(a[2]) if len(a) == 3 else 10
+        if not 1 <= t <= 99:
+            sys.exit('SECS: 1..99')
+        write((MAGIC + struct.pack('<III', e, t, e ^ 0xa5a5a5a5)).ljust(BLOCK, b'\0'))
+        print(f'default: {NAMES[e]} after {t} s')
+    elif a == ['clear']:
+        write(bytes(BLOCK))
+        print('default: iOS after 10 s')
+    else:
+        print(__doc__.strip(), file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == '__main__':
+    main()

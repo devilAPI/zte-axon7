@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=4
+pkgrel=5
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -28,6 +28,7 @@ source="
 	modules-initfs
 	axon7-dualboot
 	axon7-dualboot-update
+	axon7-bootmenu
 	axon7-dualboot.initd
 	axon7-dualboot.service
 	80-axon7-dualboot.preset
@@ -42,6 +43,7 @@ package() {
 	# iOS + postmarketOS dual boot (axon7-dualboot is ios/tools/axon7-dualboot.py)
 	install -Dm755 "$srcdir"/axon7-dualboot "$pkgdir"/usr/bin/axon7-dualboot
 	install -Dm755 "$srcdir"/axon7-dualboot-update "$pkgdir"/usr/libexec/axon7-dualboot-update
+	install -Dm755 "$srcdir"/axon7-bootmenu "$pkgdir"/usr/bin/axon7-bootmenu
 	# systemd images (the OpenRC service is in $pkgname-openrc)
 	install -Dm644 "$srcdir"/axon7-dualboot.service "$pkgdir"/usr/lib/systemd/system/axon7-dualboot.service
 	install -Dm644 "$srcdir"/80-axon7-dualboot.preset "$pkgdir"/usr/lib/systemd/system-preset/80-axon7-dualboot.preset
@@ -56,8 +58,9 @@ openrc() {
 sha512sums="
 c026a85aa8193f490885273d1674b0d508a8d7896a5499dee6d562ba1d67bcb940c88fc192c8355994ba8d532ea745dc5239003afaeb25b113bc213d157f3421  deviceinfo
 e5dd6e54ca7b33b3452655390e3ccecb183c3217422587df9e82c923683c662e487b35701accc19f7adddbbaddd22dfa6482082ec9057ce801e49e697a2ea01a  modules-initfs
-6dc2abbabce860892f41248640c0ed45026eec3d34e9ba5e152803357bfbf360c3758d647874c6755dd3176d6f08dcd09782c74c6d3ff23a64745b7b9cb5e6fb  axon7-dualboot
-da606a7ca6c789029b298a92be115aa5b68fe74e23e59c01be8b7415e56663deef3cbefb2afe9a778d9ba56fc86a66fbee0816499dd9a564d9f5968d5e5ba27a  axon7-dualboot-update
+4744e7ad563b04c57f7adc0833d97bfb428183d454adb76398b73c555cd0f1a99cc1eb709f4ab54e8ff59a8037ec20fba8a1fb2d8f130812eee207ba67a0d496  axon7-dualboot
+cf4153b45cf3254b9085f6d19cdcc710a65d622f0020f24ead1c25da356ca2aa3f597ccf9104361f48212bffb77c25fb9d65a8774b1e1dea857eb827a8f44004  axon7-dualboot-update
+708701f0a1d1b3d2df23d73fa26e537a0dc514c6ec8ece6851e89a7e2470c8dbd841e5e99e39e7167d69a61aaeb3abea9bfe8e197fdcf5de9e9c393fcebc4cd4  axon7-bootmenu
 ff013477448430d39343516f17d5b2fdae60c4cf8473f34ad3a7808c73453349684548d8ef8a1be194afe3f6c9ef78ea071e8849fdaf31a049cbd294122c85bd  axon7-dualboot.initd
 0faa1c586fe4a7d18bad58ed722fb698c59c6c5b52d655c9f37368d992a52c8f5d7d94332c76836266f717d0b8c43364b4fc46b4260527b71328279b12def7e4  axon7-dualboot.service
 4f0a7f68f1a44ce72cf222d808eb59f8bd2e639019c3d2ce0d505e20b78bc46f2f360bd3a10c088a29c81ebc7dd0f4e5b2865fe30a65b95d03d5e3517223861e  80-axon7-dualboot.preset
