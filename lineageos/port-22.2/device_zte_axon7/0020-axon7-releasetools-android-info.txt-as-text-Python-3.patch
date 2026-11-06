@@ -1,0 +1,29 @@
+From 9194f8e1b48971bd5f1eb029ab06eab8d165ecee Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Fri, 6 Nov 2026 19:50:45 +0000
+Subject: [PATCH 20/20] axon7: releasetools: android-info.txt as text (Python
+ 3), use the zip passed in
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: Ib6cc0f1e0ca0b3870fd712e349eb809d6ff7d9c9
+---
+ releasetools.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/releasetools.py b/releasetools.py
+index 5db9906..4ad9412 100644
+--- a/releasetools.py
++++ b/releasetools.py
+@@ -27,7 +27,7 @@ def IncrementalOTA_Assertions(info):
+   return
+ 
+ def AddTrustZoneAssertion(info, input_zip):
+-  android_info = info.input_zip.read("OTA/android-info.txt")
++  android_info = input_zip.read("OTA/android-info.txt").decode()
+   m = re.search(r'require\s+version-trustzone\s*=\s*(\S+)', android_info)
+   if m:
+     versions = m.group(1).split('|')
+-- 
+2.47.3
+

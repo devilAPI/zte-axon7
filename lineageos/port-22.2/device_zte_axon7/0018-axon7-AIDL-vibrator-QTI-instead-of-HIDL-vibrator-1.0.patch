@@ -1,0 +1,54 @@
+From 62e35d4fcb642c748a614733887a4ae0b8725433 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Fri, 6 Nov 2026 19:12:20 +0000
+Subject: [PATCH 18/20] axon7: AIDL vibrator (QTI) instead of HIDL vibrator@1.0
+ (not in the 22.2 framework matrix)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: I2d4b24e429cd8f1e62fc76a9542735151dd27cf8
+---
+ device.mk    | 6 ++----
+ manifest.xml | 9 ---------
+ 2 files changed, 2 insertions(+), 13 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index 3ffa78e..cb3c8f4 100644
+--- a/device.mk
++++ b/device.mk
+@@ -434,10 +434,8 @@ PRODUCT_PACKAGES += \
+ # Vendor init
+ $(call soong_config_set,libinit,vendor_init_lib,//$(LOCAL_PATH):libinit_msm8996)
+ 
+-# Vibrator
+-PRODUCT_PACKAGES += \
+-    android.hardware.vibrator@1.0-impl \
+-    android.hardware.vibrator@1.0-service
++# Vibrator (AIDL, QTI: /sys/class/leds/vibrator of the qpnp haptics driver)
++$(call inherit-product, vendor/qcom/opensource/vibrator/vibrator-vendor-product.mk)
+ 
+ # VNDK
+ PRODUCT_PACKAGES += \
+diff --git a/manifest.xml b/manifest.xml
+index 8d325b4..257f9b6 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -190,15 +190,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.vibrator</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IVibrator</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>com.qualcomm.qti.ant</name>
+         <transport>hwbinder</transport>
+-- 
+2.47.3
+

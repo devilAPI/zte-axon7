@@ -1,0 +1,118 @@
+From 44dd7af8a11bca2dfce692e0fb68ea2aa19b6956 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Fri, 6 Nov 2026 18:57:30 +0000
+Subject: [PATCH 17/20] axon7: recovery updater on the 22.2 OTA API
+ (deprecated-ota, error codes, Android.bp)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: I02919dda1028e55bfbff6a61b6613e73080fac9d
+---
+ recovery/Android.bp           | 14 ++++++++++++++
+ recovery/Android.mk           | 11 -----------
+ recovery/recovery_updater.cpp | 15 +++++++--------
+ 3 files changed, 21 insertions(+), 19 deletions(-)
+ create mode 100644 recovery/Android.bp
+ delete mode 100644 recovery/Android.mk
+
+diff --git a/recovery/Android.bp b/recovery/Android.bp
+new file mode 100644
+index 0000000..300dc22
+--- /dev/null
++++ b/recovery/Android.bp
+@@ -0,0 +1,14 @@
++//
++// Copyright (C) 2025 The LineageOS Project
++// SPDX-License-Identifier: Apache-2.0
++//
++
++cc_library_static {
++    name: "librecovery_updater_axon7",
++    include_dirs: [
++        "bootable/deprecated-ota/edify/include",
++        "bootable/recovery",
++        "bootable/recovery/otautil/include",
++    ],
++    srcs: ["recovery_updater.cpp"],
++}
+diff --git a/recovery/Android.mk b/recovery/Android.mk
+deleted file mode 100644
+index 5a2b7be..0000000
+--- a/recovery/Android.mk
++++ /dev/null
+@@ -1,11 +0,0 @@
+-LOCAL_PATH := $(call my-dir)
+-
+-include $(CLEAR_VARS)
+-LOCAL_C_INCLUDES := bootable/recovery \
+-    bootable/recovery/updater/include \
+-    bootable/recovery/edify/include \
+-    bootable/recovery/otautil/include \
+-    system/core/base/include
+-LOCAL_SRC_FILES := recovery_updater.cpp
+-LOCAL_MODULE := librecovery_updater_axon7
+-include $(BUILD_STATIC_LIBRARY)
+diff --git a/recovery/recovery_updater.cpp b/recovery/recovery_updater.cpp
+index 4bec233..880fc23 100644
+--- a/recovery/recovery_updater.cpp
++++ b/recovery/recovery_updater.cpp
+@@ -26,11 +26,12 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
+-#include <android-base/stringprintf.h>
++#include <memory>
++#include <string>
++#include <vector>
+ 
+ #include "edify/expr.h"
+ #include "otautil/error_code.h"
+-#include "updater/install.h"
+ 
+ #define MAX(a, b) (((a) > (b)) ? (a) : (b))
+ 
+@@ -93,11 +94,11 @@ static void bm_make_delta2(int *delta2, const char *pat, size_t pat_len) {
+ static char * bm_search(const char *str, size_t str_len, const char *pat,
+         size_t pat_len) {
+     int delta1[ALPHABET_LEN];
+-    int delta2[pat_len];
++    std::vector<int> delta2(pat_len);
+     int i;
+ 
+     bm_make_delta1(delta1, pat, pat_len);
+-    bm_make_delta2(delta2, pat, pat_len);
++    bm_make_delta2(delta2.data(), pat, pat_len);
+ 
+     if (pat_len == 0) {
+         return (char *) str;
+@@ -161,25 +162,23 @@ err_ret:
+ 
+ /* verify_trustzone("TZ_VERSION", "TZ_VERSION", ...) */
+ Value * VerifyTrustZoneFn(const char *name, State *state, const std::vector<std::unique_ptr<Expr>>& argv) {
+-    auto updater = state->updater;
+     char current_tz_version[TZ_VER_BUF_LEN];
+     size_t i;
+     int ret;
+ 
+     ret = get_tz_version(current_tz_version, TZ_VER_BUF_LEN);
+     if (ret) {
+-        return ErrorAbort(state, "%s() failed to read current TZ version: %d",
++        return ErrorAbort(state, kVendorFailure, "%s() failed to read current TZ version: %d",
+                 name, ret);
+     }
+ 
+     std::vector<std::string> tz_version;
+     if (!ReadArgs(state, argv, &tz_version)) {
+-        return ErrorAbort(state, "%s() error parsing arguments", name);
++        return ErrorAbort(state, kArgsParsingFailure, "%s() error parsing arguments", name);
+     }
+ 
+     ret = 0;
+     for (i = 0; i < argv.size(); i++) {
+-        updater->UiPrint(android::base::StringPrintf("Checking for TZ version %s\n", tz_version[i].c_str()));
+         if (strncmp(tz_version[i].c_str(), current_tz_version, tz_version[i].length()) == 0) {
+             ret = 1;
+             break;
+-- 
+2.47.3
+

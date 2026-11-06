@@ -1,0 +1,21 @@
+From cec1438d389694226814e98038c2aa59234ae6ac Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Fri, 6 Nov 2026 19:35:52 +0000
+Subject: [PATCH 19/20] axon7: twrp.fstab to recovery/root/system/etc (root/etc
+ is a symlink on 22.2)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: Iaa5bc9ecac733b2e6f299ff8abbcd3038e6cd5e6
+---
+ recovery/root/{ => system}/etc/twrp.fstab | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ rename recovery/root/{ => system}/etc/twrp.fstab (100%)
+
+diff --git a/recovery/root/etc/twrp.fstab b/recovery/root/system/etc/twrp.fstab
+similarity index 100%
+rename from recovery/root/etc/twrp.fstab
+rename to recovery/root/system/etc/twrp.fstab
+-- 
+2.47.3
+

@@ -10,7 +10,7 @@ developers. Every step is a button press or a command you can copy.
 > | Boot menu (choose the OS at power-on) | works |
 > | iOS 16.7.16 | boots to the home screen, touch, Wi-Fi, GPU, Sileo (jailbreak). No calls/mobile data, no camera, no audio. |
 > | postmarketOS (Linux) | boots from the microSD card: display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG (mouse, keyboard, stick). No calls, no audio, no camera. |
-> | LineageOS 22 (Android 15) | **not available yet** (being ported). The menu entry is there but has nothing to boot. |
+> | LineageOS 22 (Android 15) | **not available yet**: it builds, but is untested and cannot be installed next to iOS yet. The menu entry is there but has nothing to boot. |
 >
 > There are **no ready-made downloads** yet: Apple's iOS and the phone's
 > firmware may not be redistributed, so the guide builds them on your PC

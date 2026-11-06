@@ -1,0 +1,32 @@
+From 88baca1d60e7c77dca302047079cceb76491e01a Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Fri, 6 Nov 2026 18:09:41 +0000
+Subject: [PATCH 16/20] axon7: sepolicy: gx_fpd may not set debug_prop on 22.2
+ (neverallow)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i1nM3y1ifpqjS4n7PW
+Change-Id: I253fc784a2f00215fb96b7cbb80ad5945afd71f2
+---
+ sepolicy/vendor/gx_fpd.te | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/sepolicy/vendor/gx_fpd.te b/sepolicy/vendor/gx_fpd.te
+index 7884173..f258700 100644
+--- a/sepolicy/vendor/gx_fpd.te
++++ b/sepolicy/vendor/gx_fpd.te
+@@ -37,8 +37,9 @@ allow gx_fpd gx_fpd_device:chr_file { read write ioctl open };
+ # For memory allocation
+ allow gx_fpd ion_device:chr_file { read open ioctl };
+ 
+-# Allow setting debug.fp.fail_count
+-set_prop(gx_fpd, debug_prop)
++# debug.fp.fail_count: Android 15 forbids vendor domains to set debug_prop
++# (neverallow in system/sepolicy/private/property.te); it is only a counter
++dontaudit gx_fpd debug_prop:property_service set;
+ 
+ # R dir perms for firmware dir
+ r_dir_file(gx_fpd, firmware_file)
+-- 
+2.47.3
+
