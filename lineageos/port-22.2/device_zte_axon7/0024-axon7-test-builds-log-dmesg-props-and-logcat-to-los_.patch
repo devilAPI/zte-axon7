@@ -1,0 +1,78 @@
+From b7f1fee2c7dd3ca3d6618387dd4e6c7541e01800 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 08:06:23 +0000
+Subject: [PATCH 24/29] axon7: test builds log dmesg, props and logcat to
+ los_metadata every 2 s
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Change-Id: I4f36ad69eed3eca5004004ddb410953b8a16357e
+---
+ device.mk               |  3 ++-
+ test/axon7-testlog.sh   | 21 +++++++++++++++++++++
+ test/init.axon7-test.rc | 11 ++++++++++-
+ 3 files changed, 33 insertions(+), 2 deletions(-)
+ create mode 100644 test/axon7-testlog.sh
+
+diff --git a/device.mk b/device.mk
+index 628496d..dd00adf 100644
+--- a/device.mk
++++ b/device.mk
+@@ -469,5 +469,6 @@ PRODUCT_ADB_KEYS := $(AXON7_ADB_KEYS)
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/test/init.axon7-test.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.axon7-test.rc \
+-    $(LOCAL_PATH)/test/axon7-misc-pmos.bin:$(TARGET_COPY_OUT_VENDOR)/etc/axon7-misc-pmos.bin
++    $(LOCAL_PATH)/test/axon7-misc-pmos.bin:$(TARGET_COPY_OUT_VENDOR)/etc/axon7-misc-pmos.bin \
++    $(LOCAL_PATH)/test/axon7-testlog.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testlog.sh
+ endif
+diff --git a/test/axon7-testlog.sh b/test/axon7-testlog.sh
+new file mode 100644
+index 0000000..6810fdf
+--- /dev/null
++++ b/test/axon7-testlog.sh
+@@ -0,0 +1,21 @@
++#!/system/bin/sh
++# Unattended test builds only: every 2 s the whole kernel log, the props and
++# the newest logcat lines go to the start of los_metadata (raw, 16 MiB, not
++# used by this build), so a boot that restarts can be read from
++# postmarketOS afterwards: dd if=/dev/disk/by-partlabel/los_metadata | strings
++d=/dev/block/bootdevice/by-name/los_metadata
++t=/dev/axon7-testlog.txt
++n=0
++while true; do
++	n=$((n + 1))
++	{
++		echo "=== axon7 testlog #$n uptime $(cat /proc/uptime)"
++		echo "=== getprop"; getprop
++		echo "=== dmesg"; dmesg
++		echo "=== logcat"; logcat -d -b all -v threadtime -t 6000
++		echo "=== end"
++	} > $t 2>&1
++	head -c 15728640 $t | dd of=$d bs=1048576 conv=notrunc 2>/dev/null
++	sync
++	sleep 2
++done
+diff --git a/test/init.axon7-test.rc b/test/init.axon7-test.rc
+index 1a7a242..77bdb84 100644
+--- a/test/init.axon7-test.rc
++++ b/test/init.axon7-test.rc
+@@ -1,6 +1,15 @@
+ # Unattended test builds only (AXON7_ADB_KEYS, device.mk): as soon as this
+ # boot reaches init, the shim boot menu (last block of misc, ios/shim
+ # boot_setting) goes back to postmarketOS after 5 s, so a LineageOS that
+-# crashes or restarts later boots postmarketOS next and does not loop.
++# crashes or restarts later boots postmarketOS next and does not loop; the
++# logs of the boot go to los_metadata (axon7-testlog.sh).
+ on post-fs
+     exec u:r:su:s0 root root -- /system/bin/dd if=/vendor/etc/axon7-misc-pmos.bin of=/dev/block/bootdevice/by-name/misc bs=4096 seek=255 conv=notrunc
++    start axon7_testlog
++
++service axon7_testlog /system/bin/sh /vendor/bin/axon7-testlog.sh
++    user root
++    group root log
++    seclabel u:r:su:s0
++    disabled
++    oneshot
+-- 
+2.47.3
+

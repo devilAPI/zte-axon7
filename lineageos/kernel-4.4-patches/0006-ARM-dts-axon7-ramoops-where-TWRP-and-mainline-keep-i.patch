@@ -1,0 +1,55 @@
+From 2af747ee5ff2e7e8f5f2954aedf4f0e68679752d Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 11:00:53 +0000
+Subject: [PATCH 6/7] ARM: dts: axon7: ramoops where TWRP and mainline keep it
+
+ZTE 3.18 (TWRP) and mainline (postmarketOS) both use 4 MiB at
+0xbfc00000 with 32 KiB dmesg records and 1 MiB console, ftrace and pmsg
+zones. 0x92900000 was not read by either, so a LineageOS boot that died
+left no log behind.
+
+Change-Id: Ifc7b96c15c6e0162ecd031929fd5aee550b8ca78
+---
+ .../boot/dts/qcom/msm8996-zte-axon7-common.dtsi | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+index b8d37cc06dee..a2a2ad4677a2 100644
+--- a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
++++ b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+@@ -39,10 +39,15 @@
+ 		 */
+ 		/delete-node/ cont_splash_mem_hdmi@bdd00000;
+ 
+-		/* Same region ZTE's 3.18 kernel used for ramoops */
+-		ramoops_mem: ramoops_mem@92900000 {
++		/*
++		 * Where ZTE's 3.18 kernel (TWRP) and mainline (postmarketOS)
++		 * keep ramoops, with their layout: the next boot of any of the
++		 * three can read the log (dmesg zones, console, ftrace, pmsg).
++		 */
++		ramoops_mem: ramoops_mem@bfc00000 {
+ 			label = "ramoops_mem";
+-			reg = <0x0 0x92900000 0x0 0x00100000>;
++			reg = <0x0 0xbfc00000 0x0 0x00400000>;
++			no-map;
+ 		};
+ 	};
+ };
+@@ -886,10 +891,10 @@
+ 		status = "ok";
+ 		memory-region = <&ramoops_mem>;
+ 
+-		console-size = <0x0 0x00080000>;
+-		pmsg-size = <0x0 0x00040000>;
++		console-size = <0x0 0x00100000>;
++		pmsg-size = <0x0 0x00100000>;
+ 		record-size = <0x0 0x00008000>;
+-		ftrace-size = <0x0 0x00020000>;
++		ftrace-size = <0x0 0x00100000>;
+ 	};
+ };
+ 
+-- 
+2.47.3
+

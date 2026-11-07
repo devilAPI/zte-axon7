@@ -1,0 +1,58 @@
+From 4db8995fdc7e1be33aa044dc6288630cb88e6130 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 05:52:46 +0000
+Subject: [PATCH 21/29] axon7: triple boot: /data on los_data, microSD not for
+ vold
+
+userdata is the iOS root and the card holds postmarketOS (ios/shim boot
+menu); LineageOS gets its own partitions from axon7-tripleboot-gpt.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Change-Id: I1ed8521b8e241e11e445a40432e75769d78ccc6e
+---
+ init/fstab.qcom               | 7 +++++--
+ sepolicy/vendor/file_contexts | 4 ++++
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/init/fstab.qcom b/init/fstab.qcom
+index 216c3c9..c68c960 100644
+--- a/init/fstab.qcom
++++ b/init/fstab.qcom
+@@ -5,11 +5,14 @@
+ # 22.2 (as msm8996-common): system/vendor first-stage mounted from here (no
+ # DT fstab), /data ext4 with file-based encryption: moving from 18.1's
+ # footer encryption needs a format of userdata.
++# Triple boot (iOS + postmarketOS + LineageOS, ios/shim): userdata holds the
++# iOS root and the microSD card postmarketOS, so /data is los_data (LUN 0,
++# axon7-tripleboot-gpt) and the card is not handed to vold.
+ #<src>                                       <mnt_point>        <type>  <mnt_flags and options>                                     <fs_mgr_flags>
+ /dev/block/bootdevice/by-name/boot           /boot              emmc    defaults                                                    recoveryonly
+ /dev/block/bootdevice/by-name/recovery       /recovery          emmc    defaults                                                    recoveryonly
+ /dev/block/bootdevice/by-name/cache          /cache             ext4    nosuid,nodev,noatime,barrier=1                              wait,check,formattable
+-/dev/block/bootdevice/by-name/userdata       /data              ext4    nosuid,nodev,noatime,barrier=1,noauto_da_alloc              latemount,wait,check,fileencryption=ice,quota,formattable
++/dev/block/bootdevice/by-name/los_data       /data              ext4    nosuid,nodev,noatime,barrier=1,noauto_da_alloc              latemount,wait,check,fileencryption=ice,quota,formattable
+ /dev/block/by-name/system                    /system            ext4    ro,barrier=1                                                wait,first_stage_mount
+ /dev/block/by-name/vendor                    /vendor            ext4    ro,barrier=1                                                wait,first_stage_mount
+ /dev/block/bootdevice/by-name/persist        /mnt/vendor/persist     ext4    nosuid,nodev,noatime,barrier=1                                                                    wait
+@@ -19,5 +22,5 @@
+ /dev/block/bootdevice/by-name/misc           /misc              emmc    defaults                                                    defaults
+ /dev/block/zram0                             none               swap    defaults                                                    zramsize=536870912,max_comp_streams=4
+ 
+-/devices/soc/74a4900.sdhci/mmc_host*                                auto               auto    defaults                                                    voldmanaged=sdcard1:auto
++#/devices/soc/74a4900.sdhci/mmc_host*                                auto               auto    defaults                                                    voldmanaged=sdcard1:auto   (postmarketOS lives on the card)
+ /devices/soc/6a00000.ssusb/6a00000.dwc3/xhci-hcd.0.auto/usb*        auto               auto    defaults                                                    voldmanaged=usbdisk:auto
+diff --git a/sepolicy/vendor/file_contexts b/sepolicy/vendor/file_contexts
+index 5a75732..13a820c 100644
+--- a/sepolicy/vendor/file_contexts
++++ b/sepolicy/vendor/file_contexts
+@@ -33,3 +33,7 @@
+ /(vendor|system/vendor)/bin/hw/android\.hardware\.light@2\.0-service\.zte_8996    u:object_r:hal_light_default_exec:s0
+ /(vendor|system/vendor)/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock u:object_r:hal_power_stats_default_exec:s0
+ /(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch-service\.axon7             u:object_r:hal_lineage_touch_default_exec:s0
++
++# Triple boot: LineageOS /data and /metadata (axon7-tripleboot-gpt)
++/dev/block/bootdevice/by-name/los_data          u:object_r:userdata_block_device:s0
++/dev/block/bootdevice/by-name/los_metadata      u:object_r:metadata_block_device:s0
+-- 
+2.47.3
+

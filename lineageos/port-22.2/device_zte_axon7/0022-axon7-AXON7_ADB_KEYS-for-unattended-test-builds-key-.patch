@@ -1,0 +1,31 @@
+From 548882bde07e1148543f46df5cece900f553f839 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 06:21:46 +0000
+Subject: [PATCH 22/29] axon7: AXON7_ADB_KEYS for unattended test builds (key
+ in, adb on, authentication kept)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Change-Id: I06886eaf22817c81c405e713f5652eb1bd1d8ec8
+---
+ device.mk | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index cb3c8f4..0d0fa34 100644
+--- a/device.mk
++++ b/device.mk
+@@ -460,3 +460,11 @@ PRODUCT_COPY_FILES += \
+ PRODUCT_PACKAGES += \
+     firmware_wlan_mac.bin_symlink \
+     firmware_WCNSS_qcom_cfg.ini_symlink
++
++# Test builds without anyone at the phone: AXON7_ADB_KEYS=FILE (adb public
++# keys of the test host) puts the key in and starts adbd from the first
++# boot; adb authentication stays on (ro.adb.secure=1), only that host gets in.
++ifneq ($(AXON7_ADB_KEYS),)
++PRODUCT_ADB_KEYS := $(AXON7_ADB_KEYS)
++PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
++endif
+-- 
+2.47.3
+

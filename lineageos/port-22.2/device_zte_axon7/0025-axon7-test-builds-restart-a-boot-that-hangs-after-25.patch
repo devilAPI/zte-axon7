@@ -1,0 +1,72 @@
+From c5c3621d03ce3edcfdd5f81a06c53feea74dfb20 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 11:03:25 +0000
+Subject: [PATCH 25/29] axon7: test builds: restart a boot that hangs after 25
+ min
+
+Change-Id: I43804bcca2a0667e5361bffd6949a0aff1fd3e6a
+---
+ device.mk               |  3 ++-
+ test/axon7-testguard.sh |  9 +++++++++
+ test/init.axon7-test.rc | 13 ++++++++++++-
+ 3 files changed, 23 insertions(+), 2 deletions(-)
+ create mode 100755 test/axon7-testguard.sh
+
+diff --git a/device.mk b/device.mk
+index dd00adf..74b15ac 100644
+--- a/device.mk
++++ b/device.mk
+@@ -470,5 +470,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/test/init.axon7-test.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.axon7-test.rc \
+     $(LOCAL_PATH)/test/axon7-misc-pmos.bin:$(TARGET_COPY_OUT_VENDOR)/etc/axon7-misc-pmos.bin \
+-    $(LOCAL_PATH)/test/axon7-testlog.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testlog.sh
++    $(LOCAL_PATH)/test/axon7-testlog.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testlog.sh \
++    $(LOCAL_PATH)/test/axon7-testguard.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testguard.sh
+ endif
+diff --git a/test/axon7-testguard.sh b/test/axon7-testguard.sh
+new file mode 100755
+index 0000000..d9108cf
+--- /dev/null
++++ b/test/axon7-testguard.sh
+@@ -0,0 +1,9 @@
++#!/system/bin/sh
++# Unattended test builds only: a time limit for the test boot. A LineageOS
++# that hangs in userspace (no adb, no restart) restarts after 25 min; the
++# test shim (ios/shim LOS_TEST) then sends the phone to TWRP, where the test
++# script reads the kernel log (pstore) and restores the boot menu.
++sleep 1500
++setprop sys.powerctl reboot
++sleep 30
++echo b > /proc/sysrq-trigger
+diff --git a/test/init.axon7-test.rc b/test/init.axon7-test.rc
+index 77bdb84..8a7d903 100644
+--- a/test/init.axon7-test.rc
++++ b/test/init.axon7-test.rc
+@@ -2,7 +2,11 @@
+ # boot reaches init, the shim boot menu (last block of misc, ios/shim
+ # boot_setting) goes back to postmarketOS after 5 s, so a LineageOS that
+ # crashes or restarts later boots postmarketOS next and does not loop; the
+-# logs of the boot go to los_metadata (axon7-testlog.sh).
++# logs of the boot go to los_metadata (axon7-testlog.sh). axon7-testguard.sh
++# restarts a boot that hangs after 25 min.
++on early-init
++    start axon7_testguard
++
+ on post-fs
+     exec u:r:su:s0 root root -- /system/bin/dd if=/vendor/etc/axon7-misc-pmos.bin of=/dev/block/bootdevice/by-name/misc bs=4096 seek=255 conv=notrunc
+     start axon7_testlog
+@@ -13,3 +17,10 @@ service axon7_testlog /system/bin/sh /vendor/bin/axon7-testlog.sh
+     seclabel u:r:su:s0
+     disabled
+     oneshot
++
++service axon7_testguard /system/bin/sh /vendor/bin/axon7-testguard.sh
++    user root
++    group root
++    seclabel u:r:su:s0
++    disabled
++    oneshot
+-- 
+2.47.3
+

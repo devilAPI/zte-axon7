@@ -2,7 +2,19 @@
 
 Developer notes for the 4.4 kernel port (milestone 1: the kernel builds with
 an Axon 7 device tree and config fragment and is wired into the LineageOS
-22.2 tree). **Not tested on a phone yet. Nothing here is known to boot.**
+22.2 tree). **Boots LineageOS 22.2 to the setup wizard (2026-11-07)** through
+the shim's LineageOS entry. What it took on the phone:
+
+- ramoops at 0xbfc00000, 4 MiB, with TWRP's and mainline's layout (0006):
+  the old 0x92900000 was read by nothing, failed boots left no log.
+- smbcharger `fastchg-current-comp = 1200` (0007): ZTE's 900 is from the
+  PMI8994 table; the probe failed and the kernel hung at 2.5 s.
+- shim (ios `shim/android.c`): bootargs as one string (the kernel saw only
+  the DTB's own part, no `androidboot.*`, no panel) and without LK's
+  `kpti=1` (the kernel stopped before its first console line).
+- device tree 0026-0029: fstab in the boot ramdisk, `los_data` block labels,
+  the dsp context mount, battery sysfs labels for the 4.4 paths, a configfs
+  USB gadget (4.4 has no `android_usb`).
 
 - Base: `LineageOS/android_kernel_xiaomi_msm8996` `lineage-22.2`
   (4.4.302, HEAD `535079d2fa36`)
@@ -178,8 +190,8 @@ has no backlight node (only touch, vkeys, volume keys), so nothing to port.
    has no `fastboot boot`): convert with `ios/tools/axon7-androidimg.py
    convert` (raw Image + DTB section, the shim cannot gunzip) and write it to
    `los_boot` (LUN 0, writable from postmarketOS). If it does not come up,
-   reboot to TWRP and read `/sys/fs/pstore/console-ramoops*` (pstore is
-   enabled at 0x92900000). Note: the shim picks the DTB by msm-id/board-id
+   reboot to TWRP and read `/sys/fs/pstore/console-ramoops*` (pstore at
+   0xbfc00000, the same as TWRP and postmarketOS). Note: the shim picks the DTB by msm-id/board-id
    (0xf6/0x30001, 0x64/0) and copies /memory and bootargs as described in
    `ios/shim/android.c`.
 2. Display: splash should stay on (cont-splash). Check `dmesg | grep -i mdss`,

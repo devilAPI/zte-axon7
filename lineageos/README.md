@@ -4,14 +4,15 @@ Status (2026-11-05): **no LineageOS 19.1 or newer exists for the Axon 7**,
 neither builds nor sources. The newest is an unofficial **LineageOS 18.1
 (Android 11)** by blueyfish / rcky844 (tipzbuilds), 2026-11-01.
 
-Our port (2026-11-06): **LineageOS 22.2 (Android 15) builds** on the build
-server: `lineage-22.2-20261106-UNOFFICIAL-axon7.zip` (992 MB) with the 4.4
-kernel port ([KERNEL-4.4-PORT.md](KERNEL-4.4-PORT.md)) and the device tree
-series in `port-22.2/` (0001-0020). **Not tested on a phone, not
-published.** The zip is a plain LineageOS installer: it writes `boot` and
-uses `userdata` for /data, which would replace the iOS/postmarketOS boot
-menu and the iOS partition. For the triple boot it still has to boot from
-`los_boot` through the shim and use `los_data` / `los_metadata`.
+Our port (2026-11-07): **LineageOS 22.2 (Android 15) boots to the setup
+wizard** in the triple boot (shim menu entry, `los_boot`, /data on
+`los_data`, file-based encryption), with the 4.4 kernel port
+([KERNEL-4.4-PORT.md](KERNEL-4.4-PORT.md)) and the device tree series in
+`port-22.2/` (0001-0029). Display, USB/adb and the boot itself work;
+nothing else is tested yet, nothing is published. The plain zip
+(`lineage-22.2-*-UNOFFICIAL-axon7.zip`) is not for the triple boot: it
+writes `boot` and would replace the boot menu. Test boots run unattended
+with `ios/tools/axon7-los-test.sh` (test builds: `AXON7_ADB_KEYS`).
 
 | File | Contents |
 | --- | --- |

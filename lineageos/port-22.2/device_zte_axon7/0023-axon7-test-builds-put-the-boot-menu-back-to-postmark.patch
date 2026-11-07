@@ -1,0 +1,54 @@
+From c4d524f93ed279f6931a862b359f9260fd2193c0 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 06:23:16 +0000
+Subject: [PATCH 23/29] axon7: test builds put the boot menu back to
+ postmarketOS from init (no loop if a test boot fails later)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Change-Id: I7d2c7e57e19c66df6e00eaa39a6620ad0be1f34b
+---
+ device.mk                |   3 +++
+ test/axon7-misc-pmos.bin | Bin 0 -> 4096 bytes
+ test/init.axon7-test.rc  |   6 ++++++
+ 3 files changed, 9 insertions(+)
+ create mode 100644 test/axon7-misc-pmos.bin
+ create mode 100644 test/init.axon7-test.rc
+
+diff --git a/device.mk b/device.mk
+index 0d0fa34..628496d 100644
+--- a/device.mk
++++ b/device.mk
+@@ -467,4 +467,7 @@ PRODUCT_PACKAGES += \
+ ifneq ($(AXON7_ADB_KEYS),)
+ PRODUCT_ADB_KEYS := $(AXON7_ADB_KEYS)
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
++PRODUCT_COPY_FILES += \
++    $(LOCAL_PATH)/test/init.axon7-test.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.axon7-test.rc \
++    $(LOCAL_PATH)/test/axon7-misc-pmos.bin:$(TARGET_COPY_OUT_VENDOR)/etc/axon7-misc-pmos.bin
+ endif
+diff --git a/test/axon7-misc-pmos.bin b/test/axon7-misc-pmos.bin
+new file mode 100644
+index 0000000000000000000000000000000000000000..93f7956484217e47348379ff80605690edc19b67
+GIT binary patch
+literal 4096
+zcmeIup$$MG5JbU4P!J0JX#j(uK(0@y<7YN`SwG+IW6sq|MAX;G%y&kB009C72oNAZ
+NfB*pk1PJ^{-~zvZ1kV5f
+
+literal 0
+HcmV?d00001
+
+diff --git a/test/init.axon7-test.rc b/test/init.axon7-test.rc
+new file mode 100644
+index 0000000..1a7a242
+--- /dev/null
++++ b/test/init.axon7-test.rc
+@@ -0,0 +1,6 @@
++# Unattended test builds only (AXON7_ADB_KEYS, device.mk): as soon as this
++# boot reaches init, the shim boot menu (last block of misc, ios/shim
++# boot_setting) goes back to postmarketOS after 5 s, so a LineageOS that
++# crashes or restarts later boots postmarketOS next and does not loop.
++on post-fs
++    exec u:r:su:s0 root root -- /system/bin/dd if=/vendor/etc/axon7-misc-pmos.bin of=/dev/block/bootdevice/by-name/misc bs=4096 seek=255 conv=notrunc
+-- 
+2.47.3
+

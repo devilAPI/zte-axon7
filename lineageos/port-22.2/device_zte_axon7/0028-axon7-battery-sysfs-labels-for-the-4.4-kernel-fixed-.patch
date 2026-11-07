@@ -1,0 +1,46 @@
+From f5e06274dd2aebafe7d72998ae3280b07bd57179 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 13:13:13 +0000
+Subject: [PATCH 28/29] axon7: battery sysfs labels for the 4.4 kernel; fixed
+ charging control node
+
+hal_lineage_health could not open charging_enabled (generic sysfs label,
+the genfs paths were 3.18 ones), looped over its node list forever and
+system_server, waiting for the service, was killed by its watchdog every
+66 s: boot animation only.
+
+Change-Id: I7bb4d7fb28cf6a0b700671a0b2a418716c63c947
+---
+ device.mk                      | 3 +++
+ sepolicy/vendor/genfs_contexts | 4 ++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 440a331..5cf7e9f 100644
+--- a/device.mk
++++ b/device.mk
+@@ -307,6 +307,9 @@ PRODUCT_PACKAGES += \
+     vendor.lineage.health-service.default
+ 
+ $(call soong_config_set,lineage_health,charging_control_supports_bypass,false)
++# smbcharger (4.4): the HAL would otherwise search for a node forever and
++# system_server waits for it (watchdog restart every 66 s)
++$(call soong_config_set,lineage_health,charging_control_charging_path,/sys/class/power_supply/battery/battery_charging_enabled)
+ 
+ # LiveDisplay
+ PRODUCT_PACKAGES += \
+diff --git a/sepolicy/vendor/genfs_contexts b/sepolicy/vendor/genfs_contexts
+index ee359bc..e9be55e 100644
+--- a/sepolicy/vendor/genfs_contexts
++++ b/sepolicy/vendor/genfs_contexts
+@@ -14,3 +14,7 @@ genfscon sysfs /devices/soc/qpnp-fg-17/power_supply                     u:object
+ genfscon sysfs /devices/soc/qpnp-smbcharger-16/power_supply             u:object_r:sysfs_batteryinfo:s0
+ genfscon sysfs /devices/soc/soc:qcom,bcl/power_supply                   u:object_r:sysfs_batteryinfo:s0
+ genfscon sysfs /devices/soc/75ba000.i2c/i2c-12/12-0020/input/input1     u:object_r:sysfs_touchscreen:s0
++
++# 4.4 kernel: charger and fuel gauge on the SPMI bus (3.18: qpnp-smbcharger-16, qpnp-fg-17)
++genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-02/400f000.qcom,spmi:qcom,pmi8994@2:qcom,qpnp-smbcharger/power_supply u:object_r:sysfs_battery_supply:s0
++genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-02/400f000.qcom,spmi:qcom,pmi8994@2:qcom,fg/power_supply u:object_r:sysfs_battery_supply:s0
+-- 
+2.47.3
+

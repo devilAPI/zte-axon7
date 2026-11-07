@@ -1,0 +1,32 @@
+From 994fd5a1ad539d9c29e60f8a0da1a8fd21dfdc9a Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 12:12:09 +0000
+Subject: [PATCH 26/29] axon7: fstab.qcom in the boot ramdisk for first stage
+ mount
+
+First stage init found no fstab (no DT fstab, nothing at /fstab.qcom)
+and rebooted to the bootloader.
+
+Change-Id: I27dcac9f6eb1c9ccc751a9bec2685e8e4a212b60
+---
+ device.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 74b15ac..440a331 100644
+--- a/device.mk
++++ b/device.mk
+@@ -160,6 +160,10 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PACKAGES += \
+     charger_res_images
+ 
++# fstab: first stage init (no DT fstab) reads it from the boot ramdisk root
++PRODUCT_COPY_FILES += \
++    $(LOCAL_PATH)/init/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
++
+ # Common init scripts
+ PRODUCT_PACKAGES += \
+     fstab.qcom \
+-- 
+2.47.3
+

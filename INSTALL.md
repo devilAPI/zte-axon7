@@ -3,14 +3,14 @@
 For people who have flashed custom ROMs before (TWRP, ADB) but are not
 developers. Every step is a button press or a command you can copy.
 
-> **State (2026-11-06)**
+> **State (2026-11-07)**
 >
 > | | Status |
 > |---|---|
 > | Boot menu (choose the OS at power-on) | works |
 > | iOS 16.7.16 | boots to the home screen, touch, Wi-Fi, GPU, Sileo (jailbreak). No calls/mobile data, no camera, no audio. |
 > | postmarketOS (Linux) | boots from the microSD card: display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG (mouse, keyboard, stick). No calls, no audio, no camera. |
-> | LineageOS 22 (Android 15) | **not available yet**: it builds, but is untested and cannot be installed next to iOS yet. The menu entry is there but has nothing to boot. |
+> | LineageOS 22 (Android 15) | **not available yet**: a developer build boots to the setup wizard next to iOS and postmarketOS (display, USB/adb, encrypted storage on its own partition). No install steps here yet; nothing else tested. The menu entry has nothing to boot until then. |
 >
 > There are **no ready-made downloads** yet: Apple's iOS and the phone's
 > firmware may not be redistributed, so the guide builds them on your PC

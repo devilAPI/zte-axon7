@@ -1,0 +1,63 @@
+From caa6a6f88bc157d3c6a6f8632847e6e41be01f03 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 12:40:43 +0000
+Subject: [PATCH 27/29] axon7: /data on los_data mounts encrypted: block
+ labels, dsp context mount
+
+- los_data/los_metadata labels on the platform by-name path (ueventd does
+  not know init's bootdevice symlink): fsck/tune2fs were denied.
+- init may mount /vendor/dsp with context=adsprpcd_file; that mount failed,
+  mount_all returned -1 instead of "file encrypted", init never created
+  the fscrypt keyring and vold rebooted to recovery.
+- dsp nofail: a firmware mount must not stop the boot.
+
+Change-Id: Id450af685c8058b372e5939442ea312d0f7f7ceb
+---
+ init/fstab.qcom               | 2 +-
+ sepolicy/vendor/file_contexts | 8 +++++---
+ sepolicy/vendor/init.te       | 3 +++
+ 3 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/init/fstab.qcom b/init/fstab.qcom
+index c68c960..b6bada2 100644
+--- a/init/fstab.qcom
++++ b/init/fstab.qcom
+@@ -16,7 +16,7 @@
+ /dev/block/by-name/system                    /system            ext4    ro,barrier=1                                                wait,first_stage_mount
+ /dev/block/by-name/vendor                    /vendor            ext4    ro,barrier=1                                                wait,first_stage_mount
+ /dev/block/bootdevice/by-name/persist        /mnt/vendor/persist     ext4    nosuid,nodev,noatime,barrier=1                                                                    wait
+-/dev/block/bootdevice/by-name/dsp            /vendor/dsp             ext4    ro,nosuid,nodev,barrier=1,context=u:object_r:adsprpcd_file:s0                                     wait
++/dev/block/bootdevice/by-name/dsp            /vendor/dsp             ext4    ro,nosuid,nodev,barrier=1,context=u:object_r:adsprpcd_file:s0                                     wait,nofail
+ /dev/block/bootdevice/by-name/modem          /vendor/firmware_mnt    vfat    ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0      wait
+ /dev/block/bootdevice/by-name/bluetooth      /vendor/bt_firmware     vfat    ro,shortname=lower,uid=1002,gid=3002,dmask=227,fmask=337,context=u:object_r:bt_firmware_file:s0   wait
+ /dev/block/bootdevice/by-name/misc           /misc              emmc    defaults                                                    defaults
+diff --git a/sepolicy/vendor/file_contexts b/sepolicy/vendor/file_contexts
+index 13a820c..d374828 100644
+--- a/sepolicy/vendor/file_contexts
++++ b/sepolicy/vendor/file_contexts
+@@ -34,6 +34,8 @@
+ /(vendor|system/vendor)/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock u:object_r:hal_power_stats_default_exec:s0
+ /(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch-service\.axon7             u:object_r:hal_lineage_touch_default_exec:s0
+ 
+-# Triple boot: LineageOS /data and /metadata (axon7-tripleboot-gpt)
+-/dev/block/bootdevice/by-name/los_data          u:object_r:userdata_block_device:s0
+-/dev/block/bootdevice/by-name/los_metadata      u:object_r:metadata_block_device:s0
++# Triple boot: LineageOS /data and /metadata (axon7-tripleboot-gpt). The
++# platform path: ueventd labels the node by the links it creates itself, not
++# by init's /dev/block/bootdevice symlink.
++/dev/block/platform/soc/624000.ufshc/by-name/los_data      u:object_r:userdata_block_device:s0
++/dev/block/platform/soc/624000.ufshc/by-name/los_metadata  u:object_r:metadata_block_device:s0
+diff --git a/sepolicy/vendor/init.te b/sepolicy/vendor/init.te
+index abdd7b6..e5ec442 100644
+--- a/sepolicy/vendor/init.te
++++ b/sepolicy/vendor/init.te
+@@ -2,3 +2,6 @@ allow init sysfs_leds:lnk_file r_file_perms;
+ 
+ # Allow init to bind mount loader config for media swcodec
+ allow init system_file:file mounton;
++
++# fstab.qcom mounts /vendor/dsp with context=u:object_r:adsprpcd_file:s0
++allow init adsprpcd_file:filesystem { mount unmount getattr relabelfrom relabelto };
+-- 
+2.47.3
+

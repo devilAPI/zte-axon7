@@ -1,0 +1,46 @@
+From ae56f7c77ad4b2f7ac8af8004ec84d922ed75fb1 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 11:57:55 +0000
+Subject: [PATCH 7/7] ARM: dts: axon7: smbcharger fastchg-current-comp 1200
+ (PMI8996 table)
+
+ZTE 3.18 used the PMI8994 table, where 900 is index 2. The 4.4 driver
+uses the PMI8996 table (250/1100/1200/1500) on this PMIC: 900 is not in
+it, the probe failed with -EINVAL and the kernel hung at 2.5 s while
+unregistering the battery power supply. 1200 is index 2, the register
+value ZTE wrote.
+
+Change-Id: Ib0e2cfa79d8c5506d3128d8fc61a37bbdb3c56a4
+---
+ arch/arm/boot/dts/qcom/msm8996-v3-pmi8996-zte-axon7.dts | 2 +-
+ arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/boot/dts/qcom/msm8996-v3-pmi8996-zte-axon7.dts b/arch/arm/boot/dts/qcom/msm8996-v3-pmi8996-zte-axon7.dts
+index ebb0efa38515..143704fc9b4a 100644
+--- a/arch/arm/boot/dts/qcom/msm8996-v3-pmi8996-zte-axon7.dts
++++ b/arch/arm/boot/dts/qcom/msm8996-v3-pmi8996-zte-axon7.dts
+@@ -51,6 +51,6 @@
+ };
+ 
+ &pmi8994_charger {
+-	qcom,fastchg-current-comp = <900>;
++	qcom,fastchg-current-comp = <1200>;	/* index 2, as ZTE 3.18 wrote with its 900 (PMI8994 table) */
+ 	qcom,thermal-mitigation = <2500 1500 500 0>;
+ };
+diff --git a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+index a2a2ad4677a2..5a7d57120e29 100644
+--- a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
++++ b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+@@ -771,7 +771,7 @@
+ 	qcom,iterm-ma = <150>;
+ 	qcom,fastchg-current-ma = <3000>;
+ 	qcom,float-voltage-mv = <4400>;
+-	qcom,fastchg-current-comp = <900>;
++	qcom,fastchg-current-comp = <1200>;	/* index 2, as ZTE 3.18 wrote with its 900 (PMI8994 table) */
+ 	qcom,float-voltage-comp = <10>;
+ 	qcom,resume-delta-mv = <100>;
+ 	qcom,parallel-usb-min-current-ma = <1000>;
+-- 
+2.47.3
+
