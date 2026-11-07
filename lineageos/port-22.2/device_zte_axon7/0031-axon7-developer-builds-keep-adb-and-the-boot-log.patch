@@ -1,0 +1,129 @@
+From c13fe2e4ade957f919fdcbc251affe111e787b42 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 16:32:33 +0000
+Subject: [PATCH] axon7: developer builds keep adb and the boot log; test hooks
+ only with AXON7_TEST=1
+
+AXON7_ADB_KEYS now means a developer build: adb with that key and the
+boot log on los_metadata (every 2 s for 15 min, then every minute), so a
+LineageOS that goes dark or shuts down can be read afterwards. The boot
+menu reset and the 25 min restart need AXON7_TEST=1 as well.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Change-Id: I5d4154119d19c73ad7e1a8d2091afa524833f797
+---
+ device.mk               | 16 ++++++++++++----
+ test/axon7-testlog.sh   | 10 ++++++----
+ test/init.axon7-log.rc  | 12 ++++++++++++
+ test/init.axon7-test.rc | 15 +++------------
+ 4 files changed, 33 insertions(+), 20 deletions(-)
+ create mode 100644 test/init.axon7-log.rc
+
+diff --git a/device.mk b/device.mk
+index 8a1941e..532dcc8 100644
+--- a/device.mk
++++ b/device.mk
+@@ -468,15 +468,23 @@ PRODUCT_PACKAGES += \
+     firmware_wlan_mac.bin_symlink \
+     firmware_WCNSS_qcom_cfg.ini_symlink
+ 
+-# Test builds without anyone at the phone: AXON7_ADB_KEYS=FILE (adb public
+-# keys of the test host) puts the key in and starts adbd from the first
+-# boot; adb authentication stays on (ro.adb.secure=1), only that host gets in.
++# Developer builds: AXON7_ADB_KEYS=FILE (adb public keys of the developer
++# host) puts the key in and starts adbd from the first boot; adb
++# authentication stays on (ro.adb.secure=1), only that host gets in. The logs
++# of each boot go to los_metadata (axon7-testlog.sh).
+ ifneq ($(AXON7_ADB_KEYS),)
+ PRODUCT_ADB_KEYS := $(AXON7_ADB_KEYS)
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
++PRODUCT_COPY_FILES += \
++    $(LOCAL_PATH)/test/init.axon7-log.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.axon7-log.rc \
++    $(LOCAL_PATH)/test/axon7-testlog.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testlog.sh
++endif
++# Unattended test boots with nobody at the phone (AXON7_TEST=1, together with
++# AXON7_ADB_KEYS): the boot menu goes back to postmarketOS and a hang restarts
++# after 25 min.
++ifeq ($(AXON7_TEST),1)
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/test/init.axon7-test.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.axon7-test.rc \
+     $(LOCAL_PATH)/test/axon7-misc-pmos.bin:$(TARGET_COPY_OUT_VENDOR)/etc/axon7-misc-pmos.bin \
+-    $(LOCAL_PATH)/test/axon7-testlog.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testlog.sh \
+     $(LOCAL_PATH)/test/axon7-testguard.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testguard.sh
+ endif
+diff --git a/test/axon7-testlog.sh b/test/axon7-testlog.sh
+index 6810fdf..3064e5a 100644
+--- a/test/axon7-testlog.sh
++++ b/test/axon7-testlog.sh
+@@ -1,8 +1,9 @@
+ #!/system/bin/sh
+-# Unattended test builds only: every 2 s the whole kernel log, the props and
+-# the newest logcat lines go to the start of los_metadata (raw, 16 MiB, not
+-# used by this build), so a boot that restarts can be read from
++# Developer builds (AXON7_ADB_KEYS): the whole kernel log, the props and the
++# newest logcat lines go to the start of los_metadata (raw, 16 MiB, not used
++# by this build), so a boot that restarts or shuts down can be read from
+ # postmarketOS afterwards: dd if=/dev/disk/by-partlabel/los_metadata | strings
++# Every 2 s for the first 15 min of a boot, then every minute (flash wear).
+ d=/dev/block/bootdevice/by-name/los_metadata
+ t=/dev/axon7-testlog.txt
+ n=0
+@@ -17,5 +18,6 @@ while true; do
+ 	} > $t 2>&1
+ 	head -c 15728640 $t | dd of=$d bs=1048576 conv=notrunc 2>/dev/null
+ 	sync
+-	sleep 2
++	up=$(cut -d. -f1 /proc/uptime)
++	if [ "$up" -lt 900 ]; then sleep 2; else sleep 60; fi
+ done
+diff --git a/test/init.axon7-log.rc b/test/init.axon7-log.rc
+new file mode 100644
+index 0000000..9a40c93
+--- /dev/null
++++ b/test/init.axon7-log.rc
+@@ -0,0 +1,12 @@
++# Developer builds (AXON7_ADB_KEYS, device.mk): the logs of each boot go to
++# los_metadata (axon7-testlog.sh), so a boot with a dark screen or a restart
++# can be read from postmarketOS or TWRP afterwards.
++on post-fs
++    start axon7_testlog
++
++service axon7_testlog /system/bin/sh /vendor/bin/axon7-testlog.sh
++    user root
++    group root log
++    seclabel u:r:su:s0
++    disabled
++    oneshot
+diff --git a/test/init.axon7-test.rc b/test/init.axon7-test.rc
+index 8a7d903..bd1a958 100644
+--- a/test/init.axon7-test.rc
++++ b/test/init.axon7-test.rc
+@@ -1,22 +1,13 @@
+-# Unattended test builds only (AXON7_ADB_KEYS, device.mk): as soon as this
++# Unattended test builds only (AXON7_TEST=1, device.mk): as soon as this
+ # boot reaches init, the shim boot menu (last block of misc, ios/shim
+ # boot_setting) goes back to postmarketOS after 5 s, so a LineageOS that
+-# crashes or restarts later boots postmarketOS next and does not loop; the
+-# logs of the boot go to los_metadata (axon7-testlog.sh). axon7-testguard.sh
+-# restarts a boot that hangs after 25 min.
++# crashes or restarts later boots postmarketOS next and does not loop.
++# axon7-testguard.sh restarts a boot that hangs after 25 min.
+ on early-init
+     start axon7_testguard
+ 
+ on post-fs
+     exec u:r:su:s0 root root -- /system/bin/dd if=/vendor/etc/axon7-misc-pmos.bin of=/dev/block/bootdevice/by-name/misc bs=4096 seek=255 conv=notrunc
+-    start axon7_testlog
+-
+-service axon7_testlog /system/bin/sh /vendor/bin/axon7-testlog.sh
+-    user root
+-    group root log
+-    seclabel u:r:su:s0
+-    disabled
+-    oneshot
+ 
+ service axon7_testguard /system/bin/sh /vendor/bin/axon7-testguard.sh
+     user root
+-- 
+2.47.3
+

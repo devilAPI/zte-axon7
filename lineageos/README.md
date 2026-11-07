@@ -8,11 +8,15 @@ Our port (2026-11-07): **LineageOS 22.2 (Android 15) boots to the setup
 wizard** in the triple boot (shim menu entry, `los_boot`, /data on
 `los_data`, file-based encryption), with the 4.4 kernel port
 ([KERNEL-4.4-PORT.md](KERNEL-4.4-PORT.md)) and the device tree series in
-`port-22.2/` (0001-0030). Display, USB/adb and the boot itself work;
-nothing else is tested yet, nothing is published. The plain zip
+`port-22.2/` (0001-0031). Display, USB/adb and the boot itself work in
+test builds; a build without adb shut itself down in its first boot
+(cause still open, being looked at with a developer build). Nothing else
+is tested yet, nothing is published. The plain zip
 (`lineage-22.2-*-UNOFFICIAL-axon7.zip`) is not for the triple boot: it
 writes `boot` and would replace the boot menu. Test boots run unattended
-with `ios/tools/axon7-los-test.sh` (test builds: `AXON7_ADB_KEYS`).
+with `ios/tools/axon7-los-test.sh`. Developer builds (`AXON7_ADB_KEYS`)
+have adb for that one host and write each boot's log to `los_metadata`;
+unattended test boots also set `AXON7_TEST=1`.
 
 | File | Contents |
 | --- | --- |
