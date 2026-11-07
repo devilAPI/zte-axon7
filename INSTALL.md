@@ -207,6 +207,7 @@ Change the default from postmarketOS: `sudo axon7-bootmenu default pmos 5`
 
 ## Rescue
 
+- **iOS restarts about 25 s after every start** (images flashed before 2026-11-07): a watchdog in the boot menu reset it. Update the repository (`git pull --recurse-submodules`) and flash the iOS kernel again (step 3c, second command); nothing else changes.
 - **Stuck on a black screen / logo:** hold **Power + Volume Up** ~10 s → TWRP.
 - **Boot menu broken (phone always goes to TWRP or hangs):** in TWRP restore the boot partition:
   `adb push backup/stock-lineage-boot.img /tmp/b.img && adb shell dd if=/tmp/b.img of=/dev/block/bootdevice/by-name/boot`
