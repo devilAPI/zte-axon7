@@ -1,0 +1,84 @@
+From abf1752f2bf90485d4d094fef407f2b6d90e4587 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 13:45:37 +0000
+Subject: [PATCH] axon7: no ANT+ (system_server crash loop); LED labels and
+ light HAL access for 4.4
+
+AntHalService runs in the system process and loads the old-HIDL-ABI
+com.qualcomm.qti.ant@1.0.so: UnsatisfiedLinkError, system_server restarted
+every minute and the panel came back without backlight. The 4.4 LED paths
+(backlight under mdss_fb_primary, RGB and haptics on the PMI8994 SPMI bus)
+get sysfs_leds, which the lights HAL may now write.
+
+Change-Id: I344ba45bc76445eb21dc91280e9862aaee2f76b4
+---
+ device.mk                            | 6 +++---
+ manifest.xml                         | 9 ---------
+ sepolicy/vendor/genfs_contexts       | 5 +++++
+ sepolicy/vendor/hal_light_default.te | 4 ++++
+ 4 files changed, 12 insertions(+), 12 deletions(-)
+ create mode 100644 sepolicy/vendor/hal_light_default.te
+
+diff --git a/device.mk b/device.mk
+index 5cf7e9f..8a1941e 100644
+--- a/device.mk
++++ b/device.mk
+@@ -97,9 +97,9 @@ PRODUCT_COPY_FILES += \
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/public.libraries.txt:$(TARGET_COPY_OUT_VENDOR)/etc/public.libraries.txt
+ 
+-# ANT+
+-PRODUCT_PACKAGES += \
+-    AntHalService
++# ANT+: none. AntHalService runs in the system process and loads
++# com.qualcomm.qti.ant@1.0.so, built against the old HIDL ABI
++# (gBnConstructorMap): system_server crashed every minute on 22.2.
+ 
+ # Audio
+ PRODUCT_PACKAGES += \
+diff --git a/manifest.xml b/manifest.xml
+index 257f9b6..2ab8cba 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -190,15 +190,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>com.qualcomm.qti.ant</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IAntHci</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>com.qualcomm.qti.dpm.api</name>
+         <transport>hwbinder</transport>
+diff --git a/sepolicy/vendor/genfs_contexts b/sepolicy/vendor/genfs_contexts
+index e9be55e..3417ef3 100644
+--- a/sepolicy/vendor/genfs_contexts
++++ b/sepolicy/vendor/genfs_contexts
+@@ -18,3 +18,8 @@ genfscon sysfs /devices/soc/75ba000.i2c/i2c-12/12-0020/input/input1     u:object
+ # 4.4 kernel: charger and fuel gauge on the SPMI bus (3.18: qpnp-smbcharger-16, qpnp-fg-17)
+ genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-02/400f000.qcom,spmi:qcom,pmi8994@2:qcom,qpnp-smbcharger/power_supply u:object_r:sysfs_battery_supply:s0
+ genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-02/400f000.qcom,spmi:qcom,pmi8994@2:qcom,fg/power_supply u:object_r:sysfs_battery_supply:s0
++
++# 4.4 kernel: LEDs (3.18: leds-qpnp-N, the backlight under mdss_fb)
++genfscon sysfs /devices/soc/900000.qcom,mdss_mdp/900000.qcom,mdss_mdp:qcom,mdss_fb_primary/leds u:object_r:sysfs_leds:s0
++genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-03/400f000.qcom,spmi:qcom,pmi8994@3:qcom,leds@d000/leds u:object_r:sysfs_leds:s0
++genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-03/400f000.qcom,spmi:qcom,pmi8994@3:qcom,haptics@c000/leds u:object_r:sysfs_leds:s0
+diff --git a/sepolicy/vendor/hal_light_default.te b/sepolicy/vendor/hal_light_default.te
+new file mode 100644
+index 0000000..156a32f
+--- /dev/null
++++ b/sepolicy/vendor/hal_light_default.te
+@@ -0,0 +1,4 @@
++# Lineage AIDL lights HAL: lcd-backlight and the RGB LED (/sys/class/leds)
++allow hal_light_default sysfs_leds:dir r_dir_perms;
++allow hal_light_default sysfs_leds:file rw_file_perms;
++allow hal_light_default sysfs_leds:lnk_file read;
+-- 
+2.47.3
+
