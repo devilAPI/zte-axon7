@@ -10,6 +10,7 @@ Three ways of running something new on the ZTE Axon 7 (Snapdragon 820,
 | [**LineageOS**](lineageos/) | 22.2 (Android 15) port in progress (device tree, 4.4 kernel); the boot menu already has its entry and partitions |
 
 **Want to try it?** Step-by-step installation guide (iOS + postmarketOS with a boot menu): [INSTALL.md](INSTALL.md)
+The XDA thread's first post (BBCode, status and changelog): [XDA-POST.md](XDA-POST.md)
 
 ## Hardware documentation
 
