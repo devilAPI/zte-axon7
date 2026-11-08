@@ -22,7 +22,7 @@ Phase: [B]alpha[/B]. Developer builds only.
 [SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
 [TABLE]
 [TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, display, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, NFC, flashlight, all 42 sensors, GPS service, fingerprint sensor driver, both cameras detected, sound card and audio routing (AK4961 + AK4490 Hi-Fi DAC), modem services for both SIM slots (dual SIM)[/TD][TD]rear camera (no picture sizes yet, the camera app crashes), screen colours differ between the left and right half after waking, the phone sometimes wakes up or locks by itself, flashlight tile says "Camera in use", sound actually audible and fingerprint enrolment (untested), calls/data with a SIM (untested)[/TD][/TR]
+[TR][TD]boots to the home screen, display, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, NFC, flashlight, all 42 sensors, GPS service, fingerprint sensor driver, both cameras detected, sound (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]rear camera (no picture sizes yet, the camera app crashes), screen colours differ between the left and right half after waking, the phone sometimes wakes up or locks by itself, flashlight tile says "Camera in use", volume cannot be changed, fingerprint enrolment (untested), calls/data with a SIM (untested)[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -32,12 +32,13 @@ Developers can build it from source; the developer setup (a multi-boot with iOS 
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-08"]
 [LIST]
+[*]Sound is audible (confirmed on the phone); the volume cannot be changed yet.
 [*]Bluetooth works.
 [*]The modem's radio service (rild) runs on Android 15's new radio interface; the Qualcomm modem daemons no longer crash.
 [*]Fingerprint sensor driver (Goodix, ported from ZTE's kernel) works; enrolling a finger is not tested yet.
 [*]Both cameras are detected (Android 15 needs the HAL3 mode of the camera blob); flashlight works.
 [*]NFC works (PN548 driver ported from ZTE's kernel).
-[*]Audio: the sound card comes up (AK4961 codec and AK4490 Hi-Fi DAC drivers ported from ZTE's kernel); the audio HAL routes sound and switches the speaker amplifier on. Not yet confirmed audible.
+[*]Audio: the sound card comes up (AK4961 codec and AK4490 Hi-Fi DAC drivers ported from ZTE's kernel); the audio HAL routes sound and switches the speaker amplifier on.
 [*]Telephony starts cleanly with both SIM slots (dual SIM, one radio service per slot).
 [/LIST]
 [/SPOILER]
