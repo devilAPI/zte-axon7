@@ -1,0 +1,87 @@
+From 7a1daf4f1d8aa4ae9bf81dbb7363399cebd8c018 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 01:09:07 +0000
+Subject: [PATCH 15/20] axon7: AK49xx irq domain via IRQCHIP_DECLARE, gpio 64
+ for the AK4961 reset, balanced NFC irq wake
+
+From the los17 boot: ak49xx_reset could not get gpio 64 (taken by the
+WCD9335 msm_cdc_pinctrl node), ak49xx_irq_probe found no domain (ZTE's
+3.18 declared it in irq-msm.c), pn5xx warned about unbalanced
+irq_set_irq_wake.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: If6c767d294e0807757e57416304176a076086365
+---
+ arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi |  5 +++++
+ drivers/mfd/ak49xx-irq.c                             |  6 ++++++
+ drivers/nfc/pn5xx_i2c.c                              | 12 ++++++++++--
+ 3 files changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+index 5a8b8a83a57e..5bf9d17bcd31 100644
+--- a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
++++ b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+@@ -905,3 +905,8 @@
+ 		/delete-node/ vbmeta;
+ 	};
+ };
++
++/* gpio 64 is the AK4961 reset (akm,cdc-reset-gpio); no WCD9335 reset pin */
++&wcd_rst_gpio {
++	status = "disabled";
++};
+diff --git a/drivers/mfd/ak49xx-irq.c b/drivers/mfd/ak49xx-irq.c
+index 272e47ddc78b..72e31249204d 100644
+--- a/drivers/mfd/ak49xx-irq.c
++++ b/drivers/mfd/ak49xx-irq.c
+@@ -775,3 +775,9 @@ static void ak49xx_irq_drv_exit(void)
+ }
+ module_exit(ak49xx_irq_drv_exit);
+ #endif /* CONFIG_OF */
++
++#ifdef CONFIG_OF
++#include <linux/irqchip.h>
++/* 4.4: the domain of akm,ak49xx-irq is made here (ZTE's 3.18 did it in irq-msm.c) */
++IRQCHIP_DECLARE(ak49xx_irq, "akm,ak49xx-irq", ak49xx_irq_of_init);
++#endif
+diff --git a/drivers/nfc/pn5xx_i2c.c b/drivers/nfc/pn5xx_i2c.c
+index f6ca5a0d441a..a3f6861dcd0f 100644
+--- a/drivers/nfc/pn5xx_i2c.c
++++ b/drivers/nfc/pn5xx_i2c.c
+@@ -116,6 +116,9 @@ bool          clk_run = false;
+ 
+ /*add nfc id information begin*/
+ 
++/* wake enable/disable must stay balanced (4.4 warns otherwise) */
++static bool pn5xx_irq_wake;
++
+ static char nfc_id[51] = "NXP-PN65T-NA-NA-NA";
+ static int nfc_id_read_proc(struct seq_file *m, void *v)
+ {
+@@ -332,7 +335,9 @@ static long pn5xx_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long a
+ 			gpio_set_value(pn5xx_dev->firm_gpio, 0);
+ 			gpio_set_value(pn5xx_dev->ven_gpio, 1);
+ 			msleep(20);
+-			irq_set_irq_wake(pn5xx_dev->client->irq, 1);
++			if (!pn5xx_irq_wake &&
++			    !irq_set_irq_wake(pn5xx_dev->client->irq, 1))
++				pn5xx_irq_wake = true;
+ #ifdef CONFIG_NFC_ENABLE_BB_CLK2
+ 			if (clk_run == false) {
+ 			   msleep(20);
+@@ -351,7 +356,10 @@ static long pn5xx_dev_ioctl(struct file *filp, unsigned int cmd, unsigned long a
+ 			gpio_set_value(pn5xx_dev->ven_gpio, 0);
+ 
+ 			msleep(20);
+-			irq_set_irq_wake(pn5xx_dev->client->irq, 0);
++			if (pn5xx_irq_wake) {
++				irq_set_irq_wake(pn5xx_dev->client->irq, 0);
++				pn5xx_irq_wake = false;
++			}
+ #ifdef CONFIG_NFC_ENABLE_BB_CLK2
+ 			if (clk_run == true) {
+ 				msleep(20);
+-- 
+2.47.3
+

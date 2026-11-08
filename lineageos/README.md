@@ -8,15 +8,16 @@ Our port (2026-11-07): **LineageOS 22.2 (Android 15) boots to the setup
 wizard** in the triple boot (shim menu entry, `los_boot`, /data on
 `los_data`, file-based encryption), with the 4.4 kernel port
 ([KERNEL-4.4-PORT.md](KERNEL-4.4-PORT.md)) and the device tree series in
-`port-22.2/` (0001-0045, plus three patches to the Android tree in
-`port-22.2/aosp/` and kernel patches 0008-0014). Developer builds, nothing
+`port-22.2/` (0001-0046, plus three patches to the Android tree in
+`port-22.2/aosp/` and kernel patches 0008-0020). Developer builds, nothing
 published yet. Confirmed on the phone (2026-11-08): display, touch, USB/adb,
-backlight, Wi-Fi, Bluetooth, 42 sensors, fingerprint driver and daemon, the
-modem firmware, `rild` with the Android 15 radio AIDL services (SIM slot 1),
-mobile-data/IMS daemons, camera sensors and calibration data. Built, waiting
-for the next test: camera as HAL3, audio (AK4961), NFC (PN548), single-SIM
-telephony. Open: screen colours on one half after waking, second SIM slot,
-calls/data with a SIM (untested).
+backlight, Wi-Fi, Bluetooth, NFC, 42 sensors, GPS service, flashlight,
+fingerprint driver and daemon, both cameras detected (HAL3), the sound card
+(AK4961 + AK4490, audio HAL routes and the speaker amplifier switch on), the
+modem with `rild` on the Android 15 radio AIDL services, telephony starting
+cleanly. Open: the camera app crashes (a stream size of width 0 in the camera
+metadata), audible sound and fingerprint enrolment untested, dual SIM in test,
+screen colours on one half after waking, calls/data with a SIM (untested).
 
 Old vendor blobs on Android 15, and what makes them run (2026-11-08):
 

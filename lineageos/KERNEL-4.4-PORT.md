@@ -167,19 +167,24 @@ Porting notes (2026-11-08): the AK4961 needed the 4.4 ASoC API (no codec
 register cache, `snd_soc_dapm_to_codec`, `snd_soc_card_jack_new`) and ZTE's
 `msm_is_in_voice_call()` in `msm-pcm-routing-v2`; the machine driver replaces
 `msm8996.c`. `zte_eeprom` needed an empty GPIO table for nodes without `gpios`
-(the probe oopsed in `kernel_init` and the boot hung).
+(the probe oopsed in `kernel_init` and the boot hung). The AK4961 control
+port is SPI on BLSP2 QUP3: gpio 50 had been nullified in the Xiaomi pin table
+(restored, 0016); the AK49xx irq domain is made at probe, since
+`IRQCHIP_DECLARE` does not run below the TLMM platform driver (0018); the
+card's Compress9 link uses MultiMedia16, which is a PCM front end on 4.4
+(0020).
 
 Sizes are from the 3.18 tree. "Needed for" says what stays broken without it.
 
 | Prio | Driver | 3.18 path | Size | What it is / needed for |
 |---|---|---|---|---|
-| ported (0014), not yet confirmed | AK4961 codec + AK49xx MFD core | `sound/soc/codecs/ak4961*.c`, `drivers/mfd/ak49xx-{core,irq,slimslave,core-resource}.c`, `drivers/irqchip/irq-msm.c` | ~8.1k + 3.5k lines (240 KB + 90 KB) | the main audio codec on slimbus (there is **no WCD9335**): speaker, earpiece, mics, headset |
-| ported (0014), not yet confirmed | AK4961 machine driver | `sound/soc/msm/msm8996-ak496x.c` | 3.5k lines | sound card `msm8996-ak4961-snd-card`; must be rebased onto the 4.4 `msm8996.c`/q6 APIs |
-| 1 | AK4490 DAC, AK8157 PLL, ISL98608 | `sound/soc/codecs/ak4490/` | 2.1k lines | Hi-Fi headphone path |
+| ported (0014-0020): card registers | AK4961 codec + AK49xx MFD core | `sound/soc/codecs/ak4961*.c`, `drivers/mfd/ak49xx-{core,irq,slimslave,core-resource}.c`, `drivers/irqchip/irq-msm.c` | ~8.1k + 3.5k lines (240 KB + 90 KB) | the main audio codec on slimbus (there is **no WCD9335**): speaker, earpiece, mics, headset |
+| ported (0014, 0020): card registers | AK4961 machine driver | `sound/soc/msm/msm8996-ak496x.c` | 3.5k lines | sound card `msm8996-ak4961-snd-card`; must be rebased onto the 4.4 `msm8996.c`/q6 APIs |
+| ported (0019) | AK4490 DAC, AK8157 PLL, ISL98608 | `sound/soc/codecs/ak4490/` | 2.1k lines | Hi-Fi headphone path |
 | ported (0008, 0010): /dev/goodix_fp, gx_fpd runs | Goodix GF3118M fingerprint | `drivers/input/fingerprint/goodix/` | ~1k lines | fingerprint (TEE based; node `goodix,fingerprint`) |
 | ported (0009, 0012): OTP/calibration read by the camera daemon | ZTE camera EEPROM | `drivers/media/platform/msm/camera_v2/sensor/eeprom/zte_eeprom.c` | 1.8k lines | OTP/calibration of the 3 sensors (`zte,eeprom-*`) |
 | 2 | ZTE camera IO helpers | `.../camera_v2/sensor/zte_io/` | 21 KB | OIS/actuator helpers used by ZTE's camera stack |
-| ported (0013), not yet confirmed | PN5xx NFC | `drivers/nfc/pn5xx_i2c.c` | 772 lines | NFC; the HAL opens `/dev/pn5xx`. Alternative: in-tree `nq-nci` or Xiaomi `pn548` with a binding change plus HAL config |
+| ported (0013): NFC on | PN5xx NFC | `drivers/nfc/pn5xx_i2c.c` | 772 lines | NFC; the HAL opens `/dev/pn5xx`. Alternative: in-tree `nq-nci` or Xiaomi `pn548` with a binding change plus HAL config |
 | 2 | ZTE smbcharger/FG/PON changes | `drivers/power/qpnp-smbcharger.c`, `qpnp-fg.c`, `qpnp-power-on.c` (C457 "Import ZTE A2017G Oreo release changes") | patch set | ZTE charging policy, `vchg`, `design_capacity`, `interfere_id_irq_from_usb()` for HD3SS3220 |
 | 3 | ZTE misc | `drivers/power/zte_misc.c` | 650 lines | hw version (imem `hw_ver_id`), battery id helpers; built unconditionally in 3.18 |
 | 3 | NDT force sensor | `drivers/input/touchscreen/ndt_stress.c` | 2.3k lines | "pressure" sensor on the touch bus, probably not fitted on all boards |

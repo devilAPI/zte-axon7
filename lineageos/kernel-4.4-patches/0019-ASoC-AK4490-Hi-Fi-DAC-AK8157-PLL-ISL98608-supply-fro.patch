@@ -1,0 +1,2323 @@
+From 94959a38d33dbfd145302bf5e0775f5071a2716c Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 08:32:25 +0000
+Subject: [PATCH 19/20] ASoC: AK4490 Hi-Fi DAC, AK8157 PLL, ISL98608 supply
+ from the ZTE 3.18 kernel (axon7)
+
+The msm8996-ak496x card has an ak4490-AIF1 link (headphones), so the card
+never registered without this codec. 4.4: own register cache instead of
+codec->reg_cache, snd_soc_codec_get_dapm(), no readable/volatile hooks.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Ib81b1d78d93377b239bf73ca1f757f44d6d0be80
+---
+ .../dts/qcom/msm8996-zte-axon7-common.dtsi    |    2 +-
+ arch/arm64/configs/vendor/zte/axon7.config    |    3 +
+ sound/soc/codecs/Kconfig                      |    2 +
+ sound/soc/codecs/Makefile                     |    1 +
+ sound/soc/codecs/ak4490/Kconfig               |    8 +
+ sound/soc/codecs/ak4490/Makefile              |    6 +
+ sound/soc/codecs/ak4490/ak4490.c              | 1543 +++++++++++++++++
+ sound/soc/codecs/ak4490/ak4490.h              |   65 +
+ sound/soc/codecs/ak4490/ak8157.c              |  312 ++++
+ sound/soc/codecs/ak4490/isl98608.c            |  274 +++
+ 10 files changed, 2215 insertions(+), 1 deletion(-)
+ create mode 100644 sound/soc/codecs/ak4490/Kconfig
+ create mode 100644 sound/soc/codecs/ak4490/Makefile
+ create mode 100644 sound/soc/codecs/ak4490/ak4490.c
+ create mode 100644 sound/soc/codecs/ak4490/ak4490.h
+ create mode 100644 sound/soc/codecs/ak4490/ak8157.c
+ create mode 100644 sound/soc/codecs/ak4490/isl98608.c
+
+diff --git a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+index 5bf9d17bcd31..6924c7133ae6 100644
+--- a/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
++++ b/arch/arm/boot/dts/qcom/msm8996-zte-axon7-common.dtsi
+@@ -99,7 +99,7 @@
+ 			ak4490,hifi_pop_gpio = <&tlmm 74 0>;
+ 		};
+ 
+-		/* Intersil ISL98608 DAC power supply (no driver yet) */
++		/* Intersil ISL98608 DAC power supply (sound/soc/codecs/ak4490/isl98608.c) */
+ 		isl98608@29 {
+ 			compatible = "isl98608";
+ 			reg = <0x29>;
+diff --git a/arch/arm64/configs/vendor/zte/axon7.config b/arch/arm64/configs/vendor/zte/axon7.config
+index 2d6b3f80c2a4..c3c2e380b5e4 100644
+--- a/arch/arm64/configs/vendor/zte/axon7.config
++++ b/arch/arm64/configs/vendor/zte/axon7.config
+@@ -48,3 +48,6 @@ CONFIG_PN5XX_NFC=y
+ 
+ # AKM AK4961 audio codec (slimbus) and its machine driver (msm8996-ak496x)
+ CONFIG_AK4961_CODEC=y
++
++# AK4490 Hi-Fi DAC with AK8157 PLL and ISL98608 supply (headphones; part of the AK4961 sound card)
++CONFIG_SND_SOC_AK4490=y
+diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
+index 45dc032ac447..ec1fecdb21cf 100644
+--- a/sound/soc/codecs/Kconfig
++++ b/sound/soc/codecs/Kconfig
+@@ -1018,4 +1018,6 @@ config SND_SOC_MSM_HDMI_CODEC_RX
+ source "sound/soc/codecs/sdm660_cdc/Kconfig"
+ source "sound/soc/codecs/msm_sdw/Kconfig"
+ 
++source "sound/soc/codecs/ak4490/Kconfig"
++
+ endmenu
+diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
+index af951dfccf34..7c9c594b83a0 100644
+--- a/sound/soc/codecs/Makefile
++++ b/sound/soc/codecs/Makefile
+@@ -439,3 +439,4 @@ obj-y += msm_sdw/
+ obj-y	+= tfa98xx/
+ snd-soc-ak4961-objs := ak4961.o ak4961-tables.o
+ obj-$(CONFIG_SND_SOC_AK4961)	+= snd-soc-ak4961.o
++obj-$(CONFIG_SND_SOC_AK4490)	+= ak4490/
+diff --git a/sound/soc/codecs/ak4490/Kconfig b/sound/soc/codecs/ak4490/Kconfig
+new file mode 100644
+index 000000000000..7e451f17eef3
+--- /dev/null
++++ b/sound/soc/codecs/ak4490/Kconfig
+@@ -0,0 +1,8 @@
++menu "AK4490 HEADPHONE chip"
++
++config SND_SOC_AK4490
++	bool "AK4490"  
++	---help---
++	  Add ak4490 configuration
++
++endmenu
+diff --git a/sound/soc/codecs/ak4490/Makefile b/sound/soc/codecs/ak4490/Makefile
+new file mode 100644
+index 000000000000..ef510f321d3c
+--- /dev/null
++++ b/sound/soc/codecs/ak4490/Makefile
+@@ -0,0 +1,6 @@
++snd-soc-ak4490-objs := ak4490.o
++snd-soc-isl98608-objs := isl98608.o
++snd-soc-ak8157-objs := ak8157.o
++obj-$(CONFIG_SND_SOC_AK4490)	+= snd-soc-ak4490.o
++obj-$(CONFIG_SND_SOC_AK4490)	+= snd-soc-isl98608.o
++obj-$(CONFIG_SND_SOC_AK4490)	+= snd-soc-ak8157.o
+diff --git a/sound/soc/codecs/ak4490/ak4490.c b/sound/soc/codecs/ak4490/ak4490.c
+new file mode 100644
+index 000000000000..06592d9586ac
+--- /dev/null
++++ b/sound/soc/codecs/ak4490/ak4490.c
+@@ -0,0 +1,1543 @@
++/*
++ * ak4490.c  --  audio driver for AK4490
++ *
++ * Copyright (C) 2014 Asahi Kasei Microdevices Corporation
++ *  Author                Date        Revision
++ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++ *                      14/08/11	    1.0
++ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of  the GNU General  Public License as published by the
++ *  Free Software Foundation;  either version 2 of the  License, or (at your
++ *  option) any later version.
++ *
++ */
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/i2c.h>
++#include <linux/delay.h>
++#include <linux/slab.h>
++#include <linux/gpio.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/errno.h>
++#include <linux/init.h>
++#include <linux/of_platform.h>
++#include <linux/stat.h>
++
++#include <linux/kernel.h>
++#include <sound/soc.h>
++#include <sound/soc-dapm.h>
++#include <sound/initval.h>
++#include <sound/tlv.h>
++#include <sound/pcm_params.h>
++#include <linux/regmap.h>
++#include <linux/gpio.h>
++#include <linux/of_gpio.h>
++
++#include "ak4490.h"
++
++
++#include <linux/clk.h>
++#include <linux/wakelock.h>
++#define AK4490_DEBUG			//used at debug mode
++
++#define CONFIG_DEBUG_FS_CODEC_AK4490
++#ifdef CONFIG_DEBUG_FS_CODEC_AK4490
++#define AK4490_CONTIF_DEBUG		//used at debug mode
++#endif
++
++#ifdef AK4490_DEBUG
++#define akdbgprt printk
++#else
++#define akdbgprt(format, arg...) do {} while (0)
++#endif
++
++/* AK4490 Codec Private Data */
++struct ak4490_priv {
++	struct snd_soc_codec codec;
++	struct i2c_client *i2c_client;
++	struct regmap *regmap;
++	u8 reg_cache[AK4490_MAX_REGISTERS];
++	unsigned int fmt; //lhs
++	int fs1;         // Sampling Frequency
++	int nBickFreq;   //  0: 48fs for 24bit,  1: 64fs or more for 32bit
++	int nDSDSel;
++	int pdn_gpio;                                  //AK4490_PDN/<&pmi8994_gpios 1 0>
++	int ldoen_gpio;                               //HIFI_LDO_EN/<&tlmm 93 0>
++	int isl54405_sw_pwr_gpio;                     //<&pmi8994_gpios 10 0> Hifi swtch power
++	int isl98608_ldo_pwr_gpio; 
++	int isl54405_mute_gpio;// 0 disable mute , 1 enable mute
++	int isl54405_sel_gpio;  // 0 select 4490, 1 select 4961
++	int isl_dir_gpio;
++	int isl_dc_gpio;
++	bool akm_hifi_switch;
++	bool akm_hifi_switch_mute;
++	bool akm_pw_switch;
++	int hifi_pop_gpio;        // 0:connect, 1:cut
++};
++static struct ak4490_priv *g_ak4490_priv = NULL;
++
++#ifdef CONFIG_DEBUG_FS_CODEC_AK4490
++struct snd_soc_codec *ak4490_codec;
++#endif
++static const struct reg_default ak4490_reg_defaults[] = {
++	{  0, 0x04 }, {  1, 0x22 }, {  2, 0x00 }, {  3, 0xFF },
++	{  4, 0xFF}, {  5, 0x00 }, {  6, 0x00 }, {  7, 0x00 },
++	{  8, 0x00 }, {  9, 0x00 }
++};
++
++
++static const u8 ak4490_reg[AK4490_MAX_REGISTERS] = {
++	0x04,	/*	0x00	AK4490_00_CONTROL1			*/
++	0x22,	/*	0x01	AK4490_01_CONTROL2			*/
++	0x00,	/*	0x02	AK4490_02_CONTROL3			*/
++	0xFF,	/*	0x03	AK4490_03_LCHATT			*/
++	0xFF,	/*	0x04	AK4490_04_RCHATT			*/
++	0x00,	/*	0x05	AK4490_05_CONTROL4			*/
++	0x00,	/*	0x06	AK4490_06_CONTROL5			*/
++	0x00,	/*	0x07	AK4490_07_CONTROL6			*/
++	0x00,	/*	0x08	AK4490_08_CONTROL7			*/
++	0x00,	/*	0x09	AK4490_09_CONTROL8			*/
++};
++
++static const struct {
++	int readable;   /* Mask of readable bits */
++	int writable;   /* Mask of writable bits */
++} ak4490_access_masks[] = {
++    { 0xFF, 0xEF },	//0x00
++    { 0xFF, 0xFF },	//0x01
++    { 0xFF, 0xBF },	//0x02
++    { 0xFF, 0xFF },	//0x03
++    { 0xFF, 0xFF },	//0x04
++    { 0xFF, 0xC3 },	//0x05
++    { 0xFF, 0xFB },	//0x06
++    { 0xFF, 0x01 },	//0x07
++    { 0xFF, 0x03 },	//0x08
++    { 0xFF, 0x03 },	//0x09
++};
++
++/* Volume control:
++ * from -127 to 0 dB in 0.5 dB steps (mute instead of -127.5 dB) */
++static DECLARE_TLV_DB_SCALE(latt_tlv, -12750, 50, 0);
++static DECLARE_TLV_DB_SCALE(ratt_tlv, -12750, 50, 0);
++
++static const char *ak4490_ecs_select_texts[] = {"768kHz", "384kHz"};
++
++static const char *ak4490_dem_select_texts[] = {"44.1kHz", "OFF", "48kHz", "32kHz"};
++static const char *ak4490_dzfm_select_texts[] = {"Separated", "ANDed"};
++
++static const char *ak4490_sellr_select_texts[] = {"Rch", "Lch"};
++static const char *ak4490_dckb_select_texts[] = {"Falling", "Rising"};
++static const char *ak4490_dcks_select_texts[] = {"512fs", "768fs"};
++
++static const char *ak4490_dsdd_select_texts[] = {"Normal", "Volume Bypass"};
++
++static const char *ak4490_sc_select_texts[] = {"Setting 1", "Setting 2", "Setting 3"};
++static const char *ak4490_dsdf_select_texts[] = {"50kHz", "150kHz"};
++
++
++static const struct soc_enum ak4490_dac_enum[] = {
++	SOC_ENUM_SINGLE(AK4490_00_CONTROL1, 5,
++			ARRAY_SIZE(ak4490_ecs_select_texts), ak4490_ecs_select_texts),
++
++	SOC_ENUM_SINGLE(AK4490_01_CONTROL2, 1,
++			ARRAY_SIZE(ak4490_dem_select_texts), ak4490_dem_select_texts),
++	SOC_ENUM_SINGLE(AK4490_01_CONTROL2, 6,
++			ARRAY_SIZE(ak4490_dzfm_select_texts), ak4490_dzfm_select_texts),
++
++	SOC_ENUM_SINGLE(AK4490_02_CONTROL3, 1,
++			ARRAY_SIZE(ak4490_sellr_select_texts), ak4490_sellr_select_texts),
++	SOC_ENUM_SINGLE(AK4490_02_CONTROL3, 4,
++			ARRAY_SIZE(ak4490_dckb_select_texts), ak4490_dckb_select_texts),
++	SOC_ENUM_SINGLE(AK4490_02_CONTROL3, 5,
++			ARRAY_SIZE(ak4490_dcks_select_texts), ak4490_dcks_select_texts),
++
++	SOC_ENUM_SINGLE(AK4490_06_CONTROL5, 1,
++			ARRAY_SIZE(ak4490_dsdd_select_texts), ak4490_dsdd_select_texts),
++
++	SOC_ENUM_SINGLE(AK4490_08_CONTROL7, 0,
++			ARRAY_SIZE(ak4490_sc_select_texts), ak4490_sc_select_texts),
++
++	SOC_ENUM_SINGLE(AK4490_09_CONTROL8, 1,
++			ARRAY_SIZE(ak4490_dsdf_select_texts), ak4490_dsdf_select_texts),
++
++};
++
++static const char *ak4490_dsdsel_select_texts[] = {"2.8224MHz", "5.6448MHz", "11.2896MHz"};
++static const char *ak4490_bickfreq_select[] = {"48fs", "64fs"};
++
++static const struct soc_enum ak4490_dac_enum2[] = {
++    SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ak4490_dsdsel_select_texts), ak4490_dsdsel_select_texts), 
++    SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ak4490_bickfreq_select), ak4490_bickfreq_select), 
++};
++#ifdef AK4490_CONTIF_DEBUG
++static unsigned int ak4490_i2c_read(struct snd_soc_codec *codec, unsigned int reg);
++static int ak4490_i2c_write(struct snd_soc_codec *codec, unsigned int reg,unsigned int value);
++#endif
++extern void isl98608_power_down(void);
++extern void isl98608_power_up(void);
++extern void ak8157_clock_open(void);
++extern void ak8157_clock_close(void);
++
++extern void ak8157_rate_set(int rate);
++
++
++static int ak4490_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt);
++static int ak4490_power_up(struct ak4490_priv *ak4490);
++static int ak4490_power_down(struct ak4490_priv *ak4490);
++
++
++
++
++static inline u32 ak4490_read_reg_cache(struct snd_soc_codec *, u16);
++
++static int ak4490_get_dsdsel(
++struct snd_kcontrol       *kcontrol,
++struct snd_ctl_elem_value  *ucontrol)
++{
++    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++
++    ucontrol->value.enumerated.item[0] = ak4490->nDSDSel;
++
++    return 0;
++}
++
++static int ak4490_set_dsdsel(
++struct snd_kcontrol       *kcontrol,
++struct snd_ctl_elem_value  *ucontrol)
++{
++    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++
++	ak4490->nDSDSel = ucontrol->value.enumerated.item[0];
++
++	if ( ak4490->nDSDSel == 0 ) { 	//  2.8224MHz
++		snd_soc_update_bits(codec, AK4490_06_CONTROL5, 0x01, 0x00);
++		snd_soc_update_bits(codec, AK4490_09_CONTROL8, 0x01, 0x00);
++	}
++	else if( ak4490->nDSDSel == 1 ) {	// 5.6448MHz
++		snd_soc_update_bits(codec, AK4490_06_CONTROL5, 0x01, 0x01);
++		snd_soc_update_bits(codec, AK4490_09_CONTROL8, 0x01, 0x00);
++	}
++	else {								// 11.2896MHz
++	snd_soc_update_bits(codec, AK4490_09_CONTROL8, 0x01, 0x01);
++	snd_soc_update_bits(codec, AK4490_09_CONTROL8, 0x01, 0x00);
++	}
++	
++	return 0;
++}
++
++static int ak4490_get_bickfs(
++struct snd_kcontrol       *kcontrol,
++struct snd_ctl_elem_value  *ucontrol)
++{
++    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++
++    ucontrol->value.enumerated.item[0] = ak4490->nBickFreq;
++
++    return 0;
++}
++
++static int ak4490_set_bickfs(
++struct snd_kcontrol       *kcontrol,
++struct snd_ctl_elem_value  *ucontrol)
++{
++    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++    
++	ak4490->nBickFreq = ucontrol->value.enumerated.item[0];
++	
++    return 0;
++}
++
++#ifdef AK4490_DEBUG
++
++static const char *test_reg_select[]   = 
++{
++    "read AK4490",
++};
++
++static const struct soc_enum ak4490_enum[] = 
++{
++    SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(test_reg_select), test_reg_select),
++};
++
++static int nTestRegNo = 0;
++
++static int get_test_reg(
++struct snd_kcontrol       *kcontrol,
++struct snd_ctl_elem_value  *ucontrol)
++{
++    /* Get the current output routing */
++    ucontrol->value.enumerated.item[0] = nTestRegNo;
++
++    return 0;
++}
++
++static int set_test_reg(
++struct snd_kcontrol       *kcontrol,
++struct snd_ctl_elem_value  *ucontrol)
++{
++    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++    u32    currMode = ucontrol->value.enumerated.item[0];
++	int    i, value;
++	int	   regs, rege;
++
++	nTestRegNo = currMode;
++
++	regs = 0x00;
++	rege = 0x09;
++
++	for ( i = regs ; i <= rege ; i++ ){
++		value = snd_soc_read(codec, i);
++		printk("***@AK4490 Addr,Reg=(%x, %x)\n", i, value);
++
++	//	value = ak4490_i2c_read(codec,i);
++		//printk("###AK4490 Addr,Reg=(%x, %x)\n", i, value);
++	}
++
++	return 0;
++}
++#endif
++
++static const char *hifi_switch_text[] = {
++        "on", "off"
++};
++ 
++static const struct soc_enum hifi_switch_enum =
++                SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(hifi_switch_text), hifi_switch_text);
++
++
++static const char *hifi_switch_ctl_text[] = {
++        "ak4490", "ak4961"
++};
++ 
++static const struct soc_enum hifi_switch_ctl_enum =
++                SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(hifi_switch_ctl_text), hifi_switch_ctl_text);
++
++
++
++static int akm_get_hifi_switch(struct snd_kcontrol *kcontrol,
++        struct snd_ctl_elem_value *ucontrol)
++{
++        struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++        struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++ 
++        ucontrol->value.enumerated.item[0] = ak4490->akm_hifi_switch;
++ 
++        return 0;
++}
++ 
++static int akm_set_hifi_switch(struct snd_kcontrol *kcontrol,
++        struct snd_ctl_elem_value *ucontrol)
++{
++        struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++        struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++	 u8      status = ucontrol->value.integer.value[0];
++//	 int ret;
++
++/*	 pr_err("[LHS]%s ## status=%d\n",__func__,status);
++	 if(status==1)
++	 	{
++	 		ret = gpio_direction_output(ak4490->isl54405_sel_gpio, 1);
++			if (ret < 0) {
++				pr_err("%s(): ak4490_isl54405_sel_gpio direction failed %d\n",
++				__func__, ret);
++				return ret;
++				}
++	 	}
++	 else if(status == 0)
++	 	{
++	 		 ret = gpio_direction_output(ak4490->isl54405_sel_gpio, 0); //4490
++			if (ret < 0) {
++				pr_err("%s(): ak4490_isl54405_sel_gpio direction failed %d\n",
++				__func__, ret);
++				return ret;
++				}
++	 	}
++	 else
++	 	{
++	 	
++	 	}*/
++	 ak4490->akm_hifi_switch=status;
++	 return 0;
++}
++
++static int akm_get_hifi_switch_mute(struct snd_kcontrol *kcontrol,
++        struct snd_ctl_elem_value *ucontrol)
++{
++        struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++        struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++ 
++        ucontrol->value.enumerated.item[0] = ak4490->akm_hifi_switch_mute;
++ 
++        return 0;
++}
++ 
++static int akm_set_hifi_switch_mute(struct snd_kcontrol *kcontrol,
++        struct snd_ctl_elem_value *ucontrol)
++{
++        struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++        struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++	 u8      status = ucontrol->value.integer.value[0];
++	 int ret;
++	 pr_err("[LHS]%s \n",__func__);
++
++	 if(status==0)
++	 	{
++	 		ret = gpio_direction_output(ak4490->isl54405_mute_gpio, 1); //mute
++			if (ret < 0) {
++				pr_err("%s(): ak4490_isl54405_mute_gpio direction failed %d\n",
++				__func__, ret);
++				return ret;
++				}
++			msleep(50);
++		pr_err("[LHS]%s ak4490->isl54405_mute_gpio is 1,status=%d\n",__func__,status);
++	 	}
++	  else if(status == 1)
++	 	{
++	 		msleep(50);
++	 		 ret = gpio_direction_output(ak4490->isl54405_mute_gpio, 0);
++			if (ret < 0) {
++				pr_err("%s(): ak4490_isl54405_mute_gpio direction failed %d\n",
++				__func__, ret);
++				return ret;
++				}
++		pr_err("[LHS]%s ak4490->isl54405_mute_gpio is 0,status=%d\n",__func__,status);
++	 	}
++	 else
++	 	{
++	 	}
++	 ak4490->akm_hifi_switch_mute=status;
++	 return 0;
++}
++
++
++
++
++static int akm_get_hifi_pw_switch(struct snd_kcontrol *kcontrol,
++        struct snd_ctl_elem_value *ucontrol)
++{
++        struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++        struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++ 
++        ucontrol->value.enumerated.item[0] = ak4490->akm_pw_switch;
++ 
++        return 0;
++}
++ 
++static int akm_set_hifi_pw_switch(struct snd_kcontrol *kcontrol,
++        struct snd_ctl_elem_value *ucontrol)
++{
++        struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
++        struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++	 u8      status = ucontrol->value.integer.value[0];
++	 int ret;
++	 pr_err("[LHS]%s \n",__func__);
++
++	 if(status==0)
++	 	{
++
++			ret = ak4490_power_up(ak4490);
++			if (ret < 0) {
++				pr_err("%s(): ak4490_power_up failed %d\n",__func__, ret);
++				return ret;
++				}
++	 	}
++	  else if(status == 1)
++	 	{
++			ak8157_clock_close();                                                                                       
++			msleep(10);
++			ret = ak4490_power_down(ak4490);
++			if (ret < 0) {
++				pr_err("%s(): ak4490_power_down failed %d\n",__func__, ret);
++				return ret;
++			}
++	 	}
++	 else
++	 	{
++			
++	 	}
++	 ak4490->akm_pw_switch=status;
++	 return 0;
++}
++
++
++static const struct snd_kcontrol_new ak4490_snd_controls[] = {
++	SOC_SINGLE_TLV("AK4490 Lch Digital Volume",
++			AK4490_03_LCHATT, 0, 0xFF, 0, latt_tlv),
++	SOC_SINGLE_TLV("AK4490 Rch Digital Volume",
++			AK4490_04_RCHATT, 0, 0xFF, 0, ratt_tlv),
++
++	SOC_ENUM("AK4490 EX DF I/F clock", ak4490_dac_enum[0]), 
++	SOC_ENUM("AK4490 De-emphasis Response", ak4490_dac_enum[1]), 
++	SOC_ENUM("AK4490 Data Zero Detect Mode", ak4490_dac_enum[2]),
++	SOC_ENUM("AK4490 Data Selection at Mono Mode", ak4490_dac_enum[3]), 
++
++	SOC_ENUM("AK4490 Polarity of DCLK", ak4490_dac_enum[4]),
++	SOC_ENUM("AK4490 DCKL Frequency", ak4490_dac_enum[5]),
++
++	SOC_ENUM("AK4490 DDSD Play Back Path", ak4490_dac_enum[6]),
++	SOC_ENUM("AK4490 Sound control", ak4490_dac_enum[7]),
++	SOC_ENUM("AK4490 Cut Off of DSD Filter", ak4490_dac_enum[8]),
++
++	SOC_ENUM_EXT("AK4490 DSD Data Stream", ak4490_dac_enum2[0], ak4490_get_dsdsel, ak4490_set_dsdsel),
++	SOC_ENUM_EXT("AK4490 BICK Frequency Select", ak4490_dac_enum2[1], ak4490_get_bickfs, ak4490_set_bickfs),
++
++	SOC_ENUM_EXT("AKM HIFI Switch Sel", hifi_switch_ctl_enum,
++					akm_get_hifi_switch, akm_set_hifi_switch),
++
++	SOC_ENUM_EXT("AKM HIFI Switch Mute", hifi_switch_enum,
++					akm_get_hifi_switch_mute, akm_set_hifi_switch_mute),
++
++	SOC_ENUM_EXT("AKM HIFI PW", hifi_switch_enum,
++					akm_get_hifi_pw_switch, akm_set_hifi_pw_switch),
++
++
++	SOC_SINGLE("AK4490 External Digital Filter", AK4490_00_CONTROL1, 6, 1, 0),
++	SOC_SINGLE("AK4490 MCLK Frequncy Auto Setting", AK4490_00_CONTROL1, 7, 1, 0),
++	SOC_SINGLE("AK4490 Soft Mute Control", AK4490_01_CONTROL2, 0, 1, 0),
++	SOC_SINGLE("AK4490 Short delay filter", AK4490_01_CONTROL2, 5, 1, 0),
++	SOC_SINGLE("AK4490 Data Zero Detect Enable", AK4490_01_CONTROL2, 7, 1, 0),
++	SOC_SINGLE("AK4490 Slow Roll-off Filter", AK4490_02_CONTROL3, 0, 1, 0),
++	SOC_SINGLE("AK4490 Invering Enable of DZF", AK4490_02_CONTROL3, 4, 1, 0),
++	SOC_SINGLE("AK4490 Mono Mode", AK4490_02_CONTROL3, 3, 1, 0),
++	SOC_SINGLE("AK4490 Super Slow Roll-off Filter", AK4490_05_CONTROL4, 0, 1, 0),
++	SOC_SINGLE("AK4490 AOUTR Phase Inverting", AK4490_05_CONTROL4, 6, 1, 0),
++	SOC_SINGLE("AK4490 AOUTL Phase Inverting", AK4490_05_CONTROL4, 7, 1, 0),
++	SOC_SINGLE("AK4490 DSD Mute Release", AK4490_06_CONTROL5, 3, 1, 0),
++	SOC_SINGLE("AK4490 DSD Mute Control Hold", AK4490_06_CONTROL5, 4, 1, 0),
++	SOC_SINGLE("AK4490 DSDR is detected", AK4490_06_CONTROL5, 5, 1, 0),
++	SOC_SINGLE("AK4490 DSDL is detected", AK4490_06_CONTROL5, 6, 1, 0),
++	SOC_SINGLE("AK4490 DSD Data Mute", AK4490_06_CONTROL5, 7, 1, 0),
++	SOC_SINGLE("AK4490 Synchronization Control", AK4490_07_CONTROL6, 0, 1, 0),
++
++
++#ifdef AK4490_DEBUG
++	SOC_ENUM_EXT("Reg Read", ak4490_enum[0], get_test_reg, set_test_reg),
++#endif
++
++};
++
++
++/* ak4490 dapm widgets */
++static const struct snd_soc_dapm_widget ak4490_dapm_widgets[] = {
++	SND_SOC_DAPM_DAC("AK4490 DAC", "NULL", AK4490_00_CONTROL1, 0, 0),
++	SND_SOC_DAPM_AIF_IN("AK4490 SDTI", "Playback", 0, SND_SOC_NOPM, 0, 0),
++	SND_SOC_DAPM_OUTPUT("AK4490 AOUT"),
++	SND_SOC_DAPM_SUPPLY("AK4490_RX_BIAS", SND_SOC_NOPM, 0, 0, NULL, 0),
++};
++
++static const struct snd_soc_dapm_route ak4490_intercon[] = 
++{
++	{"AK4490 DAC", "NULL", "AK4490 SDTI"},
++	{"AK4490 AOUT", "NULL", "AK4490 DAC"},
++	{"AK4490 SDTI", "NULL", "AK4490_RX_BIAS"},
++};
++
++static int ak4490_hw_params(struct snd_pcm_substream *substream,
++		struct snd_pcm_hw_params *params,
++		struct snd_soc_dai *dai)
++{
++	struct snd_soc_codec *codec = dai->codec;
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++
++	u8 	dfs;
++	u8  dfs2;
++	int nfs1;
++	unsigned int fmt;
++	unsigned int format;
++
++	pr_err("[LHS]%s: sgEntry!\n",__func__);
++	nfs1 = params_rate(params);
++	 ak8157_rate_set(nfs1);
++	 ak8157_clock_open();
++	fmt = params_format(params);
++	ak4490->fs1 = nfs1;
++	ak4490->fmt = fmt;
++//	pr_err("[LHS]%s: nfs1=%d , fmt=%x!\n",__func__,nfs1,fmt);
++
++	dfs = snd_soc_read(codec, AK4490_01_CONTROL2);
++	dfs &= ~AK4490_DFS;
++	
++	dfs2 = snd_soc_read(codec, AK4490_05_CONTROL4);
++	dfs2 &= ~AK4490_DFS2;
++//	pr_err("[LHS]%s: dfs=%x , dfss=%x!\n",__func__,dfs,dfs2);
++
++	switch (nfs1) {
++		case 32000:
++		case 44100:
++		case 48000:
++			dfs |= AK4490_DFS_48KHZ;
++			dfs2 |= AK4490_DFS2_48KHZ;
++			break;
++		case 88200:
++		case 96000:
++			dfs |= AK4490_DFS_96KHZ;
++			dfs2 |= AK4490_DFS2_48KHZ;
++			break;
++		case 176400:
++		case 192000:
++			dfs |= AK4490_DFS_192KHZ;
++			dfs2 |= AK4490_DFS2_48KHZ;
++			break;
++		case 384000:
++			dfs |= AK4490_DFS_384KHZ;
++			dfs2 |= AK4490_DFS2_384KHZ;
++			break;
++		case 768000:
++			dfs |= AK4490_DFS_768KHZ;
++			dfs2 |= AK4490_DFS2_384KHZ;
++			break;
++		default:
++			return -EINVAL;
++	}
++
++
++	
++
++	snd_soc_write(codec, AK4490_00_CONTROL1, 0x0f);
++//	snd_soc_write(codec, AK4490_02_CONTROL3, 0x01);
++	snd_soc_write(codec, AK4490_02_CONTROL3, 0x00);
++	snd_soc_write(codec, AK4490_01_CONTROL2, dfs);
++
++	snd_soc_write(codec, AK4490_06_CONTROL5, 0x00);
++	snd_soc_write(codec, AK4490_07_CONTROL6, 0x00);
++        snd_soc_write(codec, AK4490_08_CONTROL7, 0x01);
++	snd_soc_write(codec, AK4490_09_CONTROL8, 0x00);
++	snd_soc_write(codec, AK4490_05_CONTROL4, dfs2);
++
++	//pr_err("[LHS]%s: 111 dfs=%x , dfss=%x!\n",__func__,dfs,dfs2);
++
++	format = snd_soc_read(codec, AK4490_00_CONTROL1);
++	format &= ~AK4490_DIF;
++
++	switch (params_format(params)) {
++	case SNDRV_PCM_FORMAT_S16_LE:
++	        pr_err("%s: SNDRV_PCM_FORMAT_S16_LE %u\n", __func__,params_format(params));
++		 format |=0x0e; 
++		break;
++	case SNDRV_PCM_FORMAT_S24_LE:
++	case SNDRV_PCM_FORMAT_S24_3LE:
++		pr_err("%s: SNDRV_PCM_FORMAT_S24_LE %u\n", __func__,params_format(params));
++		format |=0x0e;
++		break;
++	case SNDRV_PCM_FORMAT_S32_LE:
++		pr_err("%s: SNDRV_PCM_FORMAT_S32_LE %u\n", __func__,params_format(params));
++		format |=0x0e;
++		break;
++	default:
++		pr_err("%s: Invalid RX format %u\n", __func__,
++				params_format(params));
++		return -EINVAL;
++	}
++	snd_soc_write(codec, AK4490_00_CONTROL1, format);
++	//pr_err("[LHS]%s: 111 AK4490_00_CONTROL1=%x!\n",__func__,format);
++
++	//snd_soc_write(codec, AK4490_01_CONTROL2, dfs);
++	//snd_soc_write(codec, AK4490_05_CONTROL4, dfs2);
++
++
++	//ak4490_set_dai_fmt(dai,fmt);
++
++	return 0;
++}
++
++
++static int ak4490_hw_free(struct snd_pcm_substream *substream,
++		struct snd_soc_dai *dai)
++{
++	//pr_err("[LHS]%s: Entry!\n",__func__);
++
++	return 0;
++}
++
++
++static int ak4490_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
++		unsigned int freq, int dir)
++{
++//	struct snd_soc_codec *codec = dai->codec;
++
++	pr_err("[LHS]%s: Entry!\n",__func__);
++
++	return 0;
++}
++
++static int ak4490_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
++{
++	struct snd_soc_codec *codec = dai->codec;
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++	u8 format;
++	u8 format2;
++
++	pr_err("[LHS]%s: Entry!\n",__func__);
++	//
++
++	/* set master/slave audio interface */
++	format = snd_soc_read(codec, AK4490_00_CONTROL1);
++	format &= ~AK4490_DIF;
++
++	format2 = snd_soc_read(codec, AK4490_02_CONTROL3);
++	format2 &= ~AK4490_DIF_DSD;
++	pr_err("[LHS] %s format=%x format2=%x \n",__func__,format,format2);
++/*    switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
++        case SND_SOC_DAIFMT_CBS_CFS:
++            break;
++        case SND_SOC_DAIFMT_CBM_CFM:
++        case SND_SOC_DAIFMT_CBS_CFM:
++        case SND_SOC_DAIFMT_CBM_CFS:
++        default:
++            dev_err(codec->dev, "Clock mode unsupported");
++           return -EINVAL;
++    }
++*/
++	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
++		case SND_SOC_DAIFMT_I2S:
++		//	format |= AK4490_DIF_I2S_MODE;
++		//	if ( ak4490->nBickFreq == 1 ) 	format |= AK4490_DIF_32BIT_MODE;
++		//	break;
++		case SND_SOC_DAIFMT_LEFT_J:
++		case SND_SOC_DAIFMT_RIGHT_J:
++			//format |= AK4490_DIF_MSB_MODE;
++			format |= AK4490_DIF_I2S_MODE;
++			if ( ak4490->nBickFreq == 1 ) 	format |= AK4490_DIF_32BIT_MODE;
++			break;
++		case SND_SOC_DAIFMT_DSD:
++			format2 |= AK4490_DIF_DSD_MODE;
++			break;
++		default:
++			return -EINVAL;
++	}
++
++	/* set format */
++
++	snd_soc_write(codec, AK4490_00_CONTROL1, format);
++	snd_soc_write(codec, AK4490_02_CONTROL3, format2);
++	return 0;
++}
++
++static int __maybe_unused ak4490_volatile(struct snd_soc_codec *codec, unsigned int reg)
++{
++	int	ret;
++
++	switch (reg) {
++//		case :
++//			ret = 1;
++		default:
++			ret = 0;
++			break;
++	}
++	return ret;
++}
++
++static int __maybe_unused ak4490_readable(struct snd_soc_codec *codec, unsigned int reg)
++{
++
++	if (reg >= ARRAY_SIZE(ak4490_access_masks))
++		return 0;
++	return ak4490_access_masks[reg].readable != 0;
++}
++
++/*
++* Read ak4490 register cache
++ */
++static inline u32 ak4490_read_reg_cache(struct snd_soc_codec *codec, u16 reg)
++{
++    u8 *cache = g_ak4490_priv->reg_cache;
++    BUG_ON(reg > ARRAY_SIZE(ak4490_reg));
++    return (u32)cache[reg];
++}
++
++#ifdef AK4490_CONTIF_DEBUG
++/*
++ * Write ak4490 register cache
++ */
++static inline void ak4490_write_reg_cache(
++struct snd_soc_codec *codec, 
++u16 reg,
++u16 value)
++{
++    u8 *cache = g_ak4490_priv->reg_cache;	/* 4.4: no ASoC codec cache */
++    BUG_ON(reg > ARRAY_SIZE(ak4490_reg));
++    cache[reg] = (u8)value;
++}
++
++static unsigned int ak4490_i2c_read(struct snd_soc_codec *codec, unsigned int reg)
++{
++
++	unsigned int ret;
++	ret = i2c_smbus_read_byte_data(g_ak4490_priv->i2c_client, (u8)(reg & 0xFF));
++
++	if (ret < 0) {
++		akdbgprt("[LHS][AK4490] %s(%d) ret=%x \n",__FUNCTION__,__LINE__,ret);
++	}
++	return ret;
++}
++
++static int ak4490_i2c_write(struct snd_soc_codec *codec, unsigned int reg,
++	unsigned int value)
++{
++
++
++	 pr_err("[LHS]%s, reg=%x , data=%x\n",__func__,reg,value);
++	ak4490_write_reg_cache(codec, reg, value);
++
++	if(i2c_smbus_write_byte_data(g_ak4490_priv->i2c_client, (u8)(reg & 0xFF), (u8)(value & 0xFF))<0) {
++		akdbgprt("[lhs][AK4490] %s(%d)\n",__FUNCTION__,__LINE__);
++		return EIO;
++	}
++	
++	return 0;
++}
++#endif
++
++#ifdef CONFIG_DEBUG_FS_CODEC_AK4490
++static int ak4490_power_enable(bool val);
++static ssize_t ak4490reg_data_show(struct device *dev,
++					   struct device_attribute *attr, char *buf)
++{
++	int i,value;
++	int regs,rege;
++	u8 rx[32]={0};
++	int ret = 0;
++	int fpt = 0;
++	regs=0x00;
++	rege=0x0a;
++	pr_err("[LHS] %s in\n",__func__);
++	ak4490_power_enable(true);
++	for(i= regs;i<rege;i++)
++		{
++		//value=snd_soc_read(ak4490_codec,i);
++			value = ak4490_i2c_read(ak4490_codec,i);
++			//rx[i]=value ;
++			rx[i]=(u8)value ;
++		pr_err("[LHS] ak4490 reg show add =%x , data =%x \n", i,value);
++			if(value<0)
++			break;
++		}
++	ak4490_power_enable(false);
++	if (i == rege) {
++		for (i = regs; i < rege; i++, fpt += 6) {
++			ret += sprintf(buf + fpt, "%02x,%02x\n", i, rx[i]);
++			}
++		return ret;
++		} 
++	else {
++		return sprintf(buf, "ak4490 test error!\n");
++		}
++}
++
++static ssize_t ak4490reg_data_store(struct device *dev,
++					struct device_attribute *attr,
++					const char *buf, size_t count)
++
++{
++	char *ptr_data = (char *)buf;
++	char *p;
++	int i, pt_count = 0;
++	unsigned short val[20];
++	while((p=strsep(&ptr_data,","))){
++		if(!*p)
++			break;
++		if(pt_count>=20)
++			break;
++		val[pt_count] = simple_strtoul(p,NULL,16);
++		pt_count++;
++	}
++	for(i=0;i<pt_count;i+=2)
++		{
++			//snd_soc_write(ak4490_codec,val[i],val[i+1]);
++			ak4490_i2c_write(ak4490_codec,val[i],val[i+1]);
++			pr_err("[LHS] write reg add=%x , val =%x \n",val[i],val[i+1]);
++		}
++	return count;
++	//return 0;
++}
++
++static DEVICE_ATTR(ak4490reg_data, 0664, ak4490reg_data_show, ak4490reg_data_store);
++#endif
++
++// * for AK4490
++static int ak4490_trigger(struct snd_pcm_substream *substream, int cmd, struct snd_soc_dai *codec_dai)
++{
++	int 	ret = 0;  
++//    struct snd_soc_codec *codec = codec_dai->codec;
++//    struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++
++	//pr_err("[LHS]%s: Entry!  sgcmd =%x \n",__func__,cmd);
++	switch (cmd) {
++	case SNDRV_PCM_TRIGGER_START:
++	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
++	//	msleep(50);
++		break;
++	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
++	case SNDRV_PCM_TRIGGER_STOP:
++			break;
++	default:
++		break;
++		}
++
++
++	return ret;
++}
++
++
++static int ak4490_set_bias_level(struct snd_soc_codec *codec,
++		enum snd_soc_bias_level level)
++{
++	pr_err("%s: Entry!\n",__func__);
++
++	switch (level) {
++	case SND_SOC_BIAS_ON:
++	case SND_SOC_BIAS_PREPARE:
++	case SND_SOC_BIAS_STANDBY:
++		break;
++	case SND_SOC_BIAS_OFF:
++		break;
++	}
++	snd_soc_codec_get_dapm(codec)->bias_level = level;
++
++	return 0;
++}
++
++static int ak4490_set_dai_mute(struct snd_soc_dai *dai, int mute) 
++{
++    struct snd_soc_codec *codec = dai->codec;
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++	int ret;
++
++	pr_err("[LHS]%s: mute[%s]\n",__func__,mute ? "ON":"OFF");
++		
++	if (mute) {	//SMUTE: 1 , MUTE
++	/* hifi_pop_gpio connected*/
++		ret = gpio_direction_output(ak4490->hifi_pop_gpio, 0);
++		if (ret < 0) {
++			pr_err("%s(): hifi_pop_gpio direction failed %d\n",
++			__func__, ret);
++			return ret;
++		}
++		pr_err("[LHS]%s: hifi_pop_gpio is 0 \n",__func__);
++		pr_err("%s(): 3: hifi_pop_gpio(%d) value(%d)",
++                         __func__, ak4490->hifi_pop_gpio, gpio_get_value_cansleep(ak4490->hifi_pop_gpio));
++
++		msleep(10); // ZTE_chenjun:OK:1000,10,5
++
++		/* change the switch to ak4961 after the music stop*/
++		ret = gpio_direction_output(ak4490->isl54405_sel_gpio, 1);
++			if (ret < 0) {
++				pr_err("%s(): isl54405_sel_gpio direction failed %d\n",
++				__func__, ret);
++				return ret;
++			}
++		ak4490->akm_hifi_switch = 1;
++		pr_err("[LHS]%s: isl54405_sel_gpio is 1 , set to ak4961!\n",__func__);
++	}
++	else {		// SMUTE: 0 ,NORMAL operation
++		snd_soc_update_bits(codec, AK4490_01_CONTROL2, 0x01, 0x00);
++				/* change the switch to ak4490 after the music start*/
++		ret = gpio_direction_output(ak4490->isl54405_sel_gpio, 0);
++			if (ret < 0) {
++				pr_err("%s(): isl54405_sel_gpio direction failed %d\n",
++				__func__, ret);
++				return ret;
++				}
++		ak4490->akm_hifi_switch = 0;
++		pr_err("[LHS]%s: isl54405_sel_gpio is 0 ,set to ak4490!\n",__func__);
++	}
++
++	return 0;
++}
++
++#define AK4490_RATES		(SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
++				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |\
++				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |\
++				SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |\
++				SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |\
++				SNDRV_PCM_RATE_192000)  // | SNDRV_PCM_RATE_384000 | SNDRV_PCM_RATE_768000
++
++#define AK4490_FORMATS		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE
++
++
++static struct snd_soc_dai_ops ak4490_dai_ops = {
++	.hw_params	= ak4490_hw_params,
++	.hw_free = ak4490_hw_free,
++	.set_sysclk	= ak4490_set_dai_sysclk,
++	.set_fmt	= ak4490_set_dai_fmt,
++	.trigger = ak4490_trigger,
++	.digital_mute = ak4490_set_dai_mute,
++};
++
++struct snd_soc_dai_driver ak4490_dai[] = {   
++	{										 
++		.name = "ak4490-AIF1",
++		.playback = {
++		       .stream_name = "Playback",
++		       .channels_min = 1,
++		       .channels_max = 2,
++		       .rates = AK4490_RATES,
++		       .formats = AK4490_FORMATS,
++		},
++		.ops = &ak4490_dai_ops,
++	},									 
++};
++
++static int ak4490_init_reg(struct snd_soc_codec *codec)
++{
++
++	ak4490_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
++
++	return 0;
++}
++
++
++static int ak4490_populate_dt_pdata(struct device *dev,
++		struct ak4490_priv *ak4490)
++{
++	if ((NULL == ak4490) || (NULL == dev)){
++		pr_err("%s null codec point\n", __func__);
++		return -EINVAL;
++	}
++	pr_err("[LHS]%s in 3333 \n",__func__);
++	ak4490->pdn_gpio = of_get_named_gpio(dev->of_node,
++					      "ak4490,pdn-gpio", 0);
++	if (!gpio_is_valid(ak4490->pdn_gpio)){
++		dev_err(dev, "%s error pdn_gpio gpio 1\n", __func__);
++		pr_err("%s error pdn_gpio gpio 1\n", __func__);
++		return -EINVAL;
++	}
++
++	ak4490->ldoen_gpio = of_get_named_gpio(dev->of_node,"ak4490,ldoen-gpio",0);
++		if (!gpio_is_valid(ak4490->ldoen_gpio)){
++		dev_err(dev, "%s error ldoen_gpio gpio 93\n", __func__);
++		pr_err("%s error pdn_gpio gpio 93\n", __func__);
++		return -EINVAL;
++	}
++
++	ak4490->isl54405_sw_pwr_gpio = of_get_named_gpio(dev->of_node,
++					      "qcom,isl-sw-pwr-gpio", 0);
++	if (!gpio_is_valid(ak4490->isl54405_sw_pwr_gpio)){
++		dev_err(dev, "%s error isl54405_sw_pwr_gpio pmi gpios 10\n", __func__);
++		return -EINVAL;
++	}
++
++	ak4490->isl98608_ldo_pwr_gpio = of_get_named_gpio(dev->of_node,
++					      "ak4490,isl-ldo-pwr-gpio", 0);
++	if (!gpio_is_valid(ak4490->isl98608_ldo_pwr_gpio)){
++		dev_err(dev, "%s error isl98608_ldo_pwr_gpio pmi mpp 4\n", __func__);
++		return -EINVAL;
++	}
++
++	ak4490->isl54405_sel_gpio = of_get_named_gpio(dev->of_node,
++					      "ak4490,hifi_sel_gpio", 0);
++	if (!gpio_is_valid(ak4490->isl54405_sel_gpio)){
++		dev_err(dev, "%s error isl54405_sel_gpio pm mpp 2\n", __func__);
++		return -EINVAL;
++	}
++	
++	ak4490->isl54405_mute_gpio = of_get_named_gpio(dev->of_node,
++					      "ak4490,hifi_mute_gpio", 0);
++	if (!gpio_is_valid(ak4490->isl54405_mute_gpio)){
++		dev_err(dev, "%s error isl54405_mute_gpio pm mpp 4\n", __func__);
++		return -EINVAL;
++	}
++
++	ak4490->hifi_pop_gpio = of_get_named_gpio(dev->of_node,
++					      "ak4490,hifi_pop_gpio", 0);
++	if (!gpio_is_valid(ak4490->hifi_pop_gpio)){
++		dev_err(dev, "%s error is hifi_pop_gpio pmi gpios 10\n", __func__);
++		return -EINVAL;
++	}
++	pr_err("%s hifi_pop_gpio(%d) success\n", __func__, ak4490->hifi_pop_gpio);
++
++	
++    return 0;
++}
++#ifdef CONFIG_DEBUG_FS_CODEC_AK4490
++int isl98608_pw_enable(bool val)
++{
++ 	int ret=0;
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(ak4490_codec);
++	pr_err("[LHS]%s  in \n",__func__);
++
++	if(val==true)
++		{
++	ret = gpio_direction_output(ak4490->ldoen_gpio, 1);                                        
++	if (ret < 0) {
++		pr_err("%s(): ak4490_ldoen_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	ret = gpio_direction_output(ak4490->isl98608_ldo_pwr_gpio, 1);                            
++	if (ret < 0) {
++		pr_err("[LHS]%s(): isl98608_ldo_pwr_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++		}
++	else 
++		{
++			ret = gpio_direction_output(ak4490->ldoen_gpio, 0);                                        
++			if (ret < 0) {
++				pr_err("%s(): ak4490_ldoen_gpio direction failed %d\n",
++						__func__, ret);
++				return ret;
++			}
++			ret = gpio_direction_output(ak4490->isl98608_ldo_pwr_gpio, 0);                            
++			if (ret < 0) {
++				pr_err("[LHS]%s(): isl98608_ldo_pwr_gpio direction failed %d\n",
++						__func__, ret);
++				return ret;
++			}
++		}
++	return 0;
++}
++
++
++static int ak4490_power_enable(bool val)
++{
++	int ret = 0;
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(ak4490_codec);
++	pr_err("[LHS]%s in val =%d \n",__func__,val);
++	if(val==true)
++		{
++			//AKM-sungang:1,PDN pin = L 												 
++			ret = gpio_direction_output(ak4490->pdn_gpio, 0);                  				
++			if (ret < 0) {
++				pr_err("%s(): ak4490_pdn_gpio direction failed %d\n",
++						__func__, ret);
++				return ret;
++			}
++			msleep(10);
++			//AKM-sungang:2,TVDD/AVDD/DVDD power up
++			ret = gpio_direction_output(ak4490->ldoen_gpio, 1);                                        
++			if (ret < 0) {
++				pr_err("%s(): ak4490_ldoen_gpio direction failed %d\n",
++						__func__, ret);
++				return ret;
++			}
++
++			//AKM-sungang:4,PDN pin = H 												 
++			ret = gpio_direction_output(ak4490->pdn_gpio, 1);                  				
++			if (ret < 0) {
++				pr_err("%s(): ak4490_pdn_gpio direction failed %d\n",
++						__func__, ret);
++				return ret;
++			}
++		}
++	else
++		{
++			//AKM-sungang:1,PDN pin = L 												 
++			ret = gpio_direction_output(ak4490->pdn_gpio, 0);                  				
++			if (ret < 0) {
++				pr_err("%s(): ak4490_pdn_gpio direction failed %d\n",
++						__func__, ret);
++				return ret;
++			}
++			msleep(10);
++			//AKM-sungang:2,TVDD/AVDD/DVDD power up
++			ret = gpio_direction_output(ak4490->ldoen_gpio, 0);                                        
++			if (ret < 0) {
++				pr_err("%s(): ak4490_ldoen_gpio direction failed %d\n",
++						__func__, ret);
++				return ret;
++			}
++		}
++	pr_err("[LHS]%s out!\n",__func__);
++
++	return 0;
++}
++#endif
++
++static int ak4490_power_up(struct ak4490_priv *ak4490)
++{
++	int ret = 0;
++	pr_err("[LHS]%s in : power up flow : ak4490_ldo , isl98608 pwr and regs, ak4490_pdn .\n",__func__);
++	//AKM-sungang:1,PDN pin = L 												 
++	ret = gpio_direction_output(ak4490->pdn_gpio, 0);                  				
++	if (ret < 0) {
++		pr_err("%s(): ak4490_pdn_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	//AKM-sungang:2,TVDD/AVDD/DVDD power up
++	ret = gpio_direction_output(ak4490->ldoen_gpio, 1);                                        
++	if (ret < 0) {
++		pr_err("%s(): ak4490_ldoen_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	//AKM-sungang:3,isl98608_en(VREFHL/R VDDL/R) power up
++	ret = gpio_direction_output(ak4490->isl98608_ldo_pwr_gpio, 1);                            
++	if (ret < 0) {
++		pr_err("%s(): isl98608_ldo_pwr_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	msleep(10);
++	isl98608_power_up();
++	msleep(10);
++	//AKM-sungang:4,PDN pin = H 												 
++	ret = gpio_direction_output(ak4490->pdn_gpio, 1);                  				
++	if (ret < 0) {
++		pr_err("%s(): ak4490_pdn_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	pr_err("[LHS]%s out!\n",__func__);
++
++	return 0;
++	
++}
++static int ak4490_power_down(struct ak4490_priv *ak4490)
++{
++	int ret = 0;
++	pr_err("[LHS]%s in : power off flow: ak4490_pdn , ak4490_ldo , isl98608 \n",__func__);
++	//AKM-sungang:1,PDN pin = L 												 
++	ret = gpio_direction_output(ak4490->pdn_gpio, 0);						
++	if (ret < 0) {
++		pr_err("%s(): ak4490_pdn_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	//AKM-sungang:2,TVDD/AVDD/DVDD power down
++	ret = gpio_direction_output(ak4490->ldoen_gpio, 0); 					
++	if (ret < 0) {
++		pr_err("%s(): ak4490_ldoen_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	msleep(10);
++	//power down the isl98608
++	ret = gpio_direction_output(ak4490->isl98608_ldo_pwr_gpio, 0);				
++	if (ret < 0) {
++		pr_err("%s(): isl98608_ldo_pwr_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	/* hifi_pop_gpio cut*/
++		ret = gpio_direction_output(ak4490->hifi_pop_gpio, 1);
++		if (ret < 0) {
++			pr_err("%s(): hifi_pop_gpio direction failed %d\n",
++			__func__, ret);
++			return ret;
++		}
++		pr_err("[LHS]%s: hifi_pop_gpio is 1 \n",__func__);
++		pr_err("%s(): 3: hifi_pop_gpio(%d) value(%d)",
++                         __func__, ak4490->hifi_pop_gpio, gpio_get_value_cansleep(ak4490->hifi_pop_gpio));
++	pr_err("[LHS]%s out! \n",__func__);
++	return 0;
++
++}
++	
++static int ak4490_initial_gpio(struct ak4490_priv *ak4490)
++{
++	int ret = 0;
++	//AKM-sungang:1,PDN pin = L
++	ret = gpio_request(ak4490->pdn_gpio, "ak4490_pdn_gpio");
++	if (ret < 0) {
++		pr_err("%s(): ak4490_pdn_gpio request failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	// power down the ak4490 pdn during the system up
++	ret = gpio_direction_output(ak4490->pdn_gpio, 0);
++	if (ret < 0) {
++		pr_err("%s(): ak4490_pdn_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	//AKM-sungang:2,TVDD/AVDD/DVDD power up
++	ret = gpio_request(ak4490->ldoen_gpio, "ak4490_ldo_gpio");                            
++	if (ret < 0) {
++		pr_err("%s(): ak4490_ldoen_gpio request failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	// power down the ak4490 ldo during the system up 
++	ret = gpio_direction_output(ak4490->ldoen_gpio, 0);    
++	if (ret < 0) {
++		pr_err("%s(): ak4490_ldoen_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++
++	pr_err("[LHS] %s ldo -- enable !\n",__func__);
++	msleep(100);
++	//AKM-sungang:3,isl98608_en(VREFHL/R VDDL/R) power up
++	ret = gpio_request(ak4490->isl98608_ldo_pwr_gpio, "isl98608_ldo_pwr_gpio");                
++	if (ret < 0) {
++		pr_err("%s(): isl98608_ldo_pwr_gpio request failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	// power down the isl98608 during the system up 
++	ret = gpio_direction_output(ak4490->isl98608_ldo_pwr_gpio, 0); 
++	if (ret < 0) {
++		pr_err("%s(): isl98608_ldo_pwr_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	  //AKM-sungang:4,HP-CHIP power up
++	ret = gpio_request(ak4490->isl54405_sw_pwr_gpio, "isl54405_sw_pwr_gpio");            
++	if (ret < 0) {
++		pr_err("%s(): isl54405_sw_pwr_gpio request failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	// power up the isl54405 switch during the system up 
++	ret = gpio_direction_output(ak4490->isl54405_sw_pwr_gpio, 1);   
++	if (ret < 0) {
++		pr_err("%s(): isl54405_sw_pwr_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++
++	ret = gpio_request(ak4490->isl54405_sel_gpio, "ak4490_isl54405_sel_gpio");
++	if (ret < 0) {
++		pr_err("%s(): ak4490_isl54405_sel_gpio request failed %d\n",
++				__func__, ret);
++		return ret;
++        }
++	// switch select the ak4961 at the system start 
++	ret = gpio_direction_output(ak4490->isl54405_sel_gpio, 1);  
++	if (ret < 0) {
++		pr_err("%s(): ak4490_isl54405_sel_gpio direction failed %d\n",
++				__func__, ret);
++		return ret;
++		}
++
++	ret = gpio_request(ak4490->isl54405_mute_gpio, "ak4490_isl54405_mute_gpio");
++	if (ret < 0) {
++		pr_err("%s(): ak4490_isl54405_mute_gpio request failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++	// switch mute off(play will be ok) during the system start 
++	ret = gpio_direction_output(ak4490->isl54405_mute_gpio, 1); 
++	if (ret < 0) {
++		pr_err("%s(): ak4490_isl54405_mute_gpio direction failed %d\n",
++				__func__, ret);
++	return ret;
++	}
++
++	// hifi_pop_gpio cut
++	ret = gpio_request(ak4490->hifi_pop_gpio, "ak4490_hifi_pop_gpio");            
++	if (ret < 0) {
++		pr_err("%s(): is hifi_pop_gpio request failed %d\n",
++				__func__, ret);
++	}
++
++	ret = gpio_direction_output(ak4490->hifi_pop_gpio, 1);   
++	if (ret < 0) {
++		pr_err("%s(): is hifi_pop_gpio direction failed %d\n",
++				__func__, ret);
++	}
++
++
++    	pr_err("[LHS]%s system up ,ak4490 initial_gpio success!default setting : hifi swith power on , switch mute on , select ak4961, all others off \n",__func__);
++	return 0;
++}
++
++
++static int ak4490_probe(struct snd_soc_codec *codec)
++{
++	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++#ifdef CONFIG_DEBUG_FS_CODEC_AK4490
++	int ret = 0;
++#endif
++	pr_err("[LHS]%s: Entry!\n",__func__);
++
++#ifdef AK4490_CONTIF_DEBUG
++	//codec->write = ak4490_i2c_write;
++	//codec->read = ak4490_i2c_read;
++#endif
++#ifdef CONFIG_DEBUG_FS_CODEC_AK4490
++	ret=device_create_file(codec->dev,&dev_attr_ak4490reg_data);
++	if(ret)
++		{
++			pr_err("[LHS] %s error to create reg_data\n",__func__);
++		}
++	ak4490_codec=codec;
++#endif
++
++
++//	ak4490_codec = codec;
++
++	ak4490_init_reg(codec);
++
++	ak4490->fs1 = 48000;
++	ak4490->nBickFreq = 0;		
++	ak4490->nDSDSel = 0;
++	ak4490->akm_hifi_switch_mute=0;
++	ak4490->akm_hifi_switch=0;
++	ak4490->akm_pw_switch=0;
++
++	return 0;
++}
++
++static int ak4490_remove(struct snd_soc_codec *codec)
++{
++
++	akdbgprt("\t[AK4490] %s(%d)\n",__FUNCTION__,__LINE__);
++
++#ifdef CONFIG_DEBUG_FS_CODEC_AK4490
++	device_remove_file(codec->dev,&dev_attr_ak4490reg_data);
++#endif
++
++	ak4490_set_bias_level(codec, SND_SOC_BIAS_OFF);
++	return 0;
++}
++
++/* ZTE_modify initialization from incompatible pointer type begin */
++static int ak4490_suspend(struct snd_soc_codec *codec)
++{
++//	struct ak4490_priv *ak4490 = snd_soc_codec_get_drvdata(codec);
++//	pr_err("[LHS]%s: ak4490_suspend \n",__func__);
++//	regcache_sync(ak4490->regmap);
++
++	ak4490_set_bias_level(codec, SND_SOC_BIAS_OFF);
++
++	return 0;
++}
++/* ZTE_modify end */
++
++static int ak4490_resume(struct snd_soc_codec *codec)
++{
++//	pr_err("[LHS]%s: ak4490_resume \n",__func__);
++//	ak4490_init_reg(codec);
++	ak4490_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
++	return 0;
++}
++
++struct snd_soc_codec_driver soc_codec_dev_ak4490 = {
++	.probe = ak4490_probe,
++	.remove = ak4490_remove,
++	.suspend =	ak4490_suspend,
++	.resume =	ak4490_resume,
++
++	.controls = ak4490_snd_controls,
++	.num_controls = ARRAY_SIZE(ak4490_snd_controls),
++	.read = ak4490_i2c_read,
++	.write = ak4490_i2c_write,
++	.set_bias_level = ak4490_set_bias_level,
++	.reg_cache_size = ARRAY_SIZE(ak4490_reg),
++	.reg_word_size = sizeof(u8),
++	.reg_cache_default = ak4490_reg,
++	.dapm_widgets = ak4490_dapm_widgets,
++	.num_dapm_widgets = ARRAY_SIZE(ak4490_dapm_widgets),
++	.dapm_routes = ak4490_intercon,
++	.num_dapm_routes = ARRAY_SIZE(ak4490_intercon),
++};
++EXPORT_SYMBOL_GPL(soc_codec_dev_ak4490);
++
++
++static const struct regmap_config ak4490_regmap_config = {
++	.reg_bits = 8,
++	.val_bits = 8,
++
++	.max_register = AK4490_MAX_REGISTERS,
++	.reg_defaults = ak4490_reg_defaults,
++	.num_reg_defaults = ARRAY_SIZE(ak4490_reg_defaults),
++	.cache_type = REGCACHE_RBTREE,
++};
++
++
++static int ak4490_i2c_probe(struct i2c_client *i2c,
++                            const struct i2c_device_id *id)
++{
++	struct ak4490_priv *ak4490;
++	int ret=0;
++
++	akdbgprt("\t[LHS][AK4490] %s(%d)\n",__FUNCTION__,__LINE__);
++	
++
++	ak4490 = devm_kzalloc(&i2c->dev, sizeof(struct ak4490_priv), GFP_KERNEL);
++	if (ak4490 == NULL) 
++		return -ENOMEM;
++
++       ret = ak4490_populate_dt_pdata(&i2c->dev, ak4490);
++	if (ret) {
++		pr_err("[LHS]%s Parsing DT failed99(%d)", __func__, ret);
++		return ret;
++	}
++
++   ret = ak4490_initial_gpio(ak4490);
++	if (ret){
++		pr_info("%s fail to set gpio%d\n", __func__, ret);
++	}
++
++
++	ak4490->regmap = devm_regmap_init_i2c(i2c, &ak4490_regmap_config);
++	if (IS_ERR(ak4490->regmap))
++		{
++		pr_err("[LHS] %s regmap failed!\n",__func__);
++		return PTR_ERR(ak4490->regmap);
++		}
++
++	   
++	i2c_set_clientdata(i2c, ak4490);
++	ak4490->i2c_client = i2c;
++       g_ak4490_priv = ak4490;
++
++
++	dev_set_name(&i2c->dev, "%s", "ak4490");
++
++	pr_err("[LHS]%s dev name--------sungang %s\n", __func__, dev_name(&i2c->dev));
++
++	ret = snd_soc_register_codec(&i2c->dev,
++			&soc_codec_dev_ak4490, &ak4490_dai[0], ARRAY_SIZE(ak4490_dai));
++	if (ret < 0){
++		kfree(ak4490);
++		akdbgprt("\t[AK4490 Error!] %s(%d)\n",__FUNCTION__,__LINE__);
++	}
++	pr_err("[LHS]%s leave ret=%d\n", __func__, ret);
++	return ret;
++}
++
++static int ak4490_i2c_remove(struct i2c_client *client)
++{
++
++	snd_soc_unregister_codec(&client->dev);
++	kfree(i2c_get_clientdata(client));
++	return 0;
++}
++
++static const struct i2c_device_id ak4490_i2c_id[] = {
++	{ "ak4490", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, ak4490_i2c_id);
++
++static struct i2c_driver ak4490_i2c_driver = {
++	.driver = {
++		.name = "ak4490",
++		.owner = THIS_MODULE,
++	},
++	.probe = ak4490_i2c_probe,
++	.remove = ak4490_i2c_remove,
++	.id_table = ak4490_i2c_id,
++};
++
++static int __init ak4490_modinit(void)
++{
++
++	akdbgprt("\t[AK4490] %s(%d)\n", __FUNCTION__,__LINE__);
++
++	return i2c_add_driver(&ak4490_i2c_driver);
++}
++
++module_init(ak4490_modinit);
++
++static void __exit ak4490_exit(void)
++{
++	i2c_del_driver(&ak4490_i2c_driver);
++}
++module_exit(ak4490_exit);
++
++MODULE_DESCRIPTION("ASoC ak4490 codec driver");
++MODULE_LICENSE("GPL");
+diff --git a/sound/soc/codecs/ak4490/ak4490.h b/sound/soc/codecs/ak4490/ak4490.h
+new file mode 100644
+index 000000000000..0a95507799ca
+--- /dev/null
++++ b/sound/soc/codecs/ak4490/ak4490.h
+@@ -0,0 +1,65 @@
++/*
++ * ak4490.h  --  audio driver for ak4490
++ *
++ * Copyright (C) 2014 Asahi Kasei Microdevices Corporation
++ *  Author                Date        Revision
++ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++ *                      14/08/11	   1.0
++ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of  the GNU General  Public License as published by the
++ *  Free Software Foundation;  either version 2 of the  License, or (at your
++ *  option) any later version.
++ *
++ */
++
++
++#define SND_SOC_DAIFMT_DSD		   0x101
++
++#ifndef _AK4490_H
++#define _AK4490_H
++
++#define AK4490_00_CONTROL1			0x00
++#define AK4490_01_CONTROL2			0x01
++#define AK4490_02_CONTROL3			0x02
++#define AK4490_03_LCHATT			0x03
++#define AK4490_04_RCHATT			0x04
++#define AK4490_05_CONTROL4			0x05
++#define AK4490_06_CONTROL5			0x06
++#define AK4490_07_CONTROL6			0x07
++#define AK4490_08_CONTROL7			0x08
++#define AK4490_09_CONTROL8			0x09
++
++#define AK4490_MAX_REGISTERS	(AK4490_09_CONTROL8 + 1)
++
++/* Bitfield Definitions */
++
++/* AK4490_00_CONTROL1 (0x00) Fields */
++#define AK4490_DIF					0x0E
++#define AK4490_DIF_MSB_MODE	    (2 << 1)
++#define AK4490_DIF_I2S_MODE     (3 << 1)
++#define AK4490_DIF_32BIT_MODE	(4 << 1)
++
++/* AK4490_02_CONTROL3 (0x02) Fields */
++#define AK4490_DIF_DSD				0x80
++#define AK4490_DIF_DSD_MODE	    (1 << 7)
++
++
++/* AK4490_01_CONTROL2 (0x01) Fields */
++/* AK4490_05_CONTROL4 (0x05) Fields */
++#define AK4490_DFS				0x18
++#define AK4490_DFS_48KHZ		(0x0 << 3)  //  30kHz to 54kHz
++#define AK4490_DFS_96KHZ		(0x1 << 3)  //  54kHz to 108kHz
++#define AK4490_DFS_192KHZ		(0x2 << 3)  //  120kHz  to 216kHz
++#define AK4490_DFS_384KHZ		(0x0 << 3)
++#define AK4490_DFS_768KHZ		(0x1 << 3)
++
++#define AK4490_DFS2				0x2
++#define AK4490_DFS2_48KHZ		(0x0 << 1)  //  30kHz to 216kHz
++#define AK4490_DFS2_384KHZ		(0x1 << 1)  //  384kHz, 768kHkHz to 108kHz
++
++int isl98608_pw_enable(bool);
++
++
++#endif
+diff --git a/sound/soc/codecs/ak4490/ak8157.c b/sound/soc/codecs/ak4490/ak8157.c
+new file mode 100644
+index 000000000000..9149aefd782b
+--- /dev/null
++++ b/sound/soc/codecs/ak4490/ak8157.c
+@@ -0,0 +1,312 @@
++/*
++ * ak8157.c  --  audio driver for AK8157
++ *
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of  the GNU General  Public License as published by the
++ *  Free Software Foundation;  either version 2 of the  License, or (at your
++ *  option) any later version.
++ *
++ */
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/i2c.h>
++#include <linux/delay.h>
++#include <linux/slab.h>
++#include <linux/gpio.h>
++#include <sound/soc.h>
++#include <sound/soc-dapm.h>
++#include <sound/initval.h>
++#include <sound/tlv.h>
++
++#include <linux/gpio.h>
++#include <linux/of_gpio.h>
++
++// ZTE_chenjun
++// #define MSM8996_I2S_MASTER
++#define CONFIG_DEBUG_FS_AK8157
++
++
++
++struct ak8157_priv {
++	struct i2c_client *i2c;
++	int rstn;
++	int rstn_tmp;
++};
++struct ak8157_priv ak8157_i2c;
++static int ak8157_i2c_read(struct i2c_client *i2c, unsigned int reg)
++{
++
++	int ret;
++
++	ret = i2c_smbus_read_byte_data(i2c, (u8)(reg & 0xFF));
++
++	if (ret < 0) {
++		pr_err("%s reg=%x, ret=%d\n", __func__, reg, ret);
++	}
++
++	return ret;
++}
++
++static int ak8157_i2c_write(struct i2c_client *i2c, unsigned int reg,
++	unsigned int value)
++{
++    int ret;
++
++    ret = i2c_smbus_write_byte_data(i2c, (u8)(reg & 0xFF), (u8)(value & 0xFF));
++	if(ret < 0) {
++		pr_err("[LHS]%s ret=%d\n",__func__, ret);
++		return EIO;
++	}
++	
++	return 0;
++}
++#ifdef CONFIG_DEBUG_FS_AK8157
++static ssize_t ak8157reg_data_show(struct device *dev,
++					   struct device_attribute *attr, char *buf)
++{
++	int i,value,fpt,ret;
++	int regs,rege;
++	u8 rx[32]={0};
++	ret = fpt = 0;
++	regs=0x00;
++	rege=0x02;
++	pr_err("[LHS] sungang%s in\n",__func__);
++	for(i= regs;i<rege;i++)
++		{
++		value=ak8157_i2c_read(ak8157_i2c.i2c,i);
++			//rx[i]=value ;
++		rx[i]=(u8)value ;
++		pr_err("[LHS] sungang ak8157 reg show add =%x , data =%x \n", i,value);
++		if(value<0)
++		break;
++		}
++	if (i == rege) {
++		for (i = regs; i < rege; i++, fpt += 6) {
++			ret += sprintf(buf + fpt, "%02x,%02x\n", i, rx[i]);
++		} 
++		return ret;
++        }
++	else {
++		return sprintf(buf, "ak8157 test error!\n");
++	}
++	return 0;
++}
++
++static ssize_t ak8157reg_data_store(struct device *dev,
++					struct device_attribute *attr,
++					const char *buf, size_t count)
++
++{
++	/*char *ptr_data = (char *)buf;
++	char *p;
++	int i, pt_count = 0;
++	unsigned short val[20];
++	while((p=strsep(&ptr_data,","))){
++		if(!*p)
++			break;
++		if(pt_count>=20)
++			break;
++		val[pt_count] = simple_strtoul(p,NULL,16);
++		pt_count++;
++	}
++	for(i=0;i<pt_count;i+=2)
++		{
++			ak8157_i2c_write(ak8157_i2c.i2c,val[i],val[i+1]);
++			pr_err("[LHS] sungang ak8157 write reg add=%x , val =%x \n",val[i],val[i+1]);
++		}
++	return count;*/
++	return 0;
++}
++
++static DEVICE_ATTR(ak8157reg_data, 0664, ak8157reg_data_show, ak8157reg_data_store);
++#endif
++
++
++
++void ak8157_rate_set(int rate)
++{
++
++    pr_err("[LHS]%s rate=%d\n", __func__, rate);
++
++    switch (rate) {
++		case 192000: // 192K 
++			ak8157_i2c_write(ak8157_i2c.i2c, 0x01, 0x22);
++			break;
++		case 96000: // 96K
++			ak8157_i2c_write(ak8157_i2c.i2c, 0x01, 0x12);
++			break;
++		case 48000: // 48K
++			ak8157_i2c_write(ak8157_i2c.i2c, 0x01, 0x02);
++			break;
++		case 44100: // 44.1K
++			ak8157_i2c_write(ak8157_i2c.i2c, 0x01, 0x01);
++			break;
++		default:
++			ak8157_i2c_write(ak8157_i2c.i2c, 0x01, 0x02);
++			break;
++	}
++	msleep(5);
++}
++
++
++static int ak8157_config_init(struct i2c_client *client)
++{
++
++	int ret = 0,ret1=0,ret2=0;
++	ret = ak8157_i2c_write(client,0x00,0xe7);
++
++	ret1 = ak8157_i2c_read(client,0x00);
++	ret = ak8157_i2c_write(client,0x01,0x00);
++	
++	ret2= ak8157_i2c_read(client,0x01);
++	pr_err("[LHS]%s ret1 = %0x,ret2 = %0x\n",__func__,ret1,ret2);
++	return 0;
++
++}
++static int ak8157_i2c_probe(struct i2c_client *i2c,
++                            const struct i2c_device_id *id)
++{
++	struct ak8157_priv *ak8157;
++	int ret=0;
++
++	pr_err("%s enter\n",__func__);
++
++	ak8157 = kzalloc(sizeof(struct ak8157_priv), GFP_KERNEL);
++	if (ak8157 == NULL) 
++		return -ENOMEM;
++
++    ak8157->i2c = i2c;
++	i2c_set_clientdata(i2c, ak8157);
++	
++#if 1
++    ak8157->rstn = of_get_named_gpio(i2c->dev.of_node, 
++					      "ak8157,rstn-gpio", 0);
++	if (!gpio_is_valid(ak8157->rstn)){  
++		pr_err("%s error ak8157 rstn ret=%d\n", __func__, ak8157->rstn);
++		return -EINVAL;
++	}
++
++	ret = gpio_request(ak8157->rstn, "ak8157_rstn_pin");
++	if (ret < 0) {
++		pr_err("%s(): ak8157_rstn_pin request failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++
++	gpio_direction_output(ak8157->rstn, 0);
++	usleep_range(1000, 1005);
++	gpio_direction_output(ak8157->rstn, 1);
++    	pr_err("[LHS]%s(): reset success! \n",__func__);
++#endif
++
++// ZTE_chenjun:TEMP
++#if 1
++    ak8157->rstn_tmp = of_get_named_gpio(i2c->dev.of_node, 
++					      "ak8157,rstn-gpio-tmp", 0);
++	if (!gpio_is_valid(ak8157->rstn_tmp)){  
++		pr_err("%s error ak8157 rstn_tmp ret=%d\n", __func__, ak8157->rstn_tmp);
++		return -EINVAL;
++	}
++
++	ret = gpio_request(ak8157->rstn_tmp, "ak8157_rstn_pin_tmp");
++	if (ret < 0) {
++		pr_err("%s(): ak8157_rstn_pin_tmp request failed %d\n",
++				__func__, ret);
++		return ret;
++	}
++
++	gpio_direction_output(ak8157->rstn_tmp, 0);
++	usleep_range(1000, 1005);
++	gpio_direction_output(ak8157->rstn_tmp, 1);
++    	pr_err("[LHS]%s(): reset tmp success! \n",__func__);
++#endif
++
++    	ak8157_config_init(i2c);
++    	ak8157_i2c.i2c= i2c;
++	ak8157_i2c.rstn=ak8157->rstn;
++	ak8157_i2c.rstn_tmp=ak8157->rstn_tmp;
++	
++#ifdef CONFIG_DEBUG_FS_AK8157
++	ret=device_create_file(&i2c->dev,&dev_attr_ak8157reg_data);
++	if(ret)
++		{
++			pr_err("[LHS] sungang %s error to create reg_data\n",__func__);
++		}
++	ak8157_i2c.i2c= i2c;
++#endif
++	return ret;
++}
++
++
++void ak8157_clock_open(void)
++{
++	int ret;
++	pr_err("[LHS]%s() !\n",__func__);
++#if defined(MSM8996_I2S_MASTER)
++	ret=ak8157_i2c_write(ak8157_i2c.i2c,0x00,0x27); // ONLY MCLK to AK4490
++#else
++	ret=ak8157_i2c_write(ak8157_i2c.i2c,0x00,0xe0); 
++	// pr_err("[LHS]%s sungang---0xe0\n",__func__);
++
++	ret=ak8157_i2c_write(ak8157_i2c.i2c,0x00,0x00); // ALL I2S CLK and MCLK to AK4490
++	// pr_err("[LHS]%s sungang---0x00\n",__func__);
++#endif
++}
++
++void ak8157_clock_close(void)
++{
++	int ret;
++	pr_err("[lhs]%s() !\n",__func__);
++	ret = ak8157_i2c_write(ak8157_i2c.i2c,0x00,0xe7);
++}
++
++
++static int ak8157_i2c_remove(struct i2c_client *i2c)
++{
++
++#ifdef CONFIG_DEBUG_FS_AK8157
++	device_remove_file(&i2c->dev,&dev_attr_ak8157reg_data);
++#endif
++
++	kfree(i2c_get_clientdata(i2c));
++
++	return 0;
++}
++
++static const struct i2c_device_id ak8157_i2c_id[] = {
++	{ "ak8157", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, ak8157_i2c_id);
++
++static struct i2c_driver ak8157_i2c_driver = {
++	.driver = {
++		.name = "ak8157",
++		.owner = THIS_MODULE,
++	},
++	.probe = ak8157_i2c_probe,
++	.remove = ak8157_i2c_remove,
++	.id_table = ak8157_i2c_id,
++};
++
++static int __init ak8157_init(void)
++{
++
++	pr_info("%s \n",__func__);
++
++	return i2c_add_driver(&ak8157_i2c_driver);
++}
++
++module_init(ak8157_init);
++
++static void __exit ak8157_exit(void)
++{
++	i2c_del_driver(&ak8157_i2c_driver);
++}
++module_exit(ak8157_exit);
++
++MODULE_DESCRIPTION("ASoC AK8157 codec driver");
++MODULE_LICENSE("GPL");
++
+diff --git a/sound/soc/codecs/ak4490/isl98608.c b/sound/soc/codecs/ak4490/isl98608.c
+new file mode 100644
+index 000000000000..b16952599303
+--- /dev/null
++++ b/sound/soc/codecs/ak4490/isl98608.c
+@@ -0,0 +1,274 @@
++/*
++ * isl98608.c  --  audio driver for ISL98608
++ *
++ *
++ *  This program is free software; you can redistribute  it and/or modify it
++ *  under  the terms of  the GNU General  Public License as published by the
++ *  Free Software Foundation;  either version 2 of the  License, or (at your
++ *  option) any later version.
++ *
++ */
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/i2c.h>
++#include <linux/delay.h>
++#include <linux/slab.h>
++#include <linux/gpio.h>
++#include <sound/soc.h>
++#include <sound/soc-dapm.h>
++#include <sound/initval.h>
++#include <sound/tlv.h>
++
++#include <linux/gpio.h>
++#include <linux/of_gpio.h>
++
++#include "ak4490.h"
++
++#define CONFIG_DEBUG_FS_ISL98608
++
++
++// ZTE_chenjun
++// #define HIFI_LDO_7V
++
++struct isl98608_priv {
++	struct i2c_client *i2c;
++};
++struct isl98608_priv g_l98608;
++
++
++#if 1
++static int isl98608_i2c_read(struct i2c_client *i2c, unsigned int reg)
++{
++
++	int ret;
++
++	ret = i2c_smbus_read_byte_data(i2c, (u8)(reg & 0xFF));
++
++	if (ret < 0) {
++		pr_err("[LHS]%s reg=%x, ret=%d\n", __func__, reg, ret);
++	}
++
++	return ret;
++}
++
++static int isl98608_i2c_write(struct i2c_client *i2c, unsigned int reg,
++	unsigned int value)
++{
++    int ret;
++
++    ret = i2c_smbus_write_byte_data(i2c, (u8)(reg & 0xFF), (u8)(value & 0xFF));
++	if(ret < 0) {
++		pr_err("[LHS]%s reg = %x ,ret=%d\n",__func__,reg, ret);
++		return EIO;
++	}
++	
++	return 0;
++}
++#endif
++
++#ifdef CONFIG_DEBUG_FS_ISL98608
++static ssize_t isl98608reg_data_show(struct device *dev,
++					   struct device_attribute *attr, char *buf)
++{
++	int i,value,fpt,ret;
++	int regs,rege;
++	u8 rx[32]={0};
++	ret = fpt = 0;
++	regs=0x00;
++	rege=0x0e;
++	pr_err("[LHS] sungang%s in\n",__func__);
++	isl98608_pw_enable(true);
++	for(i= regs;i<rege;i++)
++		{
++		value=isl98608_i2c_read(g_l98608.i2c,i);
++		rx[i]=(u8)value ;
++		pr_err("[LHS] sungang isl98608 reg show add =%x , data =%x \n", i,value);
++		if(value<0)
++		break;
++		}
++	isl98608_pw_enable(false);
++	if (i == rege) {
++		for (i = regs; i < rege; i++, fpt += 6) {
++			ret += sprintf(buf + fpt, "%02x,%02x\n", i, rx[i]);
++		} 
++		return ret;
++        }
++	else {
++		return sprintf(buf, "isl98608 test error!\n");
++	}
++	return 0;
++}
++
++static ssize_t isl98608reg_data_store(struct device *dev,
++					struct device_attribute *attr,
++					const char *buf, size_t count)
++
++{
++/*	char *ptr_data = (char *)buf;
++	char *p;
++	int i, pt_count = 0;
++	unsigned short val[20];
++	while((p=strsep(&ptr_data,","))){
++		if(!*p)
++			break;
++		if(pt_count>=20)
++			break;
++		val[pt_count] = simple_strtoul(p,NULL,16);
++		pt_count++;
++	}
++	for(i=0;i<pt_count;i+=2)
++		{
++			isl98608_i2c_write(g_l98608.i2c,val[i],val[i+1]);
++			pr_err("[LHS] sungang isl98608 write reg add=%x , val =%x \n",val[i],val[i+1]);
++		}
++	return count;*/
++	return 0;
++}
++
++static DEVICE_ATTR(isl98608reg_data, 0664, isl98608reg_data_show, isl98608reg_data_store);
++#endif
++
++
++void isl98608_power_down(void)
++{
++	//pr_err("[LHS]%s enter\n",__func__);
++	isl98608_i2c_write(g_l98608.i2c,0x05,0x80);
++}
++
++void isl98608_power_up(void)
++{
++
++	int val_address = 0,val_value = 0;
++
++	//pr_err("[LHS]%s enter\n",__func__);
++
++	isl98608_i2c_write(g_l98608.i2c,0x00,0x00);
++	isl98608_i2c_write(g_l98608.i2c,0x01,0x00);
++	isl98608_i2c_write(g_l98608.i2c,0x02,0x00);
++	isl98608_i2c_write(g_l98608.i2c,0x03,0x00);
++	isl98608_i2c_write(g_l98608.i2c,0x04,0x00);
++	isl98608_i2c_write(g_l98608.i2c,0x05,0x87);	
++
++#if defined(HIFI_LDO_7V)
++	isl98608_i2c_write(g_l98608.i2c,0x06,0x28);
++#else
++	isl98608_i2c_write(g_l98608.i2c,0x06,0x0d);
++#endif
++
++	isl98608_i2c_write(g_l98608.i2c,0x07,0x00);
++	isl98608_i2c_write(g_l98608.i2c,0x08,0x00);
++
++#if defined(HIFI_LDO_7V)
++	isl98608_i2c_write(g_l98608.i2c,0x09,0x28);
++#else
++	isl98608_i2c_write(g_l98608.i2c,0x09,0x08);
++#endif
++
++	isl98608_i2c_write(g_l98608.i2c,0x0a,0xf0);
++	isl98608_i2c_write(g_l98608.i2c,0x0b,0x0a);
++	isl98608_i2c_write(g_l98608.i2c,0x0c,0x05);
++	isl98608_i2c_write(g_l98608.i2c,0x0d,0x34);
++
++for(val_address = 0x00;val_address<0x0e;val_address++)
++
++{
++		 val_value = isl98608_i2c_read(g_l98608.i2c, val_address);
++		if(val_value <0 )
++		{
++			pr_err("[LHS]%s:i2c read failed\n",__func__);			
++		}
++		//pr_err("[LHS]%s:reg_addr:%x,reg_value:%x\n",__func__,val_address,val_value);
++	}
++    
++
++}
++
++
++static int isl98608_i2c_probe(struct i2c_client *i2c,
++                            const struct i2c_device_id *id)
++{
++	struct isl98608_priv *isl98608;
++	int ret=0;
++
++	pr_err("%s enter\n",__func__);
++
++	isl98608 = kzalloc(sizeof(struct isl98608_priv), GFP_KERNEL);
++	if (isl98608 == NULL) {
++		pr_err("[LHS]%s Error: alloc error ! \n",__func__);
++		return -ENOMEM;
++	}
++
++
++	if (!i2c_check_functionality(i2c->adapter,
++				     I2C_FUNC_SMBUS_BYTE_DATA)) {
++		pr_err("[LHS] %s I2C adapter doesn't support I2C_FUNC_SMBUS_BYTE",__func__);
++		return -EIO;
++	}
++
++
++    	isl98608->i2c = i2c;
++	i2c_set_clientdata(i2c, isl98608);
++
++
++	g_l98608.i2c=isl98608->i2c;
++#ifdef CONFIG_DEBUG_FS_ISL98608
++	ret=device_create_file(&i2c->dev,&dev_attr_isl98608reg_data);
++	if(ret)
++		{
++			pr_err("[LHS] sungang %s error to create reg_data\n",__func__);
++		}
++	g_l98608.i2c= i2c;
++#endif
++
++	
++	return ret;
++}
++
++static int isl98608_i2c_remove(struct i2c_client *i2c)
++{
++#ifdef CONFIG_DEBUG_FS_ISL98608
++	device_remove_file(&i2c->dev,&dev_attr_isl98608reg_data);
++#endif
++
++	kfree(i2c_get_clientdata(i2c));
++
++	return 0;
++}
++
++static const struct i2c_device_id isl98608_i2c_id[] = {
++	{ "isl98608", 0 },
++	{ }
++};
++
++MODULE_DEVICE_TABLE(i2c, isl98608_i2c_id);
++
++static struct i2c_driver isl98608_i2c_driver = {
++	.driver = {
++		.name = "isl98608",
++		.owner = THIS_MODULE,
++	},
++	.probe = isl98608_i2c_probe,
++	.remove = isl98608_i2c_remove,
++	.id_table = isl98608_i2c_id,
++};
++
++
++static int __init isl98608_init(void)
++{
++
++	pr_info("%s \n",__func__);
++
++	return i2c_add_driver(&isl98608_i2c_driver);
++}
++
++module_init(isl98608_init);
++
++static void __exit isl98608_exit(void)
++{
++	i2c_del_driver(&isl98608_i2c_driver);
++}
++module_exit(isl98608_exit);
++
++MODULE_DESCRIPTION("ASoC ISL98608 codec driver");
++MODULE_LICENSE("GPL");
+-- 
+2.47.3
+

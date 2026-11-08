@@ -30,7 +30,7 @@ Bootloader, modem, EFS/IMEI and recovery are never touched. TWRP stays your way 
 [TR][TD][B]Boot menu[/B][/TD][TD]choose iOS / postmarketOS / LineageOS with the volume keys, remembers a default[/TD][TD][/TD][/TR]
 [TR][TD][B]iOS 16.7.16[/B][/TD][TD]home screen, touch, Wi-Fi, GPU, Sileo (jailbreak)[/TD][TD]calls, mobile data, camera, audio[/TD][/TR]
 [TR][TD][B]postmarketOS[/B][/TD][TD]display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG[/TD][TD]calls, audio, camera[/TD][/TR]
-[TR][TD][B]LineageOS 22.2[/B][/TD][TD][I]developer builds only, not released yet:[/I] boots to the home screen, display, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, NFC, both cameras detected, flashlight, all 42 sensors, fingerprint sensor driver, GPS service, modem starts and its services come up (SIM slot 1)[/TD][TD]audio (codec found, driver not finished), camera picture and fingerprint enrolment (untested), second SIM slot, calls/data with a SIM (untested), screen colours on one half after waking[/TD][/TR]
+[TR][TD][B]LineageOS 22.2[/B][/TD][TD][I]developer builds only, not released yet:[/I] boots to the home screen, display, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, NFC, flashlight, all 42 sensors, GPS service, fingerprint sensor driver, both cameras detected, sound card and audio routing (AK4961 + AK4490 Hi-Fi DAC), modem starts and its services come up[/TD][TD]camera app (crashes on a bad stream size), sound actually audible and fingerprint enrolment (untested), dual SIM (in test), calls/data with a SIM (untested), screen colours on one half after waking[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -51,7 +51,7 @@ LineageOS has no install steps yet; they come with the first release.
 [*]LineageOS: fingerprint sensor driver (Goodix, ported from ZTE's kernel) works; enrolling a finger is not tested yet.
 [*]LineageOS: both cameras are detected (Android 15 needs the HAL3 mode of the camera blob); flashlight works.
 [*]LineageOS: NFC works (PN548 driver ported from ZTE's kernel).
-[*]LineageOS: the audio codec (AK4961) answers; its driver (ported from ZTE's kernel) is not finished yet.
+[*]LineageOS: audio: the sound card comes up (AK4961 codec and AK4490 Hi-Fi DAC drivers ported from ZTE's kernel); the audio HAL routes sound and switches the speaker amplifier on. Not yet confirmed audible.
 [*]LineageOS: telephony starts cleanly (single SIM for now).
 [/LIST]
 [/SPOILER]

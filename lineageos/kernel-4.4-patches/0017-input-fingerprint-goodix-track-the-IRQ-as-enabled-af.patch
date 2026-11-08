@@ -1,0 +1,29 @@
+From cb97b31e5c52d2aceab08e79923b58a15c3a7409 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 07:56:07 +0000
+Subject: [PATCH 17/20] input: fingerprint: goodix: track the IRQ as enabled
+ after request_threaded_irq (unbalanced enable in gf_open)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I70f2ef615f52a511ba591c3a34f6ccb90d8a5341
+---
+ drivers/input/fingerprint/goodix/gf_spi.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/input/fingerprint/goodix/gf_spi.c b/drivers/input/fingerprint/goodix/gf_spi.c
+index 438af552f3f0..4a7ebeb0fafe 100755
+--- a/drivers/input/fingerprint/goodix/gf_spi.c
++++ b/drivers/input/fingerprint/goodix/gf_spi.c
+@@ -678,6 +678,8 @@ static int gf_probe(struct platform_device *pdev)
+ 					   "gf", gf_dev);
+ 		if (!ret) {
+ 			enable_irq_wake(gf_dev->irq);
++			/* request_threaded_irq() leaves it enabled */
++			gf_dev->irq_enabled = 1;
+ 			gf_disable_irq(gf_dev);
+ 		}
+ 	}
+-- 
+2.47.3
+

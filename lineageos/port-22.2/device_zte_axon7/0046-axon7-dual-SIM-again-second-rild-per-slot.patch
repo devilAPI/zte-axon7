@@ -1,0 +1,109 @@
+From c56d5ab66bb46758cb540cf8a04e2c3f20270069 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 09:04:59 +0000
+Subject: [PATCH] axon7: dual SIM again (second rild per slot)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Iae5d8de9ab81301d092ae2b0e4393f4f91552ab8
+---
+ init/init.qcom.rc                     |  5 ++---
+ rild/android.hardware.radio-axon7.xml | 10 +++++++++-
+ system.prop                           |  4 ++--
+ 3 files changed, 13 insertions(+), 6 deletions(-)
+
+diff --git a/init/init.qcom.rc b/init/init.qcom.rc
+index 8b142ad..c2ae4aa 100755
+--- a/init/init.qcom.rc
++++ b/init/init.qcom.rc
+@@ -398,11 +398,10 @@ service qcom-sh /vendor/bin/init.qcom.sh
+ on property:ro.vendor.ril.mbn_copy_completed=1
+     write /data/vendor/radio/copy_complete 1
+ 
+-# Second SIM slot: off for now. rild_axon7 (libril-modem-lib) is built for one
+-# SIM; the Qualcomm RIL's second instance crashed with stack corruption.
++# Second SIM slot: a second rild_axon7 (-c 2 registers the slot2 radio HALs).
++# Its earlier stack corruption was the Android 8 Parcel size (libril_parcel_shim).
+ service ril-daemon2 /vendor/bin/hw/rild -c 2
+     class main
+-    disabled
+     user radio
+     group radio cache inet misc audio log readproc wakelock
+     capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
+diff --git a/rild/android.hardware.radio-axon7.xml b/rild/android.hardware.radio-axon7.xml
+index 33e4351..a8f166a 100644
+--- a/rild/android.hardware.radio-axon7.xml
++++ b/rild/android.hardware.radio-axon7.xml
+@@ -1,5 +1,5 @@
+ <manifest version="1.0" type="device">
+-    <!-- rild_axon7 (libril-modem-lib): radio AIDL HALs, SIM slot 1 (slot2 comes back with a two-slot rild) -->
++    <!-- rild_axon7 (libril-modem-lib): radio AIDL HALs, SIM slots 1 and 2 (one rild per slot) -->
+     <hal format="aidl">
+         <name>android.hardware.radio.config</name>
+         <version>4</version>
+@@ -14,39 +14,47 @@
+         <name>android.hardware.radio.data</name>
+         <version>4</version>
+         <fqname>IRadioData/slot1</fqname>
++        <fqname>IRadioData/slot2</fqname>
+     </hal>
+     <hal format="aidl">
+         <name>android.hardware.radio.ims</name>
+         <version>3</version>
+         <fqname>IRadioIms/slot1</fqname>
++        <fqname>IRadioIms/slot2</fqname>
+     </hal>
+     <hal format="aidl">
+         <name>android.hardware.radio.messaging</name>
+         <version>4</version>
+         <fqname>IRadioMessaging/slot1</fqname>
++        <fqname>IRadioMessaging/slot2</fqname>
+     </hal>
+     <hal format="aidl">
+         <name>android.hardware.radio.modem</name>
+         <version>4</version>
+         <fqname>IRadioModem/slot1</fqname>
++        <fqname>IRadioModem/slot2</fqname>
+     </hal>
+     <hal format="aidl">
+         <name>android.hardware.radio.network</name>
+         <version>4</version>
+         <fqname>IRadioNetwork/slot1</fqname>
++        <fqname>IRadioNetwork/slot2</fqname>
+     </hal>
+     <hal format="aidl">
+         <name>android.hardware.radio.sim</name>
+         <version>4</version>
+         <fqname>IRadioSim/slot1</fqname>
++        <fqname>IRadioSim/slot2</fqname>
+     </hal>
+     <hal format="aidl">
+         <name>android.hardware.radio.voice</name>
+         <version>4</version>
+         <fqname>IRadioVoice/slot1</fqname>
++        <fqname>IRadioVoice/slot2</fqname>
+     </hal>
+     <hal format="aidl">
+         <name>android.hardware.radio.sap</name>
+         <fqname>ISap/slot1</fqname>
++        <fqname>ISap/slot2</fqname>
+     </hal>
+ </manifest>
+diff --git a/system.prop b/system.prop
+index 0f2ff12..3b4a341 100644
+--- a/system.prop
++++ b/system.prop
+@@ -25,8 +25,8 @@ persist.demo.hdmirotationlock=false
+ 
+ # Radio
+ DEVICE_PROVISIONED=1
+-# single SIM for now: rild_axon7 serves slot1 only (ril-daemon2 is off)
+-persist.radio.multisim.config=ssss
++# dual SIM: one rild_axon7 per slot (vendor.ril-daemon slot1, ril-daemon2 slot2)
++persist.radio.multisim.config=dsds
+ ril.subscription.types=NV,RUIM
+ 
+ # USB
+-- 
+2.47.3
+

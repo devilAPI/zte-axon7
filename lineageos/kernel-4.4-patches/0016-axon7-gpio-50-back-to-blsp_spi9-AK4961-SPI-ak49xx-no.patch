@@ -1,0 +1,87 @@
+From 0f20a2ec7b43591a28822d9afc63956a29c3bb20 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 07:55:49 +0000
+Subject: [PATCH 16/20] axon7: gpio 50 back to blsp_spi9 (AK4961 SPI); ak49xx:
+ no SPI access without the SPI device
+
+los18 panicked: spi9 could not set its pins (LineageOS' Xiaomi tree
+nullified gpio 50), so spi_ak4961 was never created, and
+ak49xx_device_init read registers through a NULL spi_device. ZTE's 3.18
+kernel uses gpio 50 for this SPI; the register helpers now return
+-ENODEV when the SPI device is missing.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Ic9aba0737b4ce434c85966a3ef3efe30dce7c16b
+---
+ drivers/mfd/ak49xx-core.c              | 10 +++++-----
+ drivers/pinctrl/qcom/pinctrl-msm8996.c |  4 +++-
+ 2 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/mfd/ak49xx-core.c b/drivers/mfd/ak49xx-core.c
+index 545982314f48..f7c83ebda8e5 100644
+--- a/drivers/mfd/ak49xx-core.c
++++ b/drivers/mfd/ak49xx-core.c
+@@ -321,7 +321,7 @@ int ak49xx_ram_write(struct ak49xx *ak49xx, u8 vat, u8 page,
+ 	} else if (ak49xx_intf == AK49XX_INTERFACE_TYPE_SPI ||
+ 		ak49xx_intf == AK49XX_INTERFACE_TYPE_SLIMBUS_SPI) {
+ 
+-		ret = spi_write(ak49xx_spi, buf, count);
++		ret = !ak49xx_spi ? -ENODEV : spi_write(ak49xx_spi, buf, count);
+ 		if (ret) {
+ 			pr_err("failed to write ram data in SPI mode.\n");
+ 		}
+@@ -358,7 +358,7 @@ int ak49xx_run_ram_write(struct ak49xx *ak49xx, u8 *buf)
+ 
+ 	} else if (ak49xx_intf == AK49XX_INTERFACE_TYPE_SPI || ak49xx_intf == AK49XX_INTERFACE_TYPE_SLIMBUS_SPI) {
+ 
+-		ret += spi_write(ak49xx_spi, buf, buf[3] * 3 + 9);
++		ret += !ak49xx_spi ? -ENODEV : spi_write(ak49xx_spi, buf, buf[3] * 3 + 9);
+ 		ret += ak49xx_write(ak49xx, CRAM_RUN_EXE, 1, &runc, false);
+ 
+ 		if (ret) {
+@@ -389,7 +389,7 @@ int ak49xx_cram_read(unsigned short reg,
+ 	if (ak49xx_intf == AK49XX_INTERFACE_TYPE_SPI ||
+ 		ak49xx_intf == AK49XX_INTERFACE_TYPE_SLIMBUS_SPI) {
+ 
+-		ret = spi_write_then_read(ak49xx_spi, tx, 3, d, bytes);
++		ret = !ak49xx_spi ? -ENODEV : spi_write_then_read(ak49xx_spi, tx, 3, d, bytes);
+ 		if (ret != 0) {
+ 			pr_err("failed to read ak49xx cram\n");
+ 		}
+@@ -493,7 +493,7 @@ static int ak49xx_spi_read_device(unsigned short reg,
+ 	tx[0] = 0x01;
+ 	tx[1] = reg >> 8;
+ 	tx[2] = reg & 0xFF;
+-	ret = spi_write_then_read(ak49xx_spi, tx, 3, d, bytes);
++	ret = !ak49xx_spi ? -ENODEV : spi_write_then_read(ak49xx_spi, tx, 3, d, bytes);
+ 	if (ret != 0) {
+ 		pr_err("failed to read ak49xx register\n");
+ 		return ret;
+@@ -512,7 +512,7 @@ static int ak49xx_spi_write_device(unsigned short reg,
+ 	tx[2] = reg & 0xFF;
+ 	memcpy(tx + 3, src, bytes);
+ 
+-	ret = spi_write(ak49xx_spi, tx, bytes + 3);
++	ret = !ak49xx_spi ? -ENODEV : spi_write(ak49xx_spi, tx, bytes + 3);
+ 	if (ret != 0) {
+ 		pr_err("[LHS]failed to write ak49xx register\n");
+ 		return ret;
+diff --git a/drivers/pinctrl/qcom/pinctrl-msm8996.c b/drivers/pinctrl/qcom/pinctrl-msm8996.c
+index ba37fa900578..d21a20cb92b4 100644
+--- a/drivers/pinctrl/qcom/pinctrl-msm8996.c
++++ b/drivers/pinctrl/qcom/pinctrl-msm8996.c
+@@ -1761,7 +1761,9 @@ static const struct msm_pingroup msm8996_groups[] = {
+ 		 NA, NA),
+ 	PINGROUP(49, uim3, blsp_spi9, blsp_uart9, blsp_uim9, blsp10_spi,
+ 		 dac_calib8, NA, NA, NA),
+-	PINGROUP(50, NA, NA, NA, NA, NA, NA, NA, NA, NA),
++	/* axon7: gpio 50 is BLSP2 QUP3 SPI (AK4961 control port), as in ZTE's 3.18 */
++	PINGROUP(50, uim3, blsp_spi9, blsp_uart9, blsp_uim9, blsp10_spi,
++		 dac_calib9, NA, NA, NA),
+ 	PINGROUP(51, uim3, blsp_spi9, blsp_uart9, blsp_i2c9, blsp10_spi,
+ 		 dac_calib10, NA, NA, NA),
+ 	PINGROUP(52, uim3, blsp_spi9, blsp_uart9, blsp_i2c9,
+-- 
+2.47.3
+

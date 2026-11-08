@@ -1,0 +1,87 @@
+From ec07594424485b6e7d8dde3d97cc4545b59ca386 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 08:14:50 +0000
+Subject: [PATCH 18/20] ak49xx: irq domain made at probe, -EPROBE_DEFER passed
+ on
+
+los19: the AK4961 answered over SPI (device code 0x61), but the irq
+controller had no domain (IRQCHIP_DECLARE does not run when the parent
+TLMM is a platform driver) and ak49xx_device_init returned the device
+code as its error, so the slimbus probe failed for good instead of
+deferring.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Ia314de5c7f96278418232aff88499589c12f4ec2
+---
+ drivers/mfd/ak49xx-core.c            |  5 ++++-
+ drivers/mfd/ak49xx-irq.c             | 12 +++++++++++-
+ include/uapi/linux/mfd/ak49xx/core.h |  4 ++--
+ 3 files changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/mfd/ak49xx-core.c b/drivers/mfd/ak49xx-core.c
+index f7c83ebda8e5..78d2c7e3fe70 100644
+--- a/drivers/mfd/ak49xx-core.c
++++ b/drivers/mfd/ak49xx-core.c
+@@ -871,7 +871,10 @@ static int ak49xx_device_init(struct ak49xx *ak49xx)
+ 				ak49xx_reg_read, ak49xx_reg_write,
+ 				ak49xx_bulk_read, ak49xx_bulk_write);
+ 
+-	if (ak49xx_core_irq_init(&ak49xx->core_res))
++	/* -EPROBE_DEFER until the ak49xx irq controller is up: pass it on
++	 * (it used to return the device code, 0x61, as the error) */
++	ret = ak49xx_core_irq_init(&ak49xx->core_res);
++	if (ret)
+ 		goto err;
+ 
+ 	if (ak49xx->dev) {
+diff --git a/drivers/mfd/ak49xx-irq.c b/drivers/mfd/ak49xx-irq.c
+index 72e31249204d..8a7f7c338b2e 100644
+--- a/drivers/mfd/ak49xx-irq.c
++++ b/drivers/mfd/ak49xx-irq.c
+@@ -486,7 +486,7 @@ static int ak49xx_map_irq(
+ 	return phyirq_to_virq(ak49xx_res, irq);
+ }
+ #else
+-int __init ak49xx_irq_of_init(struct device_node *node,
++int ak49xx_irq_of_init(struct device_node *node,
+ 		struct device_node *parent)
+ {
+ 	struct ak49xx_irq_drv_data *data;
+@@ -666,6 +666,16 @@ static int ak49xx_irq_probe(struct platform_device *pdev)
+ 		}
+ 		dev_err(&pdev->dev, "%s: virq = %d\n", __func__, irq);
+ 		domain = irq_find_host(pdev->dev.of_node);
++		if (!domain) {
++			/*
++			 * 4.4: IRQCHIP_DECLARE does not run for this node (its parent,
++			 * the TLMM, is a platform driver here), so make the domain now.
++			 */
++			ret = ak49xx_irq_of_init(pdev->dev.of_node, NULL);
++			if (ret)
++				return ret;
++			domain = irq_find_host(pdev->dev.of_node);
++		}
+ 		if (unlikely(!domain)) {
+ 			pr_err("%s: domain is NULL", __func__);
+ 			return -EINVAL;
+diff --git a/include/uapi/linux/mfd/ak49xx/core.h b/include/uapi/linux/mfd/ak49xx/core.h
+index 88c910704f97..a0d55afed296 100644
+--- a/include/uapi/linux/mfd/ak49xx/core.h
++++ b/include/uapi/linux/mfd/ak49xx/core.h
+@@ -125,10 +125,10 @@ int ak49xx_cram_read(unsigned short reg, int bytes, void *dest);
+ #if defined(CONFIG_AK4960_CODEC) || \
+ 	defined(CONFIG_AK4961_CODEC) || \
+ 	defined(CONFIG_AK4962_CODEC)
+-int __init ak49xx_irq_of_init(struct device_node *node,
++int ak49xx_irq_of_init(struct device_node *node,
+ 			       struct device_node *parent);
+ #else
+-static inline int __init ak49xx_irq_of_init(struct device_node *node,
++static inline int ak49xx_irq_of_init(struct device_node *node,
+ 			       struct device_node *parent)
+ {
+ 	return 0;
+-- 
+2.47.3
+
