@@ -22,7 +22,7 @@ Phase: [B]alpha[/B]. Developer builds only.
 [SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
 [TABLE]
 [TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight, all 42 sensors, GPS service, fingerprint (enrolment works), front camera, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]rear camera (detected, the app opens it, no picture yet), GPS (no position yet), the phone sometimes wakes up or locks by itself, flashlight tile says "Camera in use", unlocking with the fingerprint (untested), calls/data with a SIM (untested)[/TD][/TR]
+[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight, all 42 sensors, GPS service, fingerprint (enrolment works), both cameras (no optical stabilisation yet), sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]optical image stabilisation (off for now), GPS (no position yet), the phone sometimes wakes up or locks by itself, flashlight tile says "Camera in use", unlocking with the fingerprint (untested), calls/data with a SIM (untested)[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -38,7 +38,7 @@ Developers can build it from source; the developer setup (a multi-boot with iOS 
 [*]Bluetooth audio to speakers works.
 [*]Wi-Fi hotspot can be switched on and off, and Wi-Fi has internet again afterwards (the device declared a tethering offload driver that does not exist; Android waited for it forever).
 [*]Front camera works (the image processor speaks ZTE's camera interface now).
-[*]Rear camera: the sensor, its calibration and the image stabiliser come up; no picture yet.
+[*]Rear camera works (camera I2C bus settings as in ZTE's kernel). The optical image stabiliser is switched off for now: once started it blocked the camera's I2C bus.
 [*]Sound is audible and the volume works (the audio policy lost all volume steps over a missing Bluetooth include).
 [*]The brightness slider works (the Samsung panel needs ZTE's brightness command sequence in high-speed mode).
 [*]Fingerprint enrolment works (ZTE's fingerprint HAL no longer depends on an Android framework library).

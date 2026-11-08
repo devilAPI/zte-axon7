@@ -1,0 +1,44 @@
+From 19bbd17fd23f388e9553164d152583f41aec4e69 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 14:56:39 +0000
+Subject: [PATCH] axon7: no tetheroffload HALs in the manifest (nothing serves
+ them; Tethering waited forever: hotspot could not be switched off, Settings
+ ANR)
+
+Change-Id: I39b7f534084e907e5880c23c76e522726f294c13
+---
+ manifest.xml | 18 ------------------
+ 1 file changed, 18 deletions(-)
+
+diff --git a/manifest.xml b/manifest.xml
+index fcb038e..b1a5f56 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -154,24 +154,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.tetheroffload.config</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IOffloadConfig</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.tetheroffload.control</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IOffloadControl</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>com.qualcomm.qti.dpm.api</name>
+         <transport>hwbinder</transport>
+-- 
+2.47.3
+
