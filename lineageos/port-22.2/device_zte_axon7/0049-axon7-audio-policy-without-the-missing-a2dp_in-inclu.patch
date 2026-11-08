@@ -1,0 +1,28 @@
+From c434fadfe0a1ddb78c35cbbf741828784a9e0cac Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 11:34:36 +0000
+Subject: [PATCH 49/50] axon7: audio policy without the missing a2dp_in include
+ (the failed XInclude dropped all volume curves: volume stuck)
+
+Change-Id: Iecf92551acd922442861b8a273456d1d82559e41
+---
+ audio/audio_policy_configuration.xml | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/audio/audio_policy_configuration.xml b/audio/audio_policy_configuration.xml
+index eeb3118..8313872 100755
+--- a/audio/audio_policy_configuration.xml
++++ b/audio/audio_policy_configuration.xml
+@@ -275,9 +275,6 @@
+ 
+         </module>
+ 
+-        <!-- A2DP Input Audio HAL -->
+-        <xi:include href="/vendor/etc/a2dp_in_audio_policy_configuration.xml"/>
+-
+         <!-- Usb Audio HAL -->
+         <xi:include href="/vendor/etc/usb_audio_policy_configuration.xml"/>
+ 
+-- 
+2.47.3
+

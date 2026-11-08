@@ -1,0 +1,35 @@
+From 10e9e1f305ec12f49e3446d11cd56c667fd74876 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 12:00:55 +0000
+Subject: [PATCH 50/50] axon7: fingerprint HAL module without
+ libandroid_runtime (dlopen failed: enrolment impossible)
+
+Change-Id: I30ace14b6faec31ab22a1da9304e4245ecfe6299
+---
+ extract-files.sh | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/extract-files.sh b/extract-files.sh
+index ca35def..680af8f 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -141,9 +141,15 @@ function blob_fixup() {
+         "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
+         ;;
+     # libstdc++ is libstdc++_vendor on the vendor partition (camera, fingerprint)
+-    vendor/lib/liboptizoom.so|vendor/lib/libchromaflash.so|vendor/lib/libmmcamera_hdr_gb_lib.so|vendor/lib/libseemore.so|vendor/lib/libtsvideoprocess.so|vendor/lib/libtrueportrait.so|vendor/lib/libubifocus.so|vendor/lib64/libfp_client.so|vendor/lib64/libfpnav.so|vendor/lib64/hw/fingerprint.msm8996.so|vendor/lib64/hw/gxfingerprint.default.so)
++    vendor/lib/liboptizoom.so|vendor/lib/libchromaflash.so|vendor/lib/libmmcamera_hdr_gb_lib.so|vendor/lib/libseemore.so|vendor/lib/libtsvideoprocess.so|vendor/lib/libtrueportrait.so|vendor/lib/libubifocus.so|vendor/lib64/libfp_client.so|vendor/lib64/libfpnav.so|vendor/lib64/hw/gxfingerprint.default.so)
+         "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
+         ;;
++    # Goodix HAL module: libandroid_runtime is a framework library (not
++    # loadable from the fingerprint HAL) and none of its symbols are used
++    vendor/lib64/hw/fingerprint.msm8996.so)
++        "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
++        "${PATCHELF}" --remove-needed "libandroid_runtime.so" "${2}"
++        ;;
+     # pm-service: sp<> on a stack object aborts on Android 15 (shims/stackptr.cpp)
+     vendor/bin/pm-service)
+         grep -q libstackptr_shim.so "${2}" || "${PATCHELF}" --add-needed "libstackptr_shim.so" "${2}"
+-- 
+2.47.3
+
