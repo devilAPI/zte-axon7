@@ -22,7 +22,7 @@ Phase: [B]alpha[/B]. Developer builds only.
 [SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
 [TABLE]
 [TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, display, brightness, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, NFC, flashlight, all 42 sensors, GPS service, fingerprint (enrolment works), both cameras detected, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]rear camera (no picture sizes yet, the camera app crashes), screen colours differ between the left and right half after waking, the phone sometimes wakes up or locks by itself, flashlight tile says "Camera in use", unlocking with the fingerprint (untested), calls/data with a SIM (untested)[/TD][/TR]
+[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), NFC, flashlight, all 42 sensors, GPS service, fingerprint (enrolment works), both cameras detected, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]cameras (both are detected and the camera app opens, but no picture yet), GPS (no position yet), the phone sometimes wakes up or locks by itself, flashlight tile says "Camera in use", unlocking with the fingerprint (untested), calls/data with a SIM (untested)[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -32,6 +32,11 @@ Developers can build it from source; the developer setup (a multi-boot with iOS 
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-08"]
 [LIST]
+[*]Screen colours stay correct after waking (a colour table of the display engine lost its contents during sleep and turned colours into rainbow blocks on each half).
+[*]Battery percentage is shown correctly (was stuck at 50 %; the battery profile is now chosen by name, as ZTE does).
+[*]Back key works (it was sent as a Menu key).
+[*]Bluetooth audio to speakers works.
+[*]Rear camera: the sensor, its calibration and the image stabiliser come up; the camera app opens (no picture yet).
 [*]Sound is audible and the volume works (the audio policy lost all volume steps over a missing Bluetooth include).
 [*]The brightness slider works (the Samsung panel needs ZTE's brightness command sequence in high-speed mode).
 [*]Fingerprint enrolment works (ZTE's fingerprint HAL no longer depends on an Android framework library).

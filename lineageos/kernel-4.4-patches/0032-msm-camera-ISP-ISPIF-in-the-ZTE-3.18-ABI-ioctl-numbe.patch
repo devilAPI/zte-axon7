@@ -1,0 +1,160 @@
+From 5a86b59bded40d93ac2171e259f94296a3c51daf Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 14:27:39 +0000
+Subject: [PATCH 32/32] msm: camera: ISP/ISPIF in the ZTE 3.18 ABI (ioctl
+ numbers, EVERY_10FRAME, GET_VFE_HW_LIMIT, no ISPIF reserved_param): ISP
+ AHB_CFG was rejected
+
+Change-Id: Idae9c21e0591b313f284aeed50d9edab5c745c83
+---
+ .../platform/msm/camera_v2/isp/msm_isp_util.c | 15 +++++++++
+ .../platform/msm/camera_v2/ispif/msm_ispif.c  |  2 +-
+ include/uapi/media/msmb_isp.h                 | 33 +++++++++++++++++--
+ include/uapi/media/msmb_ispif.h               |  2 --
+ 4 files changed, 47 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/media/platform/msm/camera_v2/isp/msm_isp_util.c b/drivers/media/platform/msm/camera_v2/isp/msm_isp_util.c
+index 582e421cc6f3..4474b9a46814 100644
+--- a/drivers/media/platform/msm/camera_v2/isp/msm_isp_util.c
++++ b/drivers/media/platform/msm/camera_v2/isp/msm_isp_util.c
+@@ -189,6 +189,8 @@ uint32_t msm_isp_get_framedrop_period(
+ 	case EVERY_7FRAME:
+ 	case EVERY_8FRAME:
+ 		return frame_skip_pattern + 1;
++	case EVERY_10FRAME:
++		return 10;
+ 	case EVERY_16FRAME:
+ 		return 16;
+ 		break;
+@@ -947,6 +949,12 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
+ 		rc = msm_isp_cfg_input(vfe_dev, arg);
+ 		mutex_unlock(&vfe_dev->core_mutex);
+ 		break;
++	case VIDIOC_MSM_ISP_CFG_HW_STATE:
++	case VIDIOC_MSM_ISP_UPDATE_FE_FRAME_ID:
++	case VIDIOC_MSM_ISP_RESTART_FE:
++		/* ZTE 3.18 ABI: no-ops here (4.4 votes bandwidth per stream) */
++		rc = 0;
++		break;
+ 	case VIDIOC_MSM_ISP_AHB_CLK_CFG:
+ 		mutex_lock(&vfe_dev->core_mutex);
+ 		if (vfe_dev->hw_info->vfe_ops.core_ops.ahb_clk_cfg)
+@@ -1443,6 +1451,13 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
+ 		vfe_dev->vfe_ub_policy = *cfg_data;
+ 		break;
+ 	}
++	case GET_VFE_HW_LIMIT: {
++		/* ZTE 3.18 ABI: optional DT limit, not set on the axon7 */
++		if (cmd_len < sizeof(uint32_t))
++			return -EINVAL;
++		*cfg_data = 0;
++		break;
++	}
+ 	}
+ 	return 0;
+ }
+diff --git a/drivers/media/platform/msm/camera_v2/ispif/msm_ispif.c b/drivers/media/platform/msm/camera_v2/ispif/msm_ispif.c
+index 3076d19c0d0d..4bd30def7123 100644
+--- a/drivers/media/platform/msm/camera_v2/ispif/msm_ispif.c
++++ b/drivers/media/platform/msm/camera_v2/ispif/msm_ispif.c
+@@ -1419,7 +1419,7 @@ static int msm_ispif_stop_frame_boundary(struct ispif_device *ispif,
+ 		rc = readl_poll_timeout(ispif->base + intf_addr, stop_flag,
+ 					(stop_flag & 0xF) == 0xF,
+ 					ISPIF_TIMEOUT_SLEEP_US,
+-					(params->reserved_param ? params->reserved_param : ISPIF_TIMEOUT_ALL_US));
++					ISPIF_TIMEOUT_ALL_US); /* ZTE ABI: no reserved_param */
+ 		if (rc < 0)
+ 			goto end;
+ 		if (cid_right_mask) {
+diff --git a/include/uapi/media/msmb_isp.h b/include/uapi/media/msmb_isp.h
+index 379eb48694e7..0da462debf45 100644
+--- a/include/uapi/media/msmb_isp.h
++++ b/include/uapi/media/msmb_isp.h
+@@ -76,6 +76,7 @@ enum msm_vfe_frame_skip_pattern {
+ 	EVERY_6FRAME,
+ 	EVERY_7FRAME,
+ 	EVERY_8FRAME,
++	EVERY_10FRAME,	/* ZTE 3.18 camera ABI */
+ 	EVERY_16FRAME,
+ 	EVERY_32FRAME,
+ 	SKIP_ALL,
+@@ -457,6 +458,7 @@ enum msm_vfe_reg_cfg_type {
+ 	VFE_HW_UPDATE_UNLOCK,
+ 	SET_WM_UB_SIZE,
+ 	SET_UB_POLICY,
++	GET_VFE_HW_LIMIT,	/* ZTE 3.18 camera ABI */
+ };
+ 
+ struct msm_vfe_cfg_cmd2 {
+@@ -907,14 +909,29 @@ enum msm_isp_ioctl_cmd_code {
+ 	MSM_ISP_SET_DUAL_HW_MASTER_SLAVE,
+ 	MSM_ISP_MAP_BUF_START_FE,
+ 	MSM_ISP_UNMAP_BUF,
+-	MSM_ISP_AHB_CLK_CFG,
+-	MSM_ISP_DUAL_HW_MASTER_SLAVE_SYNC,
++	/* ZTE 3.18 camera ABI (axon7 blobs): its order from here on */
+ 	MSM_ISP_FETCH_ENG_MULTI_PASS_START,
+ 	MSM_ISP_MAP_BUF_START_MULTI_PASS_FE,
++	MSM_ISP_CFG_HW_STATE,
++	MSM_ISP_AHB_CLK_CFG,
++	MSM_ISP_UPDATE_FE_FRAME_ID,
++	MSM_ISP_RESTART_FE,
++	MSM_ISP32_REQUEST_STREAM,
++	/* 4.4 only */
++	MSM_ISP_DUAL_HW_MASTER_SLAVE_SYNC,
+ 	MSM_ISP_REQUEST_BUF_VER2,
+ 	MSM_ISP_DUAL_HW_LPM_MODE,
+ };
+ 
++/* ZTE 3.18 camera ABI: accepted as no-ops (bandwidth is voted per stream) */
++struct msm_vfe_update_fe_frame_id {
++	uint32_t frame_id;
++};
++
++struct msm_vfe_restart_fe_cmd {
++	uint32_t restart_fe;
++};
++
+ #define VIDIOC_MSM_VFE_REG_CFG \
+ 	_IOWR('V', MSM_VFE_REG_CFG, \
+ 		struct msm_vfe_cfg_cmd2)
+@@ -1018,6 +1035,18 @@ enum msm_isp_ioctl_cmd_code {
+ #define VIDIOC_MSM_ISP_AHB_CLK_CFG \
+ 	_IOWR('V', MSM_ISP_AHB_CLK_CFG, struct msm_isp_ahb_clk_cfg)
+ 
++#define VIDIOC_MSM_ISP_CFG_HW_STATE \
++	_IOWR('V', MSM_ISP_CFG_HW_STATE, \
++		struct msm_vfe_axi_stream_cfg_cmd)
++
++#define VIDIOC_MSM_ISP_UPDATE_FE_FRAME_ID \
++	_IOWR('V', MSM_ISP_UPDATE_FE_FRAME_ID, \
++		struct msm_vfe_update_fe_frame_id)
++
++#define VIDIOC_MSM_ISP_RESTART_FE \
++	_IOWR('V', MSM_ISP_RESTART_FE, \
++		struct msm_vfe_restart_fe_cmd)
++
+ #define VIDIOC_MSM_ISP_DUAL_HW_MASTER_SLAVE_SYNC \
+ 	_IOWR('V', MSM_ISP_DUAL_HW_MASTER_SLAVE_SYNC, \
+ 	struct msm_isp_dual_hw_master_slave_sync)
+diff --git a/include/uapi/media/msmb_ispif.h b/include/uapi/media/msmb_ispif.h
+index 2e28a1ee300d..d532037427cc 100644
+--- a/include/uapi/media/msmb_ispif.h
++++ b/include/uapi/media/msmb_ispif.h
+@@ -113,13 +113,11 @@ struct msm_ispif_param_data_ext {
+ 	struct msm_ispif_right_param_entry right_entries[MAX_PARAM_ENTRIES];
+ 	uint32_t stereo_enable;
+ 	uint16_t line_width[VFE_MAX];
+-	uint32_t reserved_param;
+ };
+ 
+ struct msm_ispif_param_data {
+ 	uint32_t num;
+ 	struct msm_ispif_params_entry entries[MAX_PARAM_ENTRIES];
+-	uint32_t reserved_param;
+ };
+ 
+ struct msm_isp_info {
+-- 
+2.47.3
+

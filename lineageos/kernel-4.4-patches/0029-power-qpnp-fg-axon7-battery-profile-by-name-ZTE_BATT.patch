@@ -1,0 +1,32 @@
+From 3f1e95d3e7b104b78d448fd479efed756141cbf7 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 13:20:28 +0000
+Subject: [PATCH 29/32] power: qpnp-fg: axon7 battery profile by name
+ (ZTE_BATTERY_DATA_ID_1), as ZTE does (capacity stuck at 50 %)
+
+Change-Id: I4d57d200550adc2569765500be9bb2701b798536
+---
+ drivers/power/supply/qcom/qpnp-fg.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/power/supply/qcom/qpnp-fg.c b/drivers/power/supply/qcom/qpnp-fg.c
+index 5767119f6fbe..9267502e0d4f 100644
+--- a/drivers/power/supply/qcom/qpnp-fg.c
++++ b/drivers/power/supply/qcom/qpnp-fg.c
+@@ -327,7 +327,12 @@ module_param_named(
+ 	first_est_dump, fg_est_dump, int, 00600
+ );
+ 
+-static char *fg_batt_type;
++/*
++ * Axon 7: ZTE selects the battery profile by name, not by the battery-ID
++ * resistor (batterydata-zte-p996a01-3250mah.dtsi: "no used zte_pm"). Without
++ * it no profile matched and the fuel gauge reported a fixed 50 %.
++ */
++static char *fg_batt_type = "ZTE_BATTERY_DATA_ID_1";
+ module_param_named(
+ 	battery_type, fg_batt_type, charp, 00600
+ );
+-- 
+2.47.3
+
