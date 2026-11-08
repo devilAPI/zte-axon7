@@ -22,7 +22,7 @@ Phase: [B]alpha[/B]. Developer builds only.
 [SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
 [TABLE]
 [TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight, all 42 sensors, GPS service, fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]GPS (no position yet), the phone sometimes wakes up or locks by itself, flashlight tile says "Camera in use", unlocking with the fingerprint (untested), calls/data with a SIM (untested)[/TD][/TR]
+[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight, all 42 sensors, GPS service, fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]GPS (no position yet), the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -32,6 +32,7 @@ Developers can build it from source; the developer setup (a multi-boot with iOS 
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-08"]
 [LIST]
+[*]The battery icon sits at the right edge of the status bar (Android kept space free there for a privacy dot).
 [*]Screen colours stay correct after waking (a colour table of the display engine lost its contents during sleep and turned colours into rainbow blocks on each half).
 [*]Battery percentage is shown correctly (was stuck at 50 %; the battery profile is now chosen by name, as ZTE does).
 [*]Back key works (it was sent as a Menu key).
