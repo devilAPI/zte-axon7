@@ -54,7 +54,8 @@ Step-by-step guide: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTAL
 [/SPOILER]
 
 [SIZE=5][B]Source[/B][/SIZE]
-[URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (folder postmarketos: kernel patches, device tree, packages)
+[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux, branch zte-axon7[/URL] (Linux 7.3.1 with the Axon 7 patches); kernel configuration: [URL='https://github.com/devilAPI/zte-axon7/blob/main/postmarketos/pmaports-local/device/testing/linux-zte-axon7/config-zte-axon7.aarch64']config-zte-axon7.aarch64[/URL]
+Packages, build scripts and docs: [URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (folder postmarketos)
 The same project also brings LineageOS 22.2 and iOS 16 to the Axon 7 (both alpha, own threads).
 
 [SIZE=5][B]Credits[/B][/SIZE]

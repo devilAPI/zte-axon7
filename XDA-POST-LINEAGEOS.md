@@ -53,7 +53,8 @@ Developers can build it from source; the developer setup (a multi-boot with iOS 
 [/SPOILER]
 
 [SIZE=5][B]Source[/B][/SIZE]
-[URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (folder lineageos: device tree patches, kernel patches, Android tree patches)
+[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7']github.com/devilAPI/android_kernel_zte_msm8996, branch axon7[/URL] (Linux 4.4, LineageOS msm8996 kernel with the Axon 7 drivers and fixes)
+Device tree, Android patches and build notes: [URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (folder lineageos)
 The same project also brings Nura (Linux, beta) and iOS 16 (alpha) to the Axon 7, each with its own thread.
 
 [SIZE=5][B]Credits[/B][/SIZE]
