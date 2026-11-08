@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-07
+Last update: 2026-11-08
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
@@ -24,13 +24,13 @@ A boot menu for the ZTE Axon 7 that starts one of three systems:
 [/LIST]
 Bootloader, modem, EFS/IMEI and recovery are never touched. TWRP stays your way back.
 
-[SIZE=5][B]Status (2026-11-07)[/B][/SIZE]
+[SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
 [TABLE]
 [TR][TH][/TH][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
 [TR][TD][B]Boot menu[/B][/TD][TD]choose iOS / postmarketOS / LineageOS with the volume keys, remembers a default[/TD][TD][/TD][/TR]
 [TR][TD][B]iOS 16.7.16[/B][/TD][TD]home screen, touch, Wi-Fi, GPU, Sileo (jailbreak)[/TD][TD]calls, mobile data, camera, audio[/TD][/TR]
 [TR][TD][B]postmarketOS[/B][/TD][TD]display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG[/TD][TD]calls, audio, camera[/TD][/TR]
-[TR][TD][B]LineageOS 22.2[/B][/TD][TD][I]developer builds only, not released yet:[/I] boots to the setup wizard, display, touch, encrypted storage, USB/adb, Wi-Fi, all 42 sensors, modem firmware starts and the radio services come up (SIM slot 1)[/TD][TD]audio (no codec driver yet), camera, fingerprint, Bluetooth, second SIM slot, calls/data with a SIM (untested), screen colours on one half after waking[/TD][/TR]
+[TR][TD][B]LineageOS 22.2[/B][/TD][TD][I]developer builds only, not released yet:[/I] boots to the home screen, display, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, all 42 sensors, fingerprint sensor driver, modem starts and its services come up (SIM slot 1)[/TD][TD]audio, camera and NFC (drivers ported, not yet confirmed), fingerprint enrolment (untested), second SIM slot, calls/data with a SIM (untested), screen colours on one half after waking[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -44,12 +44,20 @@ Step-by-step guide: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTAL
 LineageOS has no install steps yet; they come with the first release.
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-08"]
+[LIST]
+[*]LineageOS: Bluetooth works.
+[*]LineageOS: the modem's radio service (rild) runs on Android 15's new radio interface; the Qualcomm modem daemons no longer crash.
+[*]LineageOS: fingerprint sensor driver (Goodix, ported from ZTE's kernel) works; enrolling a finger is not tested yet.
+[*]LineageOS: both camera sensors and their factory calibration are read; the camera app does not see them yet (fix built, next test).
+[*]LineageOS: audio codec (AK4961) and NFC (PN548) drivers ported from ZTE's kernel, not yet confirmed.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-07"]
 [LIST]
 [*]LineageOS 22.2 (developer builds): first boot to the setup wizard in the multi-boot setup; encrypted storage on its own partition, display, USB/adb, battery and charging info.
 [*]LineageOS: Wi-Fi works; all 42 sensors are detected.
 [*]LineageOS: the modem starts and its services register with Android 15 (new radio service on top of Qualcomm's RIL); mobile data and IMS daemons no longer crash.
-[*]LineageOS: ported from ZTE's kernel, built, not yet confirmed on the phone: fingerprint (Goodix) and camera calibration (EEPROM) drivers.
 [/LIST]
 [/SPOILER]
 
