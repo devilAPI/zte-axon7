@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=9
+pkgrel=10
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -10,7 +10,6 @@ options="!check !archcheck"
 depends="buffyboard 
 	bluez
 	bluez-btmgmt
-	firmware-zte-axon7
 	linux-firmware-ath10k
 	linux-firmware-qca
 	linux-firmware-qcom
@@ -44,6 +43,9 @@ source="
 	axon7-btaddr
 	axon7-btaddr.service
 	90-axon7-btaddr.rules
+	axon7-firmware
+	axon7-firmware.service
+	axon7-pil-squasher
 	"
 
 build() {
@@ -72,6 +74,11 @@ package() {
 	install -Dm755 "$srcdir"/axon7-btaddr "$pkgdir"/usr/libexec/axon7-btaddr
 	install -Dm644 "$srcdir"/axon7-btaddr.service "$pkgdir"/usr/lib/systemd/system/axon7-btaddr.service
 	install -Dm644 "$srcdir"/90-axon7-btaddr.rules "$pkgdir"/usr/lib/udev/rules.d/90-axon7-btaddr.rules
+	# firmware from the phone's own modem/vendor partitions at first boot, so
+	# images need no proprietary files (firmware-zte-axon7 is optional)
+	install -Dm755 "$srcdir"/axon7-firmware "$pkgdir"/usr/libexec/axon7-firmware
+	install -Dm755 "$srcdir"/axon7-pil-squasher "$pkgdir"/usr/bin/axon7-pil-squasher
+	install -Dm644 "$srcdir"/axon7-firmware.service "$pkgdir"/usr/lib/systemd/system/axon7-firmware.service
 }
 
 openrc() {

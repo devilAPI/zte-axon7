@@ -1,0 +1,78 @@
+#!/bin/sh
+# First boot of Nura on the ZTE Axon 7: take the firmware from the phone's own
+# partitions, so that no Qualcomm/ZTE file has to be part of the Nura image.
+#
+#   modem  (vfat, read-only): image/{adsp,modem,slpi,venus}.mdt + .bNN, mba.mbn,
+#                             bdwlan30.bin (Wi-Fi board data)
+#   vendor (ext4, read-only): firmware/a530_zap.mdt + .bNN (GPU)
+#                             (no vendor partition: system/vendor/firmware)
+#
+# Split .mdt images are joined into the .mbn files the device tree names
+# (axon7-pil-squasher). Nothing is written to the phone's partitions. When
+# the files were missing at this boot, the phone restarts once so that the
+# modem, DSPs, GPU and Wi-Fi load them.
+#
+# Does nothing when the firmware is already there (firmware-zte-axon7 package
+# or an earlier run). Log: journalctl -u axon7-firmware
+set -u
+root=${AXON7_FW_ROOT:-}	# test: write below another directory
+fw=$root/usr/lib/firmware/qcom/msm8996/zte/axon7
+board=$root/usr/lib/firmware/postmarketos/ath10k/QCA6174/hw3.0/board.bin
+log() { echo "axon7-firmware: $*"; }
+
+missing() {
+	for f in a530_zap adsp mba modem slpi venus; do
+		[ -s "$fw/$f.mbn" ] || return 0
+	done
+	[ -s "$board" ] || return 0
+	return 1
+}
+
+missing || { log "firmware present"; exit 0; }
+
+part() { [ -b "/dev/disk/by-partlabel/$1" ] && echo "/dev/disk/by-partlabel/$1"; }
+tmp=$(mktemp -d /run/axon7-firmware.XXXXXX)
+out=$tmp/out
+mkdir -p "$tmp/m" "$tmp/v" "$out"
+cleanup() { umount "$tmp/m" "$tmp/v" 2>/dev/null; rm -rf "$tmp"; }
+trap cleanup EXIT
+
+m=$(part modem) || { log "no modem partition"; exit 1; }
+mount -t vfat -o ro "$m" "$tmp/m" || { log "cannot mount $m"; exit 1; }
+vfw=
+for p in vendor system; do
+	d=$(part $p) || continue
+	mount -o ro,noload "$d" "$tmp/v" 2>/dev/null || mount -o ro "$d" "$tmp/v" 2>/dev/null || continue
+	for s in firmware vendor/firmware system/vendor/firmware; do
+		[ -f "$tmp/v/$s/a530_zap.mdt" ] && { vfw=$tmp/v/$s; break; }
+	done
+	[ -n "$vfw" ] && break
+	umount "$tmp/v"
+done
+
+ok=1
+for f in adsp modem slpi venus; do
+	axon7-pil-squasher "$out/$f.mbn" "$tmp/m/image/$f.mdt" || { log "$f: not in the modem partition"; ok=0; }
+done
+cp "$tmp/m/image/mba.mbn" "$out/" || ok=0
+cp "$tmp/m/image/bdwlan30.bin" "$out/board.bin" || ok=0
+if [ -n "$vfw" ]; then
+	axon7-pil-squasher "$out/a530_zap.mbn" "$vfw/a530_zap.mdt" || ok=0
+else
+	log "a530_zap (GPU) not found: install a ROM with a vendor partition (LineageOS 16-18.1) to get it"
+fi
+
+mkdir -p "$fw" "${board%/*}"
+for f in "$out"/*.mbn; do
+	[ -s "$f" ] && install -m644 "$f" "$fw/"
+done
+[ -s "$out/board.bin" ] && install -m644 "$out/board.bin" "$board"
+sync
+log "firmware from the phone's partitions: $(ls "$fw" | tr '\n' ' ')$([ -s "$board" ] && echo board.bin)"
+[ "$ok" = 1 ] || log "some files are missing, see above"
+
+# the remoteprocs and Wi-Fi asked for their firmware before this ran
+if [ "${1:-}" != --no-reboot ]; then
+	log "restarting once to load it"
+	systemctl --no-block reboot 2>/dev/null || reboot
+fi

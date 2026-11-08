@@ -1,0 +1,13 @@
+[Unit]
+Description=Axon 7 firmware from the phone's modem and vendor partitions (first boot)
+ConditionPathExists=!/usr/lib/firmware/qcom/msm8996/zte/axon7/modem.mbn
+After=local-fs.target systemd-udev-settle.service
+Wants=systemd-udev-settle.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/axon7-firmware
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
