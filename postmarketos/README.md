@@ -1,6 +1,9 @@
-# postmarketOS for the ZTE Axon 7 (mainline Linux)
+# Nura: postmarketOS for the ZTE Axon 7 (mainline Linux)
 
-Status: **packages written and the kernel builds; not booted on the phone yet.**
+Status: **beta** (2026-11-08). Nura is this postmarketOS port's name for
+users; packages and device names stay `zte-axon7`. Install guide for users:
+[../INSTALL-NURA.md](../INSTALL-NURA.md). What works: display, touch,
+on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG.
 
 Device `zte-axon7`, mainline **Linux 7.3.1** (the newest stable release;
 postmarketOS's own msm8996 kernel is at 6.19.5, and everything the Axon 7
@@ -129,6 +132,14 @@ the `pmos_boot` partition on LUN 0: LUNs 1-4 (boot, system, vendor) are write
 protected while the phone runs normally.
 
 ## Installing (no fastboot on this phone)
+
+Firmware tarball from the phone in TWRP: `scripts/axon7-firmware.sh` (see
+*Firmware tarball*). Standalone boot from LK: LK unpacks the kernel to
+0x80080000 (7.3.1 `image_size` ends at 0x81f20000, DTB at 0x82400000) and
+puts the initramfs after the DTB at about 0x82600000; the 14.1 MB initramfs
+ends at 0x83375254, just below the splash reservation at 0x83400000. An
+initramfs more than about 550 KB larger would overlap it (the multi-boot
+shim moves its bundle out of the way, so it doesn't have this limit).
 
 The Axon 7's LK has no `fastboot boot` and `pmbootstrap flasher` won't work.
 From TWRP:
