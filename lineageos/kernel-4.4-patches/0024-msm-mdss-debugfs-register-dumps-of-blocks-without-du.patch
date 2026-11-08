@@ -1,0 +1,32 @@
+From 2be24f9592383fe618a45a7ee04f1940509c0c69 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 10:36:32 +0000
+Subject: [PATCH 24/24] msm: mdss: debugfs register dumps of blocks without
+ dump ranges (DSI)
+
+Change-Id: I1eb5a487413b27928025014efc510bf1a323a2e3
+---
+ drivers/video/fbdev/msm/mdss_debug.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/video/fbdev/msm/mdss_debug.c b/drivers/video/fbdev/msm/mdss_debug.c
+index 9ccd290ba2a6..956d0530f098 100644
+--- a/drivers/video/fbdev/msm/mdss_debug.c
++++ b/drivers/video/fbdev/msm/mdss_debug.c
+@@ -497,7 +497,12 @@ static ssize_t mdss_debug_base_offset_write(struct file *file,
+ 	if (cnt > (dbg->max_offset - off))
+ 		cnt = dbg->max_offset - off;
+ 
+-	if (!mdss_debug_base_is_valid_range(off, cnt))
++	/* blocks without dump ranges (dsi0_ctrl, dsi1_phy, ...) are bounded
++	 * by max_offset above */
++	/* also the whole DSPP0/DSPP1 blocks (PA, gamut, PCC, dither) */
++	if (!list_empty(&dbg->dump_list) &&
++	    !(off >= 0x55000 && off + cnt <= 0x59000) &&
++	    !mdss_debug_base_is_valid_range(off, cnt))
+ 		return -EINVAL;
+ 
+ 	mutex_lock(&mdss_debug_lock);
+-- 
+2.47.3
+

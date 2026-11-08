@@ -1,0 +1,761 @@
+From 54c1bc220ed520610922df04093e4100b3bf2908 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 10:17:46 +0000
+Subject: [PATCH 21/24] msm: camera: ZTE's 3.18 camera ABI for the axon7 camera
+ blobs
+
+The rear camera reported an empty stream configuration (0x0 sizes): the
+camera daemon and HAL (Android 8 blobs) talk ZTE's 3.18 camera ABI, which
+differs from 4.4's in enums and structs (CFG_POWER_RESET in the sensor
+commands, actuator CCI info and register read/write with their struct
+members, OIS deinit/read, bakeup_slave_addr, SENSOR_PMIC, no laser LED
+sub-module, no CUSTOM3 gpio, no VMIPI, no csiphy data_rate).
+
+- msm_cam_sensor.h (uapi and kernel) and msm_camsensor_sdk.h are ZTE's;
+  4.4-only additions that do not move anything (flash query, META12) are
+  appended
+- ported from ZTE: CFG_POWER_RESET (power down + up), actuator CCI info
+  and register read/write (also the compat path), OIS deinit and read
+- 4.4-only uses dropped: laser LED driver, CAM_VMIPI, SENSOR_GPIO_CUSTOM3,
+  CFG_OIS_CALIBRATION (Xiaomi), csiphy data_rate (0)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I37a91f79fc6573f25b43efbd5e1023164b4fe5f1
+---
+ .../platform/msm/camera_v2/sensor/Makefile    |   2 +-
+ .../camera_v2/sensor/actuator/msm_actuator.c  | 103 ++++++++++++++++++
+ .../msm/camera_v2/sensor/csiphy/msm_csiphy.c  |   4 +-
+ .../camera_v2/sensor/io/msm_camera_dt_util.c  |  11 +-
+ .../msm/camera_v2/sensor/msm_sensor.c         |  48 ++++++++
+ .../msm/camera_v2/sensor/msm_sensor_driver.c  |   7 +-
+ .../msm/camera_v2/sensor/ois/msm_ois.c        |  95 +++++++++++++++-
+ include/media/msm_cam_sensor.h                |  17 +--
+ include/uapi/media/msm_cam_sensor.h           |  64 ++++++-----
+ include/uapi/media/msm_camsensor_sdk.h        |  23 ++--
+ 10 files changed, 302 insertions(+), 72 deletions(-)
+
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/Makefile b/drivers/media/platform/msm/camera_v2/sensor/Makefile
+index b04560fe42bc..9271ea4b54b9 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/Makefile
++++ b/drivers/media/platform/msm/camera_v2/sensor/Makefile
+@@ -5,5 +5,5 @@ ccflags-y += -Idrivers/media/platform/msm/camera_v2/camera
+ ccflags-y += -Idrivers/media/platform/msm/camera_v2/sensor/io
+ ccflags-y += -Idrivers/media/platform/msm/camera_v2/sensor/cci
+ obj-$(CONFIG_MSMB_CAMERA) += cci/ io/ csiphy/ csid/ actuator/ eeprom/ ois/ flash/ ir_led/ ir_cut/
+-obj-$(CONFIG_MSMB_CAMERA) += laser_led/
++# axon7: no laser LED (no laser LED ioctl in the ZTE camera ABI)
+ obj-$(CONFIG_MSM_CAMERA_SENSOR) += msm_sensor_init.o msm_sensor_driver.o msm_sensor.o
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/actuator/msm_actuator.c b/drivers/media/platform/msm/camera_v2/sensor/actuator/msm_actuator.c
+index ce530034189b..79b822101c8f 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/actuator/msm_actuator.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/actuator/msm_actuator.c
+@@ -1559,6 +1559,72 @@ static int msm_actuator_init(struct msm_actuator_ctrl_t *a_ctrl)
+ 	return rc;
+ }
+ 
++/* axon7: ZTE's 3.18 actuator commands (CCI parameters, register access) */
++static int msm_actuator_cci_set(struct msm_actuator_ctrl_t *a_ctrl,
++				struct msm_actuator_cci_params_t *set_info)
++{
++	struct msm_camera_cci_client *cci_client = NULL;
++
++	if (a_ctrl->act_device_type == MSM_CAMERA_PLATFORM_DEVICE) {
++		cci_client = a_ctrl->i2c_client.cci_client;
++		cci_client->sid = set_info->i2c_addr >> 1;
++		cci_client->retries = 3;
++		cci_client->id_map = 0;
++		cci_client->cci_i2c_master = a_ctrl->cci_master;
++		cci_client->i2c_freq_mode = set_info->i2c_freq_mode;
++	} else {
++		a_ctrl->i2c_client.client->addr = set_info->i2c_addr;
++	}
++	a_ctrl->i2c_data_type = set_info->i2c_data_type;
++	a_ctrl->i2c_client.addr_type = set_info->i2c_addr_type;
++	return 0;
++}
++
++static int msm_actuator_register_read(struct msm_actuator_ctrl_t *a_ctrl,
++				struct reg_settings_t *reg_info)
++{
++	int32_t rc;
++	uint16_t temp = 0;
++
++	if (a_ctrl->actuator_state != ACT_OPS_ACTIVE)
++		return -1;
++	rc = a_ctrl->i2c_client.i2c_func_tbl->i2c_read(&a_ctrl->i2c_client,
++			reg_info->reg_addr, &temp, reg_info->data_type);
++	if (rc < 0) {
++		pr_err("%s:%d: i2c read failed\n", __func__, __LINE__);
++		return rc;
++	}
++	if (reg_info->delay > 20)
++		msleep(reg_info->delay);
++	else if (reg_info->delay != 0)
++		usleep_range(reg_info->delay * 1000,
++			(reg_info->delay * 1000) + 1000);
++	reg_info->reg_data = temp;
++	return rc;
++}
++
++static int msm_actuator_register_write(struct msm_actuator_ctrl_t *a_ctrl,
++				struct reg_settings_t *reg_info)
++{
++	int32_t rc;
++
++	if (a_ctrl->actuator_state != ACT_OPS_ACTIVE)
++		return -1;
++	rc = a_ctrl->i2c_client.i2c_func_tbl->i2c_write(&a_ctrl->i2c_client,
++			reg_info->reg_addr, reg_info->reg_data,
++			reg_info->data_type);
++	if (rc < 0) {
++		pr_err("%s:%d: i2c write failed\n", __func__, __LINE__);
++		return rc;
++	}
++	if (reg_info->delay > 20)
++		msleep(reg_info->delay);
++	else if (reg_info->delay != 0)
++		usleep_range(reg_info->delay * 1000,
++			(reg_info->delay * 1000) + 1000);
++	return rc;
++}
++
+ static int32_t msm_actuator_config(struct msm_actuator_ctrl_t *a_ctrl,
+ 	void __user *argp)
+ {
+@@ -1633,6 +1699,22 @@ static int32_t msm_actuator_config(struct msm_actuator_ctrl_t *a_ctrl,
+ 			pr_err("Failed actuator power up%d\n", rc);
+ 		break;
+ 
++	case CFG_ACTUATOR_CCI_INFO:
++		rc = msm_actuator_cci_set(a_ctrl, &cdata->cfg.cci_info);
++		if (rc < 0)
++			pr_err("init table failed %d\n", rc);
++		break;
++	case CFG_ACTUATOR_REGISTER_READ:
++		rc = msm_actuator_register_read(a_ctrl, &cdata->cfg.reg_info);
++		if (rc < 0)
++			pr_err("Failed actuator register read %d\n", rc);
++		break;
++	case CFG_ACTUATOR_REGISTER_WRITER:
++		rc = msm_actuator_register_write(a_ctrl, &cdata->cfg.reg_info);
++		if (rc < 0)
++			pr_err("Failed actuator register write %d\n", rc);
++		break;
++
+ 	default:
+ 		break;
+ 	}
+@@ -1868,6 +1950,22 @@ static long msm_actuator_subdev_do_ioctl(
+ 			memcpy(&actuator_data.cfg.setpos, &(u32->cfg.setpos),
+ 				sizeof(struct msm_actuator_set_position_t));
+ 			break;
++		case CFG_ACTUATOR_CCI_INFO:
++			actuator_data.cfgtype = u32->cfgtype;
++			actuator_data.cfg.cci_info.i2c_addr = u32->cfg.cci_info.i2c_addr;
++			actuator_data.cfg.cci_info.i2c_freq_mode = u32->cfg.cci_info.i2c_freq_mode;
++			actuator_data.cfg.cci_info.i2c_addr_type = u32->cfg.cci_info.i2c_addr_type;
++			actuator_data.cfg.cci_info.i2c_data_type = u32->cfg.cci_info.i2c_data_type;
++			break;
++		case CFG_ACTUATOR_REGISTER_READ:
++		case CFG_ACTUATOR_REGISTER_WRITER:
++			actuator_data.cfgtype = u32->cfgtype;
++			actuator_data.cfg.reg_info.reg_addr = u32->cfg.reg_info.reg_addr;
++			actuator_data.cfg.reg_info.addr_type = u32->cfg.reg_info.addr_type;
++			actuator_data.cfg.reg_info.reg_data = u32->cfg.reg_info.reg_data;
++			actuator_data.cfg.reg_info.data_type = u32->cfg.reg_info.data_type;
++			actuator_data.cfg.reg_info.delay = u32->cfg.reg_info.delay;
++			break;
+ 		default:
+ 			actuator_data.cfgtype = u32->cfgtype;
+ 			parg = &actuator_data;
+@@ -1892,6 +1990,11 @@ static long msm_actuator_subdev_do_ioctl(
+ 			u32->cfg.move.curr_lens_pos =
+ 				actuator_data.cfg.move.curr_lens_pos;
+ 			break;
++		case CFG_ACTUATOR_REGISTER_READ:
++		case CFG_ACTUATOR_REGISTER_WRITER:
++			u32->cfg.reg_info.reg_data =
++				actuator_data.cfg.reg_info.reg_data;
++			break;
+ 		default:
+ 			break;
+ 		}
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/csiphy/msm_csiphy.c b/drivers/media/platform/msm/camera_v2/sensor/csiphy/msm_csiphy.c
+index dbd0361c4a83..84a2065e1201 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/csiphy/msm_csiphy.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/csiphy/msm_csiphy.c
+@@ -286,7 +286,7 @@ static int msm_csiphy_3phase_lane_config(
+ 		}
+ 
+ 		if ((csiphy_dev->hw_version == CSIPHY_VERSION_V35) &&
+-			(csiphy_params->data_rate > two_gbps)) {
++			(0 /* axon7: no data_rate in the ZTE ABI */ > two_gbps)) {
+ 			msm_camera_io_w(0x40,
+ 				csiphybase +
+ 				csiphy_dev->ctrl_reg->csiphy_3ph_reg.
+@@ -812,7 +812,7 @@ static int msm_csiphy_lane_config(struct csiphy_device *csiphy_dev,
+ 	CDBG("%s csiphy_params, mask = 0x%x cnt = %d, data rate = %llu\n",
+ 		__func__,
+ 		csiphy_params->lane_mask,
+-		csiphy_params->lane_cnt, csiphy_params->data_rate);
++		csiphy_params->lane_cnt, 0ULL);
+ 	CDBG("%s csiphy_params, settle cnt = 0x%x csid %d\n",
+ 		__func__, csiphy_params->settle_cnt,
+ 		csiphy_params->csid_core);
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/io/msm_camera_dt_util.c b/drivers/media/platform/msm/camera_v2/sensor/io/msm_camera_dt_util.c
+index 24ddcbf3f7a3..e0eea938e3ee 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/io/msm_camera_dt_util.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/io/msm_camera_dt_util.c
+@@ -127,7 +127,7 @@ int msm_camera_fill_vreg_params(struct camera_vreg_t *cam_vreg,
+ 			}
+ 			break;
+ 
+-		case CAM_VMIPI:
++		case 0xFFFF: /* axon7: no CAM_VMIPI in the ZTE camera ABI (never matches) */
+ 			for (j = 0; j < num_vreg; j++) {
+ 				if (!strcmp(cam_vreg[j].reg_name, "cam_vmipi")) {
+ 					CDBG("%s:%d i %d j %d cam_vmipi\n",
+@@ -598,8 +598,7 @@ int msm_camera_get_dt_power_setting_data(struct device_node *of_node,
+ 				ps[i].seq_val = SENSOR_GPIO_CUSTOM1;
+ 			else if (!strcmp(seq_name, "sensor_gpio_custom2"))
+ 				ps[i].seq_val = SENSOR_GPIO_CUSTOM2;
+-			else if (!strcmp(seq_name, "sensor_gpio_custom3"))
+-				ps[i].seq_val = SENSOR_GPIO_CUSTOM3;
++			/* axon7: no sensor_gpio_custom3 in the ZTE camera ABI */
+ 			else
+ 				rc = -EILSEQ;
+ 			break;
+@@ -1118,11 +1117,7 @@ int msm_camera_init_gpio_pin_tbl(struct device_node *of_node,
+ 			rc = -EINVAL;
+ 			goto ERROR;
+ 		}
+-		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_CUSTOM3] =
+-			gpio_array[val];
+-		gconf->gpio_num_info->valid[SENSOR_GPIO_CUSTOM3] = 1;
+-		CDBG("%s qcom,gpio-custom3 %d\n", __func__,
+-			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_CUSTOM3]);
++		/* axon7: no SENSOR_GPIO_CUSTOM3 in the ZTE camera ABI */
+ 	} else {
+ 		rc = 0;
+ 	}
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/msm_sensor.c b/drivers/media/platform/msm/camera_v2/sensor/msm_sensor.c
+index bf2af5f8a576..c2483a4071fc 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/msm_sensor.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/msm_sensor.c
+@@ -794,6 +794,30 @@ static int msm_sensor_config32(struct msm_sensor_ctrl_t *s_ctrl,
+ 			rc = -EFAULT;
+ 		}
+ 		break;
++	/* axon7: ZTE's 3.18 CFG_POWER_RESET (the camera daemon uses it) */
++	case CFG_POWER_RESET:
++		if (s_ctrl->is_csid_tg_mode)
++			goto DONE;
++		if (s_ctrl->sensor_state != MSM_SENSOR_POWER_UP) {
++			pr_err("%s:%d failed: invalid state %d\n", __func__,
++				__LINE__, s_ctrl->sensor_state);
++			rc = -EFAULT;
++			break;
++		}
++		if (s_ctrl->func_tbl->sensor_power_down &&
++			s_ctrl->func_tbl->sensor_power_up) {
++			rc = s_ctrl->func_tbl->sensor_power_down(s_ctrl);
++			if (rc >= 0)
++				rc = s_ctrl->func_tbl->sensor_power_up(s_ctrl);
++			if (rc < 0) {
++				s_ctrl->sensor_state = MSM_SENSOR_POWER_DOWN;
++				pr_err("%s:%d power reset failed rc %d\n",
++					__func__, __LINE__, rc);
++			}
++		} else {
++			rc = -EFAULT;
++		}
++		break;
+ 	case CFG_POWER_DOWN:
+ 		if (s_ctrl->is_csid_tg_mode)
+ 			goto DONE;
+@@ -1286,6 +1310,30 @@ int msm_sensor_config(struct msm_sensor_ctrl_t *s_ctrl, void __user *argp)
+ 		}
+ 		break;
+ 
++	/* axon7: ZTE's 3.18 CFG_POWER_RESET (the camera daemon uses it) */
++	case CFG_POWER_RESET:
++		if (s_ctrl->is_csid_tg_mode)
++			goto DONE;
++		if (s_ctrl->sensor_state != MSM_SENSOR_POWER_UP) {
++			pr_err("%s:%d failed: invalid state %d\n", __func__,
++				__LINE__, s_ctrl->sensor_state);
++			rc = -EFAULT;
++			break;
++		}
++		if (s_ctrl->func_tbl->sensor_power_down &&
++			s_ctrl->func_tbl->sensor_power_up) {
++			rc = s_ctrl->func_tbl->sensor_power_down(s_ctrl);
++			if (rc >= 0)
++				rc = s_ctrl->func_tbl->sensor_power_up(s_ctrl);
++			if (rc < 0) {
++				s_ctrl->sensor_state = MSM_SENSOR_POWER_DOWN;
++				pr_err("%s:%d power reset failed rc %d\n",
++					__func__, __LINE__, rc);
++			}
++		} else {
++			rc = -EFAULT;
++		}
++		break;
+ 	case CFG_POWER_DOWN:
+ 		if (s_ctrl->is_csid_tg_mode)
+ 			goto DONE;
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/msm_sensor_driver.c b/drivers/media/platform/msm/camera_v2/sensor/msm_sensor_driver.c
+index a02a7a6a80f2..4a60507436e1 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/msm_sensor_driver.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/msm_sensor_driver.c
+@@ -311,10 +311,9 @@ static int32_t msm_sensor_fill_laser_led_subdevid_by_name(
+ 	if (!of_node)
+ 		return -EINVAL;
+ 
+-	sensor_info = s_ctrl->sensordata->sensor_info;
+-	laser_led_subdev_id = &sensor_info->subdev_id[SUB_MODULE_LASER_LED];
+-	/* set sudev id to -1 and try to found new id */
+-	*laser_led_subdev_id = -1;
++	/* axon7: no laser LED sub-module in the ZTE camera ABI */
++	(void)sensor_info; (void)laser_led_subdev_id; (void)src_node; (void)val;
++	return 0;
+ 
+ 
+ 	src_node = of_parse_phandle(of_node, "qcom,laserled-src", 0);
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/ois/msm_ois.c b/drivers/media/platform/msm/camera_v2/sensor/ois/msm_ois.c
+index 995dd48731b9..5ba7954da5ed 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/ois/msm_ois.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/ois/msm_ois.c
+@@ -251,6 +251,26 @@ static int32_t msm_ois_write_settings(struct msm_ois_ctrl_t *o_ctrl,
+ 					settings[i].data_type);
+ 				break;
+ 			}
++		}
++			break;
++		/* axon7: ZTE's register read for CFG_OIS_READ */
++		case MSM_OIS_READ: {
++			uint16_t read_data = 0;
++
++			switch (settings[i].data_type) {
++			case MSM_CAMERA_I2C_BYTE_DATA:
++			case MSM_CAMERA_I2C_WORD_DATA:
++				rc = o_ctrl->i2c_client.i2c_func_tbl
++					->i2c_read(&o_ctrl->i2c_client,
++					settings[i].reg_addr, &read_data,
++					settings[i].data_type);
++				settings[i].reg_data = read_data;
++				break;
++			default:
++				pr_err("Unsupport data type: %d\n",
++					settings[i].data_type);
++				break;
++			}
+ 		}
+ 		}
+ 
+@@ -439,6 +459,68 @@ error_alloc_workqueue:
+ 	return rc;
+ }
+ 
++/* axon7: from ZTE's 3.18 msm_ois.c */
++static int msm_ois_deinit(struct msm_ois_ctrl_t *o_ctrl)
++{
++	int rc = 0;
++
++	if (!o_ctrl)
++		return -EINVAL;
++	/* called from msm_ois_config with ois_mutex held */
++	if (o_ctrl->ois_device_type == MSM_CAMERA_PLATFORM_DEVICE &&
++		o_ctrl->ois_state == OIS_OPS_ACTIVE) {
++		rc = o_ctrl->i2c_client.i2c_func_tbl->i2c_util(
++			&o_ctrl->i2c_client, MSM_CCI_RELEASE);
++		if (rc < 0)
++			pr_err("cci_deinit failed\n");
++	}
++	o_ctrl->ois_state = OIS_OPS_INACTIVE;
++	return rc;
++}
++
++static int32_t msm_ois_read(struct msm_ois_ctrl_t *o_ctrl,
++	struct msm_ois_set_info_t *set_info)
++{
++	struct reg_settings_ois_t *settings = NULL;
++	int32_t rc = 0;
++	struct msm_camera_cci_client *cci_client = NULL;
++
++	if (o_ctrl->ois_device_type == MSM_CAMERA_PLATFORM_DEVICE) {
++		cci_client = o_ctrl->i2c_client.cci_client;
++		cci_client->sid = set_info->ois_params.i2c_addr >> 1;
++		cci_client->retries = 3;
++		cci_client->id_map = 0;
++		cci_client->cci_i2c_master = o_ctrl->cci_master;
++		cci_client->i2c_freq_mode = set_info->ois_params.i2c_freq_mode;
++	} else {
++		o_ctrl->i2c_client.client->addr = set_info->ois_params.i2c_addr;
++	}
++	o_ctrl->i2c_client.addr_type = MSM_CAMERA_I2C_WORD_ADDR;
++
++	if (set_info->ois_params.setting_size > 0 &&
++		set_info->ois_params.setting_size < MAX_OIS_REG_SETTINGS) {
++		settings = kmalloc(sizeof(struct reg_settings_ois_t) *
++			(set_info->ois_params.setting_size), GFP_KERNEL);
++		if (settings == NULL)
++			return -EFAULT;
++		if (copy_from_user(settings,
++			(void __user *)set_info->ois_params.settings,
++			set_info->ois_params.setting_size *
++			sizeof(struct reg_settings_ois_t))) {
++			kfree(settings);
++			return -EFAULT;
++		}
++		rc = msm_ois_write_settings(o_ctrl,
++			set_info->ois_params.setting_size, settings);
++		if (copy_to_user((void __user *)set_info->ois_params.settings,
++			settings, set_info->ois_params.setting_size *
++			sizeof(struct reg_settings_ois_t)))
++			rc = -EFAULT;
++		kfree(settings);
++	}
++	return rc;
++}
++
+ static int32_t msm_ois_control(struct msm_ois_ctrl_t *o_ctrl,
+ 	struct msm_ois_set_info_t *set_info)
+ {
+@@ -577,8 +659,16 @@ static int32_t msm_ois_config(struct msm_ois_ctrl_t *o_ctrl,
+ 		kfree(reg_setting);
+ 		break;
+ 	}
+-	case CFG_OIS_CALIBRATION:
+-		fadj_ois_gyro_offset_calibraion();
++	/* axon7: ZTE's 3.18 OIS commands (the camera daemon uses them) */
++	case CFG_OIS_DEINIT:
++		rc = msm_ois_deinit(o_ctrl);
++		if (rc < 0)
++			pr_err("msm_ois_deinit failed %d\n", rc);
++		break;
++	case CFG_OIS_READ:
++		rc = msm_ois_read(o_ctrl, &(cdata->cfg.set_info));
++		if (rc < 0)
++			pr_err("Failed ois read%d\n", rc);
+ 		break;
+ 	default:
+ 		break;
+@@ -888,6 +978,7 @@ static long msm_ois_subdev_do_ioctl(
+ 		ois_data.cfgtype = u32->cfgtype;
+ 
+ 		switch (u32->cfgtype) {
++		case CFG_OIS_READ:
+ 		case CFG_OIS_CONTROL:
+ 			ois_data.cfg.set_info.ois_params.setting_size =
+ 				u32->cfg.set_info.ois_params.setting_size;
+diff --git a/include/media/msm_cam_sensor.h b/include/media/msm_cam_sensor.h
+index 2c8b651147e0..053d36f12ca3 100644
+--- a/include/media/msm_cam_sensor.h
++++ b/include/media/msm_cam_sensor.h
+@@ -40,6 +40,7 @@ struct msm_camera_sensor_slave_info32 {
+ 	struct msm_sensor_power_setting_array32 power_setting_array;
+ 	uint8_t  is_init_params_valid;
+ 	struct msm_sensor_init_params sensor_init_params;
++	uint16_t bakeup_slave_addr;
+ 	enum msm_sensor_output_format_t output_format;
+ 	uint8_t bypass_video_node_creation;
+ };
+@@ -84,15 +85,6 @@ struct msm_ir_cut_cfg_data_t32 {
+ 	enum msm_ir_cut_cfg_type_t cfg_type;
+ };
+ 
+-struct msm_laser_led_cfg_data_t32 {
+-	enum msm_laser_led_cfg_type_t cfg_type;
+-	compat_uptr_t                 setting;
+-	compat_uptr_t                 debug_reg;
+-	uint32_t                      debug_reg_size;
+-	uint16_t                      i2c_addr;
+-	enum i2c_freq_mode_t          i2c_freq_mode;
+-};
+-
+ struct eeprom_read_t32 {
+ 	compat_uptr_t dbuffer;
+ 	uint32_t num_bytes;
+@@ -195,6 +187,8 @@ struct msm_actuator_cfg_data32 {
+ 		struct msm_actuator_get_info_t get_info;
+ 		struct msm_actuator_set_position_t setpos;
+ 		enum af_camera_name cam_name;
++		struct msm_actuator_cci_params_t cci_info;
++		struct reg_settings_t reg_info;
+ 	} cfg;
+ };
+ 
+@@ -285,10 +279,7 @@ struct msm_flash_cfg_data_t32 {
+ 
+ #define VIDIOC_MSM_IR_CUT_CFG32 \
+ 	_IOWR('V', BASE_VIDIOC_PRIVATE + 15, struct msm_ir_cut_cfg_data_t32)
+-
+-#define VIDIOC_MSM_LASER_LED_CFG32 \
+-	_IOWR('V', BASE_VIDIOC_PRIVATE + 16, struct msm_laser_led_cfg_data_t32)
+-
+ #endif
+ 
+ #endif
++
+diff --git a/include/uapi/media/msm_cam_sensor.h b/include/uapi/media/msm_cam_sensor.h
+index 91f194ab4895..481f4c984b4f 100644
+--- a/include/uapi/media/msm_cam_sensor.h
++++ b/include/uapi/media/msm_cam_sensor.h
+@@ -1,3 +1,8 @@
++/*
++ * axon7: this is ZTE's 3.18 camera ABI (the camera blobs, mm-qcamera-daemon
++ * and libmmcamera2_*, were built against it). 4.4-only additions that do not
++ * move existing enums or structs are appended below.
++ */
+ #ifndef __UAPI_LINUX_MSM_CAM_SENSOR_H
+ #define __UAPI_LINUX_MSM_CAM_SENSOR_H
+ 
+@@ -34,13 +39,8 @@
+ #define MAX_NUMBER_OF_STEPS 47
+ #define MAX_REGULATOR 5
+ 
+-/*msm_flash_query_data_t query types*/
+-#define FLASH_QUERY_CURRENT 1
+-
+ #define MSM_V4L2_PIX_FMT_META v4l2_fourcc('M', 'E', 'T', 'A') /* META */
+ #define MSM_V4L2_PIX_FMT_META10 v4l2_fourcc('M', 'E', '1', '0') /* META10 */
+-#define MSM_V4L2_PIX_FMT_META12 v4l2_fourcc('M', 'E', '1', '2') /* META12 */
+-
+ #define MSM_V4L2_PIX_FMT_SBGGR14 v4l2_fourcc('B', 'G', '1', '4')
+ 	/* 14  BGBG.. GRGR.. */
+ #define MSM_V4L2_PIX_FMT_SGBRG14 v4l2_fourcc('G', 'B', '1', '4')
+@@ -91,7 +91,6 @@ enum sensor_sub_module_t {
+ 	SUB_MODULE_IR_LED,
+ 	SUB_MODULE_IR_CUT,
+ 	SUB_MODULE_MAX,
+-	SUB_MODULE_LASER_LED,
+ };
+ 
+ enum {
+@@ -304,20 +303,11 @@ struct msm_ir_cut_cfg_data_t {
+ 	enum msm_ir_cut_cfg_type_t cfg_type;
+ };
+ 
+-struct msm_laser_led_cfg_data_t {
+-	enum msm_laser_led_cfg_type_t cfg_type;
+-	void __user                   *setting;
+-	void __user                   *debug_reg;
+-	uint32_t                      debug_reg_size;
+-	uint16_t                      i2c_addr;
+-	enum i2c_freq_mode_t          i2c_freq_mode;
+-};
+-
+ struct msm_eeprom_cfg_data {
+ 	enum eeprom_cfg_type_t cfgtype;
+ 	uint8_t is_supported;
+ 	union {
+-		char eeprom_name[MAX_EEPROM_NAME];
++		char eeprom_name[MAX_SENSOR_NAME];
+ 		struct eeprom_get_t get_data;
+ 		struct eeprom_read_t read_data;
+ 		struct eeprom_write_t write_data;
+@@ -333,6 +323,7 @@ enum msm_sensor_cfg_type_t {
+ 	CFG_SLAVE_WRITE_I2C_ARRAY,
+ 	CFG_WRITE_I2C_SEQ_ARRAY,
+ 	CFG_POWER_UP,
++	CFG_POWER_RESET,
+ 	CFG_POWER_DOWN,
+ 	CFG_SET_STOP_STREAM_SETTING,
+ 	CFG_GET_SENSOR_INFO,
+@@ -368,6 +359,9 @@ enum msm_actuator_cfg_type_t {
+ 	CFG_ACTUATOR_POWERDOWN,
+ 	CFG_ACTUATOR_POWERUP,
+ 	CFG_ACTUATOR_INIT,
++	CFG_ACTUATOR_CCI_INFO,
++	CFG_ACTUATOR_REGISTER_READ,
++	CFG_ACTUATOR_REGISTER_WRITER,
+ };
+ 
+ struct msm_ois_opcode {
+@@ -379,11 +373,12 @@ struct msm_ois_opcode {
+ 
+ enum msm_ois_cfg_type_t {
+ 	CFG_OIS_INIT,
++	CFG_OIS_DEINIT,
+ 	CFG_OIS_POWERDOWN,
+ 	CFG_OIS_POWERUP,
+ 	CFG_OIS_CONTROL,
++	CFG_OIS_READ,
+ 	CFG_OIS_I2C_WRITE_SEQ_TABLE,
+-	CFG_OIS_CALIBRATION,
+ };
+ 
+ enum msm_ois_cfg_download_type_t {
+@@ -394,6 +389,7 @@ enum msm_ois_cfg_download_type_t {
+ enum msm_ois_i2c_operation {
+ 	MSM_OIS_WRITE = 0,
+ 	MSM_OIS_POLL,
++	MSM_OIS_READ,
+ };
+ 
+ struct reg_settings_ois_t {
+@@ -457,6 +453,13 @@ struct msm_actuator_params_t {
+ 	struct park_lens_data_t park_lens;
+ };
+ 
++struct msm_actuator_cci_params_t {
++	uint32_t i2c_addr;
++	enum i2c_freq_mode_t i2c_freq_mode;
++	enum msm_camera_i2c_reg_addr_type i2c_addr_type;
++	enum msm_camera_i2c_data_type i2c_data_type;
++};
++
+ struct msm_actuator_set_info_t {
+ 	struct msm_actuator_params_t actuator_params;
+ 	struct msm_actuator_tuning_params_t af_tuning_params;
+@@ -523,6 +526,8 @@ struct msm_actuator_cfg_data {
+ 		struct msm_actuator_get_info_t get_info;
+ 		struct msm_actuator_set_position_t setpos;
+ 		enum af_camera_name cam_name;
++		struct msm_actuator_cci_params_t cci_info;
++		struct reg_settings_t reg_info;
+ 	} cfg;
+ };
+ 
+@@ -559,12 +564,6 @@ struct msm_flash_cfg_data_t {
+ 	} cfg;
+ };
+ 
+-struct msm_flash_query_data_t {
+-	int32_t flags;
+-	int32_t query_type;
+-	int32_t max_avail_curr;
+-};
+-
+ /* sensor init structures and enums */
+ enum msm_sensor_init_cfg_type_t {
+ 	CFG_SINIT_PROBE,
+@@ -620,17 +619,26 @@ struct sensor_init_cfg_data {
+ #define VIDIOC_MSM_OIS_CFG_DOWNLOAD \
+ 	_IOWR('V', BASE_VIDIOC_PRIVATE + 14, struct msm_ois_cfg_download_data)
+ 
+-#define VIDIOC_MSM_FLASH_QUERY_DATA \
+-	_IOWR('V', BASE_VIDIOC_PRIVATE + 15, struct msm_flash_query_data_t)
+-
+ #define VIDIOC_MSM_IR_LED_CFG \
+ 	_IOWR('V', BASE_VIDIOC_PRIVATE + 15, struct msm_ir_led_cfg_data_t)
+ 
+ #define VIDIOC_MSM_IR_CUT_CFG \
+ 	_IOWR('V', BASE_VIDIOC_PRIVATE + 15, struct msm_ir_cut_cfg_data_t)
+ 
+-#define VIDIOC_MSM_LASER_LED_CFG \
+-	_IOWR('V', BASE_VIDIOC_PRIVATE + 16, struct msm_laser_led_cfg_data_t)
++#define VIDIOC_MSM_FLASH_HW_ID \
++	_IOWR('V', BASE_VIDIOC_PRIVATE + 16, uint32_t)
++
++
++/* 4.4 additions (not used by the ZTE blobs) */
++#define MSM_V4L2_PIX_FMT_META12 v4l2_fourcc('M', 'E', '1', '2') /* META12 */
++#define FLASH_QUERY_CURRENT 1
++struct msm_flash_query_data_t {
++	int32_t flags;
++	int32_t query_type;
++	int32_t max_avail_curr;
++};
++#define VIDIOC_MSM_FLASH_QUERY_DATA \
++	_IOWR('V', BASE_VIDIOC_PRIVATE + 17, struct msm_flash_query_data_t)
+ 
+ #endif
+ 
+diff --git a/include/uapi/media/msm_camsensor_sdk.h b/include/uapi/media/msm_camsensor_sdk.h
+index a77ecd052b91..20cdaedb71a3 100644
+--- a/include/uapi/media/msm_camsensor_sdk.h
++++ b/include/uapi/media/msm_camsensor_sdk.h
+@@ -50,8 +50,6 @@
+ 
+ #define MSM_SENSOR_BYPASS_VIDEO_NODE    1
+ 
+-#define FRONT_AUX_SENSOR_SUPPORT
+-
+ enum msm_sensor_camera_id_t {
+ 	CAMERA_0,
+ 	CAMERA_1,
+@@ -72,7 +70,6 @@ enum camb_position_t {
+ 	BACK_CAMERA_B,
+ 	FRONT_CAMERA_B,
+ 	AUX_CAMERA_B = 0x100,
+-	FRONT_AUX_CAMERA_B,
+ 	INVALID_CAMERA_B,
+ };
+ 
+@@ -80,6 +77,7 @@ enum msm_sensor_power_seq_type_t {
+ 	SENSOR_CLK,
+ 	SENSOR_GPIO,
+ 	SENSOR_VREG,
++	SENSOR_PMIC,
+ 	SENSOR_I2C_MUX,
+ 	SENSOR_I2C,
+ };
+@@ -117,10 +115,8 @@ enum msm_sensor_power_seq_gpio_t {
+ 	SENSOR_GPIO_FL_RESET,
+ 	SENSOR_GPIO_CUSTOM1,
+ 	SENSOR_GPIO_CUSTOM2,
+-	SENSOR_GPIO_CUSTOM3,
+ 	SENSOR_GPIO_MAX,
+ };
+-#define SENSOR_GPIO_CUSTOM3 SENSOR_GPIO_CUSTOM3
+ 
+ enum msm_ir_cut_filter_gpio_t {
+ 	IR_CUT_FILTER_GPIO_P = 0,
+@@ -131,6 +127,13 @@ enum msm_ir_cut_filter_gpio_t {
+ #define IR_CUT_FILTER_GPIO_M IR_CUT_FILTER_GPIO_M
+ #define R_CUT_FILTER_GPIO_MAX IR_CUT_FILTER_GPIO_MAX
+ 
++enum msm_sensor_power_seq_gpio_pmic_t {
++	SENSOR_PMIC_GPIO_OIS,
++	SENSOR_PMIC_GPIO_CUSTOM1,
++	SENSOR_PMIC_GPIO_CUSTOM2,
++	SENSOR_PMIC_GPIO_MAX,
++};
++
+ enum msm_camera_vreg_name_t {
+ 	CAM_VDIG,
+ 	CAM_VIO,
+@@ -138,7 +141,6 @@ enum msm_camera_vreg_name_t {
+ 	CAM_VAF,
+ 	CAM_V_CUSTOM1,
+ 	CAM_V_CUSTOM2,
+-	CAM_VMIPI,
+ 	CAM_VREG_MAX,
+ };
+ 
+@@ -211,13 +213,6 @@ enum msm_ir_led_cfg_type_t {
+ #define CFG_IR_LED_OFF CFG_IR_LED_OFF
+ #define CFG_IR_LED_ON CFG_IR_LED_ON
+ 
+-enum msm_laser_led_cfg_type_t {
+-	CFG_LASER_LED_INIT,
+-	CFG_LASER_LED_CONTROL,
+-};
+-#define CFG_LASER_LED_INIT CFG_LASER_LED_INIT
+-#define CFG_LASER_LED_CONTROL CFG_LASER_LED_CONTROL
+-
+ enum msm_ir_cut_cfg_type_t {
+ 	CFG_IR_CUT_INIT = 0,
+ 	CFG_IR_CUT_RELEASE,
+@@ -315,6 +310,7 @@ struct msm_camera_sensor_slave_info {
+ 	struct msm_sensor_power_setting_array power_setting_array;
+ 	unsigned char  is_init_params_valid;
+ 	struct msm_sensor_init_params sensor_init_params;
++	uint16_t bakeup_slave_addr;
+ 	enum msm_sensor_output_format_t output_format;
+ 	uint8_t bypass_video_node_creation;
+ };
+@@ -370,7 +366,6 @@ struct msm_camera_csiphy_params {
+ 	unsigned char csid_core;
+ 	unsigned int csiphy_clk;
+ 	unsigned char csi_3phase;
+-	uint64_t data_rate;
+ };
+ 
+ struct msm_camera_i2c_seq_reg_array {
+-- 
+2.47.3
+
