@@ -14,9 +14,10 @@ published yet. Confirmed on the phone (2026-11-08): display, touch, USB/adb,
 backlight, Wi-Fi, Bluetooth, NFC, 42 sensors, GPS service, flashlight,
 fingerprint driver and daemon, both cameras detected (HAL3), the sound card
 (AK4961 + AK4490, audio HAL routes and the speaker amplifier switch on), the
-modem with `rild` on the Android 15 radio AIDL services, telephony starting
-cleanly. Open: the camera app crashes (a stream size of width 0 in the camera
-metadata), audible sound and fingerprint enrolment untested, dual SIM in test,
+modem with `rild` on the Android 15 radio AIDL services for both SIM slots,
+telephony starting cleanly (dual SIM). Open: the rear camera reports an empty
+stream configuration (0x0, the camera app crashes; the front camera's is
+complete), audible sound and fingerprint enrolment untested,
 screen colours on one half after waking, calls/data with a SIM (untested).
 
 Old vendor blobs on Android 15, and what makes them run (2026-11-08):
