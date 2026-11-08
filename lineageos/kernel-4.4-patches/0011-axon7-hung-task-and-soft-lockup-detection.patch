@@ -1,0 +1,29 @@
+From fc023f5e0b957c8299fee8be11c3013d46d601b8 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 21:48:30 +0000
+Subject: [PATCH 11/14] axon7: hung task and soft lockup detection
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I3d12dea665722570bc50e3449ffa4d536947c5c6
+---
+ arch/arm64/configs/vendor/zte/axon7.config | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/arm64/configs/vendor/zte/axon7.config b/arch/arm64/configs/vendor/zte/axon7.config
+index 1445de59bf1b..3ceae063ba6b 100644
+--- a/arch/arm64/configs/vendor/zte/axon7.config
++++ b/arch/arm64/configs/vendor/zte/axon7.config
+@@ -36,3 +36,9 @@ CONFIG_USB_HD3SS3220=y
+ # Goodix GF3118M fingerprint (gx_fpd opens /dev/goodix_fp)
+ CONFIG_INPUT_FINGERPRINT=y
+ CONFIG_FINGERPRINT_GOODIX_GF3118M=y
++
++# Hang detection (a test boot that hangs in a driver panics and restarts:
++# hung_task_panic/softlockup_panic on the command line of AXON7_TEST builds)
++CONFIG_DETECT_HUNG_TASK=y
++CONFIG_DEFAULT_HUNG_TASK_TIMEOUT=60
++CONFIG_LOCKUP_DETECTOR=y
+-- 
+2.47.3
+

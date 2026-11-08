@@ -1,0 +1,84 @@
+From 7acd086c838c0666ca0843199998fc6eff67be76 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 18:46:21 +0000
+Subject: [PATCH] libhidl: look up constructors in the old global maps too
+ (axon7 vendor blobs)
+
+HIDL code built before Android 10 registers its Bn/Bs constructors in
+details::gBnConstructorMap/gBsConstructorMap, which Android 13 removed:
+the old blobs (Qualcomm RIL hooks, IMS, gnss, atcmdfwd) then abort in
+getOrCreateCachedBinder ("getBnConstructorMap returned null"). Export
+the two maps again and fall back to them, as Android 12 did.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I05cfddbd2abf16556469d3f137adf65fcd0a469f
+---
+ transport/HidlBinderSupport.cpp      | 3 +++
+ transport/HidlPassthroughSupport.cpp | 3 +++
+ transport/Static.cpp                 | 4 ++++
+ transport/include/hidl/Static.h      | 5 +++++
+ 4 files changed, 15 insertions(+)
+
+diff --git a/transport/HidlBinderSupport.cpp b/transport/HidlBinderSupport.cpp
+index 8b36f1f..cbed9c3 100644
+--- a/transport/HidlBinderSupport.cpp
++++ b/transport/HidlBinderSupport.cpp
+@@ -254,6 +254,9 @@ sp<IBinder> getOrCreateCachedBinder(::android::hidl::base::V1_0::IBase* ifacePtr
+ 
+     if (sBnObj == nullptr) {
+         auto func = details::getBnConstructorMap().get(descriptor, nullptr);
++        if (func == nullptr) {
++            func = details::gBnConstructorMap->get(descriptor, nullptr);
++        }
+         LOG_ALWAYS_FATAL_IF(func == nullptr, "%s getBnConstructorMap returned null for %s",
+                             __func__, descriptor.c_str());
+ 
+diff --git a/transport/HidlPassthroughSupport.cpp b/transport/HidlPassthroughSupport.cpp
+index e059b4d..dda8fcc 100644
+--- a/transport/HidlPassthroughSupport.cpp
++++ b/transport/HidlPassthroughSupport.cpp
+@@ -29,6 +29,9 @@ namespace details {
+ 
+ static sp<IBase> tryWrap(const std::string& descriptor, sp<IBase> iface) {
+     auto func = getBsConstructorMap().get(descriptor, nullptr);
++    if (!func) {
++        func = gBsConstructorMap->get(descriptor, nullptr);
++    }
+     if (func) {
+         return func(static_cast<void*>(iface.get()));
+     }
+diff --git a/transport/Static.cpp b/transport/Static.cpp
+index fe7c0f0..683d956 100644
+--- a/transport/Static.cpp
++++ b/transport/Static.cpp
+@@ -35,6 +35,10 @@ DoNotDestruct<ConcurrentMap<const ::android::hidl::base::V1_0::IBase*,
+ DoNotDestruct<ConcurrentMap<wp<::android::hidl::base::V1_0::IBase>, SchedPrio>> gServicePrioMap{};
+ DoNotDestruct<ConcurrentMap<wp<::android::hidl::base::V1_0::IBase>, bool>> gServiceSidMap{};
+ 
++// Deprecated; kept for old vendor blobs (see Static.h).
++DoNotDestruct<BnConstructorMap> gBnConstructorMap{};
++DoNotDestruct<BsConstructorMap> gBsConstructorMap{};
++
+ BnConstructorMap& getBnConstructorMap() {
+     static BnConstructorMap& map = *new BnConstructorMap();
+     return map;
+diff --git a/transport/include/hidl/Static.h b/transport/include/hidl/Static.h
+index 3f6203c..299e8c1 100644
+--- a/transport/include/hidl/Static.h
++++ b/transport/include/hidl/Static.h
+@@ -50,6 +50,11 @@ using BsConstructorMap = ConcurrentMap<std::string,
+ // value function receives reinterpret_cast<void *>(static_cast<IFoo *>(foo)),
+ // returns sp<IBase>
+ BsConstructorMap& getBsConstructorMap();
++
++// axon7 (old vendor blobs): the pre-Android-10 HIDL code registers its
++// constructors in these globals; lookups fall back to them (as Android 12 did).
++extern DoNotDestruct<BnConstructorMap> gBnConstructorMap;
++extern DoNotDestruct<BsConstructorMap> gBsConstructorMap;
+ }  // namespace details
+ }  // namespace hardware
+ }  // namespace android
+-- 
+2.47.3
+

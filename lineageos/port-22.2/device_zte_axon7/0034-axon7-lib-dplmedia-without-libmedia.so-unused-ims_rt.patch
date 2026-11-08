@@ -1,0 +1,31 @@
+From 8e93739dd2894e8633cda189787bb7e16ffc1bd1 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 18:04:06 +0000
+Subject: [PATCH 34/45] axon7: lib-dplmedia without libmedia.so (unused;
+ ims_rtp_daemon did not link)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Ifa1458b349cc85f14a5cfb23be4189ab4518643c
+---
+ extract-files.sh | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/extract-files.sh b/extract-files.sh
+index 0ee4729..85c3b34 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -147,6 +147,10 @@ function blob_fixup() {
+     vendor/lib/liboptizoom.so|vendor/lib/libchromaflash.so|vendor/lib/libmmcamera_hdr_gb_lib.so|vendor/lib/libseemore.so|vendor/lib/libtsvideoprocess.so|vendor/lib/libtrueportrait.so|vendor/lib/libubifocus.so|vendor/lib64/libfp_client.so|vendor/lib64/libfpnav.so|vendor/lib64/hw/fingerprint.msm8996.so|vendor/lib64/hw/gxfingerprint.default.so|vendor/lib64/libfpservice.so)
+         "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
+         ;;
++    # IMS RTP: libmedia.so is gone; lib-dplmedia uses none of its symbols
++    vendor/lib64/lib-dplmedia.so)
++        "${PATCHELF}" --remove-needed "libmedia.so" "${2}"
++        ;;
+     # Old HIDL interface libs: gBnConstructorMap/gBsConstructorMap (gone from libhidlbase)
+     vendor/lib*/vendor.qti.hardware.radio.*@1.0_vendor.so|vendor/lib*/vendor.qti.gnss@*.so|vendor/lib*/vendor.qti.imsrtpservice@1.0_vendor.so|vendor/lib*/com.qualcomm.qti.imscmservice@1.0_vendor.so|vendor/lib64/vendor.qti.ims.rcsconfig@1.0.so|vendor/lib*/lib-imsrcs-v2.so)
+         grep -q libhidlbase_shim.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim.so" "${2}"
+-- 
+2.47.3
+

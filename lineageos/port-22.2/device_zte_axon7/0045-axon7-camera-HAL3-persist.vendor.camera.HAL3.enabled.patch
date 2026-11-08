@@ -1,0 +1,33 @@
+From 8ff8c411424f6a1a1a582b1e85911231b1c613a9 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 00:48:23 +0000
+Subject: [PATCH 45/45] axon7: camera HAL3 (persist.vendor.camera.HAL3.enabled)
+
+The HAL found both cameras but exposed them as device@1.0; the Android 15
+camera service only takes HAL3 ("Unsupported HIDL device HAL major
+version 1", 0 cameras).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Ic10d67f8ef130c0a7fe33ba1d53ff0eef98fdb5a
+---
+ vendor.prop | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/vendor.prop b/vendor.prop
+index f8cc4e3..586e07e 100644
+--- a/vendor.prop
++++ b/vendor.prop
+@@ -54,6 +54,9 @@ camera.disable_zsl_mode=1
+ persist.camera.imglib.fddsp=1
+ persist.ts.postmakeup=false
+ persist.ts.rtmakeup=false
++# camera.msm8996.so reads persist.vendor.camera.HAL3.enabled; without it the
++# cameras are HAL1 (device@1.0), which the Android 15 camera service drops
++persist.vendor.camera.HAL3.enabled=1
+ persist.vendor.camera.HAL3.system.enabled=1
+ persist.vendor.camera.HAL3.zte.enabled=1
+ persist.vendor.camera.preview.ubwc=0
+-- 
+2.47.3
+

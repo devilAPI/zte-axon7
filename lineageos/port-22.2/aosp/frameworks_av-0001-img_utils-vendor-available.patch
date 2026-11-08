@@ -1,0 +1,27 @@
+From 94c70c13e88fe0a8eb98579246064912ce65ac71 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 17:52:19 +0000
+Subject: [PATCH] img_utils: vendor_available for the axon7 camera HAL
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I66d60c08153939d166a8b55a2bc33e5d9d9e8d42
+---
+ media/img_utils/Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/media/img_utils/Android.bp b/media/img_utils/Android.bp
+index 237cd2b..0a4a495 100644
+--- a/media/img_utils/Android.bp
++++ b/media/img_utils/Android.bp
+@@ -23,6 +23,7 @@ package {
+ 
+ cc_library_shared {
+     name: "libimg_utils",
++    vendor_available: true, // axon7: camera.msm8996.so (vendor) links it
+ 
+     srcs: [
+         "src/EndianUtils.cpp",
+-- 
+2.47.3
+

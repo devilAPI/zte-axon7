@@ -1,0 +1,164 @@
+From 2fc3d7c45b5e177401bc39c1b33817a2e64c57f8 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 18:39:05 +0000
+Subject: [PATCH 37/45] axon7: protobuf v28 for RIL and Widevine, fingerprint
+ and camera link fixes, no qti_gnss_service
+
+From the los12 boot log:
+- rild: libsettings.so needs libprotobuf-cpp-full-v28.so; Widevine the
+  lite one. AOSP prebuilts/vndk/v28 (android12-release) protobuf, soname
+  renamed to -v28, copied by device.mk. Widevine is back.
+- gx_fpd: android::checkCallingPermission(String16) is not in the vendor
+  libbinder: libbinder_perm_shim (returns true; callers are limited by
+  SELinux).
+- camera: libFNVfbEngineHAL.so needed libandroid.so (no symbols used).
+- vendor.qti.gnss@1.0-service only looped (IGnss is served by the
+  source-built android.hardware.gnss@2.0-service-qti): off.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I254fddc1aebc768bb3c6ecb09c95b3c145a803cc
+---
+ device.mk             | 10 ++++++++++
+ extract-files.sh      |  8 +++++++-
+ proprietary-files.txt | 15 ++++++++-------
+ shims/Android.bp      |  7 +++++++
+ shims/binder_perm.cpp | 14 ++++++++++++++
+ 5 files changed, 46 insertions(+), 8 deletions(-)
+ create mode 100644 shims/binder_perm.cpp
+
+diff --git a/device.mk b/device.mk
+index 47d9cc5..3d76709 100644
+--- a/device.mk
++++ b/device.mk
+@@ -422,6 +422,7 @@ PRODUCT_PACKAGES += \
+     libcutils_shim \
+     libcutils_shim.vendor \
+     libhidlbase_shim \
++    libbinder_perm_shim \
+     libhidlbase_shim_system \
+     libstackptr_shim \
+     libui_shim.vendor
+@@ -431,6 +432,15 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PACKAGES += \
+     rild_axon7
+ 
++# protobuf 3.0 (Android 9 ABI) for the Qualcomm RIL (libsettings) and
++# Widevine (libwvhidl): AOSP prebuilts/vndk/v28 (android12-release), soname
++# renamed to *-v28 (vendor/zte/axon7/proprietary/vendor/lib*/)
++PRODUCT_COPY_FILES += \
++    vendor/zte/axon7/proprietary/vendor/lib/libprotobuf-cpp-full-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib/libprotobuf-cpp-full-v28.so \
++    vendor/zte/axon7/proprietary/vendor/lib/libprotobuf-cpp-lite-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib/libprotobuf-cpp-lite-v28.so \
++    vendor/zte/axon7/proprietary/vendor/lib64/libprotobuf-cpp-full-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-full-v28.so \
++    vendor/zte/axon7/proprietary/vendor/lib64/libprotobuf-cpp-lite-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-lite-v28.so
++
+ # camera.msm8996.so (DNG): libimg_utils for vendor
+ PRODUCT_PACKAGES += \
+     libimg_utils.vendor
+diff --git a/extract-files.sh b/extract-files.sh
+index e08ea2d..bbace3f 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -132,6 +132,7 @@ function blob_fixup() {
+     lib/lib-imsvideocodec.so|vendor/lib/libFNVfbEngineHAL.so|vendor/lib/libZEffectLib.so)
+         "${PATCHELF}" --add-needed "libui_shim.so" "${2}"
+         grep -q "libstdc++.so" "${2}" && "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
++        grep -q "libandroid.so" "${2}" && "${PATCHELF}" --remove-needed "libandroid.so" "${2}"
+         ;;
+     # Patch service.bootanim.exit in camera HAL
+     vendor/lib/hw/camera.msm8996.so)
+@@ -144,13 +145,18 @@ function blob_fixup() {
+         "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
+         ;;
+     # libstdc++ is libstdc++_vendor on the vendor partition (camera, fingerprint)
+-    vendor/lib/liboptizoom.so|vendor/lib/libchromaflash.so|vendor/lib/libmmcamera_hdr_gb_lib.so|vendor/lib/libseemore.so|vendor/lib/libtsvideoprocess.so|vendor/lib/libtrueportrait.so|vendor/lib/libubifocus.so|vendor/lib64/libfp_client.so|vendor/lib64/libfpnav.so|vendor/lib64/hw/fingerprint.msm8996.so|vendor/lib64/hw/gxfingerprint.default.so|vendor/lib64/libfpservice.so)
++    vendor/lib/liboptizoom.so|vendor/lib/libchromaflash.so|vendor/lib/libmmcamera_hdr_gb_lib.so|vendor/lib/libseemore.so|vendor/lib/libtsvideoprocess.so|vendor/lib/libtrueportrait.so|vendor/lib/libubifocus.so|vendor/lib64/libfp_client.so|vendor/lib64/libfpnav.so|vendor/lib64/hw/fingerprint.msm8996.so|vendor/lib64/hw/gxfingerprint.default.so)
+         "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
+         ;;
+     # pm-service: sp<> on a stack object aborts on Android 15 (shims/stackptr.cpp)
+     vendor/bin/pm-service)
+         grep -q libstackptr_shim.so "${2}" || "${PATCHELF}" --add-needed "libstackptr_shim.so" "${2}"
+         ;;
++    # fingerprint: checkCallingPermission(String16) (shims/binder_perm.cpp)
++    vendor/lib64/libfpservice.so)
++        grep -q libbinder_perm_shim.so "${2}" || "${PATCHELF}" --add-needed "libbinder_perm_shim.so" "${2}"
++        grep -q "libstdc++.so" "${2}" && "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
++        ;;
+     # IMS RTP: libmedia.so is gone; lib-dplmedia uses none of its symbols
+     vendor/lib64/lib-dplmedia.so)
+         "${PATCHELF}" --remove-needed "libmedia.so" "${2}"
+diff --git a/proprietary-files.txt b/proprietary-files.txt
+index 368708a..b869be0 100644
+--- a/proprietary-files.txt
++++ b/proprietary-files.txt
+@@ -483,24 +483,25 @@ vendor/lib64/libssd.so
+ -vendor/lib/libQSEEComAPI.so;DISABLE_DEPS
+ 
+ # DRM Widevine - from daisy - QKQ1.191002.002
+-# Off on 22.2: libwvhidl needs libprotobuf-cpp-lite-v28 (no such ABI any more);
+-# the service crash-looped. Clearkey stays.
+-#vendor/bin/hw/android.hardware.drm@1.2-service.widevine|e130b8f1c8d46d8a185b00cba5ff8a2a871ee94c
+-#vendor/etc/init/android.hardware.drm@1.2-service.widevine.rc|68767969f86126ada017fc09af151e299db651d5
+-#vendor/lib64/libwvhidl.so|d02a20d8e95e64c391e0af86a32dad869ceeb3b4
++# libprotobuf-cpp-lite-v28: AOSP vndk v28 prebuilt (device.mk)
++vendor/bin/hw/android.hardware.drm@1.2-service.widevine|e130b8f1c8d46d8a185b00cba5ff8a2a871ee94c
++vendor/etc/init/android.hardware.drm@1.2-service.widevine.rc|68767969f86126ada017fc09af151e299db651d5
++vendor/lib64/libwvhidl.so|d02a20d8e95e64c391e0af86a32dad869ceeb3b4
+ 
+ # Gatekeeper
+ -vendor/lib64/hw/gatekeeper.msm8996.so;DISABLE_DEPS
+ -vendor/lib/hw/gatekeeper.msm8996.so;DISABLE_DEPS
+ 
+ # GPS - from daisy - PKQ1.180917.001
+-vendor/bin/hw/vendor.qti.gnss@1.0-service|049201d8e22064b87eb52df208d8cda7066d140a
++# off: the source-built android.hardware.gnss@2.0-service-qti serves IGnss; this one only looped
++#vendor/bin/hw/vendor.qti.gnss@1.0-service|049201d8e22064b87eb52df208d8cda7066d140a
+ vendor/bin/loc_launcher|23a4470552c0c418662a7d91fa7f593bee767459
+ vendor/bin/lowi-server|f83f6ab9b978c618c87d2b5c66854533d0e3a66f
+ vendor/bin/slim_daemon|0346d3721c2a0471559d0728c329888e5bad8452
+ vendor/bin/xtra-daemon|f4fdd2d7fc56472066b05899340eb19ff67d54b4
+ vendor/etc/cacert_location.pem|0789bf799c7e45d352a83e2f79ddb0cea86db85b
+-vendor/etc/init/vendor.qti.gnss@1.0-service.rc|98655e2adc2158a052b0ecf06b065535f0a2aac7
++# off: the source-built android.hardware.gnss@2.0-service-qti serves IGnss; this one only looped
++#vendor/etc/init/vendor.qti.gnss@1.0-service.rc|98655e2adc2158a052b0ecf06b065535f0a2aac7
+ vendor/etc/xtra_root_cert.pem|f55a31ec4d9cf8ce2724acadecf00c779f8767db
+ vendor/lib64/hw/vendor.qti.gnss@1.0-impl.so|27375e1ff018f7fb65b87ee0ff06e3e39c2c13fc
+ vendor/lib64/libdataitems.so|60f312e84762cd2493a6ac4aa2f8cd715fca7099
+diff --git a/shims/Android.bp b/shims/Android.bp
+index 6978701..4fc5c53 100644
+--- a/shims/Android.bp
++++ b/shims/Android.bp
+@@ -11,3 +11,10 @@ cc_library_shared {
+     srcs: ["stackptr.cpp"],
+     vendor: true,
+ }
++
++cc_library_shared {
++    name: "libbinder_perm_shim",
++    srcs: ["binder_perm.cpp"],
++    shared_libs: ["libutils"],
++    vendor: true,
++}
+diff --git a/shims/binder_perm.cpp b/shims/binder_perm.cpp
+new file mode 100644
+index 0000000..a6fe2ac
+--- /dev/null
++++ b/shims/binder_perm.cpp
+@@ -0,0 +1,14 @@
++/*
++ * libfpservice.so (gx_fpd, fingerprint) calls
++ * android::checkCallingPermission(const String16&), which the vendor
++ * libbinder of Android 15 no longer exports (permission checks need the
++ * system's permission service). Callers of gx_fpd are limited by SELinux
++ * (hal_fingerprint), so the check passes here.
++ */
++#include <utils/String16.h>
++
++namespace android {
++bool checkCallingPermission(const String16& /* permission */) {
++    return true;
++}
++}  // namespace android
+-- 
+2.47.3
+

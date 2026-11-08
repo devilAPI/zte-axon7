@@ -1,0 +1,141 @@
+From 33e333b8c25579e9c26a1f0df941a2d588f608b2 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 23:55:46 +0000
+Subject: [PATCH 43/45] axon7: RIL Parcel ABI shim; Bluetooth SoC property and
+ extldo label
+
+- rild aborted with stack corruption in vendor_ril_send_hook_response:
+  libril-qc-qmi-1 keeps Android 8 sized Parcels on its stack. Its eight
+  Parcel imports are renamed to android::PaRcel, which libril_parcel_shim
+  implements with a heap Parcel.
+- libbt-vendor reads vendor.qcom.bluetooth.soc (qcom.bluetooth.soc could not
+  be set by vendor_init); hal_bluetooth_qti writes bt_qca6174/extldo.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I3a6cff88f25efb7a8b902955cecd50873de16270
+---
+ device.mk                      |  1 +
+ extract-files.sh               |  3 +++
+ sepolicy/vendor/genfs_contexts |  1 +
+ shims/Android.bp               |  7 ++++++
+ shims/ril_parcel.cpp           | 42 ++++++++++++++++++++++++++++++++++
+ vendor.prop                    |  1 -
+ 6 files changed, 54 insertions(+), 1 deletion(-)
+ create mode 100644 shims/ril_parcel.cpp
+
+diff --git a/device.mk b/device.mk
+index 6bb3b2e..e178ffc 100644
+--- a/device.mk
++++ b/device.mk
+@@ -424,6 +424,7 @@ PRODUCT_PACKAGES += \
+     libhidlbase_shim \
+     libbinder_perm_shim \
+     libhidlbase_shim_system \
++    libril_parcel_shim \
+     libstackptr_shim \
+     libui_shim.vendor
+ 
+diff --git a/extract-files.sh b/extract-files.sh
+index 24c76c3..ca35def 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -160,6 +160,9 @@ function blob_fixup() {
+     # Patch crashing issue in RIL library
+     vendor/lib64/libril-qc-qmi-1.so)
+         sed -i 's|\xfc\x0f\x1e\xf8\xfd\x7b\x01\xa9|\x00\x00\x80\xd2\xc0\x03\x5f\xd6|' "${2}"
++        # Android 8 Parcel on the stack: imports renamed to android::PaRcel (shims/ril_parcel.cpp)
++        sed -i 's|_ZN7android6Parcel|_ZN7android6PaRcel|g; s|_ZNK7android6Parcel|_ZNK7android6PaRcel|g' "${2}"
++        grep -q libril_parcel_shim.so "${2}" || "${PATCHELF}" --add-needed "libril_parcel_shim.so" "${2}"
+         ;;
+     # Hex edit libaudcal.so to store acdbdata in new paths
+     vendor/lib/libaudcal.so|vendor/lib64/libaudcal.so)
+diff --git a/sepolicy/vendor/genfs_contexts b/sepolicy/vendor/genfs_contexts
+index 40ec97c..7e9c4ed 100644
+--- a/sepolicy/vendor/genfs_contexts
++++ b/sepolicy/vendor/genfs_contexts
+@@ -26,5 +26,6 @@ genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-03/400f000.qcom,spmi:
+ 
+ # 4.4 kernel: Bluetooth power (hal_bluetooth_qti), QUSB and BCL power supplies (health HAL)
+ genfscon sysfs /devices/vendor/vendor:bt_qca6174/rfkill/rfkill0/state u:object_r:sysfs_bluetooth_writable:s0
++genfscon sysfs /devices/vendor/vendor:bt_qca6174/extldo u:object_r:sysfs_bluetooth_writable:s0
+ genfscon sysfs /devices/soc/7411000.qusb/power_supply u:object_r:sysfs_battery_supply:s0
+ genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-02/400f000.qcom,spmi:qcom,pmi8994@2:bcl@4200/power_supply u:object_r:sysfs_battery_supply:s0
+diff --git a/shims/Android.bp b/shims/Android.bp
+index 4fc5c53..fd1e822 100644
+--- a/shims/Android.bp
++++ b/shims/Android.bp
+@@ -18,3 +18,10 @@ cc_library_shared {
+     shared_libs: ["libutils"],
+     vendor: true,
+ }
++
++cc_library_shared {
++    name: "libril_parcel_shim",
++    srcs: ["ril_parcel.cpp"],
++    shared_libs: ["libbinder", "libutils"],
++    vendor: true,
++}
+diff --git a/shims/ril_parcel.cpp b/shims/ril_parcel.cpp
+new file mode 100644
+index 0000000..192fd62
+--- /dev/null
++++ b/shims/ril_parcel.cpp
+@@ -0,0 +1,42 @@
++/*
++ * libril-qc-qmi-1.so (Android 8 Qualcomm RIL) keeps android::Parcel objects on
++ * its stack with the Android 8 size (112 bytes); the Android 15 Parcel is
++ * bigger, so its constructor overran the caller's frame ("stack corruption
++ * detected" in vendor_ril_send_hook_response). extract-files.sh renames the
++ * blob's eight Parcel imports to android::PaRcel (same length); this class has
++ * the same methods and keeps the real Parcel on the heap. The blob only uses
++ * Parcel as a byte buffer (no binder calls with it).
++ */
++#include <binder/Parcel.h>
++
++namespace android {
++
++class PaRcel {
++  public:
++    PaRcel();
++    ~PaRcel();
++    status_t writeInt32(int32_t val);
++    status_t writeString16(const char16_t* str, size_t len);
++    status_t write(const void* data, size_t len);
++    void setDataPosition(size_t pos) const;
++    const uint8_t* data() const;
++    size_t dataSize() const;
++
++  private:
++    Parcel* mParcel;
++};
++
++static_assert(sizeof(PaRcel) <= 112, "must fit the Android 8 Parcel slot");
++
++PaRcel::PaRcel() : mParcel(new Parcel()) {}
++PaRcel::~PaRcel() { delete mParcel; }
++status_t PaRcel::writeInt32(int32_t val) { return mParcel->writeInt32(val); }
++status_t PaRcel::writeString16(const char16_t* str, size_t len) {
++    return mParcel->writeString16(str, len);
++}
++status_t PaRcel::write(const void* data, size_t len) { return mParcel->write(data, len); }
++void PaRcel::setDataPosition(size_t pos) const { mParcel->setDataPosition(pos); }
++const uint8_t* PaRcel::data() const { return mParcel->data(); }
++size_t PaRcel::dataSize() const { return mParcel->dataSize(); }
++
++}  // namespace android
+diff --git a/vendor.prop b/vendor.prop
+index d6f355e..f8cc4e3 100644
+--- a/vendor.prop
++++ b/vendor.prop
+@@ -45,7 +45,6 @@ bluetooth.profile.pan.panu.enabled?=true
+ bluetooth.profile.pbap.server.enabled?=true
+ bluetooth.profile.sap.server.enabled?=true
+ bt.max.hfpclient.connections=1
+-qcom.bluetooth.soc=rome
+ ro.bluetooth.emb_wp_mode=true
+ ro.bluetooth.wipower=true
+ vendor.qcom.bluetooth.soc=rome
+-- 
+2.47.3
+

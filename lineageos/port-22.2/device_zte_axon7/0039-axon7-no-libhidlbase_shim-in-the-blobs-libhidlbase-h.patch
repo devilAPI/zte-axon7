@@ -1,0 +1,45 @@
+From 21a2b926459eeb285a8586d52691cdabdfacd193 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 18:47:12 +0000
+Subject: [PATCH 39/45] axon7: no libhidlbase_shim in the blobs (libhidlbase
+ has the old maps again)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Ifad72788b72cb4f311a401096e01f41bc5248aa8
+---
+ extract-files.sh | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/extract-files.sh b/extract-files.sh
+index bbace3f..24c76c3 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -123,10 +123,6 @@ function blob_fixup() {
+         ;;
+     vendor/lib64/lib-uceservice.so)
+         "${PATCHELF}" --add-needed "libbase_shim.so" "${2}"
+-        grep -q libhidlbase_shim.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim.so" "${2}"
+-        ;;
+-    vendor/lib/lib-uceservice.so)
+-        grep -q libhidlbase_shim.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim.so" "${2}"
+         ;;
+     # Shim libui GraphicBuffer lock functions
+     lib/lib-imsvideocodec.so|vendor/lib/libFNVfbEngineHAL.so|vendor/lib/libZEffectLib.so)
+@@ -161,13 +157,6 @@ function blob_fixup() {
+     vendor/lib64/lib-dplmedia.so)
+         "${PATCHELF}" --remove-needed "libmedia.so" "${2}"
+         ;;
+-    # Old HIDL interface libs: gBnConstructorMap/gBsConstructorMap (gone from libhidlbase)
+-    vendor/lib*/vendor.qti.hardware.radio.*@1.0_vendor.so|vendor/lib*/vendor.qti.gnss@*.so|vendor/lib*/vendor.qti.imsrtpservice@1.0_vendor.so|vendor/lib*/com.qualcomm.qti.imscmservice@1.0_vendor.so|vendor/lib64/vendor.qti.ims.rcsconfig@1.0.so|vendor/lib*/lib-imsrcs-v2.so)
+-        grep -q libhidlbase_shim.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim.so" "${2}"
+-        ;;
+-    system_ext/lib*/com.qualcomm.qti.imscmservice@1.0.so|system_ext/lib*/vendor.qti.imsrtpservice@1.0.so)
+-        grep -q libhidlbase_shim_system.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim_system.so" "${2}"
+-        ;;
+     # Patch crashing issue in RIL library
+     vendor/lib64/libril-qc-qmi-1.so)
+         sed -i 's|\xfc\x0f\x1e\xf8\xfd\x7b\x01\xa9|\x00\x00\x80\xd2\xc0\x03\x5f\xd6|' "${2}"
+-- 
+2.47.3
+

@@ -1,0 +1,47 @@
+From 1a6eb77d10d1d2bc14954ed5dbc85f24b04cf289 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 23:16:49 +0000
+Subject: [PATCH 12/14] msm: camera: zte_eeprom: empty GPIO table for nodes
+ without gpios
+
+The probe powers the sensor; msm_camera_power_up() on 4.4 calls
+msm_cam_sensor_handle_reg_gpio() for every supply step and dereferences
+gpio_num_info unchecked. eeprom2 (s5k2t8) has no gpios: NULL pointer
+oops in kernel_init, the boot hung (los14).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I5dd32793e7faaeb1b3408fb25bb1f601b2377f1b
+---
+ .../msm/camera_v2/sensor/eeprom/zte_eeprom.c      | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/eeprom/zte_eeprom.c b/drivers/media/platform/msm/camera_v2/sensor/eeprom/zte_eeprom.c
+index 415fbdecad9e..a6ca252321d9 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/eeprom/zte_eeprom.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/eeprom/zte_eeprom.c
+@@ -557,6 +557,21 @@ static int msm_eeprom_get_dt_data(struct msm_eeprom_ctrl_t *e_ctrl)
+ 		kfree(gpio_array);
+ 	}
+ 
++	/*
++	 * 4.4: msm_camera_power_up() looks up a GPIO for every supply step
++	 * (msm_cam_sensor_handle_reg_gpio) without checking gpio_num_info; a
++	 * node without gpios (eeprom2, s5k2t8) crashed the probe. An empty
++	 * table (no valid entries) makes that step a no-op.
++	 */
++	if (!gconf->gpio_num_info) {
++		gconf->gpio_num_info = kzalloc(
++			sizeof(struct msm_camera_gpio_num_info), GFP_KERNEL);
++		if (!gconf->gpio_num_info) {
++			rc = -ENOMEM;
++			goto ERROR3;
++		}
++	}
++
+ 	return rc;
+ ERROR4:
+ 	kfree(gpio_array);
+-- 
+2.47.3
+

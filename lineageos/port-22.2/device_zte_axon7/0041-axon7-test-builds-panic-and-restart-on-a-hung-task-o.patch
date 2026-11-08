@@ -1,0 +1,33 @@
+From 92b43c1ba0231e390947b18d63f133eefd8d3965 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 21:48:32 +0000
+Subject: [PATCH 41/45] axon7: test builds panic (and restart) on a hung task
+ or soft lockup
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Id7d09cb9af12d900f337e6c7e041ed6d3bc7f747
+---
+ BoardConfig.mk | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index a769bdf..99960c9 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -71,6 +71,12 @@ DEVICE_MATRIX_FILE := hardware/qcom-caf/common/compatibility_matrix.xml
+ BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 cma=32M@0-0xffffffff
+ BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc/624000.ufshc
+ BOARD_KERNEL_CMDLINE += loop.max_part=7
++# Unattended test boots: a driver that hangs (60 s) or a CPU that locks up
++# panics, the kernel restarts at once (PANIC_TIMEOUT=-1) and the test shim
++# sends the phone to TWRP, so nobody has to hold the power key.
++ifeq ($(AXON7_TEST),1)
++BOARD_KERNEL_CMDLINE += hung_task_panic=1 softlockup_panic=1
++endif
+ BOARD_KERNEL_BASE := 0x80000000
+ BOARD_KERNEL_PAGESIZE := 4096
+ BOARD_KERNEL_TAGS_OFFSET := 0x00000100
+-- 
+2.47.3
+

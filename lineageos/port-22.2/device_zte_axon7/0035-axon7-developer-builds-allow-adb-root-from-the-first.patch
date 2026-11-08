@@ -1,0 +1,31 @@
+From a3347672641c24ce666d1e29052b11ef7f438c60 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 18:04:42 +0000
+Subject: [PATCH 35/45] axon7: developer builds allow adb root from the first
+ boot
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I6e7da035a767fa9097e2ee98d3b7686fb8a6842e
+---
+ test/init.axon7-log.rc | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/test/init.axon7-log.rc b/test/init.axon7-log.rc
+index 9a40c93..4447161 100644
+--- a/test/init.axon7-log.rc
++++ b/test/init.axon7-log.rc
+@@ -10,3 +10,10 @@ service axon7_testlog /system/bin/sh /vendor/bin/axon7-testlog.sh
+     seclabel u:r:su:s0
+     disabled
+     oneshot
++
++# adb root allowed from the first boot (Developer options -> Rooted
++# debugging, which adb_root reads from /data/adbroot/enabled at start), so
++# the developer host can read kernel logs and sysfs.
++on post-fs-data
++    mkdir /data/adbroot 0700 root root
++    exec u:r:su:s0 root root -- /system/bin/sh -c "echo 1 > /data/adbroot/enabled; restorecon -R /data/adbroot"
+-- 
+2.47.3
+

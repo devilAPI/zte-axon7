@@ -1,0 +1,33 @@
+From 9f7808cf12ccc1964defebd5f64e9769cba34aab Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 18:46:21 +0000
+Subject: [PATCH 38/45] axon7: protobuf v28 64-bit only (fsgen packaging
+ conflict)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I2f39abca4f0eebfc75c000b598977c3feb59e9a4
+---
+ device.mk | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index 3d76709..6bb3b2e 100644
+--- a/device.mk
++++ b/device.mk
+@@ -434,10 +434,9 @@ PRODUCT_PACKAGES += \
+ 
+ # protobuf 3.0 (Android 9 ABI) for the Qualcomm RIL (libsettings) and
+ # Widevine (libwvhidl): AOSP prebuilts/vndk/v28 (android12-release), soname
+-# renamed to *-v28 (vendor/zte/axon7/proprietary/vendor/lib*/)
++# renamed to *-v28; 64-bit only (no 32-bit blob needs it, and fsgen maps
++# same-named lib/ and lib64/ copies onto one path)
+ PRODUCT_COPY_FILES += \
+-    vendor/zte/axon7/proprietary/vendor/lib/libprotobuf-cpp-full-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib/libprotobuf-cpp-full-v28.so \
+-    vendor/zte/axon7/proprietary/vendor/lib/libprotobuf-cpp-lite-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib/libprotobuf-cpp-lite-v28.so \
+     vendor/zte/axon7/proprietary/vendor/lib64/libprotobuf-cpp-full-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-full-v28.so \
+     vendor/zte/axon7/proprietary/vendor/lib64/libprotobuf-cpp-lite-v28.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-lite-v28.so
+ 
+-- 
+2.47.3
+

@@ -1,0 +1,37 @@
+From 748d1fe21af825d5de8d7515697531aa4ff8d2f0 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 19:56:48 +0000
+Subject: [PATCH] libutils: vendor variant warns on RefBase stack pointers
+ instead of aborting (axon7)
+
+pm-service (Oreo blob) keeps its service object on main()'s stack and
+aborted in RefBase::incStrong.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: Ib5cb4b68994cd4fc590f2c031266268689ae3bd8
+---
+ libutils/binder/RefBase.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/libutils/binder/RefBase.cpp b/libutils/binder/RefBase.cpp
+index 4291f1e..7d8a222 100644
+--- a/libutils/binder/RefBase.cpp
++++ b/libutils/binder/RefBase.cpp
+@@ -175,7 +175,13 @@ static void check_not_on_stack(const void* ptr) {
+     uintptr_t my_frame_address =
+             reinterpret_cast<uintptr_t>(__builtin_frame_address(0 /* this frame */));
+     if (((reinterpret_cast<uintptr_t>(ptr) ^ my_frame_address) & MIN_PAGE_MASK) == 0) {
++#if defined(__ANDROID_VENDOR__)
++        // axon7: old vendor blobs (pm-service) keep a RefBase object on
++        // main()'s stack for the life of the process; warn instead of abort.
++        ALOGW("RefBase used with stack pointer argument (vendor blob, ignored)");
++#else
+         sp_report_stack_pointer();
++#endif
+     }
+ }
+ 
+-- 
+2.47.3
+

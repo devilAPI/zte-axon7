@@ -1,0 +1,34 @@
+From 08fc434d4ed492bf0114c22ab0f07343b2677ace Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 23:17:03 +0000
+Subject: [PATCH 42/45] axon7: test builds also panic on an oops (los14 hung
+ after an oops in kernel_init)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I316e7713414992c966915ff7528b4e2135b50ccf
+---
+ BoardConfig.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 99960c9..0154233 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -71,11 +71,11 @@ DEVICE_MATRIX_FILE := hardware/qcom-caf/common/compatibility_matrix.xml
+ BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 cma=32M@0-0xffffffff
+ BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc/624000.ufshc
+ BOARD_KERNEL_CMDLINE += loop.max_part=7
+-# Unattended test boots: a driver that hangs (60 s) or a CPU that locks up
++# Unattended test boots: a driver that oopses or hangs (60 s), or a CPU that locks up,
+ # panics, the kernel restarts at once (PANIC_TIMEOUT=-1) and the test shim
+ # sends the phone to TWRP, so nobody has to hold the power key.
+ ifeq ($(AXON7_TEST),1)
+-BOARD_KERNEL_CMDLINE += hung_task_panic=1 softlockup_panic=1
++BOARD_KERNEL_CMDLINE += hung_task_panic=1 softlockup_panic=1 oops=panic
+ endif
+ BOARD_KERNEL_BASE := 0x80000000
+ BOARD_KERNEL_PAGESIZE := 4096
+-- 
+2.47.3
+

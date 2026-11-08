@@ -8,21 +8,28 @@ Our port (2026-11-07): **LineageOS 22.2 (Android 15) boots to the setup
 wizard** in the triple boot (shim menu entry, `los_boot`, /data on
 `los_data`, file-based encryption), with the 4.4 kernel port
 ([KERNEL-4.4-PORT.md](KERNEL-4.4-PORT.md)) and the device tree series in
-`port-22.2/` (0001-0031). Display, USB/adb, the backlight and the boot
-itself work; a developer build ran 15 min without a problem (a build
-without adb shut down once in its first boot, cause not found). Nothing
-else is tested yet, nothing is published.
+`port-22.2/` (0001-0045, plus three patches to the Android tree in
+`port-22.2/aosp/` and kernel patches 0008-0014). Developer builds, nothing
+published yet. Confirmed on the phone (2026-11-08): display, touch, USB/adb,
+backlight, Wi-Fi, Bluetooth, 42 sensors, fingerprint driver and daemon, the
+modem firmware, `rild` with the Android 15 radio AIDL services (SIM slot 1),
+mobile-data/IMS daemons, camera sensors and calibration data. Built, waiting
+for the next test: camera as HAL3, audio (AK4961), NFC (PN548), single-SIM
+telephony. Open: screen colours on one half after waking, second SIM slot,
+calls/data with a SIM (untested).
 
-Vendor blobs that do not start yet on Android 15 (2026-11-07 log):
+Old vendor blobs on Android 15, and what makes them run (2026-11-08):
 
-| Blob | Missing | Affects |
+| Blob | Problem | Fix |
 | --- | --- | --- |
-| rild (IRadio 1.0-1.3) | Android 15 needs IRadio 1.4+ | SIM, calls, mobile data; RILJ floods logcat |
-| netmgrd, cnd, ATFWD-daemon, imsdatadaemon, vendor.qti.gnss@1.0-service | `android::hardware::details::gBnConstructorMap` (old libhidlbase) | mobile data, GPS, IMS |
-| mm-qcamera-daemon, gx_fpd | `libstdc++.so` | camera, fingerprint |
-| ims_rtp_daemon | `libmedia.so` | VoLTE |
-| widevine drm@1.2 | `libprotobuf-cpp-lite-v28.so` | DRM video |
-| pm-service, imsrcsd | abort at start | modem peripheral manager, RCS | The plain zip
+| rild (IRadio 1.0-1.3 only) | Android 15 needs radio AIDL / IRadio 1.4+ | `rild_axon7`: cuttlefish `libril-modem-lib` on top of the Qualcomm RIL (0033) |
+| libril-qc-qmi-1 | Android 8 sized `Parcel` on its stack (stack corruption) | imports renamed to `PaRcel`, `libril_parcel_shim` (0043) |
+| netmgrd, cnd, ATFWD, IMS daemons, gnss, RIL hooks | `gBnConstructorMap` gone from libhidlbase | `aosp/system_libhidl` patch |
+| pm-service | RefBase on the stack aborts | `aosp/system_core` patch |
+| rild (libsettings), Widevine | `libprotobuf-cpp-*-v28` | AOSP vndk v28 prebuilts, soname `-v28` (0037) |
+| camera, fingerprint | `libstdc++.so`, `libimg_utils`, `libandroid.so`, `checkCallingPermission` | `libstdc++_vendor`, frameworks/av patch, dropped NEEDED, `libbinder_perm_shim` |
+| camera HAL | cameras exposed as HAL1 | `persist.vendor.camera.HAL3.enabled=1` (0045) |
+| ims_rtp_daemon | `libmedia.so` | NEEDED dropped (unused) |
 (`lineage-22.2-*-UNOFFICIAL-axon7.zip`) is not for the triple boot: it
 writes `boot` and would replace the boot menu. Test boots run unattended
 with `ios/tools/axon7-los-test.sh`. Developer builds (`AXON7_ADB_KEYS`)

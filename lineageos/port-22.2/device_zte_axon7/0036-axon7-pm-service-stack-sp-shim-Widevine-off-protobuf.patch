@@ -1,0 +1,101 @@
+From d5161dbb295040710626364634eeb3b0949fea6e Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 18:09:20 +0000
+Subject: [PATCH 36/45] axon7: pm-service stack-sp shim; Widevine off (protobuf
+ v28 ABI gone)
+
+pm-service (peripheral manager, powers the modem) aborted with
+"RefBase used with stack pointer argument": libstackptr_shim makes the
+check a no-op in that process. libwvhidl needs libprotobuf-cpp-lite-v28,
+which has no Android 15 counterpart; the Widevine service only
+crash-looped (and kept init busy with flags_health_check), so it is out.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I711490c5b73ed2543ef099c8fd33c0ac15c0b70c
+---
+ device.mk             | 1 +
+ extract-files.sh      | 4 ++++
+ proprietary-files.txt | 8 +++++---
+ shims/Android.bp      | 6 ++++++
+ shims/stackptr.cpp    | 8 ++++++++
+ 5 files changed, 24 insertions(+), 3 deletions(-)
+ create mode 100644 shims/stackptr.cpp
+
+diff --git a/device.mk b/device.mk
+index 165fa64..47d9cc5 100644
+--- a/device.mk
++++ b/device.mk
+@@ -423,6 +423,7 @@ PRODUCT_PACKAGES += \
+     libcutils_shim.vendor \
+     libhidlbase_shim \
+     libhidlbase_shim_system \
++    libstackptr_shim \
+     libui_shim.vendor
+ 
+ # RIL: Android 15 takes radio AIDL (or IRadio >= 1.4) only; rild/ wraps the
+diff --git a/extract-files.sh b/extract-files.sh
+index 85c3b34..e08ea2d 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -147,6 +147,10 @@ function blob_fixup() {
+     vendor/lib/liboptizoom.so|vendor/lib/libchromaflash.so|vendor/lib/libmmcamera_hdr_gb_lib.so|vendor/lib/libseemore.so|vendor/lib/libtsvideoprocess.so|vendor/lib/libtrueportrait.so|vendor/lib/libubifocus.so|vendor/lib64/libfp_client.so|vendor/lib64/libfpnav.so|vendor/lib64/hw/fingerprint.msm8996.so|vendor/lib64/hw/gxfingerprint.default.so|vendor/lib64/libfpservice.so)
+         "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
+         ;;
++    # pm-service: sp<> on a stack object aborts on Android 15 (shims/stackptr.cpp)
++    vendor/bin/pm-service)
++        grep -q libstackptr_shim.so "${2}" || "${PATCHELF}" --add-needed "libstackptr_shim.so" "${2}"
++        ;;
+     # IMS RTP: libmedia.so is gone; lib-dplmedia uses none of its symbols
+     vendor/lib64/lib-dplmedia.so)
+         "${PATCHELF}" --remove-needed "libmedia.so" "${2}"
+diff --git a/proprietary-files.txt b/proprietary-files.txt
+index 89eab5c..368708a 100644
+--- a/proprietary-files.txt
++++ b/proprietary-files.txt
+@@ -483,9 +483,11 @@ vendor/lib64/libssd.so
+ -vendor/lib/libQSEEComAPI.so;DISABLE_DEPS
+ 
+ # DRM Widevine - from daisy - QKQ1.191002.002
+-vendor/bin/hw/android.hardware.drm@1.2-service.widevine|e130b8f1c8d46d8a185b00cba5ff8a2a871ee94c
+-vendor/etc/init/android.hardware.drm@1.2-service.widevine.rc|68767969f86126ada017fc09af151e299db651d5
+-vendor/lib64/libwvhidl.so|d02a20d8e95e64c391e0af86a32dad869ceeb3b4
++# Off on 22.2: libwvhidl needs libprotobuf-cpp-lite-v28 (no such ABI any more);
++# the service crash-looped. Clearkey stays.
++#vendor/bin/hw/android.hardware.drm@1.2-service.widevine|e130b8f1c8d46d8a185b00cba5ff8a2a871ee94c
++#vendor/etc/init/android.hardware.drm@1.2-service.widevine.rc|68767969f86126ada017fc09af151e299db651d5
++#vendor/lib64/libwvhidl.so|d02a20d8e95e64c391e0af86a32dad869ceeb3b4
+ 
+ # Gatekeeper
+ -vendor/lib64/hw/gatekeeper.msm8996.so;DISABLE_DEPS
+diff --git a/shims/Android.bp b/shims/Android.bp
+index efa3dd1..6978701 100644
+--- a/shims/Android.bp
++++ b/shims/Android.bp
+@@ -5,3 +5,9 @@ cc_library_shared {
+     compile_multilib: "both",
+     system_ext_specific: true,
+ }
++
++cc_library_shared {
++    name: "libstackptr_shim",
++    srcs: ["stackptr.cpp"],
++    vendor: true,
++}
+diff --git a/shims/stackptr.cpp b/shims/stackptr.cpp
+new file mode 100644
+index 0000000..94c6a93
+--- /dev/null
++++ b/shims/stackptr.cpp
+@@ -0,0 +1,8 @@
++/*
++ * pm-service (Oreo blob) hands a service object that lives on main()'s stack
++ * to libbinder; the sp<> of Android 15 aborts on that ("RefBase used with
++ * stack pointer argument"). The object lives as long as the process, so the
++ * check is harmless to skip for this one binary: it loads this library first
++ * (extract-files.sh), so this symbol is found before libutils'.
++ */
++void sp_report_stack_pointer() {}
+-- 
+2.47.3
+

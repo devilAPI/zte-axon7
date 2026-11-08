@@ -1,0 +1,132 @@
+From a033ecefc612a9c47da4e13a445987bfa4a2adfe Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 17:52:16 +0000
+Subject: [PATCH 32/45] axon7: HIDL constructor map shim for old blobs,
+ libstdc++_vendor, vendor cutils/ui shims, libimg_utils
+
+Android 15 logs: netmgrd, cnd, ATFWD-daemon, imsdatadaemon and the
+qti gnss service stopped at gBnConstructorMap (old libhidlbase ABI);
+mm-qcamera-daemon and gx_fpd at libstdc++.so; camera.msm8996.so at
+libimg_utils.so. extract-files.sh now adds libhidlbase_shim (vendor) or
+libhidlbase_shim_system (system_ext IMS libs, shims/) and points
+libstdc++.so at libstdc++_vendor.so.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I4356daf865f85b0b29e8f0a362084eec5507d909
+---
+ device.mk                 | 15 +++++++++++++--
+ extract-files.sh          | 17 +++++++++++++++++
+ shims/Android.bp          |  7 +++++++
+ shims/hidlbase_system.cpp | 18 ++++++++++++++++++
+ 4 files changed, 55 insertions(+), 2 deletions(-)
+ create mode 100644 shims/Android.bp
+ create mode 100644 shims/hidlbase_system.cpp
+
+diff --git a/device.mk b/device.mk
+index 532dcc8..59d7b82 100644
+--- a/device.mk
++++ b/device.mk
+@@ -413,10 +413,21 @@ PRODUCT_PACKAGES += \
+     android.hardware.sensors@1.0-service \
+     libpower.vendor
+ 
+-# Shims (all from hardware/lineage/compat)
++# Shims (hardware/lineage/compat; libhidlbase_shim_system: shims/)
++# Old HIDL blobs (gnss, radio, ims, atcmdfwd) need gBnConstructorMap:
++# libhidlbase_shim (extract-files.sh adds it). libril-qc-qmi-1 needs the
++# vendor libcutils_shim, the camera effect libs the vendor libui_shim.
+ PRODUCT_PACKAGES += \
+     libbase_shim \
+-    libcutils_shim
++    libcutils_shim \
++    libcutils_shim.vendor \
++    libhidlbase_shim \
++    libhidlbase_shim_system \
++    libui_shim.vendor
++
++# camera.msm8996.so (DNG): libimg_utils for vendor
++PRODUCT_PACKAGES += \
++    libimg_utils.vendor
+ 
+ # Soong namespaces
+ PRODUCT_SOONG_NAMESPACES += \
+diff --git a/extract-files.sh b/extract-files.sh
+index 5ada0fb..0ee4729 100755
+--- a/extract-files.sh
++++ b/extract-files.sh
+@@ -123,10 +123,15 @@ function blob_fixup() {
+         ;;
+     vendor/lib64/lib-uceservice.so)
+         "${PATCHELF}" --add-needed "libbase_shim.so" "${2}"
++        grep -q libhidlbase_shim.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim.so" "${2}"
++        ;;
++    vendor/lib/lib-uceservice.so)
++        grep -q libhidlbase_shim.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim.so" "${2}"
+         ;;
+     # Shim libui GraphicBuffer lock functions
+     lib/lib-imsvideocodec.so|vendor/lib/libFNVfbEngineHAL.so|vendor/lib/libZEffectLib.so)
+         "${PATCHELF}" --add-needed "libui_shim.so" "${2}"
++        grep -q "libstdc++.so" "${2}" && "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
+         ;;
+     # Patch service.bootanim.exit in camera HAL
+     vendor/lib/hw/camera.msm8996.so)
+@@ -136,6 +141,18 @@ function blob_fixup() {
+     vendor/bin/gx_fpd)
+         "${PATCHELF}" --remove-needed "libunwind.so" "${2}"
+         "${PATCHELF}" --remove-needed "libbacktrace.so" "${2}"
++        "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
++        ;;
++    # libstdc++ is libstdc++_vendor on the vendor partition (camera, fingerprint)
++    vendor/lib/liboptizoom.so|vendor/lib/libchromaflash.so|vendor/lib/libmmcamera_hdr_gb_lib.so|vendor/lib/libseemore.so|vendor/lib/libtsvideoprocess.so|vendor/lib/libtrueportrait.so|vendor/lib/libubifocus.so|vendor/lib64/libfp_client.so|vendor/lib64/libfpnav.so|vendor/lib64/hw/fingerprint.msm8996.so|vendor/lib64/hw/gxfingerprint.default.so|vendor/lib64/libfpservice.so)
++        "${PATCHELF}" --replace-needed "libstdc++.so" "libstdc++_vendor.so" "${2}"
++        ;;
++    # Old HIDL interface libs: gBnConstructorMap/gBsConstructorMap (gone from libhidlbase)
++    vendor/lib*/vendor.qti.hardware.radio.*@1.0_vendor.so|vendor/lib*/vendor.qti.gnss@*.so|vendor/lib*/vendor.qti.imsrtpservice@1.0_vendor.so|vendor/lib*/com.qualcomm.qti.imscmservice@1.0_vendor.so|vendor/lib64/vendor.qti.ims.rcsconfig@1.0.so|vendor/lib*/lib-imsrcs-v2.so)
++        grep -q libhidlbase_shim.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim.so" "${2}"
++        ;;
++    system_ext/lib*/com.qualcomm.qti.imscmservice@1.0.so|system_ext/lib*/vendor.qti.imsrtpservice@1.0.so)
++        grep -q libhidlbase_shim_system.so "${2}" || "${PATCHELF}" --add-needed "libhidlbase_shim_system.so" "${2}"
+         ;;
+     # Patch crashing issue in RIL library
+     vendor/lib64/libril-qc-qmi-1.so)
+diff --git a/shims/Android.bp b/shims/Android.bp
+new file mode 100644
+index 0000000..efa3dd1
+--- /dev/null
++++ b/shims/Android.bp
+@@ -0,0 +1,7 @@
++cc_library_shared {
++    name: "libhidlbase_shim_system",
++    srcs: ["hidlbase_system.cpp"],
++    shared_libs: ["libhidlbase"],
++    compile_multilib: "both",
++    system_ext_specific: true,
++}
+diff --git a/shims/hidlbase_system.cpp b/shims/hidlbase_system.cpp
+new file mode 100644
+index 0000000..86c3882
+--- /dev/null
++++ b/shims/hidlbase_system.cpp
+@@ -0,0 +1,18 @@
++/*
++ * The old HIDL constructor maps (removed from libhidlbase in Android 12) for
++ * the system_ext IMS blobs (com.qualcomm.qti.imscmservice@1.0,
++ * vendor.qti.imsrtpservice@1.0). Same as hardware/lineage/compat
++ * libhidlbase_shim, which is vendor-only.
++ */
++#include <hidl/Static.h>
++
++namespace android {
++namespace hardware {
++namespace details {
++
++DoNotDestruct<BnConstructorMap> gBnConstructorMap{};
++DoNotDestruct<BsConstructorMap> gBsConstructorMap{};
++
++}  // namespace details
++}  // namespace hardware
++}  // namespace android
+-- 
+2.47.3
+

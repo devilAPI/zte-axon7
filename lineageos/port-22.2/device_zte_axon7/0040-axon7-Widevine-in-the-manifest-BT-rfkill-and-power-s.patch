@@ -1,0 +1,69 @@
+From 2a1a605d08684e472ee834e57d8e1b240e89a699 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 19:56:50 +0000
+Subject: [PATCH 40/45] axon7: Widevine in the manifest, BT rfkill and power
+ supply labels, ril-daemon2 off
+
+From the los13 boot: Widevine loads now but needs its VINTF entry;
+hal_bluetooth_qti could not write rfkill0/state (the HCI HAL never came
+up); dpdm and fg_adc power supplies were unlabeled; the second rild
+instance crashed (one-SIM libril).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I0dc4a89e10c72e4473967170ae5d761eefc0b04a
+---
+ init/init.qcom.rc              | 3 +++
+ manifest.xml                   | 6 ++++++
+ sepolicy/vendor/genfs_contexts | 5 +++++
+ 3 files changed, 14 insertions(+)
+
+diff --git a/init/init.qcom.rc b/init/init.qcom.rc
+index 5f972ad..8b142ad 100755
+--- a/init/init.qcom.rc
++++ b/init/init.qcom.rc
+@@ -398,8 +398,11 @@ service qcom-sh /vendor/bin/init.qcom.sh
+ on property:ro.vendor.ril.mbn_copy_completed=1
+     write /data/vendor/radio/copy_complete 1
+ 
++# Second SIM slot: off for now. rild_axon7 (libril-modem-lib) is built for one
++# SIM; the Qualcomm RIL's second instance crashed with stack corruption.
+ service ril-daemon2 /vendor/bin/hw/rild -c 2
+     class main
++    disabled
+     user radio
+     group radio cache inet misc audio log readproc wakelock
+     capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
+diff --git a/manifest.xml b/manifest.xml
+index b4ade6c..fcb038e 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -129,6 +129,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl">
++        <name>android.hardware.drm</name>
++        <transport>hwbinder</transport>
++        <fqname>@1.2::ICryptoFactory/widevine</fqname>
++        <fqname>@1.2::IDrmFactory/widevine</fqname>
++    </hal>
+     <!-- radio: AIDL, rild/android.hardware.radio-axon7.xml (rild_axon7) -->
+     <hal format="hidl">
+         <name>android.hardware.sensors</name>
+diff --git a/sepolicy/vendor/genfs_contexts b/sepolicy/vendor/genfs_contexts
+index 3417ef3..40ec97c 100644
+--- a/sepolicy/vendor/genfs_contexts
++++ b/sepolicy/vendor/genfs_contexts
+@@ -23,3 +23,8 @@ genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-02/400f000.qcom,spmi:
+ genfscon sysfs /devices/soc/900000.qcom,mdss_mdp/900000.qcom,mdss_mdp:qcom,mdss_fb_primary/leds u:object_r:sysfs_leds:s0
+ genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-03/400f000.qcom,spmi:qcom,pmi8994@3:qcom,leds@d000/leds u:object_r:sysfs_leds:s0
+ genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-03/400f000.qcom,spmi:qcom,pmi8994@3:qcom,haptics@c000/leds u:object_r:sysfs_leds:s0
++
++# 4.4 kernel: Bluetooth power (hal_bluetooth_qti), QUSB and BCL power supplies (health HAL)
++genfscon sysfs /devices/vendor/vendor:bt_qca6174/rfkill/rfkill0/state u:object_r:sysfs_bluetooth_writable:s0
++genfscon sysfs /devices/soc/7411000.qusb/power_supply u:object_r:sysfs_battery_supply:s0
++genfscon sysfs /devices/soc/400f000.qcom,spmi/spmi-0/spmi0-02/400f000.qcom,spmi:qcom,pmi8994@2:bcl@4200/power_supply u:object_r:sysfs_battery_supply:s0
+-- 
+2.47.3
+

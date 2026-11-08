@@ -1,0 +1,36 @@
+From 84a2b63a31fdbd378cf0a13653938fa0301d83ba Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sat, 7 Nov 2026 20:37:20 +0000
+Subject: [PATCH 10/14] input: fingerprint: goodix: no zte_misc sensor id
+ (always GF3118M on axon7)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i29oeF8XZDRKkkCQqG
+Change-Id: I3839289c9d3931677964ad419c20d07cf5fbca3e
+---
+ drivers/input/fingerprint/goodix/gf_spi.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/input/fingerprint/goodix/gf_spi.c b/drivers/input/fingerprint/goodix/gf_spi.c
+index 218498740b5e..438af552f3f0 100755
+--- a/drivers/input/fingerprint/goodix/gf_spi.c
++++ b/drivers/input/fingerprint/goodix/gf_spi.c
+@@ -578,7 +578,14 @@ static void gf_reg_key_kernel(struct gf_dev *gf_dev)
+ 		pr_warn("Failed to register GF as input device.\n");
+ }
+ 
+-extern bool is_goodix_fp(void);
++/*
++ * ZTE's zte_misc.c (not ported) picked the sensor from a boot parameter and
++ * fell back to GF3118M, the Axon 7's sensor; there is only that one here.
++ */
++static bool is_goodix_fp(void)
++{
++	return true;
++}
+ static struct class *gf_class;
+ #if defined(USE_SPI_BUS)
+ static int gf_probe(struct spi_device *spi)
+-- 
+2.47.3
+
