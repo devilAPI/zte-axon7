@@ -1,0 +1,29 @@
+From 122e3d84d04fbe91be870aa46ed8a36c2f1c9763 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 16:17:40 +0000
+Subject: [PATCH] axon7: libloc_api_v02 from daisy QKQ1.191002.002 (the PKQ one
+ did not load: GPS HAL ran without its modem link)
+
+Change-Id: I49f8192226aca09985c2d26deb559a61ee6c6500
+---
+ proprietary-files.txt | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/proprietary-files.txt b/proprietary-files.txt
+index b869be0..c82f916 100644
+--- a/proprietary-files.txt
++++ b/proprietary-files.txt
+@@ -514,7 +514,9 @@ vendor/lib64/libgeofence.so|c7250877898a17f4bfdc244f613dd1e1a9397cb6
+ vendor/lib64/libizat_client_api.so|853e4ccd91718edac986f755fc9800603d3a284a
+ vendor/lib64/libizat_core.so|381f72f4c0030f88e5acaf6a3498d9036fb30215
+ vendor/lib64/liblbs_core.so|35bec57afe24f18fedad5ed6b02eaa76a6323419
+-vendor/lib64/libloc_api_v02.so|81ab9d291d14f8ad3e094019f36fb0fa65cb0cdb
++# from daisy QKQ1.191002.002 (as msm8996-common lineage-22.2): matches the source-built
++# loc core; the PKQ one needed the old LocApiBase/LocDualContext and never loaded
++vendor/lib64/libloc_api_v02.so|b8649d539b3ba48d3ed63dfb35e2ee827431ffa1
+ vendor/lib64/libloc_ds_api.so|9d0094be7bdef2dd65bac05ba3ca77c1c90fc9a0
+ vendor/lib64/liblocationservice_glue.so|a70dcf2912346d4a5f07fe84025404fe866e3d09
+ vendor/lib64/liblocationservice.so|ec5ad361788b6e72ba4d8d9ae72732fbd9872d56
+-- 
+2.47.3
+
