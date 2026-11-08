@@ -30,7 +30,7 @@ Bootloader, modem, EFS/IMEI and recovery are never touched. TWRP stays your way 
 [TR][TD][B]Boot menu[/B][/TD][TD]choose iOS / postmarketOS / LineageOS with the volume keys, remembers a default[/TD][TD][/TD][/TR]
 [TR][TD][B]iOS 16.7.16[/B][/TD][TD]home screen, touch, Wi-Fi, GPU, Sileo (jailbreak)[/TD][TD]calls, mobile data, camera, audio[/TD][/TR]
 [TR][TD][B]postmarketOS[/B][/TD][TD]display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG[/TD][TD]calls, audio, camera[/TD][/TR]
-[TR][TD][B]LineageOS 22.2[/B][/TD][TD][I]developer builds only, not released yet:[/I] boots to the home screen, display, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, all 42 sensors, fingerprint sensor driver, modem starts and its services come up (SIM slot 1)[/TD][TD]audio, camera and NFC (drivers ported, not yet confirmed), fingerprint enrolment (untested), second SIM slot, calls/data with a SIM (untested), screen colours on one half after waking[/TD][/TR]
+[TR][TD][B]LineageOS 22.2[/B][/TD][TD][I]developer builds only, not released yet:[/I] boots to the home screen, display, touch, encrypted storage, USB/adb, Wi-Fi, Bluetooth, NFC, both cameras detected, flashlight, all 42 sensors, fingerprint sensor driver, GPS service, modem starts and its services come up (SIM slot 1)[/TD][TD]audio (codec found, driver not finished), camera picture and fingerprint enrolment (untested), second SIM slot, calls/data with a SIM (untested), screen colours on one half after waking[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -49,8 +49,10 @@ LineageOS has no install steps yet; they come with the first release.
 [*]LineageOS: Bluetooth works.
 [*]LineageOS: the modem's radio service (rild) runs on Android 15's new radio interface; the Qualcomm modem daemons no longer crash.
 [*]LineageOS: fingerprint sensor driver (Goodix, ported from ZTE's kernel) works; enrolling a finger is not tested yet.
-[*]LineageOS: both camera sensors and their factory calibration are read; the camera app does not see them yet (fix built, next test).
-[*]LineageOS: audio codec (AK4961) and NFC (PN548) drivers ported from ZTE's kernel, not yet confirmed.
+[*]LineageOS: both cameras are detected (Android 15 needs the HAL3 mode of the camera blob); flashlight works.
+[*]LineageOS: NFC works (PN548 driver ported from ZTE's kernel).
+[*]LineageOS: the audio codec (AK4961) answers; its driver (ported from ZTE's kernel) is not finished yet.
+[*]LineageOS: telephony starts cleanly (single SIM for now).
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-07"]
