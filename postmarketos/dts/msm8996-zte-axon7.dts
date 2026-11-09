@@ -736,6 +736,30 @@
 &blsp1_i2c6 {
 	status = "okay";
 
+	/*
+	 * TFA9890 speaker amplifiers, fed by the AK4961's PORT2 (SDTO2) I2S;
+	 * resets on PMI8994 GPIO 2/3 (low = running). Left/right as ZTE's
+	 * stereo_qc_spk_l/r is not verified yet.
+	 */
+	speaker_l: audio-amplifier@34 {
+		compatible = "nxp,tfa9890";
+		reg = <0x34>;
+		#sound-dai-cells = <0>;
+		sound-name-prefix = "Speaker Left";
+		vddd-supply = <&vreg_s4a_1p8>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&speaker_reset_default>;
+	};
+
+	speaker_r: audio-amplifier@35 {
+		compatible = "nxp,tfa9890";
+		reg = <0x35>;
+		#sound-dai-cells = <0>;
+		sound-name-prefix = "Speaker Right";
+		vddd-supply = <&vreg_s4a_1p8>;
+	};
+
 	hifi_clk: clock-generator@11 {
 		compatible = "asahi-kasei,ak8157";
 		reg = <0x11>;
@@ -745,6 +769,68 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&ak8157_reset_default>;
+	};
+};
+
+/*
+ * AK4961 main codec (speaker, earpiece, microphones, headset). ZTE runs it
+ * in "SLIMbus + SPI" mode: registers over SPI on BLSP2 QUP3 (CIF1 low),
+ * audio data and the port arrays over SLIMbus.
+ */
+&soc {
+	blsp2_spi3: spi@75b7000 {
+		compatible = "qcom,spi-qup-v2.2.1";
+		reg = <0x075b7000 0x600>;
+		interrupts = <GIC_SPI 103 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&gcc GCC_BLSP2_QUP3_SPI_APPS_CLK>,
+			 <&gcc GCC_BLSP2_AHB_CLK>;
+		clock-names = "core", "iface";
+		dmas = <&blsp2_dma 16>, <&blsp2_dma 17>;
+		dma-names = "tx", "rx";
+		pinctrl-names = "default";
+		pinctrl-0 = <&blsp2_spi3_default>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ak4961_spi: codec@0 {
+			compatible = "asahi-kasei,ak4961-spi";
+			reg = <0>;
+			spi-max-frequency = <9600000>;
+		};
+	};
+};
+
+&slim_msm {
+	status = "okay";
+
+	slim@1 {
+		reg = <1>;
+		#address-cells = <2>;
+		#size-cells = <0>;
+
+		ak4961_ifd: ifd@0,0 {
+			compatible = "slim1dd,4961";
+			reg = <0 0>;
+		};
+
+		ak4961: codec@2,0 {
+			compatible = "slim1dd,4961";
+			reg = <2 0>;
+			#sound-dai-cells = <1>;
+
+			slim-ifc-dev = <&ak4961_ifd>;
+			akm,spi = <&ak4961_spi>;
+
+			clocks = <&divclk1_cdc>;
+			clock-names = "mclk";
+
+			ldo-gpios = <&tlmm 63 GPIO_ACTIVE_HIGH>;
+			cif-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+			reset-gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&ak4961_default>;
+		};
 	};
 };
 
@@ -774,6 +860,22 @@
 
 		cpu {
 			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+		};
+	};
+
+	speaker-dai-link {
+		link-name = "Speakers";
+
+		cpu {
+			sound-dai = <&q6afedai SLIMBUS_0_RX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&ak4961 0>, <&speaker_l>, <&speaker_r>;
 		};
 	};
 
@@ -831,6 +933,15 @@
 };
 
 &pmi8994_gpios {
+	/* TFA9890 speaker amplifier resets (GPIO 2 and 3, ZTE SPKR_SD_N), low = running */
+	speaker_reset_default: speaker-reset-state {
+		pins = "gpio2", "gpio3";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		output-low;
+		bias-disable;
+		power-source = <PM8994_GPIO_S4>;
+	};
+
 	/* Hi-Fi: AK4490 PDN (GPIO 1), ISL54405 switch power (GPIO 10) */
 	ak4490_pdn_default: ak4490-pdn-state {
 		pins = "gpio1";
@@ -1224,6 +1335,31 @@
 		drive-strength = <2>;
 		bias-disable;
 		output-high;
+	};
+
+	/* AK4961 control port (BLSP2 QUP3 SPI, ZTE spi_9) */
+	blsp2_spi3_default: blsp2-spi3-default-state {
+		pins = "gpio49", "gpio50", "gpio51", "gpio52";
+		function = "blsp_spi9";
+		drive-strength = <6>;
+		bias-disable;
+	};
+
+	/* AK4961: CIF1 62, LDO 63, reset 64, interrupt 54 */
+	ak4961_default: ak4961-default-state {
+		ctrl-pins {
+			pins = "gpio62", "gpio63", "gpio64";
+			function = "gpio";
+			drive-strength = <16>;
+			bias-disable;
+		};
+
+		irq-pins {
+			pins = "gpio54";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
 	};
 
 	/* Quaternary MI2S: SCK 58, WS 59 (both from the AK8157), SD1 61 */

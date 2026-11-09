@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0014, installed by hand on the dev phone; in images from
-linux-zte-axon7 r8 / device-zte-axon7 r13 on). Log in over SSH or on the
+0010-0016, installed by hand on the dev phone; in images from
+linux-zte-axon7 r9 / device-zte-axon7 r14 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -30,8 +30,25 @@ speaker-test -D hw:0,0 -c 2 -r 48000 -t wav -l 1   # says "Front Left" / "Front 
 - [ ] Music file: `aplay -D hw:0,0 some-48k-stereo.wav` sounds clean (no crackle, right speed/pitch)
 - [ ] 44.1 kHz file: `aplay -D hw:0,0 some-44k1.wav` (speed/pitch right?)
 
-Without headphones nothing should come out of the speakers (they belong to
-the AK4961, which has no sound driver yet).
+With the Headphones device, nothing should come out of the speakers.
+
+## 1b. Speakers (AK4961 + two TFA9890 amplifiers)
+
+New 2026-11-09 night, kernel patches 0015/0016. **Start very quietly**: the
+amplifiers run without NXP's speaker protection profile (DSP bypass), so
+don't play loud for long.
+
+```sh
+alsaucm -c hw:0 set _verb HiFi set _enadev Speaker
+speaker-test -D hw:0,0 -c 2 -r 48000 -t sine -f 440 -l 1   # rather loud: test tone at full scale
+speaker-test -D hw:0,0 -c 2 -r 48000 -t wav -l 1           # "Front Left" / "Front Right"
+```
+
+- [ ] Sound comes out of the speakers at all
+- [ ] Both speakers (top and bottom grille) play
+- [ ] "Front Left" comes from the speaker on the left when the phone is held sideways with the volume keys up (if it's swapped, say so: the amp order 0x34/0x35 is a guess)
+- [ ] No distortion or crackling at moderate volume
+- [ ] Switching back to headphones works: `alsaucm -c hw:0 set _verb HiFi set _disdev Speaker set _enadev Headphones`
 
 ## 2. Vibration
 

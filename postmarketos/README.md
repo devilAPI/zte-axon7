@@ -163,7 +163,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09 (kernel patches 0010-0014)
+## Hardware added 2026-11-09 (kernel patches 0010-0016)
 
 | Part | Driver | State |
 | --- | --- | --- |
@@ -172,6 +172,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 | Vibrator | `qcom-pmi8994-haptics` (0012), ZTE's 2668 mV / 4255 us | LRA auto-resonance locks while playing; to be felt |
 | Torch | `leds-qcom-pmi8994-torch` (0013), `white:torch`, 1-16 (12.5 mA steps per LED) | registers as downstream, no LED fault; to be seen |
 | Hi-Fi audio | `ak4490`, `ak8157`, `isl98608-regulator`, MI2S in `apq8096` (0014) | plays in real time on Quaternary MI2S, clocked by the AK8157; to be heard |
+| Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016) | AK4961 registers equal the LineageOS dump while playing; both TFA9890 lock to its I2S clock and switch on; to be heard |
 
 Hi-Fi path: the AK8157 is the I2S clock master (the ADSP's Quaternary MI2S
 is a clock consumer with its EBIT clock gated on, data on SD1 = TLMM 61);
@@ -184,3 +185,12 @@ device Headphones (`ucm-zte-axon7*.conf` in device-zte-axon7).
 Test from the console: `alsaucm -c hw:0 set _verb HiFi` (or
 `amixer -c0 cset name='QUAT_MI2S_RX Audio Mixer MultiMedia1' 1`), then
 `speaker-test -c 2 -t sine`.
+
+Speakers: the AK4961 runs as ZTE ran it ("SLIMbus + SPI": CIF1 low, registers
+over SPI with read 0x01/write 0x81 + 16-bit address, audio over SLIMbus PGD
+ports 10/11). Its init values come from a register dump of the LineageOS 4.4
+port at idle, and the playback writes from a dump while it played to the
+speaker. ZTE's speaker path: SLIM RX1/2 = SB1_PB, PORT2 sync = SLIMbus,
+SDTO2 = SBI1; PORT2 (I2S master) feeds two TFA9890 at 0x34/0x35 on BLSP1
+QUP6 (mainline `tfa989x`, DSP bypass, no NXP container files). UCM device
+`Speaker` (priority 100) next to `Headphones` (200).

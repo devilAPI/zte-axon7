@@ -1,0 +1,425 @@
+From 098928a3090e7f3dbfa450f41a4fb3da1b029b9a Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 22:58:46 +0100
+Subject: [PATCH 15/16] ASoC: ak4961: stage 1, power-up, SLIMbus enumeration
+ and SPI registers
+
+The AK4961 (ZTE Axon 7 main codec) as a SLIMbus driver (slim1dd,4961,
+PGD and IFD) whose registers go over SPI on BLSP2 QUP3, as ZTE runs it
+(CIF1 low): LDO, CIF, reset and the 9.6 MHz MCLK (PM8994 DIV_CLK1), then
+on SLIMbus UP the device code check and the PGD port arrays.
+
+Tested: PGD LA 0x85, IFD LA 0x86, device code 0x61 over SPI. No sound
+card part yet.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts |  86 ++++++
+ sound/soc/codecs/Kconfig                      |   8 +
+ sound/soc/codecs/Makefile                     |   2 +
+ sound/soc/codecs/ak4961.c                     | 249 ++++++++++++++++++
+ 4 files changed, 345 insertions(+)
+ create mode 100644 sound/soc/codecs/ak4961.c
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 5f68053bc..b485c07bb 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -748,6 +748,67 @@ hifi_clk: clock-generator@11 {
+ 	};
+ };
+ 
++/*
++ * AK4961 main codec (speaker, earpiece, microphones, headset). ZTE runs it
++ * in "SLIMbus + SPI" mode: registers over SPI on BLSP2 QUP3 (CIF1 low),
++ * audio data and the port arrays over SLIMbus.
++ */
++&soc {
++	blsp2_spi3: spi@75b7000 {
++		compatible = "qcom,spi-qup-v2.2.1";
++		reg = <0x075b7000 0x600>;
++		interrupts = <GIC_SPI 103 IRQ_TYPE_LEVEL_HIGH>;
++		clocks = <&gcc GCC_BLSP2_QUP3_SPI_APPS_CLK>,
++			 <&gcc GCC_BLSP2_AHB_CLK>;
++		clock-names = "core", "iface";
++		dmas = <&blsp2_dma 16>, <&blsp2_dma 17>;
++		dma-names = "tx", "rx";
++		pinctrl-names = "default";
++		pinctrl-0 = <&blsp2_spi3_default>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		ak4961_spi: codec@0 {
++			compatible = "asahi-kasei,ak4961-spi";
++			reg = <0>;
++			spi-max-frequency = <9600000>;
++		};
++	};
++};
++
++&slim_msm {
++	status = "okay";
++
++	slim@1 {
++		reg = <1>;
++		#address-cells = <2>;
++		#size-cells = <0>;
++
++		ak4961_ifd: ifd@0,0 {
++			compatible = "slim1dd,4961";
++			reg = <0 0>;
++		};
++
++		ak4961: codec@2,0 {
++			compatible = "slim1dd,4961";
++			reg = <2 0>;
++
++			slim-ifc-dev = <&ak4961_ifd>;
++			akm,spi = <&ak4961_spi>;
++
++			clocks = <&divclk1_cdc>;
++			clock-names = "mclk";
++
++			ldo-gpios = <&tlmm 63 GPIO_ACTIVE_HIGH>;
++			cif-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
++			reset-gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
++
++			pinctrl-names = "default";
++			pinctrl-0 = <&ak4961_default>;
++		};
++	};
++};
++
+ &q6afedai {
+ 	dai@22 {
+ 		reg = <QUATERNARY_MI2S_RX>;
+@@ -1226,6 +1287,31 @@ hifi_pop_default: hifi-pop-default-state {
+ 		output-high;
+ 	};
+ 
++	/* AK4961 control port (BLSP2 QUP3 SPI, ZTE spi_9) */
++	blsp2_spi3_default: blsp2-spi3-default-state {
++		pins = "gpio49", "gpio50", "gpio51", "gpio52";
++		function = "blsp_spi9";
++		drive-strength = <6>;
++		bias-disable;
++	};
++
++	/* AK4961: CIF1 62, LDO 63, reset 64, interrupt 54 */
++	ak4961_default: ak4961-default-state {
++		ctrl-pins {
++			pins = "gpio62", "gpio63", "gpio64";
++			function = "gpio";
++			drive-strength = <16>;
++			bias-disable;
++		};
++
++		irq-pins {
++			pins = "gpio54";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-pull-up;
++		};
++	};
++
+ 	/* Quaternary MI2S: SCK 58, WS 59 (both from the AK8157), SD1 61 */
+ 	quat_mi2s_default: quat-mi2s-default-state {
+ 		pins = "gpio58", "gpio59", "gpio61";
+diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
+index abf71a967..f1ef4590d 100644
+--- a/sound/soc/codecs/Kconfig
++++ b/sound/soc/codecs/Kconfig
+@@ -607,6 +607,14 @@ config SND_SOC_AK4458
+ 	depends on I2C
+ 	select REGMAP_I2C
+ 
++config SND_SOC_AK4961
++	tristate "AKM AK4961 codec (SLIMbus + SPI)"
++	depends on SLIMBUS && SPI
++	select REGMAP
++	help
++	  The AK4961 audio codec of the ZTE Axon 7, registers over SPI and
++	  audio over SLIMbus.
++
+ config SND_SOC_AK4490
+ 	tristate "AKM AK4490 DAC"
+ 	depends on I2C
+diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
+index eeed8bd8c..34295766e 100644
+--- a/sound/soc/codecs/Makefile
++++ b/sound/soc/codecs/Makefile
+@@ -37,6 +37,7 @@ snd-soc-ak4118-y := ak4118.o
+ snd-soc-ak4375-y := ak4375.o
+ snd-soc-ak4458-y := ak4458.o
+ snd-soc-ak4490-y := ak4490.o
++snd-soc-ak4961-y := ak4961.o
+ snd-soc-ak8157-y := ak8157.o
+ snd-soc-ak4535-y := ak4535.o
+ snd-soc-ak4554-y := ak4554.o
+@@ -482,6 +483,7 @@ obj-$(CONFIG_SND_SOC_AK4118)	+= snd-soc-ak4118.o
+ obj-$(CONFIG_SND_SOC_AK4375)	+= snd-soc-ak4375.o
+ obj-$(CONFIG_SND_SOC_AK4458)	+= snd-soc-ak4458.o
+ obj-$(CONFIG_SND_SOC_AK4490)	+= snd-soc-ak4490.o
++obj-$(CONFIG_SND_SOC_AK4961)	+= snd-soc-ak4961.o
+ obj-$(CONFIG_SND_SOC_AK8157)	+= snd-soc-ak8157.o
+ obj-$(CONFIG_SND_SOC_AK4535)	+= snd-soc-ak4535.o
+ obj-$(CONFIG_SND_SOC_AK4554)	+= snd-soc-ak4554.o
+diff --git a/sound/soc/codecs/ak4961.c b/sound/soc/codecs/ak4961.c
+new file mode 100644
+index 000000000..ef77a0ced
+--- /dev/null
++++ b/sound/soc/codecs/ak4961.c
+@@ -0,0 +1,249 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * AKM AK4961 audio codec (ZTE Axon 7), mainline port.
++ *
++ * The AK4961 is a SLIMbus device (manufacturer 0x01dd, product 0x4961)
++ * with two enumeration addresses, the interface device (IFD) and the
++ * generic device (PGD). Like ZTE's msm-3.18 setup ("SLIMbus + SPI" mode,
++ * CIF1 low) its registers are accessed over SPI, while the audio data and
++ * the SLIMbus port arrays go over SLIMbus.
++ *
++ * SPI protocol (ak49xx-core.c): read = 0x01, addr[15:8], addr[7:0], then
++ * the data bytes; write = 0x81, addr[15:8], addr[7:0], data.
++ *
++ * Stage 1: power-up, enumeration, register access, device code check and
++ * the SLIMbus port array setup ZTE does at bring-up.
++ */
++
++#include <linux/clk.h>
++#include <linux/delay.h>
++#include <linux/gpio/consumer.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/regmap.h>
++#include <linux/slimbus.h>
++#include <linux/spi/spi.h>
++
++#define AK4961_DEVICE_CODE		0x00d5
++#define AK4961_DEVICE_CODE_VAL		0x61
++#define AK4961_MAX_REGISTER		0x07ff
++
++/* interface device value elements: 0x800 + register */
++#define AK4961_IFD_REG_OFFSET		0x800
++#define AK4961_SLIM_PGD_PORT_ARRAY(n)	(n)
++
++#define AK4961_MCLK_RATE		9600000
++
++struct ak4961_priv {
++	struct device *dev;
++	struct slim_device *slim;
++	struct slim_device *slim_ifd;
++	struct spi_device *spi;
++	struct regmap *regmap;
++	struct gpio_desc *reset;
++	struct gpio_desc *ldo;
++	struct gpio_desc *cif;
++	struct clk *mclk;
++	bool up;
++};
++
++static int ak4961_spi_reg_read(void *context, unsigned int reg, unsigned int *val)
++{
++	struct spi_device *spi = context;
++	u8 tx[3] = { 0x01, reg >> 8, reg & 0xff };
++	u8 rx;
++	int ret;
++
++	ret = spi_write_then_read(spi, tx, sizeof(tx), &rx, 1);
++	if (ret)
++		return ret;
++	*val = rx;
++	return 0;
++}
++
++static int ak4961_spi_reg_write(void *context, unsigned int reg, unsigned int val)
++{
++	struct spi_device *spi = context;
++	u8 tx[4] = { 0x81, reg >> 8, reg & 0xff, val };
++
++	return spi_write(spi, tx, sizeof(tx));
++}
++
++static const struct regmap_config ak4961_regmap_config = {
++	.name		= "ak4961",
++	.reg_bits	= 16,
++	.val_bits	= 8,
++	.max_register	= AK4961_MAX_REGISTER,
++	.reg_read	= ak4961_spi_reg_read,
++	.reg_write	= ak4961_spi_reg_write,
++	.cache_type	= REGCACHE_NONE,
++};
++
++static int ak4961_ifd_write(struct ak4961_priv *ak, u16 reg, u8 val)
++{
++	return slim_writeb(ak->slim_ifd, AK4961_IFD_REG_OFFSET + reg, val);
++}
++
++/* the PGD port arrays ZTE sets up at bring-up (ak49xx_bring_up) */
++static int ak4961_slim_ports_setup(struct ak4961_priv *ak)
++{
++	static const u8 ports[] = { 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
++	unsigned int i;
++	int ret;
++
++	for (i = 0; i < ARRAY_SIZE(ports); i++) {
++		ret = ak4961_ifd_write(ak, AK4961_SLIM_PGD_PORT_ARRAY(i), ports[i]);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++static int ak4961_power_on(struct ak4961_priv *ak)
++{
++	int ret;
++
++	/* LDO on, then SPI control interface (CIF1 low), then reset (ZTE) */
++	gpiod_set_value_cansleep(ak->ldo, 1);
++	msleep(30);
++	gpiod_set_value_cansleep(ak->cif, 0);
++	usleep_range(1000, 1100);
++
++	gpiod_set_value_cansleep(ak->reset, 1);
++	usleep_range(1000, 1100);
++	gpiod_set_value_cansleep(ak->reset, 0);
++	msleep(20);
++
++	ret = clk_set_rate(ak->mclk, AK4961_MCLK_RATE);
++	if (ret)
++		dev_warn(ak->dev, "cannot set MCLK to %u: %d\n", AK4961_MCLK_RATE, ret);
++	return clk_prepare_enable(ak->mclk);
++}
++
++static int ak4961_slim_status(struct slim_device *sdev,
++			      enum slim_device_status status)
++{
++	struct ak4961_priv *ak = dev_get_drvdata(&sdev->dev);
++	struct device_node *ifd_np;
++	unsigned int code;
++	int ret;
++
++	if (!ak)	/* the interface device */
++		return 0;
++
++	dev_info(ak->dev, "SLIMbus status %d\n", status);
++	if (status != SLIM_DEVICE_STATUS_UP || ak->up)
++		return 0;
++
++	ifd_np = of_parse_phandle(ak->dev->of_node, "slim-ifc-dev", 0);
++	if (!ifd_np)
++		return dev_err_probe(ak->dev, -EINVAL, "no slim-ifc-dev\n");
++	ak->slim_ifd = of_slim_get_device(sdev->ctrl, ifd_np);
++	of_node_put(ifd_np);
++	if (!ak->slim_ifd)
++		return dev_err_probe(ak->dev, -EINVAL, "no interface device\n");
++
++	ret = slim_get_logical_addr(ak->slim_ifd);
++	if (ret)
++		return dev_err_probe(ak->dev, ret, "interface device not enumerated\n");
++	dev_info(ak->dev, "enumerated: PGD LA %#x, IFD LA %#x\n",
++		 sdev->laddr, ak->slim_ifd->laddr);
++
++	ret = regmap_read(ak->regmap, AK4961_DEVICE_CODE, &code);
++	if (ret)
++		return dev_err_probe(ak->dev, ret, "SPI read failed\n");
++	if (code != AK4961_DEVICE_CODE_VAL)
++		return dev_err_probe(ak->dev, -ENODEV,
++				     "device code %#x, not an AK4961\n", code);
++	dev_info(ak->dev, "AK4961 device code %#x over SPI\n", code);
++
++	ret = ak4961_slim_ports_setup(ak);
++	if (ret)
++		return dev_err_probe(ak->dev, ret, "SLIMbus port setup failed\n");
++
++	ak->up = true;
++	return 0;
++}
++
++static int ak4961_slim_probe(struct slim_device *sdev)
++{
++	struct device *dev = &sdev->dev;
++	struct device_node *spi_np;
++	struct device *spi_dev;
++	struct ak4961_priv *ak;
++
++	/* the interface device node only needs to exist */
++	if (!of_property_present(dev->of_node, "slim-ifc-dev"))
++		return 0;
++
++	ak = devm_kzalloc(dev, sizeof(*ak), GFP_KERNEL);
++	if (!ak)
++		return -ENOMEM;
++	ak->dev = dev;
++	ak->slim = sdev;
++
++	spi_np = of_parse_phandle(dev->of_node, "akm,spi", 0);
++	if (!spi_np)
++		return dev_err_probe(dev, -EINVAL, "no akm,spi\n");
++	spi_dev = bus_find_device_by_of_node(&spi_bus_type, spi_np);
++	of_node_put(spi_np);
++	if (!spi_dev)
++		return dev_err_probe(dev, -EPROBE_DEFER, "SPI device not there yet\n");
++	ak->spi = to_spi_device(spi_dev);
++
++	ak->regmap = devm_regmap_init(dev, NULL, ak->spi, &ak4961_regmap_config);
++	if (IS_ERR(ak->regmap)) {
++		put_device(spi_dev);
++		return PTR_ERR(ak->regmap);
++	}
++
++	ak->ldo = devm_gpiod_get(dev, "ldo", GPIOD_OUT_LOW);
++	if (IS_ERR(ak->ldo))
++		return dev_err_probe(dev, PTR_ERR(ak->ldo), "no ldo gpio\n");
++	ak->cif = devm_gpiod_get(dev, "cif", GPIOD_OUT_LOW);
++	if (IS_ERR(ak->cif))
++		return dev_err_probe(dev, PTR_ERR(ak->cif), "no cif gpio\n");
++	ak->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
++	if (IS_ERR(ak->reset))
++		return dev_err_probe(dev, PTR_ERR(ak->reset), "no reset gpio\n");
++	ak->mclk = devm_clk_get(dev, "mclk");
++	if (IS_ERR(ak->mclk))
++		return dev_err_probe(dev, PTR_ERR(ak->mclk), "no mclk\n");
++
++	dev_set_drvdata(dev, ak);
++	/* enumeration follows once the chip is powered: ak4961_slim_status() */
++	return ak4961_power_on(ak);
++}
++
++static void ak4961_slim_remove(struct slim_device *sdev)
++{
++	struct ak4961_priv *ak = dev_get_drvdata(&sdev->dev);
++
++	if (!ak)
++		return;
++	clk_disable_unprepare(ak->mclk);
++	gpiod_set_value_cansleep(ak->reset, 1);
++	gpiod_set_value_cansleep(ak->ldo, 0);
++	put_device(&ak->spi->dev);
++}
++
++static const struct slim_device_id ak4961_slim_id[] = {
++	{ 0x01dd, 0x4961, 0x2, 0x0 },	/* PGD */
++	{ 0x01dd, 0x4961, 0x0, 0x0 },	/* IFD */
++	{ }
++};
++MODULE_DEVICE_TABLE(slim, ak4961_slim_id);
++
++static struct slim_driver ak4961_slim_driver = {
++	.driver = {
++		.name = "ak4961-slim",
++	},
++	.probe = ak4961_slim_probe,
++	.remove = ak4961_slim_remove,
++	.device_status = ak4961_slim_status,
++	.id_table = ak4961_slim_id,
++};
++module_slim_driver(ak4961_slim_driver);
++
++MODULE_DESCRIPTION("AKM AK4961 codec driver");
++MODULE_LICENSE("GPL");
+-- 
+2.56.0
+
