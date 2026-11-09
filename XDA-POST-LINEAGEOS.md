@@ -10,8 +10,12 @@ replacing the old text, then save.
 
 Last update: 2026-11-09
 
-**Before posting this version:** the first TWRP zip must be tested on a phone
-and published (Actions → "LineageOS 22.2 zip" → draft release → publish).
+**Before posting this version:** publish the first TWRP zip (Actions →
+"LineageOS 22.2 zip" → draft release → publish). The zip install was tested on
+2026-11-09 with the devtest variant (same zip, /data on los_data): TWRP 3.7.0
+flashed system, vendor and boot, the phone booted with SELinux enforcing.
+Do not publish a draft built before commit "standalone build ... platform
+by-name path" (patch 0057): those zips stop in TWRP with E1001.
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
@@ -74,6 +78,7 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-09"]
 [LIST]
+[*]First TWRP-flashable zip (no multi-boot): needs the Oreo universal bootloader and the community vendor partition; download link under Installation.
 [*]GPS works (confirmed outdoors: fix in 8 s, 8 m accuracy). The location daemons start again (their config was in an older format), and a memory region that ZTE reserves for the modem side (vlog) is kept free.
 [*]Flashlight strength: long-press the flashlight tile in Quick Settings for a slider (the torch blinks briefly at each step: the LED chip takes a new current only when switched on).
 [/LIST]
