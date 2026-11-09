@@ -88,17 +88,10 @@ jobs:
           sed -i 's/^ *//' ~/.config/pmbootstrap_v3.cfg
           python3 postmarketos/pmbootstrap/pmbootstrap.py config
 
-      - name: Cache (kernel ccache, downloaded packages)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.PMB_WORK }}/cache_ccache_aarch64
-            ${{ env.PMB_WORK }}/cache_ccache_x86_64
-            ${{ env.PMB_WORK }}/cache_apk_aarch64
-            ${{ env.PMB_WORK }}/cache_apk_x86_64
-            ${{ env.PMB_WORK }}/cache_distfiles
-          key: nura-${{ hashFiles('postmarketos/pmaports-local/**') }}
-          restore-keys: nura-
+      # No actions/cache here: restored files belong to the runner user, and
+      # the build user inside pmbootstrap's chroot cannot write to them
+      # (ccache "Permission denied", the kernel build fails). A clean build
+      # takes about an hour.
 
       - name: Build the images
         env:
