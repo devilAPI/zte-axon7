@@ -108,6 +108,10 @@ jobs:
           bash scripts/nura-release.sh
           ls -la out/release
 
+      - name: pmbootstrap log (on failure)
+        if: failure()
+        run: tail -n 150 "$PMB_WORK/log.txt" || true
+
       - name: Draft release
         if: github.event_name == 'push' || inputs.release
         env:
