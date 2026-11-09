@@ -23,10 +23,31 @@ A port of LineageOS 22.2 (Android 15) to the ZTE Axon 7. The newest official Lin
 Phase: [B]alpha[/B]: a TWRP-flashable zip for testers; expect bugs.
 
 [SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
-[TABLE]
-[TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, SELinux enforcing, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight (with strength slider), all 42 sensors, GPS (fix outdoors in about 10 s), fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
-[/TABLE]
+[SPOILER="Works"]
+[LIST]
+[*]Boots to the home screen; SELinux enforcing
+[*]Display and brightness
+[*]Touch and the three touch keys
+[*]Battery level
+[*]Encrypted storage (file-based encryption)
+[*]USB, adb
+[*]Wi-Fi, Wi-Fi hotspot
+[*]Bluetooth, also audio to speakers
+[*]NFC
+[*]Flashlight, with strength slider (long-press the tile)
+[*]All 42 sensors
+[*]GPS (fix outdoors in about 10 s)
+[*]Fingerprint (enrolment works)
+[*]Both cameras, optical image stabilisation
+[*]Sound and volume (speaker; AK4961 codec and AK4490 Hi-Fi DAC drivers)
+[*]Modem services for both SIM slots (dual SIM)
+[/LIST]
+[/SPOILER]
+[B]Does not work / not tested:[/B]
+[LIST]
+[*]The phone sometimes wakes up or locks by itself
+[*]Calls and mobile data with a SIM: untested
+[/LIST]
 
 [SIZE=5][B]Warning[/B][/SIZE]
 [LIST]
