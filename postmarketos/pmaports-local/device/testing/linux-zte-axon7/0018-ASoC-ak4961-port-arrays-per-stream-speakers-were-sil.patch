@@ -1,0 +1,425 @@
+From 08a16bb1894e90c51d23e09887e5c677315e0a65 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 23:56:03 +0100
+Subject: [PATCH 18/18] ASoC: ak4961: port arrays per stream (speakers were
+ silent), microphone 1
+
+- The SLIMbus controller runtime-suspends between streams and the bus
+  restarts, which clears the PGD port arrays written at bring-up: the
+  SLIMbus RX data never reached SBI1 and the speakers stayed silent
+  although the amplifiers ran. Write them in every hw_params, after
+  refreshing the interface device's logical address, as ZTE does.
+- AIF1 capture (ak4961_tx1) on SLIM TX7/TX8 (PGD ports 6/7): ZTE's
+  handset-mic path without the DSP (AIN1 with MPWR1A bias, MIC amp 1L,
+  ADC1L, SBO1L = ADC1), charge pump 1 and mic bias timing from ZTE's
+  events; controls MIC Gain 1L, CP1 Clock Mode, Mic_1L input and SBO1L
+  source.
+
+DT: Microphone link (SLIMBUS_0_TX), MultiMedia2 front end (playback and
+capture at the same time), earpiece switch (PM8994 GPIO 13) on the
+first TFA9890.
+
+Tested: SBI1 looped to SBO1L returns the played tone bit-exact; speaker
+to microphone: a -21 dBFS 1 kHz tone saturates the microphone at 21 dB
+gain; the vibrator raises the microphone level by about 30 dB.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts |  45 ++++-
+ sound/soc/codecs/ak4961.c                     | 178 ++++++++++++++++--
+ 2 files changed, 206 insertions(+), 17 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 65c93922a..fb53465ce 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -570,6 +570,15 @@ &pcie_phy {
+ };
+ 
+ &pm8994_gpios {
++	/* earpiece switch (ZTE qcom,rcv-sw-gpio) */
++	rcv_switch_default: rcv-switch-state {
++		pins = "gpio13";
++		function = PMIC_GPIO_FUNC_NORMAL;
++		output-low;
++		bias-disable;
++		power-source = <PM8994_GPIO_S4>;
++	};
++
+ 	/* Hi-Fi: AK8157 clock generator reset (GPIO 1, and GPIO 12 as in ZTE's tree) */
+ 	ak8157_reset_default: ak8157-reset-state {
+ 		pins = "gpio1", "gpio12";
+@@ -747,9 +756,15 @@ speaker_l: audio-amplifier@34 {
+ 		#sound-dai-cells = <0>;
+ 		sound-name-prefix = "Speaker Left";
+ 		vddd-supply = <&vreg_s4a_1p8>;
++		/*
++		 * ZTE's "Receiver Switch" (PM8994 GPIO 13): routes the top
++		 * speaker as earpiece. Which amplifier is the top one is not
++		 * verified yet.
++		 */
++		rcv-gpios = <&pm8994_gpios 13 GPIO_ACTIVE_HIGH>;
+ 
+ 		pinctrl-names = "default";
+-		pinctrl-0 = <&speaker_reset_default>;
++		pinctrl-0 = <&speaker_reset_default &rcv_switch_default>;
+ 	};
+ 
+ 	speaker_r: audio-amplifier@35 {
+@@ -846,6 +861,10 @@ &q6asmdai {
+ 	dai@0 {
+ 		reg = <MSM_FRONTEND_DAI_MULTIMEDIA1>;
+ 	};
++
++	dai@1 {
++		reg = <MSM_FRONTEND_DAI_MULTIMEDIA2>;
++	};
+ };
+ 
+ &sound {
+@@ -863,6 +882,14 @@ cpu {
+ 		};
+ 	};
+ 
++	mm2-dai-link {
++		link-name = "MultiMedia2";
++
++		cpu {
++			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
++		};
++	};
++
+ 	speaker-dai-link {
+ 		link-name = "Speakers";
+ 
+@@ -879,6 +906,22 @@ codec {
+ 		};
+ 	};
+ 
++	mic-dai-link {
++		link-name = "Microphone";
++
++		cpu {
++			sound-dai = <&q6afedai SLIMBUS_0_TX>;
++		};
++
++		platform {
++			sound-dai = <&q6routing>;
++		};
++
++		codec {
++			sound-dai = <&ak4961 1>;
++		};
++	};
++
+ 	hifi-dai-link {
+ 		link-name = "Hi-Fi Headphones";
+ 		/* BCLK and WS come from the AK8157 */
+diff --git a/sound/soc/codecs/ak4961.c b/sound/soc/codecs/ak4961.c
+index 69b70306d..63df3f0c2 100644
+--- a/sound/soc/codecs/ak4961.c
++++ b/sound/soc/codecs/ak4961.c
+@@ -30,6 +30,7 @@
+ #include <sound/pcm_params.h>
+ #include <sound/soc.h>
+ #include <sound/soc-dapm.h>
++#include <sound/tlv.h>
+ 
+ #define AK4961_DEVICE_CODE		0x00d5
+ #define AK4961_DEVICE_CODE_VAL		0x61
+@@ -55,6 +56,19 @@
+ #define AK4961_SYNC_DOMAIN_SEL1		0x0068
+ #define AK4961_SYNC_DOMAIN_SEL4		0x006b
+ #define AK4961_SDTO2_SOURCE_SEL		0x0074
++#define AK4961_SBO1_SOURCE_SEL		0x0077
++#define AK4961_POWER_MANAGEMENT_3	0x0005
++#define AK4961_CP1_READY		BIT(4)
++#define AK4961_POWER_MANAGEMENT_4	0x0006
++#define AK4961_POWER_MANAGEMENT_5	0x0007
++#define AK4961_POWER_MANAGEMENT_6	0x0008
++#define AK4961_MIC_AMP_1_LCH_GAIN	0x0010
++#define AK4961_CHARGE_PUMP_1_SETTING_1	0x0016
++#define AK4961_MIC_INPUT_SELECTOR_1	0x0034
++
++/* SLIMbus TX: SLIM TX1.. are PGD ports 0..; SB1 capture uses TX7/TX8 (ZTE) */
++#define AK4961_TX_PORT_SB1		6
++#define AK4961_MAX_TX_CH		16
+ 
+ /* SLIMbus: RX ports of the PGD start at 10 (ZTE AK4961_RX_PORT_START_NUMBER) */
+ #define AK4961_RX_PORT_START		10
+@@ -62,6 +76,7 @@
+ 
+ enum {
+ 	AK4961_AIF1_PB = 0,
++	AK4961_AIF1_CAP,
+ 	AK4961_NUM_DAIS,
+ };
+ 
+@@ -101,7 +116,7 @@ static const struct {
+ struct ak4961_dai_data {
+ 	struct slim_stream_runtime *sruntime;
+ 	struct slim_stream_config sconfig;
+-	unsigned int ch[AK4961_MAX_RX_CH];
++	unsigned int ch[AK4961_MAX_TX_CH];
+ };
+ 
+ struct ak4961_priv {
+@@ -118,6 +133,8 @@ struct ak4961_priv {
+ 
+ 	unsigned int rx_ch[AK4961_MAX_RX_CH];
+ 	unsigned int num_rx_ch;
++	unsigned int tx_ch[AK4961_MAX_TX_CH];
++	unsigned int num_tx_ch;
+ 	struct ak4961_dai_data dai[AK4961_NUM_DAIS];
+ };
+ 
+@@ -198,6 +215,51 @@ static int ak4961_pll_event(struct snd_soc_dapm_widget *w,
+ 	return 0;
+ }
+ 
++static int ak4961_cp1_event(struct snd_soc_dapm_widget *w,
++			    struct snd_kcontrol *kcontrol, int event)
++{
++	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
++
++	switch (event) {
++	case SND_SOC_DAPM_POST_PMU:
++		usleep_range(6500, 6600);
++		snd_soc_component_update_bits(component, AK4961_POWER_MANAGEMENT_3,
++					      AK4961_CP1_READY, AK4961_CP1_READY);
++		usleep_range(300, 400);
++		break;
++	case SND_SOC_DAPM_PRE_PMD:
++		snd_soc_component_update_bits(component, AK4961_POWER_MANAGEMENT_3,
++					      AK4961_CP1_READY, 0);
++		break;
++	}
++	return 0;
++}
++
++static int ak4961_micbias_event(struct snd_soc_dapm_widget *w,
++				struct snd_kcontrol *kcontrol, int event)
++{
++	if (event == SND_SOC_DAPM_POST_PMU)
++		usleep_range(14000, 14100);	/* ZTE: 48 kHz wait time */
++	return 0;
++}
++
++static const char * const ak4961_cp1_clock_text[] = {
++	"500kHz", "250kHz", "125kHz", "62.5kHz",
++};
++static SOC_ENUM_SINGLE_DECL(ak4961_cp1_clock_enum, AK4961_CHARGE_PUMP_1_SETTING_1, 0,
++			    ak4961_cp1_clock_text);
++
++/* 0 to 30 dB in 3 dB steps */
++static const DECLARE_TLV_DB_SCALE(ak4961_mic_gain_tlv, 0, 300, 0);
++
++static const char * const ak4961_mic_input_text[] = {
++	"AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "ZERO",
++};
++static SOC_ENUM_SINGLE_DECL(ak4961_mic1l_input_enum, AK4961_MIC_INPUT_SELECTOR_1, 0,
++			    ak4961_mic_input_text);
++static const struct snd_kcontrol_new ak4961_mic1l_input_mux =
++	SOC_DAPM_ENUM("Mic_1L input Selector", ak4961_mic1l_input_enum);
++
+ static const char * const ak4961_sync_domain_text[] = {
+ 	"n/a", "aif1", "aif2", "aif3", "aif4", "dsp24k", "dsp16k", "slimbus",
+ };
+@@ -212,10 +274,17 @@ static const char * const ak4961_sink_source_text[] = {
+ };
+ static SOC_ENUM_SINGLE_DECL(ak4961_sdto2_source_enum, AK4961_SDTO2_SOURCE_SEL, 0,
+ 			    ak4961_sink_source_text);
++static SOC_ENUM_SINGLE_DECL(ak4961_sbo1l_source_enum, AK4961_SBO1_SOURCE_SEL, 0,
++			    ak4961_sink_source_text);
++static const struct snd_kcontrol_new ak4961_sbo1l_source_mux =
++	SOC_DAPM_ENUM("SBO1L Source Selector", ak4961_sbo1l_source_enum);
+ 
+ static const struct snd_kcontrol_new ak4961_controls[] = {
+ 	SOC_ENUM("PORT2 Sync Domain", ak4961_port2_sync_enum),
+ 	SOC_ENUM("SDTO2 Source Selector", ak4961_sdto2_source_enum),
++	SOC_ENUM("CP1 Clock Mode", ak4961_cp1_clock_enum),
++	SOC_SINGLE_TLV("MIC Gain 1L", AK4961_MIC_AMP_1_LCH_GAIN, 0, 10, 0,
++		       ak4961_mic_gain_tlv),
+ };
+ 
+ static const struct snd_soc_dapm_widget ak4961_dapm_widgets[] = {
+@@ -224,11 +293,37 @@ static const struct snd_soc_dapm_widget ak4961_dapm_widgets[] = {
+ 			    SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
+ 	/* PORT2 I2S output to the speaker amplifiers */
+ 	SND_SOC_DAPM_OUTPUT("SDTO2"),
++
++	/* microphone 1 (ZTE handset-mic path without the DSP) */
++	SND_SOC_DAPM_INPUT("AIN1"),
++	SND_SOC_DAPM_SUPPLY_S("Charge Pump1", 1, AK4961_POWER_MANAGEMENT_3, 0, 0,
++			      ak4961_cp1_event,
++			      SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
++	SND_SOC_DAPM_SUPPLY("PMMP1A", AK4961_POWER_MANAGEMENT_4, 0, 0,
++			    ak4961_micbias_event, SND_SOC_DAPM_POST_PMU),
++	SND_SOC_DAPM_PGA("PMAIN1", AK4961_POWER_MANAGEMENT_5, 0, 0, NULL, 0),
++	SND_SOC_DAPM_MUX("Mic_1L input Selector", SND_SOC_NOPM, 0, 0,
++			 &ak4961_mic1l_input_mux),
++	SND_SOC_DAPM_ADC("ADC_1L", NULL, AK4961_POWER_MANAGEMENT_6, 0, 0),
++	SND_SOC_DAPM_MUX("SBO1L Source Selector", SND_SOC_NOPM, 0, 0,
++			 &ak4961_sbo1l_source_mux),
++	SND_SOC_DAPM_AIF_OUT("SB1 CAP", "AIF1 Capture", 0, SND_SOC_NOPM, 0, 0),
+ };
+ 
+ static const struct snd_soc_dapm_route ak4961_dapm_routes[] = {
+ 	{ "SB1 PB", NULL, "PLL CLK" },
+ 	{ "SDTO2", NULL, "SB1 PB" },
++
++	{ "PMMP1A", NULL, "Charge Pump1" },
++	{ "PMAIN1", NULL, "AIN1" },
++	/* ZTE: AIN1 PMMP Selector = MPWR1A */
++	{ "PMAIN1", NULL, "PMMP1A" },
++	{ "Mic_1L input Selector", "AIN1", "PMAIN1" },
++	{ "ADC_1L", NULL, "Mic_1L input Selector" },
++	{ "ADC_1L", NULL, "Charge Pump1" },
++	{ "SBO1L Source Selector", "ADC1", "ADC_1L" },
++	{ "SB1 CAP", NULL, "SBO1L Source Selector" },
++	{ "SB1 CAP", NULL, "PLL CLK" },
+ };
+ 
+ static int ak4961_hw_params(struct snd_pcm_substream *substream,
+@@ -242,15 +337,34 @@ static int ak4961_hw_params(struct snd_pcm_substream *substream,
+ 	unsigned int rate = params_rate(params);
+ 	unsigned int chs = params_channels(params);
+ 	unsigned int i;
++	int ret;
+ 
+ 	for (i = 0; i < ARRAY_SIZE(ak4961_rates); i++)
+ 		if (ak4961_rates[i].rate == rate)
+ 			break;
+ 	if (i == ARRAY_SIZE(ak4961_rates))
+ 		return -EINVAL;
+-	if (chs > ak->num_rx_ch || chs > AK4961_MAX_RX_CH)
++	bool playback = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
++	unsigned int *slots = playback ? ak->rx_ch : ak->tx_ch;
++	unsigned int nslots = playback ? ak->num_rx_ch : ak->num_tx_ch;
++	unsigned int port0 = playback ? AK4961_RX_PORT_START : AK4961_TX_PORT_SB1;
++
++	if (chs > nslots || chs > 2)
+ 		return -EINVAL;
+ 
++	/*
++	 * The SLIMbus may have been restarted since bring-up (the controller
++	 * runtime-suspends), which clears the PGD port arrays of the
++	 * interface device; ZTE writes them on every hw_params as well.
++	 */
++	ret = slim_get_logical_addr(ak->slim_ifd);
++	if (!ret)
++		ret = ak4961_slim_ports_setup(ak);
++	if (ret) {
++		dev_err(ak->dev, "SLIMbus port arrays: %d\n", ret);
++		return ret;
++	}
++
+ 	snd_soc_component_write(component, AK4961_CDCMCLK_DIVIDER, ak4961_rates[i].mdv);
+ 	snd_soc_component_write(component, AK4961_MSYNC7_BDV, ak4961_rates[i].bdv);
+ 	snd_soc_component_write(component, AK4961_MSYNC7_SDV, ak4961_rates[i].sdv);
+@@ -266,16 +380,17 @@ static int ak4961_hw_params(struct snd_pcm_substream *substream,
+ 	cfg->ch_count = chs;
+ 	cfg->rate = rate;
+ 	cfg->bps = params_width(params);
+-	cfg->direction = SNDRV_PCM_STREAM_PLAYBACK;
++	cfg->direction = substream->stream;
+ 	cfg->port_mask = 0;
+ 	for (i = 0; i < chs; i++) {
+-		cfg->chs[i] = ak->rx_ch[i];
+-		d->ch[i] = ak->rx_ch[i];
+-		cfg->port_mask |= BIT(AK4961_RX_PORT_START + i);
++		cfg->chs[i] = slots[i];
++		d->ch[i] = slots[i];
++		cfg->port_mask |= BIT(port0 + i);
+ 	}
+ 
+ 	if (!d->sruntime)
+-		d->sruntime = slim_stream_allocate(ak->slim, "AK4961-RX1");
++		d->sruntime = slim_stream_allocate(ak->slim,
++						   playback ? "AK4961-RX1" : "AK4961-TX1");
+ 	return d->sruntime ? 0 : -ENOMEM;
+ }
+ 
+@@ -293,6 +408,10 @@ static int ak4961_trigger(struct snd_pcm_substream *substream, int cmd,
+ 		ret = slim_stream_prepare(d->sruntime, &d->sconfig);
+ 		if (!ret)
+ 			ret = slim_stream_enable(d->sruntime);
++		dev_dbg(ak->dev, "%s start: %u ch (%u, %u) ports %#lx rate %u bps %u: %d\n",
++			dai->name, d->sconfig.ch_count, d->sconfig.chs[0],
++			d->sconfig.ch_count > 1 ? d->sconfig.chs[1] : 0,
++			d->sconfig.port_mask, d->sconfig.rate, d->sconfig.bps, ret);
+ 		break;
+ 	case SNDRV_PCM_TRIGGER_STOP:
+ 	case SNDRV_PCM_TRIGGER_SUSPEND:
+@@ -311,11 +430,16 @@ static int ak4961_set_channel_map(struct snd_soc_dai *dai,
+ 	struct ak4961_priv *ak = snd_soc_component_get_drvdata(dai->component);
+ 	unsigned int i;
+ 
+-	if (!rx_slot)
+-		return -EINVAL;
+-	ak->num_rx_ch = min_t(unsigned int, rx_num, AK4961_MAX_RX_CH);
+-	for (i = 0; i < ak->num_rx_ch; i++)
+-		ak->rx_ch[i] = rx_slot[i];
++	if (rx_slot) {
++		ak->num_rx_ch = min_t(unsigned int, rx_num, AK4961_MAX_RX_CH);
++		for (i = 0; i < ak->num_rx_ch; i++)
++			ak->rx_ch[i] = rx_slot[i];
++	}
++	if (tx_slot) {
++		ak->num_tx_ch = min_t(unsigned int, tx_num, AK4961_MAX_TX_CH);
++		for (i = 0; i < ak->num_tx_ch; i++)
++			ak->tx_ch[i] = tx_slot[i];
++	}
+ 	return 0;
+ }
+ 
+@@ -326,12 +450,21 @@ static int ak4961_get_channel_map(const struct snd_soc_dai *dai,
+ 	struct ak4961_priv *ak = snd_soc_component_get_drvdata(dai->component);
+ 	unsigned int i;
+ 
+-	if (!rx_slot || !rx_num)
+-		return -EINVAL;
+ 	/*
+-	 * Asked before hw_params: AIF1 is the stereo pair on PGD ports
+-	 * 10/11 (ZTE's speaker path sets SLIM RX1 and RX2 to SB1_PB).
++	 * Asked before hw_params: AIF1 playback is the stereo pair on PGD
++	 * ports 10/11 (ZTE's speaker path sets SLIM RX1 and RX2 to SB1_PB),
++	 * AIF1 capture is SLIM TX7/TX8 (ports 6/7; TX7 = ZTE's handset mic).
+ 	 */
++	if (dai->id == AK4961_AIF1_CAP) {
++		if (!tx_slot || !tx_num)
++			return -EINVAL;
++		*tx_num = min_t(unsigned int, 2, ak->num_tx_ch);
++		for (i = 0; i < *tx_num; i++)
++			tx_slot[i] = ak->tx_ch[i];
++		return 0;
++	}
++	if (!rx_slot || !rx_num)
++		return -EINVAL;
+ 	*rx_num = min_t(unsigned int, 2, ak->num_rx_ch);
+ 	for (i = 0; i < *rx_num; i++)
+ 		rx_slot[i] = ak->rx_ch[i];
+@@ -360,6 +493,19 @@ static struct snd_soc_dai_driver ak4961_dais[] = {
+ 		},
+ 		.ops = &ak4961_dai_ops,
+ 	},
++	[AK4961_AIF1_CAP] = {
++		.name = "ak4961_tx1",
++		.id = AK4961_AIF1_CAP,
++		.capture = {
++			.stream_name = "AIF1 Capture",
++			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
++				 SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000,
++			.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
++			.channels_min = 1,
++			.channels_max = 2,	/* TX7 = mic 1, TX8 unused for now */
++		},
++		.ops = &ak4961_dai_ops,
++	},
+ };
+ 
+ static const struct snd_soc_component_driver ak4961_component = {
+-- 
+2.56.0
+

@@ -6,7 +6,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=9
+pkgrel=10
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -53,6 +53,8 @@ source="
 	0014-ASoC-Axon-7-Hi-Fi-headphone-path-AK4490-AK8157-ISL98.patch
 	0015-ASoC-ak4961-stage-1-power-up-SLIMbus-enumeration-and.patch
 	0016-ASoC-ak4961-speaker-playback-over-SLIMbus-to-the-TFA.patch
+	0017-ASoC-tfa989x-receiver-switch-GPIO-for-revisions-othe.patch
+	0018-ASoC-ak4961-port-arrays-per-stream-speakers-were-sil.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -101,5 +103,7 @@ a60632102587db544f9a5812407e28cd272819dde1abcbae179382fc46ffe1acd23f771c0fb8a8e3
 23f7e45354700f8d6587911a4a52b6967638108bdb80ca53fa14cb92d553bcb6fe7371c82150b3ab6eaf562841e42ecaea88aaf639e00ceb7c6abac640eeacde  0014-ASoC-Axon-7-Hi-Fi-headphone-path-AK4490-AK8157-ISL98.patch
 b4ab45e846967b58720cbaaf22315f86c1f8810cdeeaadb8227482b4b4e2903759cc4605f0105eab8a5b074a34584f710cb3580a77fcc763c9fd6f3205ada8ce  0015-ASoC-ak4961-stage-1-power-up-SLIMbus-enumeration-and.patch
 e256c78973a7098796c6dc20e87535a0b38d4ea5e9959824707e64ee4e8becd0c1171883bc8bdeef5645c754dfadc1baa64041a4ce328bfaeb9938d7954f7a20  0016-ASoC-ak4961-speaker-playback-over-SLIMbus-to-the-TFA.patch
+07ab7669379c5d1874d25d836c9955e39bb84d6c7d74f829e4b0ee2367d35de926bbbd7eeb56622fdea40f34cd348718d562fa293f50474b93b10faae9f435f6  0017-ASoC-tfa989x-receiver-switch-GPIO-for-revisions-othe.patch
+551768fc3805c5dff663af064f2155d4849d918dcde6a68df0bc4320f50cde1eaefeefbc8ac1780ecd8e1c771694f06b39c21594c640c14bb28907ab80a983da  0018-ASoC-ak4961-port-arrays-per-stream-speakers-were-sil.patch
 b93026cfe9806b81b10a5189b3918c60376fe1c27da337ae873d84bc7bef2636542c2aeae1e86ab26c3bb3e6d48d7bc667320f54cf92b9ad1cbda69493b8ac49  config-zte-axon7.aarch64
 "

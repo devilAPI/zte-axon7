@@ -36,13 +36,14 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]SSH over USB and Wi-Fi
 [*]USB OTG (mouse, keyboard, USB stick; automatic)
 [*]Battery level, voltage, current and temperature (no charging control yet)
+[*]Speakers (heard by the phone's own microphone)
+[*]Microphone (bottom microphone)
+[*]Vibration (heard by the microphone)
 [/LIST]
 [/SPOILER]
 [B]New, still to be confirmed by eye or ear:[/B]
 [LIST]
 [*]Headphone audio through the Hi-Fi DAC (AK4490)
-[*]Speakers (AK4961 codec and two TFA9890 amplifiers)
-[*]Vibration
 [*]Flashlight (torch)
 [*]Flip cover sensor (open is confirmed, closed not yet)
 [/LIST]
@@ -51,7 +52,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Calls
 [*]SMS
 [*]Mobile data
-[*]Earpiece and microphones (speakers and headphones: see above)
+[*]Earpiece, second/third microphone, headset microphone
 [*]Camera
 [*]Sensors
 [*]Charging control
@@ -88,7 +89,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]Headphone audio through the Hi-Fi DAC: the sound card "ZTE Axon 7" plays through the AK4490 to the headphone jack ([I]speaker-test -c 2 -t sine[/I]). New, please tell us if you hear it.
 [*]Vibration (force-feedback rumble) and the flashlight ([I]echo 10 | sudo tee /sys/class/leds/white:torch/brightness[/I], 1-16). New, please confirm.
 [*]Flip cover sensor: reported as a lid switch. Closing a cover does nothing yet, because suspend doesn't work.
-[*]Speakers: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers. New, please confirm, and keep the volume moderate (no speaker protection profile yet).
+[*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). In the sound settings: "Speakers", "Headphones", "Microphone".
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-08"]

@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0016, installed by hand on the dev phone; in images from
-linux-zte-axon7 r9 / device-zte-axon7 r14 on). Log in over SSH or on the
+0010-0018, installed by hand on the dev phone; in images from
+linux-zte-axon7 r10 / device-zte-axon7 r15 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -17,38 +17,51 @@ menu (Volume Down, then Power), or make it the default from Nura with
 Plug in wired headphones first. Start quietly.
 
 ```sh
-alsaucm -c hw:0 set _verb HiFi          # routes the player to the Hi-Fi DAC
+alsaucm -c hw:0 set _verb HiFi set _enadev Headphones   # routes the player (hw:0,1) to the Hi-Fi DAC
 amixer -c0 sset Digital 60%             # DAC volume (0-100 %)
-speaker-test -D hw:0,0 -c 2 -r 48000 -t sine -f 440 -l 1
-speaker-test -D hw:0,0 -c 2 -r 48000 -t wav -l 1   # says "Front Left" / "Front Right"
+speaker-test -D hw:0,1 -c 2 -r 48000 -t sine -f 440 -l 1
+speaker-test -D hw:0,1 -c 2 -r 48000 -t wav -l 1   # says "Front Left" / "Front Right"
 ```
 
 - [ ] A 440 Hz tone is audible
 - [ ] "Front Left" comes out of the **left** ear, "Front Right" of the **right**
 - [ ] No loud pop or click when playback starts or stops
 - [ ] Volume changes with `amixer -c0 sset Digital 30%` / `80%`
-- [ ] Music file: `aplay -D hw:0,0 some-48k-stereo.wav` sounds clean (no crackle, right speed/pitch)
-- [ ] 44.1 kHz file: `aplay -D hw:0,0 some-44k1.wav` (speed/pitch right?)
+- [ ] Music file: `aplay -D hw:0,1 some-48k-stereo.wav` sounds clean (no crackle, right speed/pitch)
+- [ ] 44.1 kHz file: `aplay -D hw:0,1 some-44k1.wav` (speed/pitch right?)
 
 With the Headphones device, nothing should come out of the speakers.
 
 ## 1b. Speakers (AK4961 + two TFA9890 amplifiers)
 
-New 2026-11-09 night, kernel patches 0015/0016. **Start very quietly**: the
-amplifiers run without NXP's speaker protection profile (DSP bypass), so
-don't play loud for long.
+New 2026-11-09 night, kernel patches 0015-0018. The speakers are already
+confirmed working through the phone's own microphone; what's left is how
+they sound. **Start quietly**: the amplifiers run without NXP's speaker
+protection profile (DSP bypass), so don't play loud for long.
 
 ```sh
 alsaucm -c hw:0 set _verb HiFi set _enadev Speaker
-speaker-test -D hw:0,0 -c 2 -r 48000 -t sine -f 440 -l 1   # rather loud: test tone at full scale
-speaker-test -D hw:0,0 -c 2 -r 48000 -t wav -l 1           # "Front Left" / "Front Right"
+speaker-test -D hw:0,1 -c 2 -r 48000 -t sine -f 440 -l 1   # rather loud test tone
+speaker-test -D hw:0,1 -c 2 -r 48000 -t wav -l 1           # "Front Left" / "Front Right"
 ```
 
-- [ ] Sound comes out of the speakers at all
+- [x] Sound comes out of the speakers (measured with the microphone)
 - [ ] Both speakers (top and bottom grille) play
 - [ ] "Front Left" comes from the speaker on the left when the phone is held sideways with the volume keys up (if it's swapped, say so: the amp order 0x34/0x35 is a guess)
 - [ ] No distortion or crackling at moderate volume
 - [ ] Switching back to headphones works: `alsaucm -c hw:0 set _verb HiFi set _disdev Speaker set _enadev Headphones`
+
+## 1c. Microphone
+
+```sh
+alsaucm -c hw:0 set _verb HiFi set _enadev Mic
+arecord -D hw:0,0 -f S16_LE -r 48000 -c 2 -d 5 /tmp/mic.wav   # speak into the bottom of the phone
+aplay -D hw:0,1 /tmp/mic.wav                                  # play it back (speaker or headphones)
+```
+
+- [x] The microphone records (measured: vibration and speaker tone show up)
+- [ ] Your voice is clear and loud enough (gain: `amixer -c0 cset name='MIC Gain 1L' 0..10`, 3 dB steps, default 5)
+- [ ] Which microphone it is (bottom or top): cover one with a finger while talking
 
 ## 2. Vibration
 
@@ -58,7 +71,7 @@ sudo axon7-rumble 0x4000 1000    # weaker
 sudo axon7-rumble 0xffff 200     # short buzz
 ```
 
-- [ ] The phone vibrates
+- [x] The phone vibrates (the microphone hears it, +30 dB)
 - [ ] The weaker one is noticeably weaker
 - [ ] It stops when it should (no buzzing on)
 

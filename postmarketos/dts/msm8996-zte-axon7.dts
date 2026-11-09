@@ -570,6 +570,15 @@
 };
 
 &pm8994_gpios {
+	/* earpiece switch (ZTE qcom,rcv-sw-gpio) */
+	rcv_switch_default: rcv-switch-state {
+		pins = "gpio13";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		output-low;
+		bias-disable;
+		power-source = <PM8994_GPIO_S4>;
+	};
+
 	/* Hi-Fi: AK8157 clock generator reset (GPIO 1, and GPIO 12 as in ZTE's tree) */
 	ak8157_reset_default: ak8157-reset-state {
 		pins = "gpio1", "gpio12";
@@ -747,9 +756,15 @@
 		#sound-dai-cells = <0>;
 		sound-name-prefix = "Speaker Left";
 		vddd-supply = <&vreg_s4a_1p8>;
+		/*
+		 * ZTE's "Receiver Switch" (PM8994 GPIO 13): routes the top
+		 * speaker as earpiece. Which amplifier is the top one is not
+		 * verified yet.
+		 */
+		rcv-gpios = <&pm8994_gpios 13 GPIO_ACTIVE_HIGH>;
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&speaker_reset_default>;
+		pinctrl-0 = <&speaker_reset_default &rcv_switch_default>;
 	};
 
 	speaker_r: audio-amplifier@35 {
@@ -846,6 +861,10 @@
 	dai@0 {
 		reg = <MSM_FRONTEND_DAI_MULTIMEDIA1>;
 	};
+
+	dai@1 {
+		reg = <MSM_FRONTEND_DAI_MULTIMEDIA2>;
+	};
 };
 
 &sound {
@@ -863,6 +882,14 @@
 		};
 	};
 
+	mm2-dai-link {
+		link-name = "MultiMedia2";
+
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
+		};
+	};
+
 	speaker-dai-link {
 		link-name = "Speakers";
 
@@ -876,6 +903,22 @@
 
 		codec {
 			sound-dai = <&ak4961 0>, <&speaker_l>, <&speaker_r>;
+		};
+	};
+
+	mic-dai-link {
+		link-name = "Microphone";
+
+		cpu {
+			sound-dai = <&q6afedai SLIMBUS_0_TX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&ak4961 1>;
 		};
 	};
 
