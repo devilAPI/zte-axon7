@@ -10,6 +10,9 @@ replacing the old text, then save.
 
 Last update: 2026-11-09
 
+**Before posting this version:** the first TWRP zip must be tested on a phone
+and published (Actions → "LineageOS 22.2 zip" → draft release → publish).
+
 <!-- XDA-POST-BEGIN -->
 ```bbcode
 [CENTER][SIZE=6][B][ALPHA] LineageOS 22.2 (Android 15) for the ZTE Axon 7 (A2017G)[/B][/SIZE]
@@ -17,17 +20,35 @@ Last update: 2026-11-09
 
 [SIZE=5][B]What is this?[/B][/SIZE]
 A port of LineageOS 22.2 (Android 15) to the ZTE Axon 7. The newest official LineageOS for the phone is 18.1; this one runs on the msm8996 4.4 kernel with ZTE's own drivers (audio codec, fingerprint, NFC, camera parts) ported from ZTE's 3.18 kernel, and Android 15 shims for the old vendor blobs.
-Phase: [B]alpha[/B]. Developer builds only.
+Phase: [B]alpha[/B]: a TWRP-flashable zip for testers; expect bugs.
 
 [SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
 [TABLE]
 [TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight (with strength slider), all 42 sensors, GPS (fix outdoors in about 10 s), fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
+[TR][TD]boots to the home screen, SELinux enforcing, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight (with strength slider), all 42 sensors, GPS (fix outdoors in about 10 s), fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
 [/TABLE]
 
+[SIZE=5][B]Warning[/B][/SIZE]
+[LIST]
+[*]This ROM only works with the [B]Oreo "universal" bootloader[/B] (TrustZone TZ.BF.4.0.1-00353, the bootstack LineageOS 15.1 to 18.1 needed) and the [B]modem package for your model[/B]. The installer checks the bootloader and stops if it is missing.
+[*]It needs the [B]community vendor partition[/B] (512 MB after system, the same as LineageOS 16 to 18.1). The original ZTE partition layout without a vendor partition is [B]not supported[/B]. With the vendor partition you cannot flash official ZTE firmware until you remove it again (PARTY tool).
+[*]Tested on the [B]A2017G[/B] only. A2017U / A2017 (China): untested, at your own risk.
+[*]Any failure while flashing or repartitioning can brick the phone. Make a backup and keep EDL in mind.
+[/LIST]
+
 [SIZE=5][B]Installation[/B][/SIZE]
-[B]No downloads and no flashable zips during the alpha.[/B] Flashable zips come with the first beta.
-Developers can build it from source; the developer setup (a multi-boot with iOS and Nura on one phone) is described here: [URL='https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md']DEV-MULTIBOOT.md[/URL]
+[B]Attention:[/B] the bootloader must be unlocked, and you need the vendor partition.
+[LIST=1]
+[*]Install the [B]Oreo universal bootloader[/B] and the [B]modem for your model[/B] (unnecessary if you ran LineageOS 15.1 to 18.1 before). They are linked in the [URL='https://xdaforums.com/t/official-lineageos-15-1-for-zte-axon-7.3800214/']official LineageOS 15.1 thread[/URL].
+[*]Create the [B]vendor partition[/B] with Oki's [URL='https://xdaforums.com/t/tool-treble-party-v0-5-vendor-partition-manager-2018-08-31.3831517/']PARTY tool[/URL] (a TWRP zip; unnecessary if you have it already, e.g. from LineageOS 16 to 18.1). If TWRP restarts on the first run, boot back into recovery and flash it again.
+[*]Update [B]TWRP[/B] to 3.3.0 or newer ([URL='https://dl.twrp.me/ailsa_ii/']dl.twrp.me/ailsa_ii[/URL], 3.7.0_9-0 recommended).
+[*]Back up your current ROM in TWRP (Boot, System, Vendor, Data, EFS) and copy it to a computer.
+[*]Wipe → Advanced Wipe: [B]Dalvik / ART Cache, Cache, System, Vendor, Data[/B]. [B]Coming from LineageOS 18.1 or older or from stock: also Format Data[/B] (type [I]yes[/I]): Android 15 uses file-based encryption and cannot read the old encrypted data partition.
+[*]Install the [B]ROM[/B]: [URL='https://github.com/devilAPI/zte-axon7/releases']GitHub releases[/URL] ([I]lineage-22.2-DATE-UNOFFICIAL-axon7.zip[/I]; check it against the [I].sha256[/I] file).
+[*]Install GApps (optional): a package for [B]Android 15, arm64[/B] (e.g. MindTheGapps 15).
+[*]Reboot → System. The first start takes a few minutes.
+[/LIST]
+Not needed: the multi-boot with iOS and Nura is a developer setup, not part of this ROM ([URL='https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md']DEV-MULTIBOOT.md[/URL]).
 
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-09"]
