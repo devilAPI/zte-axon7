@@ -158,7 +158,7 @@ still holds Nura: format it in Android to use it as a normal card again.
 ## Rescue
 
 - **Black screen / hangs at the logo:** hold **Power + Volume Up** about 10 s → TWRP. Get the log (below), then either flash the Nura boot image again (step 3) or go back to Android.
-- **Nothing boots, not even TWRP:** not seen so far. EDL mode (phone off, hold Volume Up + Volume Down, plug in USB) and a full A2017G EDL package; see the *EDL rescue* note in [lineageos/FLASHING-PLAN.md](lineageos/FLASHING-PLAN.md).
+- **Nothing boots, not even TWRP:** not seen so far. EDL mode (phone off, hold Volume Up + Volume Down, plug in USB) and a full A2017G EDL package; see the *EDL rescue* note in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md).
 
 ## Getting logs (for bug reports)
 

@@ -2,3 +2,7 @@
 	path = ios
 	url = https://github.com/devilAPI/ios-sailfish
 	branch = axon7
+[submodule "lineageos-22.2/kernel-4.4"]
+	path = lineageos-22.2/kernel-4.4
+	url = https://github.com/devilAPI/android_kernel_zte_msm8996
+	branch = axon7

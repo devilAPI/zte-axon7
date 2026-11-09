@@ -112,7 +112,7 @@ repo init -u https://github.com/LineageOS/android.git -b lineage-22.2 --git-lfs 
 mkdir -p .repo/local_manifests && cp /path/to/axon7.xml .repo/local_manifests/
 repo sync -c -j6 --no-tags --no-clone-bundle --optimized-fetch --prune
 ```
-(`axon7.xml` is in `lineageos/build/local_manifests/axon7.xml`. It sets `clone-depth="0"` on the device and kernel repos so you get their full history for porting.)
+(`axon7.xml` is in `lineageos-22.2/build/local_manifests/axon7.xml`. It sets `clone-depth="0"` on the device and kernel repos so you get their full history for porting.)
 Clone the reference trees **outside** `lineage-22.2/`: gemini, msm8996-common, lge msm8996-common, and the 3.18 axon7 kernel.
 
 ### Disk budget (approx., with --depth=1 and lz4)

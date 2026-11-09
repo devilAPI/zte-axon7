@@ -2,7 +2,7 @@
 # server (self-hosted runner, label axon7-build; a LineageOS tree does not fit
 # on GitHub's runners).
 #
-# Runs on every push to main that touches lineageos/ (patch exports, release
+# Runs on every push to main that touches lineageos-22.2/ (patch exports, release
 # notes, build script) or this workflow, and by hand (Run workflow). A newer
 # push cancels a running build. There is no pull_request trigger, so only
 # people who can push to this repository start builds on the server.
@@ -16,7 +16,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'lineageos/**'
+      - 'lineageos-22.2/**'
       - '.github/workflows/lineageos-zip.yml'
       - '.github/scripts/draft-release.sh'
   workflow_dispatch:
@@ -41,12 +41,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
-            lineageos/ci
+            lineageos-22.2/ci
             .github/scripts
 
       - name: Build (standalone TWRP zip)
         id: build
-        run: bash lineageos/ci/build-zip.sh
+        run: bash lineageos-22.2/ci/build-zip.sh
 
       - name: Draft release
         if: github.event_name == 'push' || inputs.release
@@ -55,5 +55,5 @@ jobs:
           ZIP: ${{ steps.build.outputs.zip }}
         run: |
           date=$(basename "$ZIP" | cut -d- -f3)   # lineage-22.2-DATE-UNOFFICIAL-axon7.zip
-          bash .github/scripts/draft-release.sh lineageos "$date" lineageos/ci/release-notes.md \
+          bash .github/scripts/draft-release.sh lineageos "$date" lineageos-22.2/ci/release-notes.md \
             "$ZIP" "$ZIP.sha256"

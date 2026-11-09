@@ -25,7 +25,7 @@ the shim's LineageOS entry. What it took on the phone:
 
 ## Commits (branch `axon7`)
 
-A copy of the series is in `kernel-4.4-patches/` (`git am` on LineageOS/android_kernel_xiaomi_msm8996 lineage-22.2 at 535079d2fa36).
+The applied tree is the `kernel-4.4/` submodule (devilAPI/android_kernel_zte_msm8996, branch `axon7`). A copy of the series is in `kernel-4.4-patches/` (`git am` on LineageOS/android_kernel_xiaomi_msm8996 lineage-22.2 at 535079d2fa36).
 
 | Commit | Subject |
 |---|---|

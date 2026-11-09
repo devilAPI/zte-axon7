@@ -14,7 +14,7 @@ postmarketos/test-initramfs/*
 postmarketos/test-initramfs/root/*
 !postmarketos/test-initramfs/root/init
 # LineageOS ROM zips, recovery images and GApps
-lineageos/downloads/
+lineageos-22.2/downloads/
 # never commit proprietary firmware, ROMs, Apple files or phone dumps
 *.tar.gz
 *.mbn

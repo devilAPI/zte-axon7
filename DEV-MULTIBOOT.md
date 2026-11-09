@@ -17,7 +17,7 @@ step is a button press or a command you can copy.
 > | Boot menu (choose the OS at power-on) | works |
 > | iOS 16.7.16 | boots to the home screen, touch, Wi-Fi, GPU, Sileo (jailbreak). No calls/mobile data, no camera, no audio. |
 > | Nura (postmarketOS, Linux) | boots from the microSD card: display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG (mouse, keyboard, stick). No calls, no audio, no camera. |
-> | LineageOS 22 (Android 15) | **unofficial release**: almost all hardware works (see [lineageos/README.md](lineageos/README.md)); on its own as a TWRP zip, here in the multi-boot slot built from source |
+> | LineageOS 22 (Android 15) | **unofficial release**: almost all hardware works (see [lineageos-22.2/README.md](lineageos-22.2/README.md)); on its own as a TWRP zip, here in the multi-boot slot built from source |
 >
 > There are **no ready-made downloads** yet: Apple's iOS and the phone's
 > firmware may not be redistributed, so the guide builds them on your PC
@@ -219,8 +219,8 @@ Change the default from Nura: `sudo axon7-bootmenu default pmos 5`
 - **Stuck on a black screen / logo:** hold **Power + Volume Up** ~10 s → TWRP.
 - **Boot menu broken (phone always goes to TWRP or hangs):** in TWRP restore the boot partition:
   `adb push backup/stock-lineage-boot.img /tmp/b.img && adb shell dd if=/tmp/b.img of=/dev/block/bootdevice/by-name/boot`
-- **Back to Android (LineageOS 18.1):** TWRP → Wipe → Format Data, then flash the ROM zip as described in [lineageos/FLASHING-PLAN.md](lineageos/FLASHING-PLAN.md). This removes iOS. If you ran `axon7-tripleboot-gpt`, restore the saved partition table first (from Nura: `sudo sfdisk /dev/sda < /root/axon7-lun0-before-tripleboot-*.sfdisk`), otherwise Android only sees 20 GB.
-- **Nothing boots, not even TWRP:** EDL mode (above) and a full A2017G EDL package; see the *EDL rescue* note in [lineageos/FLASHING-PLAN.md](lineageos/FLASHING-PLAN.md). Not needed so far.
+- **Back to Android (LineageOS 18.1):** TWRP → Wipe → Format Data, then flash the ROM zip as described in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md). This removes iOS. If you ran `axon7-tripleboot-gpt`, restore the saved partition table first (from Nura: `sudo sfdisk /dev/sda < /root/axon7-lun0-before-tripleboot-*.sfdisk`), otherwise Android only sees 20 GB.
+- **Nothing boots, not even TWRP:** EDL mode (above) and a full A2017G EDL package; see the *EDL rescue* note in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md). Not needed so far.
 
 ## Getting logs (for bug reports)
 

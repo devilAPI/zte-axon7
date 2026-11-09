@@ -20,6 +20,6 @@
 ### State
 
 SELinux is enforcing. 
-See the XDA thread for what works and what does not. The kernel (GPLv2) is at https://github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7 and the patches are in this repository (`lineageos/`).
+See the XDA thread for what works and what does not. The kernel (GPLv2) is at https://github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7 and the patches are in this repository (`lineageos-22.2/`).
 
 Not affiliated with ZTE or LineageOS. Flash at your own risk.

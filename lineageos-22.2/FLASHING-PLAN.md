@@ -7,7 +7,7 @@ The newest is **LineageOS 18.1 UNOFFICIAL 2026-11-01** by Ricky Cheung
 Do not touch the phone while the other workstream is using it. Every command
 below is for the user to run later.
 
-## Files (in lineageos/downloads/)
+## Files (in lineageos-22.2/downloads/)
 
 | File | Source | Checksum |
 |---|---|---|

@@ -1,5 +1,11 @@
 # LineageOS on the ZTE Axon 7
 
+Kernel: [`kernel-4.4/`](kernel-4.4) is a submodule of
+[devilAPI/android_kernel_zte_msm8996](https://github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7)
+(branch `axon7`, Linux 4.4.302 with the Axon 7 series from
+`kernel-4.4-patches/` applied). Check it out with
+`git submodule update --init lineageos-22.2/kernel-4.4`.
+
 Status (2026-11-05): **no LineageOS 19.1 or newer exists for the Axon 7**,
 neither builds nor sources. The newest is an unofficial **LineageOS 18.1
 (Android 11)** by blueyfish / rcky844 (tipzbuilds), 2026-11-01.
