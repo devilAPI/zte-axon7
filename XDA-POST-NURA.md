@@ -10,9 +10,11 @@ replacing the old text, then save.
 
 Last update: 2026-11-09
 
-**Before the first post:** the "Nura images" workflow builds every change
-into a draft release (nura-DATE); test it on a phone, publish it, and the
-link to `nura-latest` in this post shows it.
+First image release published 2026-11-09 (nura-20261109), tested on the
+phone from a freshly written card: first start with the firmware copy, the
+root partition grows to the card, modem online, Wi-Fi, GPS engine. The
+"Nura images" workflow builds every change into a draft release (nura-DATE);
+publish it after testing and the `nura-latest` link in this post follows.
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
@@ -71,7 +73,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [LIST]
 [*]The modem starts and switches itself on (it needed room for its file-system buffer above the kernel, and someone to set it online). It restarts itself a few times in the first two minutes after power-on; it is switched on again each time.
 [*]Nura uses the whole microSD card: the system partition grows to the card size at the first start (it stayed at 1.2 GB before).
-[*]GPS: the console tool [I]sudo axon7-gps --status[/I] shows the satellites and the position; [I]axon7-gps --nmea[/I] gives NMEA for other programs. Outdoors the first fix takes about 10 minutes, indoors there is usually none. (In the next image; on older installs after the next update.)
+[*]GPS: the console tool [I]sudo axon7-gps --status[/I] shows the satellites and the position; [I]axon7-gps --nmea[/I] gives NMEA for other programs. Outdoors the first fix takes about 10 minutes, indoors there is usually none.
 [*]A memory region that ZTE reserves for the modem side (vlog) is kept free.
 [/LIST]
 [/SPOILER]

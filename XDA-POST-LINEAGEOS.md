@@ -10,12 +10,11 @@ replacing the old text, then save.
 
 Last update: 2026-11-09
 
-**Before posting this version:** publish the first TWRP zip (Actions →
-"LineageOS 22.2 zip" → draft release → publish). The zip install was tested on
-2026-11-09 with the devtest variant (same zip, /data on los_data): TWRP 3.7.0
-flashed system, vendor and boot, the phone booted with SELinux enforcing.
-Do not publish a draft built before commit "standalone build ... platform
-by-name path" (patch 0057): those zips stop in TWRP with E1001.
+First release published 2026-11-09 (lineageos-22.2-20261109; the download
+link in the post points to lineageos-latest, which follows each published
+release). The install was tested with the devtest variant of the same zip
+(/data on los_data): TWRP 3.7.0 flashed system, vendor and boot, the phone
+booted with SELinux enforcing.
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
