@@ -13,7 +13,8 @@ Last update: 2026-11-09
 First release published 2026-11-09 (lineageos-22.2-20261109; the download
 link in the post points to lineageos-latest, which follows each published
 release). The install was tested with the devtest variant of the same zip
-(/data on los_data): TWRP 3.7.0 flashed system, vendor and boot, the phone
+(/data on los_data): TWRP 3.3.0-0 (the oldest supported) flashed system,
+vendor and boot, the phone
 booted with SELinux enforcing.
 
 <!-- XDA-POST-BEGIN -->
