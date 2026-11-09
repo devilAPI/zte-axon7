@@ -3,11 +3,20 @@
 # threads always point to the newest published build:
 #   https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest
 #   https://github.com/devilAPI/zte-axon7/releases/tag/nura-latest
+# The fixed tag is put on the newest commit of main, not on the release's own
+# commit: a tag on an older commit whose workflow files differ from main counts
+# as a workflow change, which the Actions token may not make (HTTP 403).
+# Run by hand (workflow_dispatch) to redo the copy for a published release.
 name: Latest links
 
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release to copy (e.g. lineageos-22.2-20261109)
+        required: true
 
 permissions:
   contents: write
@@ -19,24 +28,25 @@ concurrency:
 jobs:
   latest:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.release.tag_name, 'lineageos-22.2-') || startsWith(github.event.release.tag_name, 'nura-2')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'lineageos-22.2-') || startsWith(github.event.release.tag_name, 'nura-2')
     steps:
       - name: Refresh the fixed release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-          TITLE: ${{ github.event.release.name }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
           REPO: ${{ github.repository }}
         run: |
           case $TAG in
             lineageos-*) latest=lineageos-latest ;;
             nura-*) latest=nura-latest ;;
+            *) echo "::error::$TAG is not a LineageOS or Nura release"; exit 1 ;;
           esac
+          TITLE=$(gh release view "$TAG" --repo "$REPO" --json name -q .name)
           mkdir files && cd files
           gh release download "$TAG" --repo "$REPO"
           gh release view "$TAG" --repo "$REPO" --json body -q .body > ../notes.md
           printf '\n\n---\nThis is a copy of **%s** (%s), the newest published build.\n' "$TITLE" "$TAG" >> ../notes.md
           gh release delete "$latest" --repo "$REPO" --yes --cleanup-tag 2>/dev/null || true
           gh release create "$latest" ./* --repo "$REPO" --latest=false \
-            --target "$(gh api "repos/$REPO/git/ref/tags/$TAG" -q .object.sha)" \
+            --target "$(gh api "repos/$REPO/commits/${{ github.event.repository.default_branch }}" -q .sha)" \
             --title "$TITLE (latest)" --notes-file ../notes.md
