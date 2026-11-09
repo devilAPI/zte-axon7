@@ -93,7 +93,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [SIZE=5][B]Source[/B][/SIZE]
 [B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux, branch zte-axon7[/URL] (Linux 7.3.1 with the Axon 7 patches); kernel configuration: [URL='https://github.com/devilAPI/zte-axon7/blob/main/postmarketos/pmaports-local/device/testing/linux-zte-axon7/config-zte-axon7.aarch64']config-zte-axon7.aarch64[/URL]
 Packages, build scripts and docs: [URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (folder postmarketos)
-The same project also brings LineageOS 22.2 (beta) and iOS 16 (alpha) to the Axon 7, each with its own thread.
+The same project also brings LineageOS 22.2 (unofficial release) and iOS 16 (alpha) to the Axon 7, each with its own thread.
 
 [SIZE=5][B]Credits[/B][/SIZE]
 postmarketOS, the mainline Linux and msm8996 mainline developers, Richard Acayan (ath10k key-deletion fix), TWRP.

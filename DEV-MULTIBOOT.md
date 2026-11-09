@@ -17,7 +17,7 @@ step is a button press or a command you can copy.
 > | Boot menu (choose the OS at power-on) | works |
 > | iOS 16.7.16 | boots to the home screen, touch, Wi-Fi, GPU, Sileo (jailbreak). No calls/mobile data, no camera, no audio. |
 > | Nura (postmarketOS, Linux) | boots from the microSD card: display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG (mouse, keyboard, stick). No calls, no audio, no camera. |
-> | LineageOS 22 (Android 15) | **beta**: almost all hardware works (see [lineageos/README.md](lineageos/README.md)); on its own as a TWRP zip, here in the multi-boot slot built from source |
+> | LineageOS 22 (Android 15) | **unofficial release**: almost all hardware works (see [lineageos/README.md](lineageos/README.md)); on its own as a TWRP zip, here in the multi-boot slot built from source |
 >
 > There are **no ready-made downloads** yet: Apple's iOS and the phone's
 > firmware may not be redistributed, so the guide builds them on your PC
