@@ -1,0 +1,58 @@
+From 5ffc3d419922c10cf555df3646a7e4e7bf0db1aa Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 10:38:28 +0100
+Subject: [PATCH] arm64: dts: qcom: msm8996-zte-axon7: rmtfs above the kernel,
+ ZTE vlog region
+
+The bootloader loads the kernel and initramfs at 0xa0000000, inside the
+32 MiB that msm8996.dtsi allows for rmtfs, so the allocation failed and
+the modem never started. Allow 512 MiB above 0xa0000000.
+
+Keep ZTE's vlog region (0x9ff00000, 1 MiB) out of Linux, as their kernel
+does: the bootloader hands it to another writer.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 2f2b3d73b..3716bb097 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -91,6 +91,16 @@ ramoops@bfc00000 {
+ 			ftrace-size = <0x100000>;
+ 			pmsg-size = <0x100000>;
+ 		};
++
++		/*
++		 * ZTE "vlog": 1 MiB the bootloader hands to another writer
++		 * (address and size in vendor IMEM); ZTE's kernel keeps it out
++		 * of Linux, so do we.
++		 */
++		vlog@9ff00000 {
++			reg = <0x0 0x9ff00000 0x0 0x100000>;
++			no-map;
++		};
+ 	};
+ 
+ 	divclk1_cdc: divclk1 {
+@@ -505,6 +515,15 @@ &mmcc {
+ 	vdd-gfx-supply = <&vdd_gfx>;
+ };
+ 
++/*
++ * The bootloader loads the kernel and initramfs at 0xa0000000, inside the
++ * 32 MiB the SoC dtsi allows for rmtfs: no room is left and the modem cannot
++ * start. Allow the whole 512 MiB above it.
++ */
++&rmtfs_mem {
++	alloc-ranges = <0x0 0xa0000000 0x0 0x20000000>;
++};
++
+ &mss_pil {
+ 	status = "okay";
+ 
+-- 
+2.56.0
+

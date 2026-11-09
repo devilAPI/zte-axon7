@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""axon7-gps: GPS from the Axon 7's modem (QMI LOC over QRTR, no libqmi).
+
+  axon7-gps [--nmea | --status] [SECONDS]
+
+--nmea (default): the modem's NMEA sentences on stdout, e.g. for gpsd.
+--status: once per second: satellites (state, signal in dB-Hz, elevation)
+and the position. Runs SECONDS (default: until interrupted). Needs root
+(QRTR socket) and the modem online (axon7-modem.service). Outdoors the first
+fix takes about 10 minutes without assistance data, indoors usually none."""
+import os
+import socket
+import struct
+import sys
+import time
+
+AF_QIPCRTR = getattr(socket, 'AF_QIPCRTR', 42)
+LOC_SERVICE = 16
+QMI_REG_EVENTS, QMI_START, QMI_STOP, QMI_SET_NMEA = 0x21, 0x22, 0x23, 0x3E
+IND_POSITION, IND_SV_INFO, IND_NMEA = 0x24, 0x25, 0x26
+SYSTEMS = {1: 'GPS', 2: 'GAL', 3: 'SBAS', 4: 'BDS', 5: 'GLO', 6: 'BDS', 7: 'QZSS'}
+STATES = {1: 'idle', 2: 'search', 3: 'track'}
+SESSION = 7
+
+
+def usage():
+    print(__doc__.strip(), file=sys.stderr)
+    sys.exit(2)
+
+
+def find_loc(sock):
+    """Look up the LOC service with the QRTR name service (control port)."""
+    ctrl = socket.socket(AF_QIPCRTR, socket.SOCK_DGRAM)
+    ctrl.settimeout(1.0)
+    # QRTR_TYPE_NEW_LOOKUP = 10: type, service, instance, node, port
+    local_node = ctrl.getsockname()[0]     # autobinds, like libqrtr
+    ctrl.sendto(struct.pack('<5I', 10, LOC_SERVICE, 0, 0, 0), (local_node, 0xfffffffe))
+    end = time.time() + 5
+    while time.time() < end:
+        try:
+            data, _ = ctrl.recvfrom(64)
+        except socket.timeout:
+            continue
+        typ, service, _instance, node, port = struct.unpack_from('<5I', data)
+        if typ == 4 and service == LOC_SERVICE and port:  # QRTR_TYPE_NEW_SERVER
+            return node, port
+    return None
+
+
+def tlv(t, data):
+    return struct.pack('<BH', t, len(data)) + data
+
+
+def parse_tlvs(b):
+    out, i = {}, 0
+    while i + 3 <= len(b):
+        t, ln = struct.unpack_from('<BH', b, i)
+        out[t] = b[i + 3:i + 3 + ln]
+        i += 3 + ln
+    return out
+
+
+def sv_list(t):
+    rows = []
+    b = t.get(0x10, b'')
+    for k in range(b[0] if b else 0):
+        e = b[1 + 28 * k:29 + 28 * k]
+        if len(e) < 28:
+            break
+        _vm, system, svid, _h, state, _im, elev, _az, snr = struct.unpack('<IIHBIBfff', e)
+        rows.append((SYSTEMS.get(system, str(system)), svid, STATES.get(state, str(state)), snr, elev))
+    return rows
+
+
+def main():
+    mode, secs = 'nmea', None
+    for a in sys.argv[1:]:
+        if a in ('--nmea', '--status'):
+            mode = a[2:]
+        elif a.isdigit():
+            secs = int(a)
+        else:
+            usage()
+    s = socket.socket(AF_QIPCRTR, socket.SOCK_DGRAM)
+    s.settimeout(1.0)
+    addr = find_loc(s)
+    if not addr:
+        sys.exit('axon7-gps: no LOC service on QRTR (is the modem up? systemctl status rmtfs)')
+    txn = [0]
+
+    def send(msg, payload=b''):
+        txn[0] += 1
+        s.sendto(struct.pack('<BHHH', 0, txn[0], msg, len(payload)) + payload, addr)
+
+    send(QMI_REG_EVENTS, tlv(0x01, struct.pack('<Q', 0x07)))   # position, SV info, NMEA
+    send(QMI_SET_NMEA, tlv(0x01, struct.pack('<I', 0xFFFF)))
+    # periodic fixes, intermediate reports, 1 s interval
+    send(QMI_START, tlv(0x01, bytes([SESSION])) + tlv(0x10, struct.pack('<I', 1))
+         + tlv(0x12, struct.pack('<I', 1)) + tlv(0x13, struct.pack('<I', 1000)))
+    start, sats, fix = time.time(), [], 'no fix'
+    try:
+        while secs is None or time.time() - start < secs:
+            try:
+                b, _ = s.recvfrom(65536)
+            except socket.timeout:
+                continue
+            flags, _t, msg, ln = struct.unpack_from('<BHHH', b, 0)
+            if flags != 4:          # indications only
+                continue
+            t = parse_tlvs(b[7:7 + ln])
+            if msg == IND_NMEA and 0x01 in t and mode == 'nmea':
+                print(t[0x01].split(b'\0')[0].decode(errors='replace').strip(), flush=True)
+            elif msg == IND_SV_INFO:
+                sats = sv_list(t)
+            elif msg == IND_POSITION and mode == 'status':
+                status = struct.unpack('<I', t[0x01][:4])[0] if 0x01 in t else -1
+                if 0x10 in t and 0x11 in t and status == 0:      # 0 = success
+                    lat, lon = struct.unpack('<d', t[0x10])[0], struct.unpack('<d', t[0x11])[0]
+                    unc = struct.unpack('<f', t[0x12])[0] if 0x12 in t else float('nan')
+                    fix = f'fix {lat:.6f} {lon:.6f} +-{unc:.0f} m'
+                else:
+                    fix = 'no fix'
+                heard = [x for x in sats if x[3] > 0]
+                line = ' '.join(f'{x[0]}{x[1]}:{x[3]:.0f}' for x in sorted(heard, key=lambda x: -x[3]))
+                print(f'{time.time() - start:6.0f}s  {len(sats)} sats, {len(heard)} heard  {fix}  {line}',
+                      flush=True)
+    except (KeyboardInterrupt, BrokenPipeError):
+        # e.g. `axon7-gps | head`: no traceback, no error at exit
+        sys.stdout = open(os.devnull, 'w')
+    finally:
+        send(QMI_STOP, tlv(0x01, bytes([SESSION])))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,24 @@
+#!/bin/sh
+# Axon 7: switch the modem online once it is up. After a start by rmtfs the
+# modem stays in the DMS operating mode "shutting-down" (radios off, GPS sees
+# no satellites) until a client sets a mode; without ModemManager nobody does.
+# Waits up to 120 s for the DMS service (QMI service 2) on QRTR node 0.
+log() { echo "axon7-modem: $*"; }
+
+i=0
+until qrtr-lookup 2>/dev/null | awk '$1 == 2 && $4 == 0 { found = 1 } END { exit !found }'; do
+	i=$((i + 1))
+	[ "$i" -ge 120 ] && { log "no DMS service on the modem after 120 s, not switched"; exit 1; }
+	sleep 1
+done
+
+for try in 1 2 3; do
+	if qmicli -d qrtr://0 --dms-set-operating-mode=online >/dev/null 2>&1; then
+		mode=$(qmicli -d qrtr://0 --dms-get-operating-mode 2>/dev/null | sed -n "s/.*Mode: '\(.*\)'/\1/p")
+		log "modem operating mode: ${mode:-unknown}"
+		exit 0
+	fi
+	sleep 2
+done
+log "could not switch the modem online"
+exit 1

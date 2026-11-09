@@ -27,3 +27,6 @@ lineageos/downloads/
 *.dmg
 *.dtb
 __pycache__/
+
+# private phone backups (EFS holds the IMEI)
+backup/

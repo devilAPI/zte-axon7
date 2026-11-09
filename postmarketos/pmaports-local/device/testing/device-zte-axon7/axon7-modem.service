@@ -1,0 +1,12 @@
+[Unit]
+Description=Axon 7 modem: operating mode online (radios and GPS on)
+After=rmtfs.service
+Wants=rmtfs.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/axon7-modem
+
+[Install]
+WantedBy=multi-user.target

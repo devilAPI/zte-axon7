@@ -3,3 +3,4 @@ enable buffyboard.service
 enable axon7-console.service
 enable bluetooth.service
 enable axon7-firmware.service
+enable axon7-modem.service

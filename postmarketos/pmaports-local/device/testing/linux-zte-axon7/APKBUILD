@@ -5,7 +5,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=6
+pkgrel=7
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -44,6 +44,7 @@ source="
 	0006-usb-typec-add-Pericom-PI5USB302-CC-logic-driver.patch
 	0007-arm64-dts-qcom-msm8996-zte-axon7-PI5USB302-Type-C-va.patch
 	0008-wifi-ath10k-only-wait-for-the-firmware-s-answer-to-S.patch
+	0009-arm64-dts-qcom-msm8996-zte-axon7-rmtfs-above-the-ker.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -84,5 +85,6 @@ e06b7ffcff5fd34e60bf5de8d36c39bc36aee74fd754cd6e2be88bc331e21354b4e4a998443dbd2f
 a9a23598bc7a29fcc54f7379dc2ea4464bec825b28df9b8a7a9002bacfdfdc9a49e0328c13f6b0a7d110b8e3d1165c9477f3590ca18f8d0c6ab3d8bf5d40cadc  0006-usb-typec-add-Pericom-PI5USB302-CC-logic-driver.patch
 ae66c337ea84b00692f8aa2d8df50666d15afaa84375f5c027d76b3b46b45f4dfe09d690b5b396216469efc665c40c630f79c130116a9c64c6c05247bf3c6e75  0007-arm64-dts-qcom-msm8996-zte-axon7-PI5USB302-Type-C-va.patch
 25157495ed0eff590d1dd905cf0849a225e6e4a56199a6ddfe4d157bfd39e69bea27d12b0c8433bc2210cedb725aeb94028a3f684c3ab68dc1236d35d7011ac0  0008-wifi-ath10k-only-wait-for-the-firmware-s-answer-to-S.patch
+f76f7fe6955ef531721b971303444f81d743a40b881a1aee30e2599316cb27cf06a0dbaefad160e621d490781530f1cc8ac4325a7d71395ca5f919b4afa7946c  0009-arm64-dts-qcom-msm8996-zte-axon7-rmtfs-above-the-ker.patch
 46b53a11b506a36a922fd26e6d45f9974a64d76a5d1ed8665d6427fe2cd2147e684d73c6918bf632798cb395d6845463583fd98167a4774bf13babc077f49da6  config-zte-axon7.aarch64
 "
