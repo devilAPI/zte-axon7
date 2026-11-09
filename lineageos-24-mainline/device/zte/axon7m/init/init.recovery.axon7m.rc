@@ -1,0 +1,4 @@
+# Recovery (also the M0 test image): adb over the dwc3 gadget
+on init
+    setprop sys.usb.configfs 1
+    setprop sys.usb.controller 6a00000.usb

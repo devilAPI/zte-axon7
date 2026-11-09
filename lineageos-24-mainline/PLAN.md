@@ -77,7 +77,7 @@ assumption, still to verify, **[D]** decision.
 | Project | What it shows | What we take |
 | --- | --- | --- |
 | **Linaro `device/linaro/dragonboard`** (db845c, rb5, sm8450, sm8550) in AOSP ([tree](https://android.googlesource.com/device/linaro/dragonboard/+/refs/heads/main)), last public commit 2025-03-26 [V] | AOSP on ACK/android-mainline for Qualcomm boards: dynamic partitions, erofs, f2fs + FBE, wpa_supplicant `-Dnl80211`, `bdaddr` tool for the BT address, `rmtfs`/`pd-mapper`/`qrtr`/`tqftpserv` in vendor, `dlkm_loader` (modules after /vendor), `suspend_blocker`, legacy tinyalsa audio HAL (`audio.primary.db845c`), graphics: Mesa (`libEGL_mesa`, `ro.hardware.egl=mesa`), `drm_hwcomposer`, `minigbm` (`soong_config minigbm platform msm`), `swangle` (SwiftShader + ANGLE) fallback | the whole skeleton: fstab, init rc, sepolicy pieces, shared/utils, graphics config. No msm8996 target exists there [V: directory listing] |
-| **AOSPM** ([github.com/aospm](https://github.com/aospm)) by the sdm845 mainline community (OnePlus 6, Poco F1), 2021-2023 | `android_device_generic_sdm845`, **qrild** + **libqril** (open QMI/QRTR RIL; data call came up, DNS never did), `tinyhal` audio, `external_vibrator-ff` (force-feedback vibrator HAL for upstream haptics), `android-lights-hal` | radio HAL starting point, vibrator HAL (our haptics driver is an ff device), lights HAL |
+| **AOSPM** ([github.com/aospm](https://github.com/aospm)) by the sdm845 mainline community (OnePlus 6, Poco F1), 2021-2023 | `android_device_generic_sdm845`, **qrild** + **libqril** (open QMI/QRTR RIL on the split **AIDL** radio interfaces `radio.config/data/messaging/modem/network` [V: source in /srv/los24/ref]; data call came up, DNS never did; development halted, libqril rewritten as a standalone library), `tinyhal` audio, `external_vibrator-ff` (force-feedback vibrator HAL for upstream haptics), `android-lights-hal` | radio HAL starting point, vibrator HAL (our haptics driver is an ff device), lights HAL |
 | **Linaro "AOSP on Pixel 3 / Poco F1"** ([blog](https://old.linaro.org/blog/aosp-on-pixel3-pocof1-running-aosp-with-mainline-kernel-on-form-factor-devices)) | AOSP on mainline phones (not dev boards) is doable | confidence, not code |
 | **GloDroid** ([manifest](https://github.com/GloDroid/glodroid_manifest)) | AOSP on mainline for Allwinner/RPi/PinePhone: Mesa built with meson inside AOSP (`aospext`), drm_hwcomposer, minigbm `gbm_mesa`, tinyhal | Mesa build recipe if NDK prebuilts become a pain |
 | **Mesa in AOSP** (`external/mesa3d` @ android-17: Mesa 26.1-devel) [V] | its generated `Android.bp` builds only the gfxstream (virtual GPU) parts | freedreno has to be built separately: Mesa's documented meson + NDK Android build, shipped as vendor prebuilts (what Linaro's vendor package does) |
@@ -234,6 +234,7 @@ and selects menu entry 3 (IMEM/misc mark as today).
 | # | Goal | Exit criterion | Needs phone | Estimate |
 | --- | --- | --- | --- | --- |
 | M0a | Kernel with Android config builds; boot image v2 builds | Image < 48 MiB, config check clean | no | 2-3 d (**in progress**) |
+| M0a' | **Boot path test without Android**: Android-config kernel + Nura's storage-safe test initramfs (busybox, USB NCM 172.16.42.1 + telnet) as a header-v2 image in `los_boot` | telnet works; `dmesg` shows binder/SELinux/erofs/f2fs, rmtfs address, UDC `6a00000.usb`; pstore console after a crash | yes (1 test, ~20 min) | 1 d |
 | M0b | Mainline kernel + Android first-stage init from `los_boot` | pstore shows init's first stage; adb in a ramdisk-only (recovery-mode) boot | yes (2-4 tests) | 3-5 d |
 | M1a | Full Android boot with SwiftShader | `sys.boot_completed=1`, adb, boot animation then launcher (slow) | yes, + new slot | 1-2 wk |
 | M1b | freedreno + drm_hwcomposer + minigbm | SurfaceFlinger on DRM, smooth UI | yes | 1-2 wk |
@@ -262,7 +263,21 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | Telephony stack (RIL + IPA v2.5 + q6voice) | no phone functions | treat as stretch; ship as Wi-Fi device first |
 | Android 17 framework assumptions about ACK (quota2, uid_sys_stats) | log noise or broken features | ACK android-mainline fallback |
 
-## 8. What is implemented (see README.md for commands)
+## 8. Findings while implementing
+
+- Kconfig on 7.3.1 (2026-11-09): `SCHED_DEBUG`, `NF_CT_PROTO_UDPLITE` and
+  `DMABUF_SYSFS_STATS` no longer exist; legacy iptables needs
+  `IP_NF_IPTABLES_LEGACY`/`IP6_NF_IPTABLES_LEGACY`=y (else every `IP_NF_*`
+  stays a module); `IFB` needs `NET_ACT_MIRRED`; Nura's lockdown LSM selects
+  `MODULE_SIG` (dropped for Android).
+- Server: `chown -R` on the kernel tree makes git re-hash all files (an hour
+  on the busy HDD); `grep -q` behind `git log` under `pipefail` reports
+  "not found" (SIGPIPE). Both handled in `kernel-build.sh`.
+- `ios/` is a submodule (ios-sailfish): the fourth menu entry is prepared as
+  `shim/0001-boot-menu-fourth-entry-l24_boot.patch` (host test builds with
+  `-Werror`, aarch64 syntax check clean), not applied.
+
+## 9. What is implemented (see README.md for commands)
 
 - `/srv/los24/lineage-24.0`: `repo init -b lineage-24.0 --depth=1 --git-lfs`,
   sync running in tmux `los24sync` (user `build`), log
@@ -275,7 +290,7 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 - `manifest/axon7m.xml`: local manifest (reference trees stay outside the
   Android tree).
 
-## 9. Sources
+## 10. Sources
 
 - LineageOS Changelog 32: https://lineageos.org/Changelog-32/
 - LineageOS manifest lineage-24.0: https://github.com/LineageOS/android/tree/lineage-24.0

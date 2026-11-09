@@ -8,7 +8,7 @@
 #                 Image (raw: the multi-boot shim does not gunzip), dtb/,
 #                 modules/*.ko + modules.load*, config, System.map, version
 #
-# Usage (as user build):  kernel-build.sh [setup|config|build|stage|all]   (default all)
+# Usage (as user build):  kernel-build.sh [setup|config|build|stage|all]...   (default all)
 #   setup   apply missing patches (Nura series from AXON7_REPO, then ours)
 #   config  Nura config + kernel/android-axon7m.config -> out/.config
 #   build   Image, dtbs, modules
@@ -17,6 +17,8 @@
 # Environment:
 #   AXON7_REPO  copy of the zte-axon7 repository (default /srv/los24/axon7/repo)
 #   J           make jobs (default 7)
+# Note: never chown -R the kernel tree: git then re-hashes every file
+# (an hour on the server's busy HDD).
 # Time: a full build from scratch takes about 25-35 min on the 7-thread server,
 # a rebuild after a driver change 1-3 min.
 set -euo pipefail
@@ -43,7 +45,8 @@ pick_clang() {
 }
 
 kmake() {
-	make -C "$KSRC" O="$KOUT" ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+	# LOCALVERSION= : no "+" from setlocalversion (the tree is not at a tag)
+	make -C "$KSRC" O="$KOUT" ARCH=arm64 LLVM=1 LLVM_IAS=1 LOCALVERSION= \
 		HOSTCFLAGS="-I/usr/include -I/usr/include/x86_64-linux-gnu" \
 		HOSTLDFLAGS="-L/usr/lib/x86_64-linux-gnu -fuse-ld=lld" \
 		-j"$J" "$@"
@@ -59,7 +62,8 @@ setup() {
 		[ -e "$p" ] || continue
 		# subject as git am would record it (folded Subject: lines joined)
 		s=$(git mailinfo /dev/null /dev/null < "$p" | sed -n 's/^Subject: //p')
-		if git log --format=%s | grep -qxF -- "$s"; then continue; fi
+		# no grep -q: with pipefail, git log would die of SIGPIPE and "fail"
+		if git log --format=%s | grep -xF -- "$s" >/dev/null; then continue; fi
 		echo "apply $(basename "$p")"
 		git am -q --whitespace=nowarn "$p"
 	done
@@ -101,11 +105,14 @@ stage() {
 }
 
 pick_clang
-case "${1:-all}" in
+echo "== $(date -u +%FT%TZ) kernel-build.sh ${*:-all}, clang $CL"
+for step in "${@:-all}"; do
+	case "$step" in
 	setup) setup ;;
 	config) config ;;
 	build) build ;;
 	stage) stage ;;
 	all) setup; config; build; stage ;;
-	*) echo "usage: $0 [setup|config|build|stage|all]" >&2; exit 2 ;;
-esac
+	*) echo "usage: $0 [setup|config|build|stage|all]..." >&2; exit 2 ;;
+	esac
+done
