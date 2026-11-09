@@ -1,0 +1,47 @@
+# LineageOS 22.2 TWRP zip for the ZTE Axon 7, built on the project's own build
+# server (self-hosted runner, label axon7-build). Started by hand only
+# (Actions → "LineageOS 22.2 zip" → Run workflow): no push or pull_request
+# trigger, so nobody else's code runs on the server. The zip goes to a DRAFT
+# release; publish it on GitHub after checking it.
+name: LineageOS 22.2 zip
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Upload as a draft GitHub release
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: axon7-lineageos-build
+  cancel-in-progress: false
+
+jobs:
+  zip:
+    runs-on: [self-hosted, axon7-build]
+    timeout-minutes: 720
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: lineageos/ci
+
+      - name: Build (standalone TWRP zip)
+        id: build
+        run: bash lineageos/ci/build-zip.sh
+
+      - name: Draft release
+        if: inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZIP: ${{ steps.build.outputs.zip }}
+        run: |
+          name=$(basename "$ZIP" .zip)            # lineage-22.2-DATE-UNOFFICIAL-axon7
+          date=$(echo "$name" | cut -d- -f3)
+          gh release create "lineageos-22.2-$date" "$ZIP" "$ZIP.sha256" \
+            --repo "$GITHUB_REPOSITORY" --draft \
+            --title "LineageOS 22.2 for the ZTE Axon 7 ($date)" \
+            --notes-file lineageos/ci/release-notes.md
