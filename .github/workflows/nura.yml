@@ -110,7 +110,9 @@ jobs:
 
       - name: pmbootstrap log (on failure)
         if: failure()
-        run: tail -n 150 "$PMB_WORK/log.txt" || true
+        run: |
+          grep -nE "error:|Error [0-9]|ERROR|undefined reference|No such file|FAILED" "$PMB_WORK/log.txt" | grep -v "^.*-Werror" | head -n 60 || true
+          tail -n 60 "$PMB_WORK/log.txt" || true
 
       - name: Draft release
         if: github.event_name == 'push' || inputs.release
