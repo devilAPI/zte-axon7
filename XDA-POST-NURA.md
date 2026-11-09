@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-08
+Last update: 2026-11-09
 
 **Before the first post:** the install without the boot menu
 (INSTALL-NURA.md) still has to be confirmed once on a phone.
@@ -38,6 +38,13 @@ There is [B]no ready-made download[/B]: the phone's firmware may not be redistri
 Step-by-step guide: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md on GitHub[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-09"]
+[LIST]
+[*]The modem starts and switches itself on (it needed room for its file-system buffer above the kernel, and someone to set it online).
+[*]GPS: the console tool [I]sudo axon7-gps --status[/I] shows the satellites and the position; [I]axon7-gps --nmea[/I] gives NMEA for other programs. Outdoors the first fix takes about 10 minutes, indoors there is usually none. (In the next image; on older installs after the next update.)
+[*]A memory region that ZTE reserves for the modem side (vlog) is kept free.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-08"]
 [LIST]
 [*]The postmarketOS port is now called [B]Nura[/B] and is in beta.
