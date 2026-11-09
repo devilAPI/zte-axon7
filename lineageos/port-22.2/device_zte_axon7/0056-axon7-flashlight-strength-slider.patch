@@ -1,0 +1,98 @@
+From 83e639f6b61952e34a3c540dc270346df2c4bf66 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Sun, 8 Nov 2026 23:31:08 +0000
+Subject: [PATCH 56/56] axon7: flashlight strength slider
+
+init (system_ext) copies persist.sys.axon7.torch_pct, which only SystemUI
+(platform_app) may set, to msm_flash axon7_torch_pct; its own sysfs label
+lets init write it. The SystemUI overlay enables the slider.
+
+Change-Id: Ifa93ae37af276096a157cef0fceabd5ad10affce
+---
+ BoardConfig.mk                                              | 1 +
+ configs/init/init.axon7-torch.rc                            | 4 ++++
+ device.mk                                                   | 4 ++++
+ .../frameworks/base/packages/SystemUI/res/values/config.xml | 2 ++
+ sepolicy/private/axon7_torch.te                             | 6 ++++++
+ sepolicy/private/genfs_contexts                             | 1 +
+ sepolicy/private/property_contexts                          | 1 +
+ 7 files changed, 19 insertions(+)
+ create mode 100644 configs/init/init.axon7-torch.rc
+ create mode 100644 sepolicy/private/axon7_torch.te
+ create mode 100644 sepolicy/private/genfs_contexts
+ create mode 100644 sepolicy/private/property_contexts
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 0154233..7344a81 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -214,6 +214,7 @@ VENDOR_SECURITY_PATCH := 2018-12-01
+ include device/qcom/sepolicy-legacy-um/SEPolicy.mk
+ 
+ BOARD_VENDOR_SEPOLICY_DIRS += $(PLATFORM_PATH)/sepolicy/vendor
++SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(PLATFORM_PATH)/sepolicy/private
+ 
+ # Treble
+ PRODUCT_FULL_TREBLE_OVERRIDE := true
+diff --git a/configs/init/init.axon7-torch.rc b/configs/init/init.axon7-torch.rc
+new file mode 100644
+index 0000000..ad33236
+--- /dev/null
++++ b/configs/init/init.axon7-torch.rc
+@@ -0,0 +1,4 @@
++# Flashlight strength: the QS flashlight tile slider sets the property, the
++# camera flash driver scales the torch current (also while the torch is on).
++on property:persist.sys.axon7.torch_pct=*
++    write /sys/module/msm_flash/parameters/axon7_torch_pct ${persist.sys.axon7.torch_pct}
+diff --git a/device.mk b/device.mk
+index e178ffc..dac9a7a 100644
+--- a/device.mk
++++ b/device.mk
+@@ -515,3 +515,7 @@ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/test/axon7-misc-pmos.bin:$(TARGET_COPY_OUT_VENDOR)/etc/axon7-misc-pmos.bin \
+     $(LOCAL_PATH)/test/axon7-testguard.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7-testguard.sh
+ endif
++
++# Flashlight strength slider (QS flashlight tile, long press)
++PRODUCT_COPY_FILES += \
++    $(LOCAL_PATH)/configs/init/init.axon7-torch.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/init.axon7-torch.rc
+diff --git a/overlay/frameworks/base/packages/SystemUI/res/values/config.xml b/overlay/frameworks/base/packages/SystemUI/res/values/config.xml
+index 86324aa..99ceb27 100644
+--- a/overlay/frameworks/base/packages/SystemUI/res/values/config.xml
++++ b/overlay/frameworks/base/packages/SystemUI/res/values/config.xml
+@@ -6,4 +6,6 @@
+ -->
+ <resources>
+     <bool name="config_enablePrivacyDot">false</bool>
++    <!-- Axon 7: the flash driver supports torch strength (axon7_torch_pct) -->
++    <bool name="config_flashlightStrengthSlider">true</bool>
+ </resources>
+diff --git a/sepolicy/private/axon7_torch.te b/sepolicy/private/axon7_torch.te
+new file mode 100644
+index 0000000..e1bedd3
+--- /dev/null
++++ b/sepolicy/private/axon7_torch.te
+@@ -0,0 +1,6 @@
++# Flashlight strength (QS flashlight tile slider -> init -> msm_flash)
++system_internal_prop(axon7_torch_prop)
++set_prop(platform_app, axon7_torch_prop)
++
++type sysfs_axon7_torch, sysfs_type, fs_type;
++allow init sysfs_axon7_torch:file w_file_perms;
+diff --git a/sepolicy/private/genfs_contexts b/sepolicy/private/genfs_contexts
+new file mode 100644
+index 0000000..def8cf0
+--- /dev/null
++++ b/sepolicy/private/genfs_contexts
+@@ -0,0 +1 @@
++genfscon sysfs /module/msm_flash/parameters/axon7_torch_pct u:object_r:sysfs_axon7_torch:s0
+diff --git a/sepolicy/private/property_contexts b/sepolicy/private/property_contexts
+new file mode 100644
+index 0000000..f293439
+--- /dev/null
++++ b/sepolicy/private/property_contexts
+@@ -0,0 +1 @@
++persist.sys.axon7.torch_pct u:object_r:axon7_torch_prop:s0 exact int
+-- 
+2.47.3
+

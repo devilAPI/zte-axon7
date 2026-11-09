@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-08
+Last update: 2026-11-09
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
@@ -19,10 +19,10 @@ Last update: 2026-11-08
 A port of LineageOS 22.2 (Android 15) to the ZTE Axon 7. The newest official LineageOS for the phone is 18.1; this one runs on the msm8996 4.4 kernel with ZTE's own drivers (audio codec, fingerprint, NFC, camera parts) ported from ZTE's 3.18 kernel, and Android 15 shims for the old vendor blobs.
 Phase: [B]alpha[/B]. Developer builds only.
 
-[SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
+[SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
 [TABLE]
 [TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight, all 42 sensors, GPS service, fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]GPS (no satellite signal: the modem receives nothing, likely its firmware; parked), the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
+[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight (with strength slider), all 42 sensors, GPS service, fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]GPS (no satellite signal: the modem receives nothing, likely its firmware; parked), the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -30,6 +30,11 @@ Phase: [B]alpha[/B]. Developer builds only.
 Developers can build it from source; the developer setup (a multi-boot with iOS and Nura on one phone) is described here: [URL='https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md']DEV-MULTIBOOT.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-09"]
+[LIST]
+[*]Flashlight strength: long-press the flashlight tile in Quick Settings for a slider (the torch blinks briefly at each step: the LED chip takes a new current only when switched on).
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-08"]
 [LIST]
 [*]The battery icon sits at the right edge of the status bar (Android kept space free there for a privacy dot).

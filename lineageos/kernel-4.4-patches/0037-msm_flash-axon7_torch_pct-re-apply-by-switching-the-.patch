@@ -1,0 +1,58 @@
+From c66454f02253fa81350f5411813f006c662ac9ed Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Mon, 9 Nov 2026 07:45:35 +0000
+Subject: [PATCH 37/37] msm_flash: axon7_torch_pct: re-apply by switching the
+ torch off and on
+
+The PMI8994 takes a new torch current only at switch-on (confirmed on the
+phone: rewriting the current while lit does nothing, off/on does).
+
+Change-Id: I1653ed3ae47016b31899c88dcef92d97b45e3df0
+---
+ .../msm/camera_v2/sensor/flash/msm_flash.c    | 22 ++++++++++++++-----
+ 1 file changed, 16 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/media/platform/msm/camera_v2/sensor/flash/msm_flash.c b/drivers/media/platform/msm/camera_v2/sensor/flash/msm_flash.c
+index 5282232c6fee..a3de605304ad 100644
+--- a/drivers/media/platform/msm/camera_v2/sensor/flash/msm_flash.c
++++ b/drivers/media/platform/msm/camera_v2/sensor/flash/msm_flash.c
+@@ -14,6 +14,7 @@
+ #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
+ 
+ #include <linux/module.h>
++#include <linux/delay.h>
+ #include <linux/of_gpio.h>
+ #include <linux/leds-qpnp-flash.h>
+ #include "msm_flash.h"
+@@ -58,13 +59,22 @@ static int axon7_torch_pct_set(const char *val, const struct kernel_param *kp)
+ 		return -EINVAL;
+ 	mutex_lock(&axon7_torch_lock);
+ 	axon7_torch_pct = v;
+-	if (axon7_torch_ctrl)
+-		for (i = 0; i < axon7_torch_ctrl->torch_num_sources; i++)
+-			if (axon7_torch_ctrl->torch_trigger[i] &&
+-				axon7_torch_curr[i])
+-				led_trigger_event(
+-					axon7_torch_ctrl->torch_trigger[i],
++	if (axon7_torch_ctrl) {
++		struct msm_flash_ctrl_t *c = axon7_torch_ctrl;
++
++		/*
++		 * The PMI8994 takes a new torch current only when the torch is
++		 * switched on: off, let the (queued) LED work run, then on.
++		 */
++		for (i = 0; i < c->torch_num_sources; i++)
++			if (c->torch_trigger[i] && axon7_torch_curr[i])
++				led_trigger_event(c->torch_trigger[i], 0);
++		msleep(30);
++		for (i = 0; i < c->torch_num_sources; i++)
++			if (c->torch_trigger[i] && axon7_torch_curr[i])
++				led_trigger_event(c->torch_trigger[i],
+ 					axon7_torch_scale(axon7_torch_curr[i]));
++	}
+ 	mutex_unlock(&axon7_torch_lock);
+ 	return 0;
+ }
+-- 
+2.47.3
+

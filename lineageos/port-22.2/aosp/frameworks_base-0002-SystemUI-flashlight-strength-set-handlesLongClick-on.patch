@@ -1,0 +1,30 @@
+From 08b7c6fd0526acc9d1924b8f772689ef69b7a7d2 Mon Sep 17 00:00:00 2001
+From: axon7-build <axon7-build@localhost>
+Date: Mon, 9 Nov 2026 06:56:42 +0000
+Subject: [PATCH 2/2] SystemUI: flashlight strength: set handlesLongClick on
+ every update
+
+newTileState() runs in the QSTileImpl constructor, before mHasStrength is
+read, so the tile never became long-clickable.
+
+Change-Id: I10ec11170bc0f034a1fda289c1405f75fa2bd9f6
+---
+ .../src/com/android/systemui/qs/tiles/FlashlightTile.java       | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
+index c568a3aaa..c5c116043 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
+@@ -206,6 +206,8 @@ public class FlashlightTile extends QSTileImpl<BooleanState> implements
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        // newTileState() runs in the QSTileImpl constructor, before mHasStrength is set
++        state.handlesLongClick = mHasStrength;
+         state.label = mHost.getContext().getString(R.string.quick_settings_flashlight_label);
+         state.secondaryLabel = "";
+         state.stateDescription = "";
+-- 
+2.47.3
+
