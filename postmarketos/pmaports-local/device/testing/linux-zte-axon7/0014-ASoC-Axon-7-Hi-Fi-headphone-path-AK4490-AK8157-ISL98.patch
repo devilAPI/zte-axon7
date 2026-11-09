@@ -1,0 +1,1193 @@
+From cf7c0478af6fb423b6be62f53b02153f6636ef44 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 22:49:35 +0100
+Subject: [PATCH 14/14] ASoC: Axon 7 Hi-Fi headphone path: AK4490, AK8157,
+ ISL98608, MI2S in apq8096
+
+New drivers, written from the register use of ZTE's msm-3.18 drivers:
+- ak4490: AK4490 DAC, I2S consumer, 32-bit I2S framing, DFS per rate,
+  RSTN as the DAPM DAC bit, soft mute plus an optional external mute
+  GPIO, dvdd/avdd supplies and PDN, powered only while used.
+- ak8157: AK8157 clock generator as a second codec on the link; it is
+  the I2S clock provider (rate register, outputs on/off per stream).
+- isl98608-regulator: the ISL98608 analog supply as one regulator
+  (enable GPIO, then ZTE's 14 register values).
+
+apq8096: MI2S back ends. qcom,mi2s-clock-consumer on a link makes the
+CPU DAI a clock consumer (BC_FC) with the port's EBIT clock gated on in
+hw_params (IBIT otherwise), off at shutdown; SLIMbus links unchanged.
+
+Axon 7 DT: AK4490 + ISL98608 on BLSP1 QUP3, AK8157 on QUP6 (both resets),
+Quaternary MI2S RX on SD1 (TLMM 58/59/61), ISL54405 switch fixed to the
+AK4490 and muted by the codec, all PMIC control pins at 1.8 V (S4) as
+downstream (they came up on VPH), sound card "ZTE Axon 7".
+
+Tested: card registers, 48 kHz playback in real time, the stream stalls
+when the AK8157 clocks are cut, and while playing the DAC, clock,
+switch and supply states equal ZTE's.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 188 ++++++++++
+ drivers/regulator/Kconfig                     |   8 +
+ drivers/regulator/Makefile                    |   1 +
+ drivers/regulator/isl98608-regulator.c        | 141 ++++++++
+ sound/soc/codecs/Kconfig                      |  17 +
+ sound/soc/codecs/Makefile                     |   4 +
+ sound/soc/codecs/ak4490.c                     | 339 ++++++++++++++++++
+ sound/soc/codecs/ak8157.c                     | 178 +++++++++
+ sound/soc/qcom/apq8096.c                      | 103 +++++-
+ 9 files changed, 974 insertions(+), 5 deletions(-)
+ create mode 100644 drivers/regulator/isl98608-regulator.c
+ create mode 100644 sound/soc/codecs/ak4490.c
+ create mode 100644 sound/soc/codecs/ak8157.c
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index d28756aef..5f68053bc 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -14,6 +14,8 @@
+ #include <dt-bindings/input/input.h>
+ #include <dt-bindings/leds/common.h>
+ #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
++#include <dt-bindings/sound/qcom,q6asm.h>
++#include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
+ #include "msm8996.dtsi"
+ #include "pm8994.dtsi"
+ #include "pmi8994.dtsi"
+@@ -123,6 +125,15 @@ divclk4: divclk4 {
+ 		pinctrl-0 = <&divclk4_pin_a>;
+ 	};
+ 
++	hifi_ldo: hifi-ldo-regulator {
++		compatible = "regulator-fixed";
++		regulator-name = "hifi_ldo";
++		gpio = <&tlmm 93 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++		pinctrl-names = "default";
++		pinctrl-0 = <&hifi_ldo_default>;
++	};
++
+ 	/* ZTE P996A01, 3250 mAh, float voltage 4.4 V (zte_p996a01_3250mah.dtsi) */
+ 	battery: battery {
+ 		compatible = "simple-battery";
+@@ -559,6 +570,15 @@ &pcie_phy {
+ };
+ 
+ &pm8994_gpios {
++	/* Hi-Fi: AK8157 clock generator reset (GPIO 1, and GPIO 12 as in ZTE's tree) */
++	ak8157_reset_default: ak8157-reset-state {
++		pins = "gpio1", "gpio12";
++		function = PMIC_GPIO_FUNC_NORMAL;
++		output-low;
++		bias-disable;
++		power-source = <PM8994_GPIO_S4>;
++	};
++
+ 	vol_keys_default: vol-keys-state {
+ 		pins = "gpio2", "gpio3";
+ 		function = PMIC_GPIO_FUNC_NORMAL;
+@@ -619,6 +639,22 @@ bt_en_default: bt-en-state {
+ };
+ 
+ &pm8994_mpps {
++	/* Hi-Fi: ISL54405 headphone switch select, MPP 2 (0 = AK4490, 1 = AK4961) */
++	hph_sel_default: hph-sel-state {
++		pins = "mpp2";
++		function = "digital";
++		output-low;
++		power-source = <2>;
++	};
++
++	/* Hi-Fi: ISL54405 mute, MPP 4 (1 = muted) */
++	hph_mute_default: hph-mute-state {
++		pins = "mpp4";
++		function = "digital";
++		output-high;
++		power-source = <2>;
++	};
++
+ 	typec_en_default: typec-en-state {
+ 		/* MPP 5: EN_CC / USB 3.0 mux, MPP 7: SS re-driver; enabled high */
+ 		pins = "mpp5", "mpp7";
+@@ -660,6 +696,106 @@ vreg_apc_0p8: s11 {
+ };
+ 
+ /* Notification LED, downstream qpnp RGB (ids 3/4/5 = R/G/B) */
++/*
++ * Hi-Fi headphone path (ZTE's msm-3.18 tree): AK4490 DAC and ISL98608
++ * supply on BLSP1 QUP3, AK8157 clock generator (the I2S clock provider)
++ * on BLSP1 QUP6, Quaternary MI2S from the ADSP, and an ISL54405 switch
++ * that connects the jack to the AK4490 (or to the AK4961, which has no
++ * driver yet, so the switch stays on the AK4490).
++ */
++&blsp1_i2c3 {
++	status = "okay";
++
++	hifi_dac: audio-codec@10 {
++		compatible = "asahi-kasei,ak4490";
++		reg = <0x10>;
++		#sound-dai-cells = <0>;
++
++		dvdd-supply = <&hifi_ldo>;
++		avdd-supply = <&hifi_avdd>;
++		pdn-gpios = <&pmi8994_gpios 1 GPIO_ACTIVE_LOW>;
++		/* ISL54405 mute, high = muted */
++		mute-gpios = <&pm8994_mpps 4 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&ak4490_pdn_default &hph_mute_default &hph_sel_default
++			     &hph_switch_power_default &hifi_pop_default>;
++	};
++
++	hifi_avdd: regulator@29 {
++		compatible = "isil,isl98608";
++		reg = <0x29>;
++		regulator-name = "hifi_avdd";
++		enable-gpios = <&pmi8994_mpps 4 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&isl98608_en_default>;
++	};
++};
++
++&blsp1_i2c6 {
++	status = "okay";
++
++	hifi_clk: clock-generator@11 {
++		compatible = "asahi-kasei,ak8157";
++		reg = <0x11>;
++		#sound-dai-cells = <0>;
++		reset-gpios = <&pm8994_gpios 1 GPIO_ACTIVE_LOW>,
++			      <&pm8994_gpios 12 GPIO_ACTIVE_LOW>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&ak8157_reset_default>;
++	};
++};
++
++&q6afedai {
++	dai@22 {
++		reg = <QUATERNARY_MI2S_RX>;
++		/* ZTE: qcom,msm-mi2s-rx-lines = <2> (bit 1, SD1 on TLMM 61) */
++		qcom,sd-lines = <1>;
++	};
++};
++
++&q6asmdai {
++	dai@0 {
++		reg = <MSM_FRONTEND_DAI_MULTIMEDIA1>;
++	};
++};
++
++&sound {
++	compatible = "qcom,apq8096-sndcard";
++	model = "ZTE Axon 7";
++
++	pinctrl-names = "default";
++	pinctrl-0 = <&quat_mi2s_default>;
++
++	mm1-dai-link {
++		link-name = "MultiMedia1";
++
++		cpu {
++			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
++		};
++	};
++
++	hifi-dai-link {
++		link-name = "Hi-Fi Headphones";
++		/* BCLK and WS come from the AK8157 */
++		qcom,mi2s-clock-consumer;
++
++		cpu {
++			sound-dai = <&q6afedai QUATERNARY_MI2S_RX>;
++		};
++
++		platform {
++			sound-dai = <&q6routing>;
++		};
++
++		codec {
++			sound-dai = <&hifi_dac>, <&hifi_clk>;
++		};
++	};
++};
++
+ &pmi8994_fg {
+ 	/* read-only: no charger driver yet, so no "power-supplies" */
+ 	monitored-battery = <&battery>;
+@@ -684,7 +820,34 @@ led {
+ 	};
+ };
+ 
++&pmi8994_mpps {
++	/* Hi-Fi: ISL98608 supply enable (MPP 4) */
++	isl98608_en_default: isl98608-en-state {
++		pins = "mpp4";
++		function = "digital";
++		output-low;
++		power-source = <2>;
++	};
++};
++
+ &pmi8994_gpios {
++	/* Hi-Fi: AK4490 PDN (GPIO 1), ISL54405 switch power (GPIO 10) */
++	ak4490_pdn_default: ak4490-pdn-state {
++		pins = "gpio1";
++		function = PMIC_GPIO_FUNC_NORMAL;
++		output-low;
++		bias-disable;
++		power-source = <PM8994_GPIO_S4>;
++	};
++
++	hph_switch_power_default: hph-switch-power-state {
++		pins = "gpio10";
++		function = PMIC_GPIO_FUNC_NORMAL;
++		output-high;
++		bias-disable;
++		power-source = <PM8994_GPIO_S4>;
++	};
++
+ 	typec_vreg_default: typec-vreg-state {
+ 		/* GPIO 8: VCONN 5 V regulator enable, GPIO 9: HD3SS3220 3.3 V */
+ 		pins = "gpio8", "gpio9";
+@@ -1046,6 +1209,31 @@ hall_default: hall-default-state {
+ 		bias-disable;
+ 	};
+ 
++	/* Hi-Fi: AK4490 LDO enable */
++	hifi_ldo_default: hifi-ldo-default-state {
++		pins = "gpio93";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
++	/* Hi-Fi: output anti-pop switch, high while the Hi-Fi path is used (ZTE) */
++	hifi_pop_default: hifi-pop-default-state {
++		pins = "gpio74";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++		output-high;
++	};
++
++	/* Quaternary MI2S: SCK 58, WS 59 (both from the AK8157), SD1 61 */
++	quat_mi2s_default: quat-mi2s-default-state {
++		pins = "gpio58", "gpio59", "gpio61";
++		function = "qua_mi2s";
++		drive-strength = <8>;
++		bias-disable;
++	};
++
+ 	mdss_dsi_default: mdss-dsi-default-state {
+ 		pins = "gpio8";
+ 		function = "gpio";
+diff --git a/drivers/regulator/Kconfig b/drivers/regulator/Kconfig
+index 5eb18762f..1c0dfa1ac 100644
+--- a/drivers/regulator/Kconfig
++++ b/drivers/regulator/Kconfig
+@@ -487,6 +487,14 @@ config REGULATOR_HI6421V600
+ 	  HiSilicon Hi6421v600 PMU / Codec IC.
+ 	  This is used on Kirin 3670 boards, like HiKey 970.
+ 
++config REGULATOR_ISL98608
++	tristate "Intersil ISL98608 audio supply"
++	depends on I2C
++	select REGMAP_I2C
++	help
++	  The ISL98608 as a switchable supply for an audio output stage
++	  (enable GPIO plus a fixed I2C configuration).
++
+ config REGULATOR_ISL9305
+ 	tristate "Intersil ISL9305 regulator"
+ 	depends on I2C
+diff --git a/drivers/regulator/Makefile b/drivers/regulator/Makefile
+index b6fd60dc7..ed0ac27c2 100644
+--- a/drivers/regulator/Makefile
++++ b/drivers/regulator/Makefile
+@@ -58,6 +58,7 @@ obj-$(CONFIG_REGULATOR_HI6421V530) += hi6421v530-regulator.o
+ obj-$(CONFIG_REGULATOR_HI6421V600) += hi6421v600-regulator.o
+ obj-$(CONFIG_REGULATOR_HI655X) += hi655x-regulator.o
+ obj-$(CONFIG_REGULATOR_ISL6271A) += isl6271a-regulator.o
++obj-$(CONFIG_REGULATOR_ISL98608) += isl98608-regulator.o
+ obj-$(CONFIG_REGULATOR_ISL9305) += isl9305.o
+ obj-$(CONFIG_REGULATOR_FP9931) += fp9931.o
+ obj-$(CONFIG_REGULATOR_LM363X) += lm363x-regulator.o
+diff --git a/drivers/regulator/isl98608-regulator.c b/drivers/regulator/isl98608-regulator.c
+new file mode 100644
+index 000000000..12e8f30b6
+--- /dev/null
++++ b/drivers/regulator/isl98608-regulator.c
+@@ -0,0 +1,141 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Renesas (Intersil) ISL98608 supply for an audio output stage, as one
++ * switchable regulator.
++ *
++ * The chip is enabled with a GPIO and then configured over I2C. The
++ * register values are the ones ZTE programs on the ZTE Axon 7 Hi-Fi path
++ * (msm-3.18 isl98608.c, default "not 7 V" variant); the outputs are not
++ * otherwise adjustable here.
++ */
++
++#include <linux/delay.h>
++#include <linux/gpio/consumer.h>
++#include <linux/i2c.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/regmap.h>
++#include <linux/regulator/driver.h>
++#include <linux/regulator/of_regulator.h>
++
++#define ISL98608_CTRL		0x05
++#define ISL98608_CTRL_OFF	0x80
++
++static const struct reg_sequence isl98608_on_seq[] = {
++	{ 0x00, 0x00 }, { 0x01, 0x00 }, { 0x02, 0x00 }, { 0x03, 0x00 },
++	{ 0x04, 0x00 }, { 0x05, 0x87 }, { 0x06, 0x0d }, { 0x07, 0x00 },
++	{ 0x08, 0x00 }, { 0x09, 0x08 }, { 0x0a, 0xf0 }, { 0x0b, 0x0a },
++	{ 0x0c, 0x05 }, { 0x0d, 0x34 },
++};
++
++struct isl98608 {
++	struct regmap *regmap;
++	struct gpio_desc *enable;
++	bool on;
++};
++
++static int isl98608_enable(struct regulator_dev *rdev)
++{
++	struct isl98608 *isl = rdev_get_drvdata(rdev);
++	int ret;
++
++	gpiod_set_value_cansleep(isl->enable, 1);
++	usleep_range(10000, 11000);
++
++	ret = regmap_multi_reg_write(isl->regmap, isl98608_on_seq,
++				     ARRAY_SIZE(isl98608_on_seq));
++	if (ret) {
++		gpiod_set_value_cansleep(isl->enable, 0);
++		return ret;
++	}
++	isl->on = true;
++	return 0;
++}
++
++static int isl98608_disable(struct regulator_dev *rdev)
++{
++	struct isl98608 *isl = rdev_get_drvdata(rdev);
++
++	regmap_write(isl->regmap, ISL98608_CTRL, ISL98608_CTRL_OFF);
++	gpiod_set_value_cansleep(isl->enable, 0);
++	isl->on = false;
++	return 0;
++}
++
++static int isl98608_is_enabled(struct regulator_dev *rdev)
++{
++	struct isl98608 *isl = rdev_get_drvdata(rdev);
++
++	return isl->on;
++}
++
++static const struct regulator_ops isl98608_ops = {
++	.enable		= isl98608_enable,
++	.disable	= isl98608_disable,
++	.is_enabled	= isl98608_is_enabled,
++};
++
++static const struct regulator_desc isl98608_desc = {
++	.name		= "isl98608",
++	.of_match	= NULL,
++	.ops		= &isl98608_ops,
++	.type		= REGULATOR_VOLTAGE,
++	.owner		= THIS_MODULE,
++	.enable_time	= 10000,
++};
++
++static const struct regmap_config isl98608_regmap = {
++	.reg_bits	= 8,
++	.val_bits	= 8,
++	.max_register	= 0x0d,
++	.cache_type	= REGCACHE_NONE,
++};
++
++static int isl98608_probe(struct i2c_client *i2c)
++{
++	struct device *dev = &i2c->dev;
++	struct regulator_config config = {};
++	struct regulator_dev *rdev;
++	struct isl98608 *isl;
++
++	isl = devm_kzalloc(dev, sizeof(*isl), GFP_KERNEL);
++	if (!isl)
++		return -ENOMEM;
++
++	isl->regmap = devm_regmap_init_i2c(i2c, &isl98608_regmap);
++	if (IS_ERR(isl->regmap))
++		return PTR_ERR(isl->regmap);
++
++	isl->enable = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
++	if (IS_ERR(isl->enable))
++		return dev_err_probe(dev, PTR_ERR(isl->enable), "no enable gpio\n");
++
++	config.dev = dev;
++	config.of_node = dev->of_node;
++	config.driver_data = isl;
++	config.init_data = of_get_regulator_init_data(dev, dev->of_node,
++						      &isl98608_desc);
++
++	rdev = devm_regulator_register(dev, &isl98608_desc, &config);
++	if (IS_ERR(rdev))
++		return dev_err_probe(dev, PTR_ERR(rdev), "cannot register\n");
++	return 0;
++}
++
++static const struct of_device_id isl98608_of_match[] = {
++	{ .compatible = "isil,isl98608" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, isl98608_of_match);
++
++static struct i2c_driver isl98608_driver = {
++	.driver = {
++		.name = "isl98608",
++		.of_match_table = isl98608_of_match,
++	},
++	.probe = isl98608_probe,
++};
++module_i2c_driver(isl98608_driver);
++
++MODULE_DESCRIPTION("ISL98608 audio supply regulator");
++MODULE_LICENSE("GPL");
+diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
+index 8e251e1d8..abf71a967 100644
+--- a/sound/soc/codecs/Kconfig
++++ b/sound/soc/codecs/Kconfig
+@@ -42,7 +42,9 @@ config SND_SOC_ALL_CODECS
+ 	imply SND_SOC_AK4118
+ 	imply SND_SOC_AK4375
+ 	imply SND_SOC_AK4458
++	imply SND_SOC_AK4490
+ 	imply SND_SOC_AK4535
++	imply SND_SOC_AK8157
+ 	imply SND_SOC_AK4554
+ 	imply SND_SOC_AK4613
+ 	imply SND_SOC_AK4619
+@@ -605,6 +607,21 @@ config SND_SOC_AK4458
+ 	depends on I2C
+ 	select REGMAP_I2C
+ 
++config SND_SOC_AK4490
++	tristate "AKM AK4490 DAC"
++	depends on I2C
++	select REGMAP_I2C
++	help
++	  The AK4490 stereo DAC in PCM (I2S) mode, as a clock consumer.
++
++config SND_SOC_AK8157
++	tristate "AKM AK8157 audio clock generator"
++	depends on I2C
++	select REGMAP_I2C
++	help
++	  The AK8157 audio clock generator as the I2S clock provider on a
++	  DAI link (rate and output enable per stream).
++
+ config SND_SOC_AK4535
+ 	tristate
+ 	depends on I2C
+diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
+index 3d122ace7..eeed8bd8c 100644
+--- a/sound/soc/codecs/Makefile
++++ b/sound/soc/codecs/Makefile
+@@ -36,6 +36,8 @@ snd-soc-ak4104-y := ak4104.o
+ snd-soc-ak4118-y := ak4118.o
+ snd-soc-ak4375-y := ak4375.o
+ snd-soc-ak4458-y := ak4458.o
++snd-soc-ak4490-y := ak4490.o
++snd-soc-ak8157-y := ak8157.o
+ snd-soc-ak4535-y := ak4535.o
+ snd-soc-ak4554-y := ak4554.o
+ snd-soc-ak4613-y := ak4613.o
+@@ -479,6 +481,8 @@ obj-$(CONFIG_SND_SOC_AK4104)	+= snd-soc-ak4104.o
+ obj-$(CONFIG_SND_SOC_AK4118)	+= snd-soc-ak4118.o
+ obj-$(CONFIG_SND_SOC_AK4375)	+= snd-soc-ak4375.o
+ obj-$(CONFIG_SND_SOC_AK4458)	+= snd-soc-ak4458.o
++obj-$(CONFIG_SND_SOC_AK4490)	+= snd-soc-ak4490.o
++obj-$(CONFIG_SND_SOC_AK8157)	+= snd-soc-ak8157.o
+ obj-$(CONFIG_SND_SOC_AK4535)	+= snd-soc-ak4535.o
+ obj-$(CONFIG_SND_SOC_AK4554)	+= snd-soc-ak4554.o
+ obj-$(CONFIG_SND_SOC_AK4613)	+= snd-soc-ak4613.o
+diff --git a/sound/soc/codecs/ak4490.c b/sound/soc/codecs/ak4490.c
+new file mode 100644
+index 000000000..3441b1fc8
+--- /dev/null
++++ b/sound/soc/codecs/ak4490.c
+@@ -0,0 +1,339 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * AKM AK4490 stereo DAC (PCM mode, I2S, clock consumer).
++ *
++ * Written for the ZTE Axon 7 Hi-Fi path from the register usage of ZTE's
++ * msm-3.18 driver: the DAC is fed by I2S whose clocks come from an
++ * external generator, it runs in 32-bit I2S mode (DIF = 111), the
++ * sampling speed is set with DFS/DFS2, and RSTN in CONTROL1 is the DAPM
++ * power bit of the DAC.
++ *
++ * Supplies: "dvdd" (digital/LDO) and "avdd" (analog). PDN is the
++ * power-down pin, asserted while the codec is off.
++ */
++
++#include <linux/delay.h>
++#include <linux/gpio/consumer.h>
++#include <linux/i2c.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/regmap.h>
++#include <linux/regulator/consumer.h>
++#include <sound/pcm_params.h>
++#include <sound/soc.h>
++#include <sound/tlv.h>
++
++#define AK4490_CONTROL1		0x00
++#define AK4490_RSTN		BIT(0)
++#define AK4490_DIF_MASK		GENMASK(3, 1)
++#define AK4490_DIF_I2S_32	(7 << 1)
++#define AK4490_CONTROL2		0x01
++#define AK4490_SMUTE		BIT(0)
++#define AK4490_DFS_MASK		GENMASK(4, 3)
++#define AK4490_DFS_NORMAL	(0 << 3)
++#define AK4490_DFS_DOUBLE	(1 << 3)
++#define AK4490_DFS_QUAD		(2 << 3)
++#define AK4490_CONTROL3		0x02
++#define AK4490_LATT		0x03
++#define AK4490_RATT		0x04
++#define AK4490_CONTROL4		0x05
++#define AK4490_DFS2		BIT(1)
++#define AK4490_DSD1		0x06
++#define AK4490_CONTROL5		0x07
++#define AK4490_CONTROL6		0x08
++#define AK4490_DSD2		0x09
++#define AK4490_MAX_REG		AK4490_DSD2
++
++static const char * const ak4490_supply_names[] = { "dvdd", "avdd" };
++
++struct ak4490_priv {
++	struct regmap *regmap;
++	struct gpio_desc *pdn;
++	struct gpio_desc *mute;
++	struct regulator_bulk_data supplies[ARRAY_SIZE(ak4490_supply_names)];
++};
++
++static const struct reg_default ak4490_reg_defaults[] = {
++	{ AK4490_CONTROL1, 0x04 },
++	{ AK4490_CONTROL2, 0x22 },
++	{ AK4490_CONTROL3, 0x00 },
++	{ AK4490_LATT,     0xff },
++	{ AK4490_RATT,     0xff },
++	{ AK4490_CONTROL4, 0x00 },
++	{ AK4490_DSD1,     0x00 },
++	{ AK4490_CONTROL5, 0x00 },
++	{ AK4490_CONTROL6, 0x00 },
++	{ AK4490_DSD2,     0x00 },
++};
++
++/* 0.5 dB steps from -127 dB, 0x00 is mute */
++static const DECLARE_TLV_DB_SCALE(ak4490_att_tlv, -12750, 50, 1);
++
++static const char * const ak4490_dem_texts[] = { "44.1kHz", "Off", "48kHz", "32kHz" };
++static SOC_ENUM_SINGLE_DECL(ak4490_dem_enum, AK4490_CONTROL2, 1, ak4490_dem_texts);
++
++static const struct snd_kcontrol_new ak4490_controls[] = {
++	SOC_DOUBLE_R_TLV("Digital Playback Volume", AK4490_LATT, AK4490_RATT,
++			 0, 0xff, 0, ak4490_att_tlv),
++	SOC_ENUM("De-emphasis", ak4490_dem_enum),
++	SOC_SINGLE("Short Delay Filter Switch", AK4490_CONTROL2, 5, 1, 0),
++	SOC_SINGLE("Slow Roll-off Filter Switch", AK4490_CONTROL3, 0, 1, 0),
++	SOC_SINGLE("Super Slow Roll-off Filter Switch", AK4490_CONTROL4, 0, 1, 0),
++};
++
++static const struct snd_soc_dapm_widget ak4490_dapm_widgets[] = {
++	SND_SOC_DAPM_DAC("DAC", "Playback", AK4490_CONTROL1, 0, 0),
++	SND_SOC_DAPM_OUTPUT("AOUTL"),
++	SND_SOC_DAPM_OUTPUT("AOUTR"),
++};
++
++static const struct snd_soc_dapm_route ak4490_dapm_routes[] = {
++	{ "AOUTL", NULL, "DAC" },
++	{ "AOUTR", NULL, "DAC" },
++};
++
++static int ak4490_hw_params(struct snd_pcm_substream *substream,
++			    struct snd_pcm_hw_params *params,
++			    struct snd_soc_dai *dai)
++{
++	struct snd_soc_component *component = dai->component;
++	unsigned int rate = params_rate(params);
++	unsigned int dfs, dfs2 = 0;
++
++	if (rate <= 54000)
++		dfs = AK4490_DFS_NORMAL;
++	else if (rate <= 108000)
++		dfs = AK4490_DFS_DOUBLE;
++	else if (rate <= 216000)
++		dfs = AK4490_DFS_QUAD;
++	else
++		return -EINVAL;
++
++	snd_soc_component_update_bits(component, AK4490_CONTROL2,
++				      AK4490_DFS_MASK, dfs);
++	snd_soc_component_update_bits(component, AK4490_CONTROL4,
++				      AK4490_DFS2, dfs2);
++	/* 32-bit I2S framing for every sample width, as ZTE runs it */
++	snd_soc_component_update_bits(component, AK4490_CONTROL1,
++				      AK4490_DIF_MASK, AK4490_DIF_I2S_32);
++	return 0;
++}
++
++static int ak4490_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
++{
++	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_I2S)
++		return -EINVAL;
++	if ((fmt & SND_SOC_DAIFMT_CLOCK_PROVIDER_MASK) != SND_SOC_DAIFMT_CBC_CFC)
++		return -EINVAL;
++	return 0;
++}
++
++static int ak4490_mute_stream(struct snd_soc_dai *dai, int mute, int stream)
++{
++	struct snd_soc_component *component = dai->component;
++	struct ak4490_priv *ak4490 = snd_soc_component_get_drvdata(component);
++
++	if (mute) {
++		/* external output switch first, then the DAC (ZTE: 50 ms) */
++		if (ak4490->mute) {
++			gpiod_set_value_cansleep(ak4490->mute, 1);
++			msleep(50);
++		}
++		snd_soc_component_update_bits(component, AK4490_CONTROL2,
++					      AK4490_SMUTE, AK4490_SMUTE);
++	} else {
++		snd_soc_component_update_bits(component, AK4490_CONTROL2,
++					      AK4490_SMUTE, 0);
++		if (ak4490->mute) {
++			msleep(50);
++			gpiod_set_value_cansleep(ak4490->mute, 0);
++		}
++	}
++	return 0;
++}
++
++static const struct snd_soc_dai_ops ak4490_dai_ops = {
++	.hw_params	= ak4490_hw_params,
++	.set_fmt	= ak4490_set_fmt,
++	.mute_stream	= ak4490_mute_stream,
++	.no_capture_mute = 1,
++};
++
++#define AK4490_RATES	(SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 | \
++			 SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 | \
++			 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 | \
++			 SNDRV_PCM_RATE_192000)
++#define AK4490_FORMATS	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | \
++			 SNDRV_PCM_FMTBIT_S32_LE)
++
++static struct snd_soc_dai_driver ak4490_dai = {
++	.name = "ak4490",
++	.playback = {
++		.stream_name	= "Playback",
++		.channels_min	= 1,
++		.channels_max	= 2,
++		.rates		= AK4490_RATES,
++		.formats	= AK4490_FORMATS,
++	},
++	.ops = &ak4490_dai_ops,
++};
++
++static int ak4490_power_on(struct ak4490_priv *ak4490)
++{
++	int ret;
++
++	gpiod_set_value_cansleep(ak4490->pdn, 1);
++	ret = regulator_bulk_enable(ARRAY_SIZE(ak4490->supplies), ak4490->supplies);
++	if (ret)
++		return ret;
++	/* supplies settle, then out of power-down (ZTE: 10 ms) */
++	msleep(10);
++	gpiod_set_value_cansleep(ak4490->pdn, 0);
++	usleep_range(1000, 2000);
++
++	regcache_cache_only(ak4490->regmap, false);
++	ret = regcache_sync(ak4490->regmap);
++	if (ret) {
++		gpiod_set_value_cansleep(ak4490->pdn, 1);
++		regulator_bulk_disable(ARRAY_SIZE(ak4490->supplies), ak4490->supplies);
++		regcache_cache_only(ak4490->regmap, true);
++	}
++	return ret;
++}
++
++static void ak4490_power_off(struct ak4490_priv *ak4490)
++{
++	regcache_cache_only(ak4490->regmap, true);
++	regcache_mark_dirty(ak4490->regmap);
++	gpiod_set_value_cansleep(ak4490->pdn, 1);
++	regulator_bulk_disable(ARRAY_SIZE(ak4490->supplies), ak4490->supplies);
++}
++
++static int ak4490_set_bias_level(struct snd_soc_component *component,
++				 enum snd_soc_bias_level level)
++{
++	struct ak4490_priv *ak4490 = snd_soc_component_get_drvdata(component);
++	struct snd_soc_dapm_context *dapm = snd_soc_component_to_dapm(component);
++
++	switch (level) {
++	case SND_SOC_BIAS_STANDBY:
++		if (snd_soc_dapm_get_bias_level(dapm) == SND_SOC_BIAS_OFF)
++			return ak4490_power_on(ak4490);
++		break;
++	case SND_SOC_BIAS_OFF:
++		ak4490_power_off(ak4490);
++		break;
++	default:
++		break;
++	}
++	return 0;
++}
++
++static const struct snd_soc_component_driver ak4490_component = {
++	.controls		= ak4490_controls,
++	.num_controls		= ARRAY_SIZE(ak4490_controls),
++	.dapm_widgets		= ak4490_dapm_widgets,
++	.num_dapm_widgets	= ARRAY_SIZE(ak4490_dapm_widgets),
++	.dapm_routes		= ak4490_dapm_routes,
++	.num_dapm_routes	= ARRAY_SIZE(ak4490_dapm_routes),
++	.set_bias_level		= ak4490_set_bias_level,
++	.idle_bias_on		= 0,
++	.endianness		= 1,
++};
++
++static bool ak4490_volatile(struct device *dev, unsigned int reg)
++{
++	return false;
++}
++
++static const struct regmap_config ak4490_regmap = {
++	.reg_bits		= 8,
++	.val_bits		= 8,
++	.max_register		= AK4490_MAX_REG,
++	.reg_defaults		= ak4490_reg_defaults,
++	.num_reg_defaults	= ARRAY_SIZE(ak4490_reg_defaults),
++	.volatile_reg		= ak4490_volatile,
++	.cache_type		= REGCACHE_FLAT,
++};
++
++static int ak4490_i2c_probe(struct i2c_client *i2c)
++{
++	struct device *dev = &i2c->dev;
++	struct ak4490_priv *ak4490;
++	unsigned int i;
++	int ret;
++
++	ak4490 = devm_kzalloc(dev, sizeof(*ak4490), GFP_KERNEL);
++	if (!ak4490)
++		return -ENOMEM;
++
++	ak4490->regmap = devm_regmap_init_i2c(i2c, &ak4490_regmap);
++	if (IS_ERR(ak4490->regmap))
++		return PTR_ERR(ak4490->regmap);
++
++	for (i = 0; i < ARRAY_SIZE(ak4490->supplies); i++)
++		ak4490->supplies[i].supply = ak4490_supply_names[i];
++	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(ak4490->supplies),
++				      ak4490->supplies);
++	if (ret)
++		return dev_err_probe(dev, ret, "cannot get supplies\n");
++
++	/* asserted = powered down */
++	ak4490->pdn = devm_gpiod_get(dev, "pdn", GPIOD_OUT_HIGH);
++	if (IS_ERR(ak4490->pdn))
++		return dev_err_probe(dev, PTR_ERR(ak4490->pdn), "no pdn gpio\n");
++
++	/* optional external output mute (asserted = muted) */
++	ak4490->mute = devm_gpiod_get_optional(dev, "mute", GPIOD_OUT_HIGH);
++	if (IS_ERR(ak4490->mute))
++		return dev_err_probe(dev, PTR_ERR(ak4490->mute), "bad mute gpio\n");
++
++	/* check the chip once, then leave it off until used */
++	ret = ak4490_power_on(ak4490);
++	if (ret)
++		return dev_err_probe(dev, ret, "cannot power up\n");
++	{
++		unsigned int val;
++
++		regcache_cache_bypass(ak4490->regmap, true);
++		ret = regmap_read(ak4490->regmap, AK4490_CONTROL2, &val);
++		regcache_cache_bypass(ak4490->regmap, false);
++		if (!ret)
++			dev_info(dev, "AK4490 found, CONTROL2 %#x\n", val);
++	}
++	ak4490_power_off(ak4490);
++	if (ret)
++		return dev_err_probe(dev, ret, "no answer from the AK4490\n");
++
++	/* sound setting 2 (SC = 1), as ZTE sets it; written on power-up */
++	regmap_write(ak4490->regmap, AK4490_CONTROL6, 0x01);
++
++	i2c_set_clientdata(i2c, ak4490);
++	return devm_snd_soc_register_component(dev, &ak4490_component,
++					       &ak4490_dai, 1);
++}
++
++static const struct of_device_id ak4490_of_match[] = {
++	{ .compatible = "asahi-kasei,ak4490" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, ak4490_of_match);
++
++static const struct i2c_device_id ak4490_i2c_id[] = {
++	{ "ak4490" },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, ak4490_i2c_id);
++
++static struct i2c_driver ak4490_i2c_driver = {
++	.driver = {
++		.name = "ak4490",
++		.of_match_table = ak4490_of_match,
++	},
++	.probe = ak4490_i2c_probe,
++	.id_table = ak4490_i2c_id,
++};
++module_i2c_driver(ak4490_i2c_driver);
++
++MODULE_DESCRIPTION("ASoC AK4490 DAC driver");
++MODULE_LICENSE("GPL");
+diff --git a/sound/soc/codecs/ak8157.c b/sound/soc/codecs/ak8157.c
+new file mode 100644
+index 000000000..213c3439b
+--- /dev/null
++++ b/sound/soc/codecs/ak8157.c
+@@ -0,0 +1,178 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * AKM AK8157 audio clock generator, as a codec on the same DAI link as the
++ * DAC it clocks. It is the I2S clock provider: it makes MCLK, BCLK and
++ * LRCLK for the DAC and the SoC from its own PLL.
++ *
++ * Register use from ZTE's msm-3.18 driver (ZTE Axon 7):
++ *   0x00 output enables: 0xe7 all off, 0x00 all on (MCLK + I2S clocks)
++ *   0x01 sample rate:    0x01 44.1 kHz, 0x02 48 kHz, 0x12 96 kHz,
++ *                        0x22 192 kHz
++ */
++
++#include <linux/delay.h>
++#include <linux/gpio/consumer.h>
++#include <linux/i2c.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/regmap.h>
++#include <sound/pcm_params.h>
++#include <sound/soc.h>
++
++#define AK8157_OUTPUTS		0x00
++#define AK8157_OUTPUTS_OFF	0xe7
++#define AK8157_OUTPUTS_ALL	0x00
++#define AK8157_OUTPUTS_STEP	0xe0
++#define AK8157_RATE		0x01
++
++struct ak8157_priv {
++	struct regmap *regmap;
++};
++
++static int ak8157_rate_code(unsigned int rate)
++{
++	switch (rate) {
++	case 44100:
++		return 0x01;
++	case 48000:
++		return 0x02;
++	case 96000:
++		return 0x12;
++	case 192000:
++		return 0x22;
++	default:
++		return -EINVAL;
++	}
++}
++
++static int ak8157_hw_params(struct snd_pcm_substream *substream,
++			    struct snd_pcm_hw_params *params,
++			    struct snd_soc_dai *dai)
++{
++	struct ak8157_priv *ak8157 = snd_soc_component_get_drvdata(dai->component);
++	int code = ak8157_rate_code(params_rate(params));
++	int ret;
++
++	if (code < 0) {
++		dev_err(dai->dev, "unsupported rate %u\n", params_rate(params));
++		return code;
++	}
++
++	ret = regmap_write(ak8157->regmap, AK8157_RATE, code);
++	if (ret)
++		return ret;
++	usleep_range(5000, 6000);
++
++	/* ZTE switches the outputs on in two steps */
++	ret = regmap_write(ak8157->regmap, AK8157_OUTPUTS, AK8157_OUTPUTS_STEP);
++	if (!ret)
++		ret = regmap_write(ak8157->regmap, AK8157_OUTPUTS, AK8157_OUTPUTS_ALL);
++	return ret;
++}
++
++static void ak8157_shutdown(struct snd_pcm_substream *substream,
++			    struct snd_soc_dai *dai)
++{
++	struct ak8157_priv *ak8157 = snd_soc_component_get_drvdata(dai->component);
++
++	regmap_write(ak8157->regmap, AK8157_OUTPUTS, AK8157_OUTPUTS_OFF);
++}
++
++static int ak8157_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
++{
++	return 0;
++}
++
++static const struct snd_soc_dai_ops ak8157_dai_ops = {
++	.hw_params	= ak8157_hw_params,
++	.shutdown	= ak8157_shutdown,
++	.set_fmt	= ak8157_set_fmt,
++};
++
++static struct snd_soc_dai_driver ak8157_dai = {
++	.name = "ak8157",
++	.playback = {
++		.stream_name	= "Playback",
++		.channels_min	= 1,
++		.channels_max	= 8,
++		.rates		= SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |
++				  SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000,
++		.formats	= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |
++				  SNDRV_PCM_FMTBIT_S32_LE,
++	},
++	.ops = &ak8157_dai_ops,
++};
++
++static const struct snd_soc_component_driver ak8157_component = {
++	.endianness = 1,
++};
++
++static const struct regmap_config ak8157_regmap = {
++	.reg_bits	= 8,
++	.val_bits	= 8,
++	.max_register	= AK8157_RATE,
++	.cache_type	= REGCACHE_NONE,
++};
++
++static int ak8157_i2c_probe(struct i2c_client *i2c)
++{
++	struct device *dev = &i2c->dev;
++	struct gpio_descs *resets;
++	struct ak8157_priv *ak8157;
++	unsigned int i;
++	int ret;
++
++	ak8157 = devm_kzalloc(dev, sizeof(*ak8157), GFP_KERNEL);
++	if (!ak8157)
++		return -ENOMEM;
++
++	ak8157->regmap = devm_regmap_init_i2c(i2c, &ak8157_regmap);
++	if (IS_ERR(ak8157->regmap))
++		return PTR_ERR(ak8157->regmap);
++
++	/* reset pulse on every reset line (ZTE's board has two) */
++	resets = devm_gpiod_get_array_optional(dev, "reset", GPIOD_OUT_HIGH);
++	if (IS_ERR(resets))
++		return dev_err_probe(dev, PTR_ERR(resets), "bad reset gpios\n");
++	if (resets) {
++		usleep_range(1000, 1100);
++		for (i = 0; i < resets->ndescs; i++)
++			gpiod_set_value_cansleep(resets->desc[i], 0);
++		usleep_range(1000, 1100);
++	}
++
++	ret = regmap_write(ak8157->regmap, AK8157_OUTPUTS, AK8157_OUTPUTS_OFF);
++	if (!ret)
++		ret = regmap_write(ak8157->regmap, AK8157_RATE, 0x00);
++	if (ret)
++		return dev_err_probe(dev, ret, "no answer from the AK8157\n");
++
++	i2c_set_clientdata(i2c, ak8157);
++	return devm_snd_soc_register_component(dev, &ak8157_component,
++					       &ak8157_dai, 1);
++}
++
++static const struct of_device_id ak8157_of_match[] = {
++	{ .compatible = "asahi-kasei,ak8157" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, ak8157_of_match);
++
++static const struct i2c_device_id ak8157_i2c_id[] = {
++	{ "ak8157" },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, ak8157_i2c_id);
++
++static struct i2c_driver ak8157_i2c_driver = {
++	.driver = {
++		.name = "ak8157",
++		.of_match_table = ak8157_of_match,
++	},
++	.probe = ak8157_i2c_probe,
++	.id_table = ak8157_i2c_id,
++};
++module_i2c_driver(ak8157_i2c_driver);
++
++MODULE_DESCRIPTION("ASoC AK8157 audio clock generator driver");
++MODULE_LICENSE("GPL");
+diff --git a/sound/soc/qcom/apq8096.c b/sound/soc/qcom/apq8096.c
+index cfd6438db..78b6c98d4 100644
+--- a/sound/soc/qcom/apq8096.c
++++ b/sound/soc/qcom/apq8096.c
+@@ -6,7 +6,10 @@
+ #include <sound/soc.h>
+ #include <sound/soc-dapm.h>
+ #include <sound/pcm.h>
++#include <sound/pcm_params.h>
++#include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
+ #include "common.h"
++#include "qdsp6/q6afe.h"
+ 
+ #define SLIM_MAX_TX_PORTS 16
+ #define SLIM_MAX_RX_PORTS 16
+@@ -88,14 +91,98 @@ static int apq8096_init(struct snd_soc_pcm_runtime *rtd)
+ 	return 0;
+ }
+ 
++struct apq8096_card_data {
++	/* MI2S ports whose bit and frame clocks come from the codec side */
++	DECLARE_BITMAP(mi2s_clk_consumer, LPASS_MAX_PORT);
++};
++
++static bool apq8096_is_mi2s(int id)
++{
++	return id >= PRIMARY_MI2S_RX && id <= QUATERNARY_MI2S_TX;
++}
++
++/* IBIT (internal) or EBIT (external) bit clock of an MI2S port */
++static int apq8096_mi2s_bit_clk(int id, bool external)
++{
++	return Q6AFE_LPASS_CLK_ID_PRI_MI2S_IBIT +
++	       ((id - PRIMARY_MI2S_RX) / 2) * 2 + (external ? 1 : 0);
++}
++
++static bool apq8096_mi2s_consumer(struct snd_soc_pcm_runtime *rtd)
++{
++	struct apq8096_card_data *data = snd_soc_card_get_drvdata(rtd->card);
++	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
++
++	return test_bit(cpu_dai->id, data->mi2s_clk_consumer);
++}
++
++static int apq8096_mi2s_startup(struct snd_pcm_substream *substream)
++{
++	struct snd_soc_pcm_runtime *rtd = snd_soc_substream_to_rtd(substream);
++	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
++	unsigned int fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF;
++
++	fmt |= apq8096_mi2s_consumer(rtd) ? SND_SOC_DAIFMT_BC_FC :
++					    SND_SOC_DAIFMT_BP_FP;
++	return snd_soc_dai_set_fmt(cpu_dai, fmt);
++}
++
++static int apq8096_mi2s_hw_params(struct snd_pcm_substream *substream,
++				  struct snd_pcm_hw_params *params)
++{
++	struct snd_soc_pcm_runtime *rtd = snd_soc_substream_to_rtd(substream);
++	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
++	bool ext = apq8096_mi2s_consumer(rtd);
++
++	/*
++	 * Bit clock of 64 fs. For an external clock the rate is nominal:
++	 * the DSP only gates it, but enables it only with a rate.
++	 */
++	return snd_soc_dai_set_sysclk(cpu_dai,
++				      apq8096_mi2s_bit_clk(cpu_dai->id, ext),
++				      params_rate(params) * 64,
++				      SNDRV_PCM_STREAM_PLAYBACK);
++}
++
++static void apq8096_mi2s_shutdown(struct snd_pcm_substream *substream)
++{
++	struct snd_soc_pcm_runtime *rtd = snd_soc_substream_to_rtd(substream);
++	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
++	bool ext = apq8096_mi2s_consumer(rtd);
++
++	snd_soc_dai_set_sysclk(cpu_dai, apq8096_mi2s_bit_clk(cpu_dai->id, ext),
++			       0, SNDRV_PCM_STREAM_PLAYBACK);
++}
++
++static const struct snd_soc_ops apq8096_mi2s_ops = {
++	.startup = apq8096_mi2s_startup,
++	.hw_params = apq8096_mi2s_hw_params,
++	.shutdown = apq8096_mi2s_shutdown,
++};
++
+ static void apq8096_add_be_ops(struct snd_soc_card *card)
+ {
++	struct apq8096_card_data *data = snd_soc_card_get_drvdata(card);
+ 	struct snd_soc_dai_link *link;
+-	int i;
+-
+-	for_each_card_prelinks(card, i, link) {
+-		if (link->no_pcm == 1) {
+-			link->be_hw_params_fixup = apq8096_be_hw_params_fixup;
++	struct device_node *np;
++	int i = 0;
++
++	/* the links are in the order of the available child nodes */
++	for_each_available_child_of_node(card->dev->of_node, np) {
++		if (i >= card->num_links)
++			break;
++		link = &card->dai_link[i++];
++
++		if (link->no_pcm != 1)
++			continue;
++
++		link->be_hw_params_fixup = apq8096_be_hw_params_fixup;
++		if (apq8096_is_mi2s(link->id)) {
++			/* "qcom,mi2s-clock-consumer": the codec side drives BCLK/WS */
++			if (of_property_read_bool(np, "qcom,mi2s-clock-consumer"))
++				set_bit(link->id, data->mi2s_clk_consumer);
++			link->ops = &apq8096_mi2s_ops;
++		} else {
+ 			link->init = apq8096_init;
+ 			link->ops = &apq8096_ops;
+ 		}
+@@ -104,6 +191,7 @@ static void apq8096_add_be_ops(struct snd_soc_card *card)
+ 
+ static int apq8096_platform_probe(struct platform_device *pdev)
+ {
++	struct apq8096_card_data *data;
+ 	struct snd_soc_card *card;
+ 	struct device *dev = &pdev->dev;
+ 	int ret;
+@@ -112,6 +200,11 @@ static int apq8096_platform_probe(struct platform_device *pdev)
+ 	if (!card)
+ 		return -ENOMEM;
+ 
++	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++	snd_soc_card_set_drvdata(card, data);
++
+ 	card->driver_name = "apq8096";
+ 	card->dev = dev;
+ 	card->owner = THIS_MODULE;
+-- 
+2.56.0
+

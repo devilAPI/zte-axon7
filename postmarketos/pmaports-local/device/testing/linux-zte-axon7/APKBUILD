@@ -1,11 +1,12 @@
 # Kernel config based on: linux-postmarketos-qcom-msm8996 (6.19.5) config,
 # updated with "make olddefconfig" for 7.3.1 + built-in USB gadget configfs;
 # no firmware user-helper fallback (each missing file cost 60 s), S6E3HA3
-# panel and SMBCHG OTG boost as modules.
+# panel and SMBCHG OTG boost as modules; fuel gauge, haptics, torch and
+# the Hi-Fi audio drivers (AK4490, AK8157, ISL98608) as modules.
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=7
+pkgrel=8
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -45,6 +46,11 @@ source="
 	0007-arm64-dts-qcom-msm8996-zte-axon7-PI5USB302-Type-C-va.patch
 	0008-wifi-ath10k-only-wait-for-the-firmware-s-answer-to-S.patch
 	0009-arm64-dts-qcom-msm8996-zte-axon7-rmtfs-above-the-ker.patch
+	0010-arm64-dts-qcom-msm8996-zte-axon7-hall-sensor-on-LVS2.patch
+	0011-power-supply-add-Qualcomm-PMIC-fuel-gauge-driver-rea.patch
+	0012-Input-add-Qualcomm-PMI8994-PMI8996-haptics-driver-Ax.patch
+	0013-leds-add-torch-mode-of-the-Qualcomm-PMI8994-PMI8996-.patch
+	0014-ASoC-Axon-7-Hi-Fi-headphone-path-AK4490-AK8157-ISL98.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -86,5 +92,10 @@ a9a23598bc7a29fcc54f7379dc2ea4464bec825b28df9b8a7a9002bacfdfdc9a49e0328c13f6b0a7
 ae66c337ea84b00692f8aa2d8df50666d15afaa84375f5c027d76b3b46b45f4dfe09d690b5b396216469efc665c40c630f79c130116a9c64c6c05247bf3c6e75  0007-arm64-dts-qcom-msm8996-zte-axon7-PI5USB302-Type-C-va.patch
 25157495ed0eff590d1dd905cf0849a225e6e4a56199a6ddfe4d157bfd39e69bea27d12b0c8433bc2210cedb725aeb94028a3f684c3ab68dc1236d35d7011ac0  0008-wifi-ath10k-only-wait-for-the-firmware-s-answer-to-S.patch
 f76f7fe6955ef531721b971303444f81d743a40b881a1aee30e2599316cb27cf06a0dbaefad160e621d490781530f1cc8ac4325a7d71395ca5f919b4afa7946c  0009-arm64-dts-qcom-msm8996-zte-axon7-rmtfs-above-the-ker.patch
-46b53a11b506a36a922fd26e6d45f9974a64d76a5d1ed8665d6427fe2cd2147e684d73c6918bf632798cb395d6845463583fd98167a4774bf13babc077f49da6  config-zte-axon7.aarch64
+ab0eda9ed06bd8f6e330ece9db1c5ff3b04175b3953d5ed6cb11de1a48363cbff98d24ec9365e28b6321504e704a52af5b024f319af1b369b8eb33fbedcbdfee  0010-arm64-dts-qcom-msm8996-zte-axon7-hall-sensor-on-LVS2.patch
+b8f8eeacc869656641e9d4463c11e4b4ff4fdab93d3a9b8c20e29875c0bb301ad322670d010be92195cfa3644111767ac17da876c059691e48d69632db1a8f0a  0011-power-supply-add-Qualcomm-PMIC-fuel-gauge-driver-rea.patch
+8863d2123310c6a3163ed11f6241fe30092d74af1ab5e83fa24067d2757e235caf9b12c65cff22cd2fe964900b90879fd39e441801b0f98be997336842c35438  0012-Input-add-Qualcomm-PMI8994-PMI8996-haptics-driver-Ax.patch
+a60632102587db544f9a5812407e28cd272819dde1abcbae179382fc46ffe1acd23f771c0fb8a8e30db63d9031b336d3794180dca2cb613d9d4b6ec64237737a  0013-leds-add-torch-mode-of-the-Qualcomm-PMI8994-PMI8996-.patch
+23f7e45354700f8d6587911a4a52b6967638108bdb80ca53fa14cb92d553bcb6fe7371c82150b3ab6eaf562841e42ecaea88aaf639e00ceb7c6abac640eeacde  0014-ASoC-Axon-7-Hi-Fi-headphone-path-AK4490-AK8157-ISL98.patch
+a22618869c3f3f4f2512bdaea617d1cce60577d147dd7dcab1ec8f7a710f5fc563937ca594317c5f206aa8734fcc220b030b3bbb019378737997eae8a817f90b  config-zte-axon7.aarch64
 "

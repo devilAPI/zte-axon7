@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-09
+Last update: 2026-11-09 (evening: battery, Hi-Fi audio, vibration, torch, cover)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -25,7 +25,7 @@ publish it after testing and the `nura-latest` link in this post follows.
 Nura is a Linux system for the ZTE Axon 7, built on [URL='https://postmarketos.org']postmarketOS[/URL] with a current mainline kernel (Linux 7.3.1) instead of the old Android kernel. It lives on the microSD card; your internal storage is not touched.
 Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (see below).
 
-[SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
+[SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
 [SPOILER="Works"]
 [LIST]
 [*]Display
@@ -35,17 +35,25 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Bluetooth (mouse, keyboard; factory Bluetooth address)
 [*]SSH over USB and Wi-Fi
 [*]USB OTG (mouse, keyboard, USB stick; automatic)
+[*]Battery level, voltage, current and temperature (no charging control yet)
 [/LIST]
 [/SPOILER]
+[B]New, still to be confirmed by eye or ear:[/B]
+[LIST]
+[*]Headphone audio through the Hi-Fi DAC (AK4490)
+[*]Vibration
+[*]Flashlight (torch)
+[*]Flip cover sensor (open is confirmed, closed not yet)
+[/LIST]
 [B]Not yet:[/B]
 [LIST]
 [*]Calls
 [*]SMS
 [*]Mobile data
-[*]Audio
+[*]Speakers, earpiece and microphones (headphones: see above)
 [*]Camera
 [*]Sensors
-[*]Battery level and charging control
+[*]Charging control
 [*]Suspend
 [*]No graphical desktop yet (text console with an on-screen keyboard)
 [/LIST]
@@ -75,6 +83,10 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]Nura uses the whole microSD card: the system partition grows to the card size at the first start (it stayed at 1.2 GB before).
 [*]GPS: the console tool [I]sudo axon7-gps --status[/I] shows the satellites and the position; [I]axon7-gps --nmea[/I] gives NMEA for other programs. Outdoors the first fix takes about 10 minutes, indoors there is usually none.
 [*]A memory region that ZTE reserves for the modem side (vlog) is kept free.
+[*]Battery level: the fuel gauge reports level, voltage, current and temperature ([I]cat /sys/class/power_supply/qcom-battery/capacity[/I]). It only reads; charging still works as the bootloader set it up.
+[*]Headphone audio through the Hi-Fi DAC: the sound card "ZTE Axon 7" plays through the AK4490 to the headphone jack ([I]speaker-test -c 2 -t sine[/I]). New, please tell us if you hear it.
+[*]Vibration (force-feedback rumble) and the flashlight ([I]echo 10 | sudo tee /sys/class/leds/white:torch/brightness[/I], 1-16). New, please confirm.
+[*]Flip cover sensor: reported as a lid switch. Closing a cover does nothing yet, because suspend doesn't work.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-08"]

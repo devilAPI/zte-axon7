@@ -1,0 +1,54 @@
+From 9b3cd312f084a256d2b6431597ff59ac0081b0ae Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Mon, 9 Nov 2026 22:04:21 +0100
+Subject: [PATCH 10/14] arm64: dts: qcom: msm8996-zte-axon7: hall sensor on,
+ LVS2 kept on for it
+
+The hall IC (TLMM 124, high = cover open) is powered from PM8994 LVS2,
+as the downstream zte-hall vddio-supply. With LVS2 off the line reads
+low, which looked like a closed cover.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 3716bb097..074e613c5 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -146,9 +146,9 @@ key-vol-down {
+ 		};
+ 
+ 		/*
+-		 * Hall sensor (downstream "zte-hall", TLMM 124). Polarity is not
+-		 * verified; a wrong polarity reports the lid as closed and makes
+-		 * userspace blank/suspend, so it stays disabled until tested.
++		 * Hall sensor (downstream "zte-hall"/"ah,hall_ic", TLMM 124):
++		 * high = cover open, low = cover closed (ZTE's ah1898.c). It is
++		 * powered from PM8994 LVS2, which is kept on for it.
+ 		 */
+ 		event-hall-sensor {
+ 			label = "Hall Effect Sensor";
+@@ -158,7 +158,6 @@ event-hall-sensor {
+ 			linux,can-disable;
+ 			wakeup-source;
+ 			debounce-interval = <150>;
+-			status = "disabled";
+ 		};
+ 	};
+ 
+@@ -958,8 +957,10 @@ vreg_lvs1a_1p8: lvs1 {
+ 			regulator-name = "vreg_lvs1a_1p8";
+ 		};
+ 
++		/* hall sensor supply (downstream zte-hall vddio-supply) */
+ 		vreg_lvs2a_1p8: lvs2 {
+ 			regulator-name = "vreg_lvs2a_1p8";
++			regulator-always-on;
+ 		};
+ 	};
+ 
+-- 
+2.56.0
+

@@ -3,7 +3,9 @@
 Status: **beta** (2026-11-08). Nura is this postmarketOS port's name for
 users; packages and device names stay `zte-axon7`. Install guide for users:
 [../INSTALL-NURA.md](../INSTALL-NURA.md). What works: display, touch,
-on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG.
+on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG, battery level. New and
+still to be confirmed by eye/ear: Hi-Fi headphone audio, vibration, torch,
+flip cover sensor (see *Hardware added 2026-11-09*).
 
 Device `zte-axon7`, mainline **Linux 7.3.1** (the newest stable release;
 postmarketOS's own msm8996 kernel is at 6.19.5, and everything the Axon 7
@@ -34,7 +36,7 @@ and wasn't used.
 - Memory: standard msm8996 reserved-memory, the splash at 0x83400000 kept, ramoops at 0xbfc00000 as downstream (readable from TWRP).
 - Enabled: UFS, microSD (`broken-cd`: the card-detect polarity is unverified, so the slot is polled), USB 2.0 dual role (dwc3 + HD3SS3220 or PI5USB302 Type-C controller on `blsp2_i2c1`, VBUS for host mode from the PMI8994 SMBCHG OTG boost, `qcom_smbchg_otg-regulator`, patch 0003; automatic role, see *USB OTG*), touch (RMI4 on `blsp2_i2c6`), volume keys (PM8994 GPIO 2/3), NFC, Wi-Fi (ath10k, QCA6174 on PCIe0; board data = the phone's `bdwlan30.bin` from firmware-zte-axon7; the kernel has no firmware user-helper fallback, which used to stall ath10k for ~3 minutes), Bluetooth, RGB LED, GPU, Venus, ADSP and modem remoteprocs, all regulators with downstream voltages.
 - Display: MDSS with both DSI links bonded (DSI0 master) to the Samsung S6E3HA3 command-mode panel (`panel-samsung-s6e3ha3`, patch 0002: downstream init sequence, reset, DCS brightness as `/sys/class/backlight`). Bonded DSI needs the DPU driver: kernel command line `msm.prefer_mdp5=0` (MDP5 does single DSI only). `simple-framebuffer` on the splash buffer covers early boot. TLMM 81-84 reserved (TrustZone owns the fingerprint SPI).
-- Hall sensor left disabled until its polarity is known.
+- Hall sensor (TLMM 124, high = open) as SW_LID; it is powered from PM8994 LVS2, which is kept on (with LVS2 off the line reads low = "closed").
 
 ## Building (needs sudo for pmbootstrap's chroots)
 
@@ -160,3 +162,25 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **USB OTG**: works on PI5USB302 units (automatic host/device); the HD3SS3220 variant is untested on a phone. The PI5USB302 interrupt is unusable (polled).
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
+
+## Hardware added 2026-11-09 (kernel patches 0010-0014)
+
+| Part | Driver | State |
+| --- | --- | --- |
+| Hall sensor | gpio-keys SW_LID + LVS2 always on (0010) | open confirmed; closed needs a magnet. logind ignores the lid (`50-zte-axon7-lid.conf`) while suspend doesn't work |
+| Fuel gauge | `qcom_fg` from msm8996-mainline, read-only without a charger driver (0011) | confirmed: level, voltage, temperature, current sign (positive = discharging) |
+| Vibrator | `qcom-pmi8994-haptics` (0012), ZTE's 2668 mV / 4255 us | LRA auto-resonance locks while playing; to be felt |
+| Torch | `leds-qcom-pmi8994-torch` (0013), `white:torch`, 1-16 (12.5 mA steps per LED) | registers as downstream, no LED fault; to be seen |
+| Hi-Fi audio | `ak4490`, `ak8157`, `isl98608-regulator`, MI2S in `apq8096` (0014) | plays in real time on Quaternary MI2S, clocked by the AK8157; to be heard |
+
+Hi-Fi path: the AK8157 is the I2S clock master (the ADSP's Quaternary MI2S
+is a clock consumer with its EBIT clock gated on, data on SD1 = TLMM 61);
+AK4490 power is the TLMM 93 LDO plus the ISL98608 (PMI MPP 4, then ZTE's 14
+registers), PDN on PMI GPIO 1; the ISL54405 jack switch (PM8994 MPP 2) stays
+on the AK4490 and its mute (MPP 4) follows the stream. All these PMIC pins
+came up on VPH and are set to 1.8 V (S4) as downstream. UCM: verb HiFi,
+device Headphones (`ucm-zte-axon7*.conf` in device-zte-axon7).
+
+Test from the console: `alsaucm -c hw:0 set _verb HiFi` (or
+`amixer -c0 cset name='QUAT_MI2S_RX Audio Mixer MultiMedia1' 1`), then
+`speaker-test -c 2 -t sine`.
