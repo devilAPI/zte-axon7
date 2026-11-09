@@ -10,8 +10,9 @@ replacing the old text, then save.
 
 Last update: 2026-11-09
 
-**Before the first post:** the install without the boot menu
-(INSTALL-NURA.md) still has to be confirmed once on a phone.
+**Before the first post:** the "Nura images" workflow builds every change
+into a draft release (nura-DATE); test it on a phone, publish it, and the
+link to `nura-latest` in this post shows it.
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
@@ -48,13 +49,22 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [/LIST]
 
 [SIZE=5][B]Installation[/B][/SIZE]
-There is [B]no ready-made download[/B]: the phone's firmware may not be redistributed, so you build Nura on a Linux PC with the firmware of your own phone (one script reads it from the phone in TWRP). Allow about two hours, most of it waiting.
 [LIST]
 [*]Tested on the [B]A2017G[/B] (4 GB / 64 GB) only. Other models: don't.
-[*]Your [B]microSD card is erased[/B]; the [B]boot partition is replaced[/B] (Android starts again when you restore your boot backup). Internal storage stays as it is.
-[*]You need: unlocked bootloader, TWRP 3.3.0 or newer, a microSD card (8 GB+), a Linux PC with about 15 GB free.
+[*]Your [B]microSD card is erased[/B]; the [B]boot partition is replaced[/B] (restore your TWRP Boot backup to go back to Android). Internal storage stays as it is.
+[*]You need: unlocked bootloader, TWRP 3.3.0 or newer, a microSD card (8 GB+), a computer with an image writer (balenaEtcher).
 [/LIST]
-Step-by-step guide: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md on GitHub[/URL]
+[B]Download:[/B] [URL='https://github.com/devilAPI/zte-axon7/releases/tag/nura-latest']newest release[/URL]: [I]nura-axon7-DATE-sdcard.img.xz[/I] (microSD card) and [I]nura-axon7-DATE-boot.img[/I] (kernel).
+Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmware from your phone's own partitions and restarts once.
+
+[B]Short version:[/B]
+[LIST=1]
+[*]TWRP: back up [B]Boot[/B].
+[*]Computer: write the sdcard image to the microSD card with balenaEtcher, put the card into the phone.
+[*]TWRP: Install → Install Image → the boot.img → [B]Boot[/B] → Reboot.
+[*]Log in as [B]user[/B] / [B]nura[/B] and change the password with [I]passwd[/I].
+[/LIST]
+Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-09"]
@@ -67,7 +77,8 @@ Step-by-step guide: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTAL
 [SPOILER="2026-11-08"]
 [LIST]
 [*]The postmarketOS port is now called [B]Nura[/B] and is in beta.
-[*]Install guide for Nura on its own (no multi-boot), and a script that makes the firmware package from your phone.
+[*]Install guide for Nura on its own (no multi-boot).
+[*]Ready-made images: the firmware comes from your phone at the first start, so nothing proprietary is in the download.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-06"]
@@ -82,7 +93,7 @@ Step-by-step guide: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTAL
 [SIZE=5][B]Source[/B][/SIZE]
 [B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux, branch zte-axon7[/URL] (Linux 7.3.1 with the Axon 7 patches); kernel configuration: [URL='https://github.com/devilAPI/zte-axon7/blob/main/postmarketos/pmaports-local/device/testing/linux-zte-axon7/config-zte-axon7.aarch64']config-zte-axon7.aarch64[/URL]
 Packages, build scripts and docs: [URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (folder postmarketos)
-The same project also brings LineageOS 22.2 and iOS 16 to the Axon 7 (both alpha, own threads).
+The same project also brings LineageOS 22.2 (beta) and iOS 16 (alpha) to the Axon 7, each with its own thread.
 
 [SIZE=5][B]Credits[/B][/SIZE]
 postmarketOS, the mainline Linux and msm8996 mainline developers, Richard Acayan (ath10k key-deletion fix), TWRP.

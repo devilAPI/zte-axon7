@@ -55,7 +55,7 @@ Developers can build and install it; the developer setup (a multi-boot with Nura
 
 [SIZE=5][B]Source[/B][/SIZE]
 [URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (submodule ios: the XNU port, loader and tools; branch axon7 of [URL='https://github.com/devilAPI/ios-sailfish/tree/axon7']devilAPI/ios-sailfish[/URL])
-The same project also brings Nura (Linux, beta) and LineageOS 22.2 (alpha) to the Axon 7, each with its own thread.
+The same project also brings Nura (Linux, beta) and LineageOS 22.2 (beta) to the Axon 7, each with its own thread.
 
 [SIZE=5][B]Credits[/B][/SIZE]
 Apple's open-source XNU, Mesa (freedreno), Sileo and the rootless jailbreak tools, TWRP.

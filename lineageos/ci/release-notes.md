@@ -1,4 +1,4 @@
-**LineageOS 22.2 (Android 15) for the ZTE Axon 7 (A2017G)**: an unofficial **alpha** build, flashable in TWRP. This is not the multi-boot setup: it replaces the Android on the phone.
+**LineageOS 22.2 (Android 15) for the ZTE Axon 7 (A2017G)**: an unofficial **beta** build, flashable in TWRP. This is not the multi-boot setup: it replaces the Android on the phone.
 
 ### Requirements (read first)
 

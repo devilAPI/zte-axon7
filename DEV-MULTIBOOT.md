@@ -3,8 +3,9 @@
 **This is the developers' setup**, used to work on all three systems on one
 phone: a boot menu after the ZTE logo starts iOS, Nura (postmarketOS) or
 LineageOS. To just use Nura, follow [INSTALL-NURA.md](INSTALL-NURA.md)
-instead. iOS and LineageOS are **alpha**: no downloads and no flashable zips
-in the alpha phase; this guide builds them from source.
+instead; LineageOS on its own is a TWRP zip ([newest release](https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest)).
+iOS is **alpha**: no downloads; this guide builds iOS and the multi-boot
+LineageOS from source.
 
 Written for people who have flashed custom ROMs before (TWRP, ADB). Every
 step is a button press or a command you can copy.
@@ -16,7 +17,7 @@ step is a button press or a command you can copy.
 > | Boot menu (choose the OS at power-on) | works |
 > | iOS 16.7.16 | boots to the home screen, touch, Wi-Fi, GPU, Sileo (jailbreak). No calls/mobile data, no camera, no audio. |
 > | Nura (postmarketOS, Linux) | boots from the microSD card: display, touch, on-screen keyboard, Wi-Fi, Bluetooth, SSH, USB OTG (mouse, keyboard, stick). No calls, no audio, no camera. |
-> | LineageOS 22 (Android 15) | **alpha, developer builds only**: boots to the home screen with most hardware (see [lineageos/README.md](lineageos/README.md)). No install steps here yet; developer builds are installed with `ios/tools/axon7-los-test.sh`. Until then the menu entry has nothing to boot. |
+> | LineageOS 22 (Android 15) | **beta**: almost all hardware works (see [lineageos/README.md](lineageos/README.md)); on its own as a TWRP zip, here in the multi-boot slot built from source |
 >
 > There are **no ready-made downloads** yet: Apple's iOS and the phone's
 > firmware may not be redistributed, so the guide builds them on your PC

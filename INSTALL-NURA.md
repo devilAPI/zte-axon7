@@ -15,9 +15,9 @@ developers. Every step is a button press or a command you can copy.
 > |---|---|
 > | display, touch, on-screen keyboard, Wi-Fi, Bluetooth (mouse, keyboard), SSH over USB and Wi-Fi, USB OTG (mouse, keyboard, stick; automatic) | calls, SMS, mobile data, audio, camera, sensors, battery level and charging control, suspend; no graphical desktop yet (a text console with an on-screen keyboard) |
 >
-> There are **no ready-made downloads**: the phone's firmware may not be
-> redistributed, so you build Nura on your PC with your own phone's firmware.
-> Allow about two hours, most of it waiting.
+> **Ready-made download** (two files, no PC tools needed besides an image
+> writer). Nura contains no firmware of Qualcomm or ZTE: at its first start it
+> copies the firmware from your phone's own partitions and restarts once.
 
 ---
 
@@ -32,28 +32,19 @@ developers. Every step is a button press or a command you can copy.
 
 **Phone:** ZTE Axon 7 A2017G, **bootloader unlocked**, **TWRP** as recovery
 (3.3.0 or newer; 3.7.0_9-0: [dl.twrp.me/ailsa_ii](https://dl.twrp.me/ailsa_ii/twrp-3.7.0_9-0-ailsa_ii.img.html)),
-a ROM with a `vendor` partition installed (LineageOS 16 to 18.1: the GPU
-firmware is copied from it). A **microSD card**, 8 GB or more. Charge to at
-least 50 %.
+an Android ROM installed (ideally LineageOS 16 to 18.1: Nura takes the GPU
+firmware from its `vendor` partition). A **microSD card**, 8 GB or more.
+Charge to at least 50 %.
 
-**PC:** Linux (Debian/Ubuntu/Arch/Fedora all work) with about 15 GB free space,
-`sudo` rights and internet. Install:
+**Computer:** any (Windows, macOS, Linux) with a microSD card reader and
+[balenaEtcher](https://etcher.balena.io/) (or another image writer).
 
-```sh
-# Debian / Ubuntu:
-sudo apt install git adb python3 android-sdk-libsparse-utils
-# Arch:
-sudo pacman -S git android-tools python
-```
+**Download** ([newest release](https://github.com/devilAPI/zte-axon7/releases/tag/nura-latest) on GitHub, also linked in the XDA thread):
 
-Get this repository:
-
-```sh
-git clone https://github.com/devilAPI/zte-axon7
-cd zte-axon7/postmarketos
-```
-
-All commands below are run in `zte-axon7/postmarketos` unless stated otherwise.
+| File | What it is |
+|---|---|
+| `nura-axon7-DATE-sdcard.img.xz` | Nura itself, for the microSD card |
+| `nura-axon7-DATE-boot.img` | Nura's kernel, for the phone's `boot` partition |
 
 **Buttons you will use:**
 
@@ -66,32 +57,55 @@ All commands below are run in `zte-axon7/postmarketos` unless stated otherwise.
 
 ## Step 1: Backup (do not skip)
 
-1. Boot TWRP, connect USB. `adb devices` must show the phone as `recovery`.
-2. In TWRP: **Backup** → select **Boot, EFS, Modem** → swipe. Copy the `TWRP` folder to your PC.
-3. Save the boot partition on your PC as well (you need it to go back to Android):
+In TWRP: **Backup** → select **Boot** (and EFS, Modem) → swipe. Copy the
+`TWRP` folder from the phone to your computer. The **Boot** backup is your
+way back to Android.
+
+## Step 2: Nura onto the microSD card (on the computer)
+
+**This erases the microSD card.**
+
+1. Put the card into the computer's card reader.
+2. Open balenaEtcher → **Flash from file** → `nura-axon7-DATE-sdcard.img.xz` (no need to unpack it) → **Select target**: the microSD card (check the size!) → **Flash**.
+3. Put the card into the phone.
+
+## Step 3: Nura's kernel into the boot partition (in TWRP)
+
+1. Copy `nura-axon7-DATE-boot.img` to the phone (connect USB in TWRP, it appears as a drive; or put it on a USB stick).
+2. TWRP → **Install** → **Install Image** (bottom right) → choose `nura-axon7-DATE-boot.img` → **Boot** → swipe.
+3. **Reboot** → **System**. If TWRP asks to install the TWRP app: **Do not install**.
+
+## Step 4: First start
+
+After the ZTE logo (and the orange "unlocked" warning) Nura starts. The
+**first start restarts once by itself**: Nura copies the firmware for
+modem, Wi-Fi and GPU from your phone's partitions (nothing is written to
+them). After that a login prompt and the on-screen keyboard appear.
+
+Log in as **`user`**, password **`nura`**, and **change the password right
+away**:
 
 ```sh
-mkdir -p backup
-adb exec-out 'dd if=/dev/block/bootdevice/by-name/boot bs=1M 2>/dev/null' > backup/android-boot.img
-ls -la backup/   # 64 MB
+passwd
 ```
 
-## Step 2: Firmware from your phone (phone in TWRP)
+Then connect to Wi-Fi:
 
 ```sh
-scripts/axon7-firmware.sh
+sudo nmcli dev wifi connect "YOUR_WIFI" password "YOUR_PASSWORD"
+sudo nmcli con mod "YOUR_WIFI" connection.autoconnect-retries 0   # keep reconnecting after a drop
 ```
 
-It reads (never writes) the `modem` and `vendor` partitions and makes the
-firmware package for the build:
-`pmaports-local/device/testing/firmware-zte-axon7/firmware-zte-axon7-1.tar.gz`.
-Keep that file to yourself: the firmware belongs to Qualcomm and ZTE.
+From now on you can also log in from a computer: over USB `ssh user@172.16.42.1`,
+over Wi-Fi `ssh user@PHONE_ADDRESS` (`ip addr` shows it).
 
-## Step 3: Build Nura (on the PC, 30-90 min)
+## Building Nura yourself (instead of the download)
 
-Nura is built with postmarketOS's `pmbootstrap`:
+On a Linux PC with about 15 GB free and `sudo`:
 
 ```sh
+git clone https://github.com/devilAPI/zte-axon7
+cd zte-axon7/postmarketos
 git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
 python3 pmbootstrap/pmbootstrap.py init
 ```
@@ -103,43 +117,10 @@ questions with anything (mainline port: yes); the next command replaces what it
 creates with Nura's packages. Then:
 
 ```sh
-cp -r pmaports-local/device/testing/* "$(python3 pmbootstrap/pmbootstrap.py config aports)/device/testing/"
-python3 pmbootstrap/pmbootstrap.py build linux-zte-axon7 firmware-zte-axon7 device-zte-axon7
-python3 pmbootstrap/pmbootstrap.py install --password CHOOSE_A_PASSWORD
-python3 pmbootstrap/pmbootstrap.py export
-ls -la /tmp/postmarketOS-export/     # boot.img and zte-axon7.img
+NURA_PASSWORD=nura scripts/nura-release.sh   # 30-90 min; out/release/: the same two files as the download
 ```
 
-`CHOOSE_A_PASSWORD` is the password of the user `user` on the phone (login
-and `sudo`). Use digits only if you want to type it on the phone's keyboard
-quickly.
-
-## Step 4: Install (phone in TWRP, microSD card in the phone)
-
-**This erases the microSD card and replaces the boot partition.**
-
-```sh
-adb shell 'umount /external_sd; dd if=/dev/zero of=/dev/block/mmcblk0 bs=1M count=8'
-adb push /tmp/postmarketOS-export/zte-axon7.img /tmp/nura.img      # about 1 GB, a few minutes
-adb shell 'simg2img /tmp/nura.img /dev/block/mmcblk0 && sync && rm /tmp/nura.img'
-adb push /tmp/postmarketOS-export/boot.img /tmp/nura-boot.img
-adb shell 'dd if=/tmp/nura-boot.img of=/dev/block/bootdevice/by-name/boot && sync && rm /tmp/nura-boot.img'
-adb reboot
-```
-
-After the ZTE logo (and the orange "unlocked" warning) Nura starts; the first
-boot takes about a minute. Log in as **`user`** with your password; the
-on-screen keyboard is at the bottom of the screen.
-
-## Step 5: First setup on the phone
-
-```sh
-sudo nmcli dev wifi connect "YOUR_WIFI" password "YOUR_PASSWORD"
-sudo nmcli con mod "YOUR_WIFI" connection.autoconnect-retries 0   # keep reconnecting after a drop
-```
-
-From now on you can also log in from your PC: over USB `ssh user@172.16.42.1`,
-over Wi-Fi `ssh user@PHONE_ADDRESS` (`ip addr` shows it).
+Continue with step 1 above. (Developers: [postmarketos/README.md](postmarketos/README.md).)
 
 ## Updating
 
@@ -149,15 +130,15 @@ sudo apk upgrade -a
 
 Programs are updated right away. A **new kernel** (package `linux-zte-axon7`)
 needs one extra step, because the phone's `boot` partition can only be
-written from TWRP: reboot into TWRP and run on the PC
+written from TWRP: copy the new kernel next to your files first
 
 ```sh
-adb shell 'mkdir -p /tmp/nb && mount /dev/block/mmcblk0p1 /tmp/nb && dd if=/tmp/nb/boot.img of=/dev/block/bootdevice/by-name/boot && sync; umount /tmp/nb'
-adb reboot
+cp /boot/boot.img ~/nura-boot.img
 ```
 
-(`mmcblk0p1` is Nura's boot partition on the card; `boot.img` there is always
-the current kernel.)
+copy it to the computer (`scp user@172.16.42.1:nura-boot.img .`), reboot
+into TWRP, copy it to the phone over USB and flash it as in step 3. (TWRP
+cannot see the files on Nura's card.)
 
 ## Tips
 
@@ -166,27 +147,22 @@ the current kernel.)
 - **Bluetooth** (mouse, keyboard): `bluetoothctl`, then `scan on`, wait for the device, `pair XX:XX:...`, `trust XX:XX:...`, `connect XX:XX:...`, `exit`. The phone uses its own factory Bluetooth address. No Bluetooth audio (no audio yet).
 - **Wi-Fi gone** (console still works): `sudo nmcli con up "YOUR_WIFI"`.
 - **Charging:** battery level and charging control are not supported yet; charge the phone in TWRP or Android if it runs low.
+- **First start without firmware** (no `modem` partition contents, e.g. after an EDL wipe): Nura still starts, without Wi-Fi; `journalctl -u axon7-firmware` says what was missing.
 
 ## Back to Android
 
-In TWRP:
-
-```sh
-adb push backup/android-boot.img /tmp/b.img && adb shell 'dd if=/tmp/b.img of=/dev/block/bootdevice/by-name/boot && sync'
-adb reboot
-```
-
-Android starts as before (its data was never touched). The microSD card
+In TWRP: **Restore** → your backup → select only **Boot** → swipe →
+**Reboot** → **System**. Android starts as before (its data was never touched). The microSD card
 still holds Nura: format it in Android to use it as a normal card again.
 
 ## Rescue
 
-- **Black screen / hangs at the logo:** hold **Power + Volume Up** about 10 s → TWRP. Get the log (below), then either write the Nura boot image again (step 4, last three commands) or go back to Android.
+- **Black screen / hangs at the logo:** hold **Power + Volume Up** about 10 s → TWRP. Get the log (below), then either flash the Nura boot image again (step 3) or go back to Android.
 - **Nothing boots, not even TWRP:** not seen so far. EDL mode (phone off, hold Volume Up + Volume Down, plug in USB) and a full A2017G EDL package; see the *EDL rescue* note in [lineageos/FLASHING-PLAN.md](lineageos/FLASHING-PLAN.md).
 
 ## Getting logs (for bug reports)
 
 - Nura running: `sudo dmesg > dmesg.txt` (copy it to the PC with `scp user@172.16.42.1:dmesg.txt .`)
-- Nura did not start: in TWRP `adb shell cat /sys/fs/pstore/console-ramoops*` (the kernel log of the failed start)
+- Nura did not start: in TWRP **Advanced → Terminal**, `cat /sys/fs/pstore/console-ramoops* > /sdcard/nura-log.txt`, then copy `nura-log.txt` to the computer (the kernel log of the failed start)
 
 Developer documentation: [postmarketos/README.md](postmarketos/README.md), [docs/](docs/).

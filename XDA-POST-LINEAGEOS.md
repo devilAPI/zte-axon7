@@ -15,12 +15,12 @@ and published (Actions → "LineageOS 22.2 zip" → draft release → publish).
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
-[CENTER][SIZE=6][B][ALPHA] LineageOS 22.2 (Android 15) for the ZTE Axon 7 (A2017G)[/B][/SIZE]
+[CENTER][SIZE=6][B][BETA] LineageOS 22.2 (Android 15) for the ZTE Axon 7 (A2017G)[/B][/SIZE]
 [I]Android 15 on the 4.4 kernel, with ZTE's drivers ported from their 3.18 kernel.[/I][/CENTER]
 
 [SIZE=5][B]What is this?[/B][/SIZE]
 A port of LineageOS 22.2 (Android 15) to the ZTE Axon 7. The newest official LineageOS for the phone is 18.1; this one runs on the msm8996 4.4 kernel with ZTE's own drivers (audio codec, fingerprint, NFC, camera parts) ported from ZTE's 3.18 kernel, and Android 15 shims for the old vendor blobs.
-Phase: [B]alpha[/B]: a TWRP-flashable zip for testers; expect bugs.
+Phase: [B]beta[/B]: almost everything works (see the status below), as a TWRP-flashable zip.
 
 [SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
 [SPOILER="Works"]
