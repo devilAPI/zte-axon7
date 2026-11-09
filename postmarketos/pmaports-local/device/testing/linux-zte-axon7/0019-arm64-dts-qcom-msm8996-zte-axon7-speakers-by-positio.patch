@@ -1,0 +1,70 @@
+From bd81394b96b8ff1c2fff3004886af3c3e6b75e91 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 00:01:18 +0100
+Subject: [PATCH] arm64: dts: qcom: msm8996-zte-axon7: speakers by position,
+ earpiece switch on the top amplifier
+
+Measured with the microphone: the TFA9890 at 0x34 drives the bottom
+speaker (next to the microphone), 0x35 the top one, and only the top
+one changes (-4.5 dB) with PM8994 GPIO 13, ZTE's receiver switch. Name
+the amplifiers "Speaker Bottom" and "Speaker Top" and move rcv-gpios
+to the top one.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 23 ++++++++++---------
+ 1 file changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index fb53465ce..db05d1f44 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -747,32 +747,33 @@ &blsp1_i2c6 {
+ 
+ 	/*
+ 	 * TFA9890 speaker amplifiers, fed by the AK4961's PORT2 (SDTO2) I2S;
+-	 * resets on PMI8994 GPIO 2/3 (low = running). Left/right as ZTE's
+-	 * stereo_qc_spk_l/r is not verified yet.
++	 * resets on PMI8994 GPIO 2/3 (low = running). 0x34 drives the bottom
++	 * speaker (next to the microphone), 0x35 the top one, which the
++	 * receiver switch turns into the earpiece (measured with the
++	 * microphone, 2026-11-09).
+ 	 */
+ 	speaker_l: audio-amplifier@34 {
+ 		compatible = "nxp,tfa9890";
+ 		reg = <0x34>;
+ 		#sound-dai-cells = <0>;
+-		sound-name-prefix = "Speaker Left";
++		sound-name-prefix = "Speaker Bottom";
+ 		vddd-supply = <&vreg_s4a_1p8>;
+-		/*
+-		 * ZTE's "Receiver Switch" (PM8994 GPIO 13): routes the top
+-		 * speaker as earpiece. Which amplifier is the top one is not
+-		 * verified yet.
+-		 */
+-		rcv-gpios = <&pm8994_gpios 13 GPIO_ACTIVE_HIGH>;
+ 
+ 		pinctrl-names = "default";
+-		pinctrl-0 = <&speaker_reset_default &rcv_switch_default>;
++		pinctrl-0 = <&speaker_reset_default>;
+ 	};
+ 
+ 	speaker_r: audio-amplifier@35 {
+ 		compatible = "nxp,tfa9890";
+ 		reg = <0x35>;
+ 		#sound-dai-cells = <0>;
+-		sound-name-prefix = "Speaker Right";
++		sound-name-prefix = "Speaker Top";
+ 		vddd-supply = <&vreg_s4a_1p8>;
++		/* ZTE's "Receiver Switch" (PM8994 GPIO 13): top speaker as earpiece */
++		rcv-gpios = <&pm8994_gpios 13 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&rcv_switch_default>;
+ 	};
+ 
+ 	hifi_clk: clock-generator@11 {
+-- 
+2.56.0
+

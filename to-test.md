@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0018, installed by hand on the dev phone; in images from
-linux-zte-axon7 r10 / device-zte-axon7 r15 on). Log in over SSH or on the
+0010-0019, installed by hand on the dev phone; in images from
+linux-zte-axon7 r11 / device-zte-axon7 r16 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -47,7 +47,7 @@ speaker-test -D hw:0,1 -c 2 -r 48000 -t wav -l 1           # "Front Left" / "Fro
 
 - [x] Sound comes out of the speakers (measured with the microphone)
 - [ ] Both speakers (top and bottom grille) play
-- [ ] "Front Left" comes from the speaker on the left when the phone is held sideways with the volume keys up (if it's swapped, say so: the amp order 0x34/0x35 is a guess)
+- [ ] Held sideways with the top of the phone to the left, "Front Left" comes from the left (top) speaker (measured: 0x34 = bottom, 0x35 = top)
 - [ ] No distortion or crackling at moderate volume
 - [ ] Switching back to headphones works: `alsaucm -c hw:0 set _verb HiFi set _disdev Speaker set _enadev Headphones`
 

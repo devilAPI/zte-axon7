@@ -6,7 +6,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=10
+pkgrel=11
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -55,6 +55,7 @@ source="
 	0016-ASoC-ak4961-speaker-playback-over-SLIMbus-to-the-TFA.patch
 	0017-ASoC-tfa989x-receiver-switch-GPIO-for-revisions-othe.patch
 	0018-ASoC-ak4961-port-arrays-per-stream-speakers-were-sil.patch
+	0019-arm64-dts-qcom-msm8996-zte-axon7-speakers-by-positio.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -105,5 +106,6 @@ b4ab45e846967b58720cbaaf22315f86c1f8810cdeeaadb8227482b4b4e2903759cc4605f0105eab
 e256c78973a7098796c6dc20e87535a0b38d4ea5e9959824707e64ee4e8becd0c1171883bc8bdeef5645c754dfadc1baa64041a4ce328bfaeb9938d7954f7a20  0016-ASoC-ak4961-speaker-playback-over-SLIMbus-to-the-TFA.patch
 07ab7669379c5d1874d25d836c9955e39bb84d6c7d74f829e4b0ee2367d35de926bbbd7eeb56622fdea40f34cd348718d562fa293f50474b93b10faae9f435f6  0017-ASoC-tfa989x-receiver-switch-GPIO-for-revisions-othe.patch
 551768fc3805c5dff663af064f2155d4849d918dcde6a68df0bc4320f50cde1eaefeefbc8ac1780ecd8e1c771694f06b39c21594c640c14bb28907ab80a983da  0018-ASoC-ak4961-port-arrays-per-stream-speakers-were-sil.patch
+d6889570d5bd26a8335df24144c485add5c2b5dd876aeba55cd0669594fec19741cc0a33341614eaf92f0c9c55f990858a96e71adab1d4a5db688deb43c1890c  0019-arm64-dts-qcom-msm8996-zte-axon7-speakers-by-positio.patch
 b93026cfe9806b81b10a5189b3918c60376fe1c27da337ae873d84bc7bef2636542c2aeae1e86ab26c3bb3e6d48d7bc667320f54cf92b9ad1cbda69493b8ac49  config-zte-axon7.aarch64
 "
