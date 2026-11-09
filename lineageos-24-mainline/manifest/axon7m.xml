@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LineageOS 24.0 local manifest for the ZTE Axon 7 on mainline Linux (axon7m).
+  Copy to /srv/los24/lineage-24.0/.repo/local_manifests/axon7m.xml.
+
+  The device tree itself is not a repo project yet: it lives in the zte-axon7
+  repository (lineageos-24-mainline/device/zte/axon7m) and is copied into the
+  tree by scripts/server-sync-device.sh. The kernel is built outside the tree
+  (scripts/kernel-build.sh) and staged in device/zte/axon7m-kernel.
+
+  Reference trees (Linaro dragonboard, AOSPM) stay OUTSIDE the Android tree in
+  /srv/los24/ref: Soong parses every Android.bp under the tree, and their
+  vendor namespaces are missing here.
+-->
+<manifest>
+</manifest>

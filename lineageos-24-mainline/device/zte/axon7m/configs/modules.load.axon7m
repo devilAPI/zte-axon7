@@ -1,0 +1,2 @@
+# Kernel modules loaded at early-init (modprobe resolves dependencies).
+# Filled in from the first kernel build (see scripts/kernel-build.sh stage).

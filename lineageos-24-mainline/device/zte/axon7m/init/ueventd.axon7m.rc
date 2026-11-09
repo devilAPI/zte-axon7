@@ -1,0 +1,13 @@
+# Firmware search path for the kernel's user-helper requests (remoteprocs,
+# ath10k, Adreno zap shader, QCA Bluetooth). No firmware is in this repository:
+# /vendor/firmware is filled from the phone at build time, the modem
+# partition's image/ directory is mounted read-only.
+firmware_directories /vendor/firmware/ /vendor/firmware_mnt/image/
+modalias_handling enabled
+
+/dev/dri/*                0666   system     graphics
+/dev/qrtr-tun             0660   system     system
+/dev/uinput               0660   uhid       uhid
+/dev/rfkill               0660   bluetooth  bluetooth
+/dev/ttyMSM1              0660   bluetooth  bluetooth
+/dev/snd/*                0660   system     audio

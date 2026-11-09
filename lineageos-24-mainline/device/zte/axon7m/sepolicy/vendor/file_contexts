@@ -1,0 +1,9 @@
+# Block devices of the l24 multi-boot slot (PLAN.md section 5)
+/dev/block/platform/soc@0/624000\.ufshc/by-name/l24_super   u:object_r:super_block_device:s0
+/dev/block/platform/soc@0/624000\.ufshc/by-name/l24_meta    u:object_r:metadata_block_device:s0
+/dev/block/platform/soc@0/624000\.ufshc/by-name/l24_data    u:object_r:userdata_block_device:s0
+/dev/block/platform/soc@0/624000\.ufshc/by-name/misc        u:object_r:misc_block_device:s0
+/dev/block/by-name/l24_super                                u:object_r:super_block_device:s0
+/dev/block/by-name/l24_meta                                 u:object_r:metadata_block_device:s0
+/dev/block/by-name/l24_data                                 u:object_r:userdata_block_device:s0
+/vendor/firmware_mnt(/.*)?                                  u:object_r:firmware_file:s0

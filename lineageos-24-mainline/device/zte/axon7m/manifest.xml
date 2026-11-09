@@ -1,0 +1,4 @@
+<!-- Vendor manifest of the Axon 7 mainline port. HALs add their own VINTF
+     fragments; this file only sets the target FCM level. -->
+<manifest version="1.0" type="device" target-level="202404">
+</manifest>
