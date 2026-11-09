@@ -24,7 +24,10 @@ deviceinfo_screen_width="1440"
 deviceinfo_screen_height="2560"
 # rootfs image goes on the microSD card (512-byte sectors), not UFS
 # clk/pd_ignore_unused keep the bootloader splash (simplefb) alive
-deviceinfo_kernel_cmdline="console=ttyMSM0,115200 console=tty0 clk_ignore_unused pd_ignore_unused msm.prefer_mdp5=0"
+# pmos.force-partition-resize: the root partition (last on the microSD card)
+# grows to the whole card at the first start; without it the initramfs only
+# resizes on ChromeOS/subpartition layouts and the root stays at image size
+deviceinfo_kernel_cmdline="console=ttyMSM0,115200 console=tty0 clk_ignore_unused pd_ignore_unused msm.prefer_mdp5=0 pmos.force-partition-resize"
 
 # Bootloader related (values match the stock boot.img header)
 deviceinfo_flash_method="fastboot"

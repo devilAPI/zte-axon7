@@ -2,23 +2,51 @@
 # Axon 7: switch the modem online once it is up. After a start by rmtfs the
 # modem stays in the DMS operating mode "shutting-down" (radios off, GPS sees
 # no satellites) until a client sets a mode; without ModemManager nobody does.
-# Waits up to 120 s for the DMS service (QMI service 2) on QRTR node 0.
+#
+# Early in the boot the modem restarts itself a few times ("fatal error
+# without message" about 40 s after each start, for the first ~2 minutes),
+# and every restart drops it back to "shutting-down". So this keeps watching:
+# every 5 s it looks for the DMS service (QMI service 2 on QRTR node 0) and
+# sets the mode to online again when needed, until the modem has stayed
+# online for STABLE seconds, or gives up after LIMIT seconds.
+LIMIT=${AXON7_MODEM_LIMIT:-420}
+STABLE=${AXON7_MODEM_STABLE:-90}
 log() { echo "axon7-modem: $*"; }
 
-i=0
-until qrtr-lookup 2>/dev/null | awk '$1 == 2 && $4 == 0 { found = 1 } END { exit !found }'; do
-	i=$((i + 1))
-	[ "$i" -ge 120 ] && { log "no DMS service on the modem after 120 s, not switched"; exit 1; }
-	sleep 1
-done
+dms_up() {
+	qrtr-lookup 2>/dev/null | awk '$1 == 2 && $4 == 0 { found = 1 } END { exit !found }'
+}
+mode() {
+	qmicli -d qrtr://0 --dms-get-operating-mode 2>/dev/null | sed -n "s/.*Mode: '\(.*\)'/\1/p"
+}
 
-for try in 1 2 3; do
-	if qmicli -d qrtr://0 --dms-set-operating-mode=online >/dev/null 2>&1; then
-		mode=$(qmicli -d qrtr://0 --dms-get-operating-mode 2>/dev/null | sed -n "s/.*Mode: '\(.*\)'/\1/p")
-		log "modem operating mode: ${mode:-unknown}"
-		exit 0
+start=$(cut -d. -f1 /proc/uptime)
+online_since=
+switched=0
+while :; do
+	now=$(cut -d. -f1 /proc/uptime)
+	if dms_up; then
+		m=$(mode)
+		if [ "$m" = online ]; then
+			[ -n "$online_since" ] || online_since=$now
+			if [ $((now - online_since)) -ge "$STABLE" ]; then
+				log "modem online (switched $switched time(s))"
+				exit 0
+			fi
+		else
+			online_since=
+			if qmicli -d qrtr://0 --dms-set-operating-mode=online >/dev/null 2>&1; then
+				switched=$((switched + 1))
+				log "modem was '${m:-unknown}', switched online"
+			fi
+		fi
+	else
+		online_since=
 	fi
-	sleep 2
+	if [ $((now - start)) -ge "$LIMIT" ]; then
+		[ "$(mode)" = online ] && { log "modem online, not yet stable after $LIMIT s"; exit 0; }
+		log "modem not online after $LIMIT s (DMS service $(dms_up && echo present || echo missing))"
+		exit 1
+	fi
+	sleep 5
 done
-log "could not switch the modem online"
-exit 1

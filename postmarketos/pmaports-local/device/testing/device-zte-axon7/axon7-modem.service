@@ -4,8 +4,9 @@ After=rmtfs.service
 Wants=rmtfs.service
 
 [Service]
-Type=oneshot
-RemainAfterExit=yes
+# runs for a few minutes at boot (the modem restarts itself early on), so not
+# a oneshot: it must not hold up multi-user.target
+Type=exec
 ExecStart=/usr/libexec/axon7-modem
 
 [Install]
