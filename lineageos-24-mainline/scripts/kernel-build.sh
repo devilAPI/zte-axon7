@@ -80,7 +80,8 @@ config() {
 }
 
 build() {
-	kmake Image dtbs modules
+	# only our DTB: "dtbs" would build every qcom (and other enabled ARCH_*) board
+	kmake Image qcom/msm8996-zte-axon7.dtb modules
 	local isz
 	isz=$(od -An -t u8 -j 16 -N 8 "$KOUT/arch/arm64/boot/Image" | tr -d ' ')
 	echo "Image image_size: $((isz / 1048576)) MiB (limit about 48 MiB below the splash)"

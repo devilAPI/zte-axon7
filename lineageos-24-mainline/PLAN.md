@@ -66,11 +66,12 @@ assumption, still to verify, **[D]** decision.
   at `android-17.0.0_r1` still has `SkiaGLRenderEngine.cpp` next to the
   Vulkan engines [V]; db845c runs with `debug.hwui.renderer=skiagl` [V].
   Whether every Android 17 feature degrades gracefully without Vulkan is [A].
-- **First stage init on a v2 boot image** (`androidboot.*` on the kernel
-  command line, no bootconfig) is how LineageOS 22.2 axon7 boots today [V for
-  Android 15]; that Android 17's init still imports the command line is [A]
-  until checked in the synced tree (`system/core/init/util.cpp`,
-  `ImportKernelCmdline`).
+- **First stage init on a v2 boot image**: Android 17's init reads
+  `androidboot.*` from both `/proc/bootconfig` and the kernel command line
+  (`system/core/init/property_service.cpp` at `android-17.0.0_r1`:
+  `ProcessBootconfig(); ProcessKernelCmdline();`) [V]. That the super
+  partition can be named by `androidboot.super_partition` (we use
+  `l24_super`) is [A] until checked in the synced tree (`fs_mgr`).
 
 ## 2. Prior art: AOSP on mainline Qualcomm kernels
 
@@ -80,7 +81,7 @@ assumption, still to verify, **[D]** decision.
 | **AOSPM** ([github.com/aospm](https://github.com/aospm)) by the sdm845 mainline community (OnePlus 6, Poco F1), 2021-2023 | `android_device_generic_sdm845`, **qrild** + **libqril** (open QMI/QRTR RIL on the split **AIDL** radio interfaces `radio.config/data/messaging/modem/network` [V: source in /srv/los24/ref]; data call came up, DNS never did; development halted, libqril rewritten as a standalone library), `tinyhal` audio, `external_vibrator-ff` (force-feedback vibrator HAL for upstream haptics), `android-lights-hal` | radio HAL starting point, vibrator HAL (our haptics driver is an ff device), lights HAL |
 | **Linaro "AOSP on Pixel 3 / Poco F1"** ([blog](https://old.linaro.org/blog/aosp-on-pixel3-pocof1-running-aosp-with-mainline-kernel-on-form-factor-devices)) | AOSP on mainline phones (not dev boards) is doable | confidence, not code |
 | **GloDroid** ([manifest](https://github.com/GloDroid/glodroid_manifest)) | AOSP on mainline for Allwinner/RPi/PinePhone: Mesa built with meson inside AOSP (`aospext`), drm_hwcomposer, minigbm `gbm_mesa`, tinyhal | Mesa build recipe if NDK prebuilts become a pain |
-| **Mesa in AOSP** (`external/mesa3d` @ android-17: Mesa 26.1-devel) [V] | its generated `Android.bp` builds only the gfxstream (virtual GPU) parts | freedreno has to be built separately: Mesa's documented meson + NDK Android build, shipped as vendor prebuilts (what Linaro's vendor package does) |
+| **Mesa in AOSP** (`external/mesa3d` @ android-17: Mesa 26.1-devel) [V] | its generated `Android.bp` builds only the gfxstream (virtual GPU) parts | freedreno has to be built separately: Mesa's [documented](https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/docs/android.rst) meson + NDK build (`-Dplatforms=android -Dandroid-stub=true -Dgallium-drivers=freedreno -Dallow-fallback-for=libdrm`, "frequently used by Chrome OS developers"), shipped as vendor prebuilts (what Linaro's vendor package does) [V docs; A that EGL/GLES for a5xx on Android works] |
 | **qcom_smgr** IIO drivers, Yassine Oudjana, [v2 2025-07](https://patchew.org/linux/20250710-qcom-smgr-v2-0-f6e198b7aa8e@protonmail.com) [V: not in 7.3.1] | MSM8996 SLPI Sensor Manager over QRTR: accel, gyro, pressure, prox, mag as IIO devices; pmOS userspace draft [MR 4118](https://gitlab.postmarketos.org/postmarketOS/pmaports/-/merge_requests/4118) | sensors milestone |
 | **IPA v2.x**, Sireesh Kodali, [RFC 2021-09](https://lore.kernel.org/all/20210920030811.57273-1-sireeshkodali1@gmail.com/) [V: not in 7.3.1, `drivers/net/ipa` starts at v3.0] | IPA v2.5 for MSM8996; with it ModemManager got an IP on an MSM8996 phone | mobile data milestone |
 
