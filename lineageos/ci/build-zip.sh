@@ -13,6 +13,10 @@ tree=${AXON7_TREE:-/srv/aosp/lineage-22.2}
 dest=${AXON7_RELEASES:-/srv/aosp/releases}
 out=$tree/out/target/product/axon7
 
+# one build at a time in this tree (manual builds use the same lock)
+exec 9>/srv/aosp/build.lock
+echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
+
 cd "$tree"
 # shellcheck disable=SC1090
 . ~/.profile

@@ -65,7 +65,7 @@ Phase: [B]alpha[/B]: a TWRP-flashable zip for testers; expect bugs.
 [*]Update [B]TWRP[/B] to 3.3.0 or newer ([URL='https://dl.twrp.me/ailsa_ii/']dl.twrp.me/ailsa_ii[/URL], 3.7.0_9-0 recommended).
 [*]Back up your current ROM in TWRP (Boot, System, Vendor, Data, EFS) and copy it to a computer.
 [*]Wipe → Advanced Wipe: [B]Dalvik / ART Cache, Cache, System, Vendor, Data[/B]. [B]Coming from LineageOS 18.1 or older or from stock: also Format Data[/B] (type [I]yes[/I]): Android 15 uses file-based encryption and cannot read the old encrypted data partition.
-[*]Install the [B]ROM[/B]: [URL='https://github.com/devilAPI/zte-axon7/releases']GitHub releases[/URL] ([I]lineage-22.2-DATE-UNOFFICIAL-axon7.zip[/I]; check it against the [I].sha256[/I] file).
+[*]Install the [B]ROM[/B]: [URL='https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest']newest release[/URL] ([I]lineage-22.2-DATE-UNOFFICIAL-axon7.zip[/I]; check it against the [I].sha256[/I] file).
 [*]Install GApps (optional): a package for [B]Android 15, arm64[/B] (e.g. MindTheGapps 15).
 [*]Reboot → System. The first start takes a few minutes.
 [/LIST]

@@ -23,10 +23,29 @@ Nura is a Linux system for the ZTE Axon 7, built on [URL='https://postmarketos.o
 Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (see below).
 
 [SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
-[TABLE]
-[TR][TH]Works[/TH][TH]Not yet[/TH][/TR]
-[TR][TD]display, touch, on-screen keyboard, Wi-Fi (also roaming between 2.4 and 5 GHz), Bluetooth (mouse, keyboard; factory Bluetooth address), SSH over USB and Wi-Fi, USB OTG (mouse, keyboard, USB stick; automatic)[/TD][TD]calls, SMS, mobile data, audio, camera, sensors, battery level and charging control, suspend; no graphical desktop yet (text console with an on-screen keyboard)[/TD][/TR]
-[/TABLE]
+[SPOILER="Works"]
+[LIST]
+[*]Display
+[*]Touch
+[*]On-screen keyboard
+[*]Wi-Fi (also roaming between 2.4 and 5 GHz)
+[*]Bluetooth (mouse, keyboard; factory Bluetooth address)
+[*]SSH over USB and Wi-Fi
+[*]USB OTG (mouse, keyboard, USB stick; automatic)
+[/LIST]
+[/SPOILER]
+[B]Not yet:[/B]
+[LIST]
+[*]Calls
+[*]SMS
+[*]Mobile data
+[*]Audio
+[*]Camera
+[*]Sensors
+[*]Battery level and charging control
+[*]Suspend
+[*]No graphical desktop yet (text console with an on-screen keyboard)
+[/LIST]
 
 [SIZE=5][B]Installation[/B][/SIZE]
 There is [B]no ready-made download[/B]: the phone's firmware may not be redistributed, so you build Nura on a Linux PC with the firmware of your own phone (one script reads it from the phone in TWRP). Allow about two hours, most of it waiting.

@@ -1,0 +1,42 @@
+# When a LineageOS or Nura release is published (by hand), copy its files to
+# the fixed release "lineageos-latest" / "nura-latest", so links in the XDA
+# threads always point to the newest published build:
+#   https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest
+#   https://github.com/devilAPI/zte-axon7/releases/tag/nura-latest
+name: Latest links
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: latest-links
+  cancel-in-progress: false
+
+jobs:
+  latest:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name, 'lineageos-22.2-') || startsWith(github.event.release.tag_name, 'nura-2')
+    steps:
+      - name: Refresh the fixed release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          TITLE: ${{ github.event.release.name }}
+          REPO: ${{ github.repository }}
+        run: |
+          case $TAG in
+            lineageos-*) latest=lineageos-latest ;;
+            nura-*) latest=nura-latest ;;
+          esac
+          mkdir files && cd files
+          gh release download "$TAG" --repo "$REPO"
+          gh release view "$TAG" --repo "$REPO" --json body -q .body > ../notes.md
+          printf '\n\n---\nThis is a copy of **%s** (%s), the newest published build.\n' "$TITLE" "$TAG" >> ../notes.md
+          gh release delete "$latest" --repo "$REPO" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$latest" ./* --repo "$REPO" --latest=false \
+            --target "$(gh api "repos/$REPO/git/ref/tags/$TAG" -q .object.sha)" \
+            --title "$TITLE (latest)" --notes-file ../notes.md

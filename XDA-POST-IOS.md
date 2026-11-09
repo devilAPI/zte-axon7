@@ -20,10 +20,27 @@ A port of Apple's open-source XNU kernel to the Axon 7's Snapdragon 820, running
 Phase: [B]alpha[/B]. For developers and the curious.
 
 [SIZE=5][B]Status (2026-11-08)[/B][/SIZE]
-[TABLE]
-[TR][TH]Works[/TH][TH]Does not work[/TH][/TR]
-[TR][TD]lock and home screen, GPU acceleration (Adreno 530 via Mesa freedreno), touch, Home on Volume Down, Wi-Fi (WPA2, rejoins on its own), Safari, OpenSSH, rootless jailbreak with Sileo (app installs work)[/TD][TD]calls, SMS, mobile data, camera, audio, Bluetooth[/TD][/TR]
-[/TABLE]
+[SPOILER="Works"]
+[LIST]
+[*]Lock and home screen
+[*]GPU acceleration (Adreno 530 via Mesa freedreno)
+[*]Touch
+[*]Home on Volume Down
+[*]Wi-Fi (WPA2, rejoins on its own)
+[*]Safari
+[*]OpenSSH
+[*]Rootless jailbreak with Sileo (app installs work)
+[/LIST]
+[/SPOILER]
+[B]Does not work:[/B]
+[LIST]
+[*]Calls
+[*]SMS
+[*]Mobile data
+[*]Camera
+[*]Audio
+[*]Bluetooth
+[/LIST]
 
 [SIZE=5][B]Installation[/B][/SIZE]
 [B]No downloads and no flashable zips during the alpha[/B] (and iOS itself can never be offered as a download: it is built from Apple's IPSW on your PC).

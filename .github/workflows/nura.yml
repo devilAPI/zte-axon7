@@ -1,0 +1,122 @@
+# Nura (postmarketOS) images for the ZTE Axon 7, built on GitHub's runners
+# with pmbootstrap (postmarketos/scripts/nura-release.sh): a raw microSD image
+# and boot.img, without any Qualcomm/ZTE firmware (the phone copies its own at
+# the first start).
+#
+# Runs on every push to main that touches postmarketos/ (packages, scripts) or
+# this workflow, and by hand. A newer push cancels a running build.
+# The default login password comes from the repository variable
+# NURA_DEFAULT_PASSWORD (Settings → Secrets and variables → Actions →
+# Variables); the build stops if it is not set.
+#
+# The images go into a DRAFT release (nura-YYYYMMDD[-N], see
+# .github/scripts/draft-release.sh); publish it on GitHub after testing.
+# Publishing refreshes the fixed "nura-latest" release (latest.yml).
+name: Nura images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'postmarketos/pmaports-local/**'
+      - 'postmarketos/scripts/nura-release.sh'
+      - '.github/workflows/nura.yml'
+      - '.github/scripts/draft-release.sh'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Put the images into a draft release
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nura-images
+  cancel-in-progress: true
+
+env:
+  # the pmbootstrap the port is developed with
+  PMBOOTSTRAP_COMMIT: e0dfe2c
+  PMB_WORK: /home/runner/pmbootstrap-work
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Check the default password variable
+        env:
+          NURA_PASSWORD: ${{ vars.NURA_DEFAULT_PASSWORD }}
+        run: |
+          [ -n "$NURA_PASSWORD" ] || { echo "::error::set the repository variable NURA_DEFAULT_PASSWORD (the published default login password)"; exit 1; }
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune --all --force >/dev/null || true
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - name: Tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q android-sdk-libsparse-utils xz-utils
+          git clone -q https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git postmarketos/pmbootstrap
+          git -C postmarketos/pmbootstrap checkout -q "$PMBOOTSTRAP_COMMIT"
+
+      - name: pmbootstrap configuration (no prompts)
+        run: |
+          mkdir -p ~/.config "$PMB_WORK/cache_git"
+          git clone -q --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$PMB_WORK/cache_git/pmaports"
+          echo 8 > "$PMB_WORK/version"
+          cat > ~/.config/pmbootstrap_v3.cfg <<EOF
+          [pmbootstrap]
+          aports = $PMB_WORK/cache_git/pmaports
+          device = zte-axon7
+          is_default_channel = False
+          jobs = $(nproc)
+          ssh_keys = False
+          timezone = Europe/Berlin
+          ui = console
+          ui_extras = False
+          user = user
+          work = $PMB_WORK
+          EOF
+          sed -i 's/^ *//' ~/.config/pmbootstrap_v3.cfg
+          python3 postmarketos/pmbootstrap/pmbootstrap.py config
+
+      - name: Cache (kernel ccache, downloaded packages)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.PMB_WORK }}/cache_ccache_aarch64
+            ${{ env.PMB_WORK }}/cache_ccache_x86_64
+            ${{ env.PMB_WORK }}/cache_apk_aarch64
+            ${{ env.PMB_WORK }}/cache_apk_x86_64
+            ${{ env.PMB_WORK }}/cache_distfiles
+          key: nura-${{ hashFiles('postmarketos/pmaports-local/**') }}
+          restore-keys: nura-
+
+      - name: Build the images
+        env:
+          NURA_PASSWORD: ${{ vars.NURA_DEFAULT_PASSWORD }}
+        run: |
+          cd postmarketos
+          bash scripts/nura-release.sh
+          ls -la out/release
+
+      - name: Draft release
+        if: github.event_name == 'push' || inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NURA_PASSWORD: ${{ vars.NURA_DEFAULT_PASSWORD }}
+        run: |
+          cd postmarketos/out/release
+          date=$(ls nura-axon7-*-boot.img | sed 's/nura-axon7-\(.*\)-boot.img/\1/')
+          sed "s|@NURA_PASSWORD@|$NURA_PASSWORD|" "$GITHUB_WORKSPACE/postmarketos/release-notes.md" > "$RUNNER_TEMP/notes.md"
+          bash "$GITHUB_WORKSPACE/.github/scripts/draft-release.sh" nura "$date" \
+            "$RUNNER_TEMP/notes.md" \
+            nura-axon7-$date-sdcard.img.xz nura-axon7-$date-boot.img SHA256SUMS-$date
