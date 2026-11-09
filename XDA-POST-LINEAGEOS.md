@@ -22,7 +22,7 @@ Phase: [B]alpha[/B]. Developer builds only.
 [SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
 [TABLE]
 [TR][TH]Works[/TH][TH]Does not work / not tested[/TH][/TR]
-[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight (with strength slider), all 42 sensors, GPS service, fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]GPS (no satellite signal: the modem receives nothing, likely its firmware; parked), the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
+[TR][TD]boots to the home screen, display, brightness, touch and the three touch keys, battery level, encrypted storage, USB/adb, Wi-Fi, Bluetooth (also audio to speakers), Wi-Fi hotspot, NFC, flashlight (with strength slider), all 42 sensors, GPS (fix outdoors in about 10 s), fingerprint (enrolment works), both cameras with optical image stabilisation, sound and volume (speaker; AK4961 codec + AK4490 Hi-Fi DAC drivers), modem services for both SIM slots (dual SIM)[/TD][TD]the phone sometimes wakes up or locks by itself, calls/data with a SIM (untested)[/TD][/TR]
 [/TABLE]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -32,6 +32,7 @@ Developers can build it from source; the developer setup (a multi-boot with iOS 
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-09"]
 [LIST]
+[*]GPS works (confirmed outdoors: fix in 8 s, 8 m accuracy). The location daemons start again (their config was in an older format), and a memory region that ZTE reserves for the modem side (vlog) is kept free.
 [*]Flashlight strength: long-press the flashlight tile in Quick Settings for a slider (the torch blinks briefly at each step: the LED chip takes a new current only when switched on).
 [/LIST]
 [/SPOILER]
