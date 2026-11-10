@@ -13,7 +13,7 @@
 # with the lineageos-24-mainline/shim patch applied to a temporary copy)
 # against a stand-in LK DTB (memory + ids + LK-style bootargs).
 #
-# Usage (PC, from the repository root or worktree; needs mkbootimg, dtc, cc):
+# Usage (PC, from the repository root or worktree; needs mkbootimg, dtc, cc, gzip):
 #   lineageos-24-mainline/scripts/make-m0-testimg.sh [OUTDIR]     (default /tmp/axon7m-m0)
 # Fetches Image and DTB from the build server (AXON7_BUILD_HOST, root@compiler).
 set -euo pipefail
@@ -26,8 +26,35 @@ H=${AXON7_BUILD_HOST:-root@compiler}
 mkdir -p "$O"
 scp -q "$H:/srv/los24/kernel/prebuilt/Image" "$H:/srv/los24/kernel/prebuilt/dtb/msm8996-zte-axon7.dtb" \
 	"$H:/srv/los24/kernel/prebuilt/version" "$O/"
-INITRD=$S/postmarketos/test-initramfs/initramfs-test.cpio.gz
-[ -r "$INITRD" ] || { echo "missing $INITRD (built by postmarketos/scripts, not in git)" >&2; exit 1; }
+# Initramfs: Nura's test initramfs (sources in postmarketos/test-initramfs,
+# busybox not in git), plus a heartbeat: the watchdog state once, then the
+# uptime in the kernel log every 5 s, so a reset shows up in pstore with its
+# time. Nura's own files stay as they are.
+TI=$S/postmarketos/test-initramfs
+[ -x "$TI/gen_init_cpio" ] && [ -r "$TI/root/bin/busybox" ] || { echo "missing $TI (busybox, gen_init_cpio)" >&2; exit 1; }
+rm -rf "$O/initramfs"; mkdir -p "$O/initramfs"
+cp -a "$TI/root" "$O/initramfs/root"
+python3 -I - "$O/initramfs/root/init" <<'PYEOF'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+hb = """# axon7m heartbeat (lineageos-24-mainline/scripts/make-m0-testimg.sh)
+( for w in /sys/class/watchdog/watchdog*; do
+	[ -d "$w" ] && log "watchdog $w: $(cat $w/identity 2>/dev/null) state=$(cat $w/state 2>/dev/null) timeout=$(cat $w/timeout 2>/dev/null)"
+  done
+  [ -e /sys/class/watchdog/watchdog0 ] || log "no watchdog device"
+  while true; do
+	echo "axon7-test: alive $(cut -d' ' -f1 /proc/uptime)" > /dev/kmsg
+	sleep 5
+  done ) &
+
+"""
+anchor = "# Keep PID 1 alive"
+assert anchor in s
+open(p, "w").write(s.replace(anchor, hb + anchor, 1))
+PYEOF
+(cd "$O/initramfs" && "$TI/gen_init_cpio" "$TI/list.txt" | gzip -9 > initramfs-test-hb.cpio.gz)
+INITRD=$O/initramfs/initramfs-test-hb.cpio.gz
 
 # Command line: the shim puts the DTB's bootargs first, then this, then LK's
 # tokens. No androidboot.*: there is no Android here.
