@@ -1,6 +1,6 @@
 # LineageOS 24 on mainline Linux for the ZTE Axon 7: plan
 
-Status: **planning + M0 groundwork** (started 2026-11-09). Codename for this
+Status: **M0: boot path works (M0a''), M0b (Android recovery) failed without USB, M0b' test images ready; full build running** (started 2026-11-09). Codename for this
 port: **`axon7m`** (device `zte/axon7m`, so it can live next to the 4.4
 `axon7` tree of LineageOS 22.2 without clashing).
 
@@ -250,6 +250,70 @@ this branch.)
    `/sys/fs/pstore/console-ramoops*` and `pmsg-ramoops-0` (shim log).
 5. Restore `los_boot` from the saved image in TWRP.
 
+**Reading the log of a failed test boot (lesson from M0b, 2026-11-10):** the
+pstore console zone (0xbfc00000) holds the log of the *previous* boot only
+until the next kernel starts writing into it. With the test shim, any reset
+after a LineageOS boot (watchdog, panic, Power + Volume Up) lands in TWRP,
+and TWRP's 3.18 kernel shows the old log as `/sys/fs/pstore/console-ramoops*`
+and then overwrites the zone with its own. So read `console-ramoops*` and
+`pmsg-ramoops-0` (the shim's log: `LOS size=`, `LOS cmdline`, `LOS entry`,
+`LOS dtb` right before the jump) **in that TWRP session**, before anything
+reboots. What Nura stores in `/var/lib/systemd/pstore` afterwards is TWRP's
+log.
+
+**M0b' procedure (2 tests, ~30 min, only `los_boot` and the boot menu are
+written).** Both images are on the server in `/srv/los24/out-test/`; both
+use kernel `7.3.1-axon7m` #3 (07:46 UTC, `WATCHDOG_SYSFS`), which no test
+has booted yet.
+
+1. Size test: `m0-pad15-boot.img` (45,858,816 bytes, sha256
+   `61d8bd84dc52649993b5dff28adbee0856f5bac5f1a11e5b95bed67aabc09490`):
+   the M0a'' busybox image plus 15 MiB of random data in the initramfs
+   (`PAD_MB=15 scripts/make-m0-testimg.sh`), larger than the failed
+   recovery image (44,310,528). Expected as in M0a'': telnet 172.16.42.1
+   within ~30 s, `ls -l /pad.bin` = 15728640 bytes, `dmesg | grep -iE
+   "Unpacking|Freeing initrd|Linux version"`, uptime past 60 s. If nothing
+   comes up within 90 s: TWRP (the shim's 30 s watchdog does that by itself
+   if the kernel never starts), pstore as above.
+2. M0b front end: `m0b-fe-recovery.img` (45,453,312 bytes, sha256
+   `5912dd2eafa7c793215b9eb93f4e69031799c130117dedaf350ffd4cf6082381`):
+   the LineageOS 24 recovery (`recovery-orig-20261110-0329.img`) + adb key +
+   the busybox front end `scripts/m0b-frontend-init.sh` (`rdinit=/axon7/init`):
+   USB NCM + telnet 172.16.42.1 (busybox shell, Android's tools in
+   /system/bin), busybox holds the watchdog, then `exec /init` (Android
+   first stage, recovery mode). Kernel log on the panel (`console=tty0`).
+   Collect over telnet: `dmesg` (whole: init's own log lines are in it),
+   `cat /tmp/recovery.log`, `ps -A -o pid,args` (is `recovery`, `adbd`,
+   `ueventd` running?), `/system/bin/getprop | grep -E "usb|init.svc|boot"`,
+   `ls -l /dev/block/by-name/ | head` (checks `androidboot.boot_devices=soc@0/...`),
+   `cat /sys/fs/selinux/enforce`, `ls /config/usb_gadget/`,
+   `cat /sys/class/udc/*/state`. Expected while telnet holds the UDC:
+   init's `write /config/usb_gadget/g1/UDC` fails with EBUSY (that shows
+   adbd got as far as its descriptors). Then the adb test:
+   `/axon7/adb-handover` (telnet ends; frees the UDC, `sys.usb.config` none
+   then adb) and `timeout 60 adb wait-for-recovery; adb devices; adb shell
+   getprop ro.build.fingerprint`. To end: in telnet `sync; reboot -f`, or
+   with adb `adb reboot`; the test shim then goes to TWRP (read pstore
+   there if anything was unclear). Set the boot menu back to postmarketOS.
+   `FRONTEND=0 scripts/make-m0b-recovery.sh` builds the plain recovery with
+   the same cmdline additions if needed.
+
+**M1a procedure (first full boot; images from the build queued in
+`los24next`, see section 9).** On the server after `build-exit 0`:
+`out/target/product/axon7m/boot.img` and `super.img` (sparse). Check boot.img
+on the PC with `scripts/shim-hostcheck.sh` and
+`ios/tools/axon7-androidimg.py check` (cmdline must contain
+`androidboot.super_partition=system`), then in TWRP: `boot.img` →
+`los_boot` (dd), `scripts/simg-put.py super.img /dev/block/sde13` (only the
+data chunks of the sparse image: ~2-3 GB instead of 5.5 GiB at TWRP's
+~3.4 MB/s, every run read back with sha1; verify `sde13` is PARTNAME=system
+first), wipe `los_metadata` (`dd if=/dev/zero bs=1M`, 16 MiB) and the first
+64 MiB of `los_data` (22.2's FBE data cannot be read by 24), boot menu entry
+LineageOS once. Expected: boot animation (SwiftShader, slow), `adb devices`
+within ~3 min (developer build, PC key), `getprop sys.boot_completed`.
+Checksums: printed by the build log's `ls -la` and to be taken with
+`sha256sum` on the server before copying.
+
 Test loop: reuse `axon7-los-test.sh` (unattended, pstore console; IMEM mark:
 one LineageOS boot, then TWRP) with the same entry 2, writing `super.img` to
 `system` instead of 22.2's system/vendor images. The test shim arms the APSS
@@ -325,6 +389,38 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
   built LineageOS 24 `recovery.img` with the current kernel/DTB and the PC's
   adb key as `/adb_keys` (`scripts/cpio-replace.py` edits the newc ramdisk
   in place, root ownership kept).
+- **M0b on the phone (2026-11-10 07:53 UTC, main session): no USB, black
+  screen, failed.** `m0b-recovery.img` (44.3 MB) from `los_boot`; for 6 min
+  no USB device at all, then Power + Volume Up → TWRP (test shim's IMEM
+  mark; its log says "Hard Reset and 'cold' boot", 08:03:59 UTC by the
+  phone's clock) → postmarketOS. The pstore copy taken in Nura is that
+  TWRP boot's console plus LK's log, so the M0b kernel's own log was
+  overwritten by TWRP and is lost (procedure fixed in section 5). Analysis
+  (no new phone data):
+  - **Not a shim size limit.** `ios/shim/android.c` reads the whole image
+    into a 128 MiB staging area at 0xa4000000 (2 MiB UFS commands, 2 s
+    timeout each), copies the kernel to 0x80000000 and the DTB to
+    0x81e00000 from a trampoline at 0xa3f00000, and leaves the ramdisk in
+    place (initrd 0xa5b90000..0xa6a2dce3): all in plain RAM in mainline's
+    map (memory 0x80000000-0x17e4bffff, reserved regions far from it),
+    initrd reserved before any dynamic allocation. The host build of
+    android.c accepts the image (`scripts/shim-hostcheck.sh`). The only
+    size limits are 128 MiB (staging) and image_size ≤ ~48 MiB (kernel).
+  - **The kernel most likely ran.** The test shim arms the APSS watchdog
+    (30 s) before `android_boot()`: a failed start (error message under
+    the menu) or a kernel that died before `qcom-wdt` probes would have
+    been reset into TWRP, with USB, within ~35 s. The phone stayed without
+    USB for 6 minutes, so something fed the watchdog: the kernel's
+    watchdog core (`WATCHDOG_HANDLE_BOOT_ENABLED`). A black screen also
+    fits: simplefb + fbcon take over the splash buffer (no `console=tty0`
+    in that image, so no text).
+  - So the failure is in Android userspace (recovery's init, `recovery`,
+    adbd/configfs) or in kernel #3 after the watchdog probe. Recovery only
+    binds the UDC after adbd wrote its FunctionFS descriptors and after the
+    `recovery` binary set `sys.usb.config=adb` (it does that after UI
+    init, `copy_userdata_files()` and a /data mount attempt), so any stall
+    before that leaves no USB device at all. The busybox front end
+    (M0b', section 5) answers which.
 - Build host memory (2026-11-10): the first `m` OOM-killed soong_build in
   Android.bp analysis (container limit 31 GB, peak 30.76 GB, the 8 GB
   "virtual" swap of the unprivileged LXC container was hardly used, swap
@@ -342,22 +438,29 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | --- | --- | --- |
 | Plan, scripts, device tree skeleton, shim patch | branch `lineageos-24-mainline` of the zte-axon7 repo (local only, not pushed) | committed |
 | LineageOS 24.0 source | `/srv/los24/lineage-24.0` (`repo init -b lineage-24.0 --depth=1 --git-lfs -g default,-darwin,-mips`) | **synced** (try 2, 00:37 UTC; 97 GB left on /srv). History: tmux `los24sync` (user `build`), `/srv/los24/sync.sh` retries 4x; try 1 ended with googlesource "Broken pipe" errors on ~20 projects, retries resume incrementally. ~80 GB so far, about 1-2 h to go |
-| Kernel | `/srv/los24/kernel/linux` (v7.3.1 shallow + Nura 0001-0018, branch `axon7-android`) | **built and staged** 2026-11-10 00:40 UTC: `7.3.1-axon7m`, Image image_size 28 MiB, 605 modules, config check clean |
-| M0a' test image | `/srv/los24/out-test/m0-test-boot.img` (sha256 `2f66b766...32aad8`, 30 MB) | **built, offline checks pass** (axon7-androidimg.py; shim android.c on the host: entry 0x80000000, DTB 0x81e00000, LK SAR tokens and kpti dropped); waiting for a phone test |
-| M0b images | `out/target/product/axon7m/{boot,recovery}.img` (29 / 42 MB, built 2026-11-10 03:29 UTC) | **built, offline checks pass** (shim parser: entry 0x80000000, DTB 0x81e00000). Recovery ramdisk: adbd, `init.recovery.axon7m.rc` (UDC `6a00000.usb`), no modules needed (UFS, dwc3, gadget built in). LineageOS userdebug is not debuggable and recovery has `ro.adb.secure=1`, so developer builds carry the PC's adb key (`AXON7_ADB_KEYS`, as in 22.2) |
+| Kernel | `/srv/los24/kernel/linux` (v7.3.1 shallow + Nura 0001-0018, branch `axon7-android`) | **built and staged** 2026-11-10 00:40 UTC: `7.3.1-axon7m`, Image image_size 28 MiB, 605 modules, config check clean; rebuilt 07:46 UTC as #3 (`kernel/patches/0001` watchdog node, `WATCHDOG_SYSFS`): in `/srv/los24/kernel/prebuilt`, used by all M0b' images |
+| M0a' test image | `/srv/los24/out-test/m0-test-boot.img` (sha256 `2f66b766...32aad8`, 30 MB) | **passed** on the phone as M0a'' (with the watchdog node, `m0b-test-boot.img`) |
+| M0b images | `out/target/product/axon7m/{boot,recovery}.img` (29 / 42 MB, built 2026-11-10 03:29 UTC; recovery saved as `/srv/los24/out-test/recovery-orig-20261110-0329.img`) | repacked `m0b-recovery.img` **failed** on the phone (no USB, section 8). Recovery ramdisk: adbd, `init.recovery.axon7m.rc` (UDC `6a00000.usb`), no modules needed (UFS, dwc3, gadget built in). LineageOS userdebug is not debuggable and recovery has `ro.adb.secure=1`, so developer builds carry the PC's adb key (`AXON7_ADB_KEYS`, as in 22.2). Its fstab still names the l24_* partitions (built before the slot change) |
+| M0b' test images | `/srv/los24/out-test/m0-pad15-boot.img` (size test, sha256 `61d8bd84...bc09490`), `m0b-fe-recovery.img` (recovery + busybox front end, sha256 `5912dd2e...6082381`) | **built, offline checks pass** (axon7-androidimg.py; `shim-hostcheck.sh`: entry 0x80000000, DTB 0x81e00000, staging to 0xa6bbc000 / 0xa6b59000); waiting for the phone (section 5, M0b') |
 | Mesa freedreno | `/srv/los24/mesa/out` → `device/zte/axon7m-mesa` (`scripts/mesa-build.sh`: Mesa 26.2.6, NDK r30, API 35) | **built**: `libEGL_mesa.so`, `libGLESv2_mesa.so` (in `egl/`), `libgallium_dri.so` (19.5 MB); needs only core libdrm + LLNDK libs; used with `AXON7_GPU=mesa` (default stays SwiftShader for the first boot) |
 | Vibrator HAL | `device/zte/axon7m/vibrator/` | written; compiles in the next build after `droid` |
 | Bluetooth address | `device/zte/axon7m/bdaddr/` | dragonboard's `bdaddr` + `--nv` for ZTE's `persist/.bt_nv.bin` (host-tested parser), persist mounted `ro,noload` |
-| Full build (M1a: `droid` incl. `super.img`) | tmux `los24build`, log `/srv/los24/logs/build-latest.log` | **compiling** 174921 actions (analysis + Kati passed ~05:20 UTC): mini LineageOS app set (`AXON7_MINI`), SwiftShader, bdaddr included (vibrator HAL not yet); about 5-8 h at low priority; disk watchdog stops it under 15 GB free on /srv (90 GB free at start; LineageOS 22.2's full out/ is 58 GB for comparison) |
+| Full build (M1a: `droid` incl. `super.img`) | tmux `los24build`, log `/srv/los24/logs/build-20261110-0432.log` | **compiling**, old l24 layout and kernel #2 (started before the slot change): 40 % (68710/170185) at 08:36 UTC, ~300 actions/min, done about 14:00 UTC. Its super.img must **not** be flashed. Left running: compiled objects are reused by the rebuild |
+| Rebuild for 22.2's slot | tmux `los24next`: `scripts/los24-build-after.sh droid` (log of the wait: `/srv/los24/logs/build-after.log`) | **queued**: waits for the first build's `build-exit`, then `los24-build.sh droid` copies the device tree (super = GPT `system`, `los_metadata`, `los_data`, vibrator HAL) and kernel #3 + watchdog DTB from `/srv/los24/axon7/repo` (synced 08:37 UTC, = commit 8a50645 + `los24-build-after.sh`) into the tree: re-analysis + changed modules/images, about 1-2 h, so images about 15:30-16:00 UTC. Then section 5, M1a |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
 
-Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/kernel-build.log /srv/los24/logs/build-latest.log'`.
-If the sync gives up after 4 tries: `su - build -c "tmux new -d -s los24sync /srv/los24/sync.sh"` (incremental), then restart the build job the same way with `los24-build.sh`.
+Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/build-after.log /srv/los24/logs/build-latest.log'`.
+`build-latest.log` points at the queued rebuild once it starts.
 
-Next steps without the phone: make the device tree build (`m recoveryimage`),
-verify the remaining [A] items (lunch release config: the tree has
-`cp1a`/`cp2a`; Wi-Fi HAL without a vendor library), Mesa
-NDK build for freedreno, port dragonboard's `bdaddr` for the BT address.
+Next steps: phone tests M0b' (section 5) decide whether the recovery
+problem is userspace (expected) and where; meanwhile the rebuild for 22.2's
+slot; then M1a. The recovery in that rebuild gets the new fstab
+(`los_metadata`, `los_data`): recovery mounts /data at start
+(`copy_userdata_files()`), which now means 22.2's los_data (allowed). Still
+[A]: Wi-Fi HAL without a vendor library. Idea for M1a, if adb does not come
+up: the same front end in boot.img; first stage init frees the ramdisk after
+switching root, so telnetd's login shell would have to live in a mount that
+survives (not done).
 
 ## 10. Sources
 
