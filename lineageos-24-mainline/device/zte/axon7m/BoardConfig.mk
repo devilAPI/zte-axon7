@@ -84,8 +84,6 @@ BOARD_AVB_ENABLE := false
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/init/fstab.axon7m
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 
-# Treble
-PRODUCT_FULL_TREBLE_OVERRIDE := true
 DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/manifest.xml
 
 # Wi-Fi: ath10k through cfg80211/nl80211, no vendor Wi-Fi HAL library
@@ -98,10 +96,6 @@ BOARD_HAVE_BLUETOOTH := true
 
 # SELinux
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
-
-# The kernel is 7.3, newer than any <kernel> entry of the framework
-# compatibility matrices: don't check kernel version/configs at build/OTA time.
-PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 
 # Development builds: faster, smaller out/
 WITH_DEXPREOPT ?= false

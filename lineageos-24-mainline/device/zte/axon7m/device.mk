@@ -4,10 +4,15 @@
 DEVICE_PATH := device/zte/axon7m
 
 PRODUCT_SHIPPING_API_LEVEL := 34
+PRODUCT_FULL_TREBLE_OVERRIDE := true
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 PRODUCT_BUILD_SUPER_PARTITION := true
 
 PRODUCT_SOONG_NAMESPACES += $(DEVICE_PATH)
+
+# The kernel is 7.3, newer than any <kernel> entry of the framework
+# compatibility matrices: don't check kernel version/configs at build/OTA time.
+PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 
 # Shared memory: no ashmem in mainline, use memfd (libcutils ashmem-dev.cpp)
 PRODUCT_SYSTEM_PROPERTIES += sys.use_memfd=true
