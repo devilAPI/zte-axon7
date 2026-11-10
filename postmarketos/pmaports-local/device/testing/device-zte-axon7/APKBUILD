@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=21
+pkgrel=22
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -23,6 +23,7 @@ depends="buffyboard
 	qrtr
 	qmi-utils
 	sns-reg
+	iio-sensor-proxy
 	"
 makedepends="devicepkg-dev"
 subpackages="$pkgname-openrc"
@@ -61,6 +62,7 @@ source="
 	axon7-sensors.conf
 	axon7-wifi-rescan
 	axon7-wifi-rescan.service
+	61-axon7-sensors.rules
 	"
 
 build() {
@@ -101,6 +103,7 @@ package() {
 	install -Dm755 "$srcdir"/axon7-sns-registry "$pkgdir"/usr/libexec/axon7-sns-registry
 	install -Dm644 "$srcdir"/axon7-sns-reg.service "$pkgdir"/usr/lib/systemd/system/axon7-sns-reg.service
 	install -Dm644 "$srcdir"/axon7-sensors.conf "$pkgdir"/usr/lib/modules-load.d/axon7-sensors.conf
+	install -Dm644 "$srcdir"/61-axon7-sensors.rules "$pkgdir"/usr/lib/udev/rules.d/61-axon7-sensors.rules
 	# Wi-Fi: rescan PCIe when the link came up after the driver gave up
 	install -Dm755 "$srcdir"/axon7-wifi-rescan "$pkgdir"/usr/libexec/axon7-wifi-rescan
 	install -Dm644 "$srcdir"/axon7-wifi-rescan.service "$pkgdir"/usr/lib/systemd/system/axon7-wifi-rescan.service
@@ -151,4 +154,5 @@ f4ac20573950dc34d4d181347351c3add94cb9adaa43a469108ec8a7109a751ae664097da3d70b31
 f90b8cfc5db97fb49a7c3519a73b34c72e6355600fa3a1d07a890f398e9bea26d68f66f26ac2dafd0ede643fe72f630aab821d4da1701522a9692bdf8dc0206a  axon7-sensors.conf
 468c6fd93ef674c2614336316e4cce583310a83123077865ad42447c47ba209af0f4f1681b03973f4e8e2211b1441963915ae732e6ab6f35da19bade4a86265e  axon7-wifi-rescan
 d72af6975d658f6241a39b783ce0a397af7c9fe21909baa12363ebb2c716a2739618928d4ba532d7ecdd5f24921f9e88c174eaa38a1db740d437d5570c6de6d2  axon7-wifi-rescan.service
+c91ff6cd3110f2cb8b40f2c6682b71945e89b89f3a5c4d29f4710495dec19b8f53467ca9ff6d0da36d3433655dd9a17017a103065d9473db6e0faa99c915faf4  61-axon7-sensors.rules
 "

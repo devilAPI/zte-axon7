@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09/10 (kernel patches
-0010-0040, installed by hand on the dev phone; in images from
-linux-zte-axon7 r20 / device-zte-axon7 r20 on). Log in over SSH or on the
+0010-0041, installed by hand on the dev phone; in images from
+linux-zte-axon7 r21 / device-zte-axon7 r22 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -190,6 +190,18 @@ echo 0 | sudo tee $D/buffer/enable >/dev/null
 
 - [ ] Uncovered: proximity about 5; with a finger over the earpiece area: a much higher number (please note it)
 - [ ] Light: a few hundred lux near a window, low in a dark room
+
+Orientation as a desktop would see it (screen rotation):
+
+```sh
+monitor-sensor     # Ctrl+C to stop
+```
+
+- [ ] Upright (as you hold a phone): "Accelerometer orientation changed: normal"
+- [ ] Turned left / right onto its long side: "left-up" / "right-up" (which is which?)
+- [ ] Upside down: "bottom-up"
+- [ ] Hand over the top of the screen: "Proximity value changed: 1"; tell Claude the
+      proximity number from above with the hand there, to set the near level
 
 ## Afterwards
 

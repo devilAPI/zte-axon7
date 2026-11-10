@@ -163,7 +163,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09/10 (kernel patches 0010-0040)
+## Hardware added 2026-11-09/10 (kernel patches 0010-0041)
 
 | Part | Driver | State |
 | --- | --- | --- |
@@ -262,9 +262,15 @@ for c in x y z; do echo 1 | sudo tee $D/scan_elements/in_accel_${c}_en; done
 echo 1 | sudo tee $D/buffer/enable; sudo timeout 1 cat /dev/${D##*/} | od -A d -t d4 | head; echo 0 | sudo tee $D/buffer/enable
 ```
 
-Desktop use: `iio-sensor-proxy` 3.9 wants an IIO trigger on the
-accelerometer ("Could not find trigger name ...") and gives up, so there is
-no auto-rotation yet; the drivers would need a trigger fired per report.
+Desktop use: `iio-sensor-proxy` (in the device package) finds the
+accelerometer, light and proximity sensor (`monitor-sensor`). It needs a
+trigger on buffered accelerometers, named `<name>-dev<IIO device number>`,
+and polls `in_illuminance_raw` / `in_proximity_raw`: each sensor gets its
+own trigger fired per report, and the light/proximity sensor reports at
+10 Hz all the time (0041). `61-axon7-sensors.rules` sets ZTE's accelerometer
+axes (x = -y, y = -x, z = -z: lying flat screen up gives "face-up") and a
+first-guess `PROXIMITY_NEAR_LEVEL` of 100. The compass is not used: the
+proxy wants a tilt-compensated heading.
 
 The WIP driver used u8 for QMI length fields; the 7.3 QMI code copies them as
 u32, so every request for a sensor other than ID 0 failed ("qmi_encode:

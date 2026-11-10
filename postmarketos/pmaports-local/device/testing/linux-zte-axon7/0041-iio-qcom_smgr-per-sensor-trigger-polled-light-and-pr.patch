@@ -1,0 +1,356 @@
+From 484b97f51050e96f83053ce86e38ccf970861667 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 12:37:18 +0100
+Subject: [PATCH] iio: qcom_smgr: per-sensor trigger, polled light and
+ proximity
+
+iio-sensor-proxy only uses buffered accelerometers through a trigger,
+and reads light and proximity by polling in_*_raw. Give each sensor's
+IIO device its own trigger, named '<name>-dev<N>' after the IIO device
+number as iio-sensor-proxy expects, fired for every report; the
+triggered buffer's pollfunc pushes the report's scan. The light and
+proximity sensor reports all the time at 10 Hz, so in_proximity_raw
+and in_illuminance_raw (Q16 lux) return current values without an
+enabled buffer.
+
+Tested on the ZTE Axon 7 with iio-sensor-proxy 3.9: accelerometer
+(tilt, with the device's mount matrix from udev), ambient light
+(24 lux) and proximity are found and report.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i3zNRHFtxX7aibZn4K
+---
+ drivers/iio/accel/smgr_accel.c             |  5 +-
+ drivers/iio/common/qcom_smgr/Kconfig       |  2 +
+ drivers/iio/common/qcom_smgr/smgr.c        | 99 +++++++++++++++++++---
+ drivers/iio/common/qcom_smgr/smgr_motion.c | 42 +++++++--
+ include/linux/iio/common/qcom_smgr.h       | 17 ++++
+ 5 files changed, 146 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/iio/accel/smgr_accel.c b/drivers/iio/accel/smgr_accel.c
+index e7b362927..778846709 100644
+--- a/drivers/iio/accel/smgr_accel.c
++++ b/drivers/iio/accel/smgr_accel.c
+@@ -10,7 +10,6 @@
+ #include <linux/iio/buffer.h>
+ #include <linux/iio/common/qcom_smgr.h>
+ #include <linux/iio/iio.h>
+-#include <linux/iio/kfifo_buf.h>
+ 
+ static int smgr_accel_read_raw(struct iio_dev *iio_dev,
+ 			       struct iio_chan_spec const *chan, int *val,
+@@ -190,8 +189,7 @@ static int smgr_accel_probe(struct platform_device *pdev)
+ 	iio_dev->channels = smgr_accel_iio_channels;
+ 	iio_dev->num_channels = ARRAY_SIZE(smgr_accel_iio_channels);
+ 
+-	ret = devm_iio_kfifo_buffer_setup(&pdev->dev, iio_dev,
+-					  &smgr_buffer_ops);
++	ret = smgr_iio_setup(&pdev->dev, iio_dev, priv->sensor);
+ 	if (ret) {
+ 		dev_err(&pdev->dev, "Failed to setup buffer: %pe\n",
+ 			ERR_PTR(ret));
+@@ -213,6 +211,7 @@ static void smgr_accel_remove(struct platform_device *pdev)
+ 	struct iio_dev *iio_dev = platform_get_drvdata(pdev);
+ 	struct smgr_iio_priv *priv = iio_priv(iio_dev);
+ 
++	priv->sensor->trig = NULL;
+ 	priv->sensor->iio_dev = NULL;
+ }
+ 
+diff --git a/drivers/iio/common/qcom_smgr/Kconfig b/drivers/iio/common/qcom_smgr/Kconfig
+index dc28ad2b9..f57f2c298 100644
+--- a/drivers/iio/common/qcom_smgr/Kconfig
++++ b/drivers/iio/common/qcom_smgr/Kconfig
+@@ -9,6 +9,8 @@ config IIO_QCOM_SMGR
+ 	depends on QCOM_RPROC_COMMON
+ 	select QCOM_QMI_HELPERS
+ 	select IIO_BUFFER
++	select IIO_TRIGGER
++	select IIO_TRIGGERED_BUFFER
+ 	help
+ 	  Say yes here to build core support for the Sensor Manager (SMGR)
+ 	  service provided by the Qualcomm Snapdragon Sensor Core (SSC).
+diff --git a/drivers/iio/common/qcom_smgr/smgr.c b/drivers/iio/common/qcom_smgr/smgr.c
+index 2d30fa2b4..7281d04df 100644
+--- a/drivers/iio/common/qcom_smgr/smgr.c
++++ b/drivers/iio/common/qcom_smgr/smgr.c
+@@ -8,6 +8,9 @@
+ #include <linux/iio/buffer.h>
+ #include <linux/iio/common/qcom_smgr.h>
+ #include <linux/iio/iio.h>
++#include <linux/iio/trigger.h>
++#include <linux/iio/trigger_consumer.h>
++#include <linux/iio/triggered_buffer.h>
+ #include <linux/module.h>
+ #include <linux/mutex.h>
+ #include <linux/of.h>
+@@ -273,10 +276,6 @@ static void smgr_report_sensor(struct smgr *smgr, struct smgr_sensor *sensor,
+ 	const struct sns_smgr_buffering_report_index *idx;
+ 	unsigned int k, n;
+ 	u32 ts = 0;
+-	struct {
+-		s32 values[3];
+-		aligned_s64 timestamp;	/* room for the IIO timestamp */
+-	} scan = { };
+ 
+ 	for (k = 0; k < ind->indices_len && k < ARRAY_SIZE(ind->indices); k++) {
+ 		idx = &ind->indices[k];
+@@ -295,22 +294,26 @@ static void smgr_report_sensor(struct smgr *smgr, struct smgr_sensor *sensor,
+ 			 sensor->last[idx->data_type][2], idx->sample_count);
+ 	}
+ 
+-	if (!sensor->iio_dev)
++	if (!sensor->iio_dev || !sensor->trig)
+ 		return;
+ 
++	memset(&sensor->scan, 0, sizeof(sensor->scan));
+ 	if (sensor->type == SNS_SMGR_SENSOR_TYPE_PROX_LIGHT) {
+ 		/*
+ 		 * RPR0521 (ZTE Axon 7): primary = proximity (near flag,
+ 		 * raw count, threshold in Q16), secondary = light (lux in
+ 		 * Q16, two raw ADC counts). Push the proximity count and lux.
+ 		 */
+-		scan.values[0] = sensor->last[SNS_SMGR_DATA_TYPE_PRIMARY][1];
+-		scan.values[1] = sensor->last[SNS_SMGR_DATA_TYPE_SECONDARY][0];
++		sensor->scan.values[0] = sensor->last[SNS_SMGR_DATA_TYPE_PRIMARY][1];
++		sensor->scan.values[1] = sensor->last[SNS_SMGR_DATA_TYPE_SECONDARY][0];
+ 	} else {
+-		memcpy(scan.values, sensor->last[SNS_SMGR_DATA_TYPE_PRIMARY],
+-		       sizeof(scan.values));
++		memcpy(sensor->scan.values, sensor->last[SNS_SMGR_DATA_TYPE_PRIMARY],
++		       sizeof(sensor->scan.values));
+ 	}
+-	iio_push_to_buffers_with_ts(sensor->iio_dev, &scan, sizeof(scan), ts);
++	sensor->scan_ts = ts;
++
++	/* runs the pollfunc of whoever uses the trigger, in this context */
++	iio_trigger_poll_nested(sensor->trig);
+ }
+ 
+ static void smgr_buffering_report_handler(struct qmi_handle *hdl,
+@@ -351,6 +354,10 @@ static int smgr_sensor_postenable(struct iio_dev *iio_dev)
+ 	struct smgr_iio_priv *priv = iio_priv(iio_dev);
+ 	struct smgr_sensor *sensor = priv->sensor;
+ 
++	/* already reporting for sysfs readers */
++	if (sensor->always_on)
++		return 0;
++
+ 	return smgr_request_buffering(smgr, sensor, true);
+ }
+ 
+@@ -360,15 +367,87 @@ static int smgr_sensor_postdisable(struct iio_dev *iio_dev)
+ 	struct smgr_iio_priv *priv = iio_priv(iio_dev);
+ 	struct smgr_sensor *sensor = priv->sensor;
+ 
++	if (sensor->always_on)
++		return 0;
++
+ 	return smgr_request_buffering(smgr, sensor, false);
+ }
+ 
++/*
++ * Keep a sensor reporting all the time, so its newest values can be read
++ * from sysfs (polling users such as iio-sensor-proxy's light and
++ * proximity support) without enabling the buffer.
++ */
++int smgr_sensor_set_always_on(struct iio_dev *iio_dev, bool on)
++{
++	struct smgr *smgr = dev_get_drvdata(iio_dev->dev.parent->parent);
++	struct smgr_iio_priv *priv = iio_priv(iio_dev);
++	struct smgr_sensor *sensor = priv->sensor;
++	int ret;
++
++	if (sensor->always_on == on)
++		return 0;
++
++	ret = smgr_request_buffering(smgr, sensor, on);
++	if (!ret || !on)
++		sensor->always_on = on;
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(smgr_sensor_set_always_on);
++
++static irqreturn_t smgr_trigger_handler(int irq, void *p)
++{
++	struct iio_poll_func *pf = p;
++	struct iio_dev *iio_dev = pf->indio_dev;
++	struct smgr_iio_priv *priv = iio_priv(iio_dev);
++	struct smgr_sensor *sensor = priv->sensor;
++
++	iio_push_to_buffers_with_ts(iio_dev, &sensor->scan,
++				    sizeof(sensor->scan), sensor->scan_ts);
++	iio_trigger_notify_done(iio_dev->trig);
++
++	return IRQ_HANDLED;
++}
++
+ struct iio_buffer_setup_ops smgr_buffer_ops = {
+ 	.postenable = &smgr_sensor_postenable,
+ 	.postdisable = &smgr_sensor_postdisable
+ };
+ EXPORT_SYMBOL_GPL(smgr_buffer_ops);
+ 
++/*
++ * Buffer and trigger for a sensor's IIO device: the SSC pushes reports at
++ * the requested rate, so each report fires the sensor's own trigger (the
++ * default one), and its pollfunc pushes the report's scan. Users that
++ * insist on a trigger (iio-sensor-proxy) can use the buffer that way.
++ */
++int smgr_iio_setup(struct device *dev, struct iio_dev *iio_dev,
++		   struct smgr_sensor *sensor)
++{
++	struct iio_trigger *trig;
++	int ret;
++
++	/* "<name>-dev<IIO device number>", as users like iio-sensor-proxy expect */
++	trig = devm_iio_trigger_alloc(dev, "%s-dev%d", iio_dev->name,
++				      iio_device_id(iio_dev));
++	if (!trig)
++		return -ENOMEM;
++
++	iio_trigger_set_drvdata(trig, iio_dev);
++	ret = devm_iio_trigger_register(dev, trig);
++	if (ret)
++		return ret;
++
++	sensor->trig = trig;
++	iio_dev->trig = iio_trigger_get(trig);
++
++	return devm_iio_triggered_buffer_setup(dev, iio_dev, NULL,
++					       smgr_trigger_handler,
++					       &smgr_buffer_ops);
++}
++EXPORT_SYMBOL_GPL(smgr_iio_setup);
++
+ static int smgr_probe(struct platform_device *pdev)
+ {
+ 	const struct sockaddr_qrtr *sq = dev_get_platdata(&pdev->dev);
+diff --git a/drivers/iio/common/qcom_smgr/smgr_motion.c b/drivers/iio/common/qcom_smgr/smgr_motion.c
+index 29d7f9a10..780e029be 100644
+--- a/drivers/iio/common/qcom_smgr/smgr_motion.c
++++ b/drivers/iio/common/qcom_smgr/smgr_motion.c
+@@ -12,7 +12,6 @@
+ #include <linux/iio/buffer.h>
+ #include <linux/iio/common/qcom_smgr.h>
+ #include <linux/iio/iio.h>
+-#include <linux/iio/kfifo_buf.h>
+ 
+ static int smgr_motion_read_raw(struct iio_dev *iio_dev,
+ 				struct iio_chan_spec const *chan, int *val,
+@@ -21,6 +20,13 @@ static int smgr_motion_read_raw(struct iio_dev *iio_dev,
+ 	struct smgr_iio_priv *priv = iio_priv(iio_dev);
+ 
+ 	switch (mask) {
++	case IIO_CHAN_INFO_RAW:
++		/* newest report: proximity count, or lux in Q16 */
++		if (chan->type == IIO_PROXIMITY)
++			*val = priv->sensor->last[SNS_SMGR_DATA_TYPE_PRIMARY][1];
++		else
++			*val = priv->sensor->last[SNS_SMGR_DATA_TYPE_SECONDARY][0];
++		return IIO_VAL_INT;
+ 	case IIO_CHAN_INFO_SAMP_FREQ:
+ 		*val = priv->sensor->data_types[0].cur_sample_rate;
+ 		return IIO_VAL_INT;
+@@ -159,7 +165,8 @@ static const struct iio_chan_spec smgr_prox_light_channels[] = {
+ 			.storagebits = 32,
+ 			.endianness = IIO_LE,
+ 		},
+-		.info_mask_separate = BIT(IIO_CHAN_INFO_SCALE),
++		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
++				      BIT(IIO_CHAN_INFO_SCALE),
+ 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
+ 		.info_mask_shared_by_all_available = BIT(IIO_CHAN_INFO_SAMP_FREQ),
+ 	},
+@@ -172,7 +179,8 @@ static const struct iio_chan_spec smgr_prox_light_channels[] = {
+ 			.storagebits = 32,
+ 			.endianness = IIO_LE,
+ 		},
+-		.info_mask_separate = BIT(IIO_CHAN_INFO_SCALE),
++		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
++				      BIT(IIO_CHAN_INFO_SCALE),
+ 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
+ 		.info_mask_shared_by_all_available = BIT(IIO_CHAN_INFO_SAMP_FREQ),
+ 	},
+@@ -235,12 +243,28 @@ static int smgr_motion_probe(struct platform_device *pdev)
+ 	iio_dev->channels = variant->channels;
+ 	iio_dev->num_channels = variant->num_channels;
+ 
+-	ret = devm_iio_kfifo_buffer_setup(&pdev->dev, iio_dev,
+-					  &smgr_buffer_ops);
++	ret = smgr_iio_setup(&pdev->dev, iio_dev, priv->sensor);
+ 	if (ret)
+ 		return dev_err_probe(&pdev->dev, ret, "failed to set up buffer\n");
+ 
+-	return devm_iio_device_register(&pdev->dev, iio_dev);
++	ret = devm_iio_device_register(&pdev->dev, iio_dev);
++	if (ret)
++		return ret;
++
++	if (variant == &smgr_prox_light_variant) {
++		struct smgr_sensor *sensor = priv->sensor;
++		unsigned int i;
++
++		/* report continuously, slowly, for sysfs readers */
++		for (i = 0; i < sensor->data_type_count; i++)
++			sensor->data_types[i].cur_sample_rate =
++				min_t(u16, 10, sensor->data_types[i].max_sample_rate);
++		ret = smgr_sensor_set_always_on(iio_dev, true);
++		if (ret)
++			dev_warn(&pdev->dev, "cannot start reporting: %d\n", ret);
++	}
++
++	return 0;
+ }
+ 
+ static void smgr_motion_remove(struct platform_device *pdev)
+@@ -248,6 +272,12 @@ static void smgr_motion_remove(struct platform_device *pdev)
+ 	struct iio_dev *iio_dev = platform_get_drvdata(pdev);
+ 	struct smgr_iio_priv *priv = iio_priv(iio_dev);
+ 
++	/*
++	 * No QMI request here: this also runs while the core is going away.
++	 * Reports that still arrive are dropped (no IIO device).
++	 */
++	priv->sensor->always_on = false;
++	priv->sensor->trig = NULL;
+ 	priv->sensor->iio_dev = NULL;
+ }
+ 
+diff --git a/include/linux/iio/common/qcom_smgr.h b/include/linux/iio/common/qcom_smgr.h
+index 3ef3a6b4f..dd67f1dc3 100644
+--- a/include/linux/iio/common/qcom_smgr.h
++++ b/include/linux/iio/common/qcom_smgr.h
+@@ -43,6 +43,17 @@ struct smgr_sensor
+ 	struct iio_dev *iio_dev;
+ 	/* newest sample of each data type */
+ 	s32 last[SNS_SMGR_DATA_TYPE_COUNT][3];
++
++	/* fired for every report; the scan it pushes */
++	struct iio_trigger *trig;
++	struct {
++		s32 values[3];
++		aligned_s64 timestamp;
++	} scan;
++	s64 scan_ts;
++
++	/* reporting without an enabled buffer, for sysfs reads */
++	bool always_on;
+ };
+ 
+ struct smgr_iio_priv
+@@ -53,4 +64,10 @@ struct smgr_iio_priv
+ 
+ extern struct iio_buffer_setup_ops smgr_buffer_ops;
+ 
++struct device;
++struct iio_dev;
++int smgr_iio_setup(struct device *dev, struct iio_dev *iio_dev,
++		   struct smgr_sensor *sensor);
++int smgr_sensor_set_always_on(struct iio_dev *iio_dev, bool on);
++
+ #endif /* __QCOM_SMGR_H__ */
+-- 
+2.56.0
+

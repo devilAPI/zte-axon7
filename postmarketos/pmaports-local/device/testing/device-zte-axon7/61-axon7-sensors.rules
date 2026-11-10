@@ -1,0 +1,7 @@
+# Sensors on the SLPI, for iio-sensor-proxy
+# Accelerometer axes as in ZTE's sensor_def_qcomdev.conf (-2 -1 -3):
+# x = -y, y = -x, z = -z. Checked: lying flat screen up gives "face-up".
+SUBSYSTEM=="iio", ATTR{name}=="qcom-smgr-accel", ENV{ACCEL_MOUNT_MATRIX}="0, -1, 0; -1, 0, 0; 0, 0, -1"
+# RPR0521 proximity count: about 5 with nothing near; the "near" level is
+# a first guess until measured with a hand over the sensor.
+SUBSYSTEM=="iio", ATTR{name}=="qcom-smgr-prox-light", ENV{PROXIMITY_NEAR_LEVEL}="100"
