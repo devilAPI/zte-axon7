@@ -203,6 +203,20 @@ monitor-sensor     # Ctrl+C to stop
 - [ ] Hand over the top of the screen: "Proximity value changed: 1"; tell Claude the
       proximity number from above with the hand there, to set the near level
 
+## 8. NFC
+
+Needs an NFC card or tag (bank card, transit card, NFC sticker). The
+controller answers and starts searching (measured); reading a tag isn't
+tested yet. Easiest with neard: `sudo apk add neard`, then
+
+```sh
+sudo nfctool -d nfc0 -1     # switch on
+sudo nfctool -d nfc0 -p     # start polling, hold the card to the back
+sudo nfctool -d nfc0 -0     # switch off
+```
+
+- [ ] A "Targets found" line appears when the card touches the back of the phone
+
 ## Afterwards
 
 When kernel r8 is installed as a package, remove the hand-installed copies
