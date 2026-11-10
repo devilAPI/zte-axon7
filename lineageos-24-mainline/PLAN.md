@@ -316,6 +316,15 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
   (`qcom,apss-wdt-msm8996`, `qcom,kpss-wdt`, bark SPI 28 as downstream).
   Nura is not affected (the shim's postmarketOS path leaves the watchdog
   off), but would gain a working watchdog from the same patch.
+- **M0a'' (2026-11-10, main session): no reset any more.** With the watchdog
+  node, `9830000.watchdog` binds as watchdog0, the heartbeat ran past 191 s;
+  rmtfs at 0xbfa00000, no new errors (same benign ones as Nura: BAM DMA -22,
+  UFS clock gating, PMIC temp-alarm deferred). `CONFIG_WATCHDOG_SYSFS` added
+  for the watchdog attributes. Patch 0001 is also in Nura now (0025).
+- **M0b without a new build:** `scripts/make-m0b-recovery.sh` repacks the
+  built LineageOS 24 `recovery.img` with the current kernel/DTB and the PC's
+  adb key as `/adb_keys` (`scripts/cpio-replace.py` edits the newc ramdisk
+  in place, root ownership kept).
 - Build host memory (2026-11-10): the first `m` OOM-killed soong_build in
   Android.bp analysis (container limit 31 GB, peak 30.76 GB, the 8 GB
   "virtual" swap of the unprivileged LXC container was hardly used, swap
