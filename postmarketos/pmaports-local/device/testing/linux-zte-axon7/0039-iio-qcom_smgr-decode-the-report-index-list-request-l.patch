@@ -1,0 +1,289 @@
+From 074067733c38657dbfb7d08b9e69a86489ba8c3f Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 12:23:00 +0100
+Subject: [PATCH 39/40] iio: qcom_smgr: decode the report index list, request
+ light data
+
+TLV 0x02 of the buffering report is a length byte and one index entry
+per requested item (sensor, data type, first sample, sample count,
+timestamp, rate). It was decoded as one fixed struct with the length
+folded into the first field, which only works for a single item.
+
+Decode it as an array, keep the newest sample of each data type per
+sensor, and request the secondary data type as well for the
+proximity/light sensor, whose light level is that secondary data. For
+that sensor push the proximity count and the illuminance (Q16 lux)
+together. Push with iio_push_to_buffers_with_ts() and a scan buffer
+that has room for the timestamp.
+
+Also set the default sample rate on every data type: probe set it on
+the first one only, once per data type.
+
+Tested on the ZTE Axon 7 (ROHM RPR0521): proximity ~20/s, light ~7/s,
+28 lux indoors; accelerometer, gyroscope and magnetometer unchanged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/iio/common/qcom_smgr/qmi/sns_smgr.c | 61 ++++++++++-------
+ drivers/iio/common/qcom_smgr/qmi/sns_smgr.h | 17 +++--
+ drivers/iio/common/qcom_smgr/smgr.c         | 72 +++++++++++++++++++--
+ include/linux/iio/common/qcom_smgr.h        |  2 +
+ 4 files changed, 116 insertions(+), 36 deletions(-)
+
+diff --git a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c
+index 8c673718c..51ed8de13 100644
+--- a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c
++++ b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c
+@@ -538,43 +538,48 @@ const struct qmi_elem_info sns_smgr_buffering_resp_ei[] = {
+ };
+ EXPORT_SYMBOL_GPL(sns_smgr_buffering_resp_ei);
+ 
+-static const struct qmi_elem_info sns_smgr_buffering_report_metadata_ei[] = {
++static const struct qmi_elem_info sns_smgr_buffering_report_index_ei[] = {
+ 	{
+-		.data_type = QMI_UNSIGNED_4_BYTE,
++		.data_type = QMI_UNSIGNED_1_BYTE,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_buffering_report_metadata, val1),
++		.elem_size = sizeof_field(struct sns_smgr_buffering_report_index, sensor_id),
+ 		.array_type = NO_ARRAY,
+-		.offset = offsetof(struct sns_smgr_buffering_report_metadata,
+-				   val1),
++		.offset = offsetof(struct sns_smgr_buffering_report_index, sensor_id),
+ 	},
+ 	{
+ 		.data_type = QMI_UNSIGNED_1_BYTE,
+ 		.elem_len = 1,
+-		.elem_size =
+-			sizeof_field(struct sns_smgr_buffering_report_metadata,
+-				     sample_count),
++		.elem_size = sizeof_field(struct sns_smgr_buffering_report_index, data_type),
++		.array_type = NO_ARRAY,
++		.offset = offsetof(struct sns_smgr_buffering_report_index, data_type),
++	},
++	{
++		.data_type = QMI_UNSIGNED_1_BYTE,
++		.elem_len = 1,
++		.elem_size = sizeof_field(struct sns_smgr_buffering_report_index, first_sample_idx),
++		.array_type = NO_ARRAY,
++		.offset = offsetof(struct sns_smgr_buffering_report_index, first_sample_idx),
++	},
++	{
++		.data_type = QMI_UNSIGNED_1_BYTE,
++		.elem_len = 1,
++		.elem_size = sizeof_field(struct sns_smgr_buffering_report_index, sample_count),
+ 		.array_type = NO_ARRAY,
+-		.offset = offsetof(struct sns_smgr_buffering_report_metadata,
+-				   sample_count),
++		.offset = offsetof(struct sns_smgr_buffering_report_index, sample_count),
+ 	},
+ 	{
+ 		.data_type = QMI_UNSIGNED_4_BYTE,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_buffering_report_metadata, timestamp),
++		.elem_size = sizeof_field(struct sns_smgr_buffering_report_index, first_sample_timestamp),
+ 		.array_type = NO_ARRAY,
+-		.offset = offsetof(struct sns_smgr_buffering_report_metadata,
+-				   timestamp),
++		.offset = offsetof(struct sns_smgr_buffering_report_index, first_sample_timestamp),
+ 	},
+ 	{
+ 		.data_type = QMI_UNSIGNED_4_BYTE,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_buffering_report_metadata, val2),
++		.elem_size = sizeof_field(struct sns_smgr_buffering_report_index, sampling_rate),
+ 		.array_type = NO_ARRAY,
+-		.offset = offsetof(struct sns_smgr_buffering_report_metadata,
+-				   val2),
++		.offset = offsetof(struct sns_smgr_buffering_report_index, sampling_rate),
+ 	},
+ 	{
+ 		.data_type = QMI_EOTI,
+@@ -634,15 +639,23 @@ const struct qmi_elem_info sns_smgr_buffering_report_ind_ei[] = {
+ 				   report_id),
+ 	},
+ 	{
+-		.data_type = QMI_STRUCT,
++		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(struct sns_smgr_buffering_report_ind,
+-					  metadata),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x02,
+ 		.offset = offsetof(struct sns_smgr_buffering_report_ind,
+-				   metadata),
+-		.ei_array = sns_smgr_buffering_report_metadata_ei,
++				   indices_len),
++	},
++	{
++		.data_type = QMI_STRUCT,
++		.elem_len = SNS_SMGR_DATA_TYPE_COUNT,
++		.elem_size = sizeof(struct sns_smgr_buffering_report_index),
++		.array_type = VAR_LEN_ARRAY,
++		.tlv_type = 0x02,
++		.offset = offsetof(struct sns_smgr_buffering_report_ind,
++				   indices),
++		.ei_array = sns_smgr_buffering_report_index_ei,
+ 	},
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+diff --git a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h
+index 8bf66e34a..6c9721018 100644
+--- a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h
++++ b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h
+@@ -115,11 +115,17 @@ struct sns_smgr_buffering_resp {
+ 	u8 ack_nak;
+ };
+ 
+-struct sns_smgr_buffering_report_metadata {
+-	u32 val1;
++/*
++ * One per requested item (sensor and data type): which run of samples
++ * in the report belongs to it.
++ */
++struct sns_smgr_buffering_report_index {
++	u8 sensor_id;
++	u8 data_type;
++	u8 first_sample_idx;
+ 	u8 sample_count;
+-	u32 timestamp;
+-	u32 val2;
++	u32 first_sample_timestamp;
++	u32 sampling_rate;
+ };
+ 
+ struct sns_smgr_buffering_report_sample {
+@@ -131,7 +137,8 @@ struct sns_smgr_buffering_report_sample {
+ 
+ struct sns_smgr_buffering_report_ind {
+ 	u8 report_id;
+-	struct sns_smgr_buffering_report_metadata metadata;
++	u32 indices_len;
++	struct sns_smgr_buffering_report_index indices[SNS_SMGR_DATA_TYPE_COUNT];
+ 	u32 samples_len;
+ 	struct sns_smgr_buffering_report_sample samples[SNS_SMGR_SAMPLES_MAX_LEN];
+ 	u8 val2;
+diff --git a/drivers/iio/common/qcom_smgr/smgr.c b/drivers/iio/common/qcom_smgr/smgr.c
+index 0081e0520..2d30fa2b4 100644
+--- a/drivers/iio/common/qcom_smgr/smgr.c
++++ b/drivers/iio/common/qcom_smgr/smgr.c
+@@ -210,6 +210,16 @@ static int smgr_request_buffering(struct smgr *smgr, struct smgr_sensor *sensor,
+ 		req.items[0].sampling_rate =
+ 			sensor->data_types[0].cur_sample_rate;
+ 
++		/* proximity/light: the light level is the secondary data type */
++		if (sensor->type == SNS_SMGR_SENSOR_TYPE_PROX_LIGHT &&
++		    sensor->data_type_count > 1) {
++			req.item_len = 2;
++			req.items[1] = req.items[0];
++			req.items[1].data_type = SNS_SMGR_DATA_TYPE_SECONDARY;
++			req.items[1].sampling_rate =
++				sensor->data_types[1].cur_sample_rate;
++		}
++
+ 		dev_dbg(smgr->dev,
+ 			"Requesting buffering for sensor 0x%02x, report rate: %d, sample rate: %d",
+ 			req.items[0].sensor_id, req.report_rate,
+@@ -251,6 +261,58 @@ static int smgr_request_buffering(struct smgr *smgr, struct smgr_sensor *sensor,
+ 	return 0;
+ }
+ 
++/*
++ * A report carries one index entry per requested item (data type): the
++ * newest sample of each goes to the sensor's last values. Sensors with
++ * one data type push their primary sample; the proximity/light sensor
++ * pushes primary (proximity) and secondary (light) together.
++ */
++static void smgr_report_sensor(struct smgr *smgr, struct smgr_sensor *sensor,
++			       const struct sns_smgr_buffering_report_ind *ind)
++{
++	const struct sns_smgr_buffering_report_index *idx;
++	unsigned int k, n;
++	u32 ts = 0;
++	struct {
++		s32 values[3];
++		aligned_s64 timestamp;	/* room for the IIO timestamp */
++	} scan = { };
++
++	for (k = 0; k < ind->indices_len && k < ARRAY_SIZE(ind->indices); k++) {
++		idx = &ind->indices[k];
++		if (idx->sensor_id != sensor->id || !idx->sample_count ||
++		    idx->data_type >= SNS_SMGR_DATA_TYPE_COUNT)
++			continue;
++		n = idx->first_sample_idx + idx->sample_count - 1;
++		if (n >= ind->samples_len)
++			continue;
++		memcpy(sensor->last[idx->data_type], ind->samples[n].values,
++		       sizeof(sensor->last[0]));
++		ts = idx->first_sample_timestamp;
++		dev_vdbg(smgr->dev, "0x%02x,%u: %d %d %d (%u samples)\n",
++			 sensor->id, idx->data_type, sensor->last[idx->data_type][0],
++			 sensor->last[idx->data_type][1],
++			 sensor->last[idx->data_type][2], idx->sample_count);
++	}
++
++	if (!sensor->iio_dev)
++		return;
++
++	if (sensor->type == SNS_SMGR_SENSOR_TYPE_PROX_LIGHT) {
++		/*
++		 * RPR0521 (ZTE Axon 7): primary = proximity (near flag,
++		 * raw count, threshold in Q16), secondary = light (lux in
++		 * Q16, two raw ADC counts). Push the proximity count and lux.
++		 */
++		scan.values[0] = sensor->last[SNS_SMGR_DATA_TYPE_PRIMARY][1];
++		scan.values[1] = sensor->last[SNS_SMGR_DATA_TYPE_SECONDARY][0];
++	} else {
++		memcpy(scan.values, sensor->last[SNS_SMGR_DATA_TYPE_PRIMARY],
++		       sizeof(scan.values));
++	}
++	iio_push_to_buffers_with_ts(sensor->iio_dev, &scan, sizeof(scan), ts);
++}
++
+ static void smgr_buffering_report_handler(struct qmi_handle *hdl,
+ 					  struct sockaddr_qrtr *sq,
+ 					  struct qmi_txn *txn, const void *data)
+@@ -267,11 +329,7 @@ static void smgr_buffering_report_handler(struct qmi_handle *hdl,
+ 		if (sensor->id != ind->report_id)
+ 			continue;
+ 
+-		// TODO: handle multiple samples
+-		iio_push_to_buffers_with_timestamp(sensor->iio_dev,
+-						   ind->samples[0].values,
+-						   ind->metadata.timestamp);
+-
++		smgr_report_sensor(smgr, sensor, ind);
+ 		break;
+ 	}
+ }
+@@ -360,8 +418,8 @@ static int smgr_probe(struct platform_device *pdev)
+ 
+ 		for (j = 0; j < smgr->sensors[i].data_type_count; j++) {
+ 			/* Default to maximum sample rate */
+-			smgr->sensors[i].data_types->cur_sample_rate =
+-				smgr->sensors[i].data_types->max_sample_rate;
++			smgr->sensors[i].data_types[j].cur_sample_rate =
++				smgr->sensors[i].data_types[j].max_sample_rate;
+ 
+ 			dev_dbg(smgr->dev, "0x%02x,%d: %s %s\n",
+ 				smgr->sensors[i].id, j,
+diff --git a/include/linux/iio/common/qcom_smgr.h b/include/linux/iio/common/qcom_smgr.h
+index 41f41cd4b..3ef3a6b4f 100644
+--- a/include/linux/iio/common/qcom_smgr.h
++++ b/include/linux/iio/common/qcom_smgr.h
+@@ -41,6 +41,8 @@ struct smgr_sensor
+ 	struct smgr_data_type_item *data_types;
+ 
+ 	struct iio_dev *iio_dev;
++	/* newest sample of each data type */
++	s32 last[SNS_SMGR_DATA_TYPE_COUNT][3];
+ };
+ 
+ struct smgr_iio_priv
+-- 
+2.56.0
+

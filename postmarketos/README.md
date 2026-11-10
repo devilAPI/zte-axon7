@@ -163,7 +163,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09/10 (kernel patches 0010-0038)
+## Hardware added 2026-11-09/10 (kernel patches 0010-0040)
 
 | Part | Driver | State |
 | --- | --- | --- |
@@ -177,7 +177,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 | Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016, 0018) | confirmed: a -21 dBFS 1 kHz tone saturates the microphone; SBI1 looped back to SLIMbus TX is bit-exact |
 | Microphones 1 and 2 | `ak4961` AIF1 capture: ADC1 left = AIN1 (bottom, TX7, 0018), right = AIN2 (top, TX8, 0026) | confirmed: the vibrator raises mic 1 by ~30 dB; a tone from the top speaker is 18 dB louder on mic 2 |
 | Headset microphone | `ak4961` AIN4 with MPWR2 bias on Mic_1L (0031), UCM device `Headset` | measured without a headset: PM4/PM5 = 0x0a while recording, open-input bias noise; voice to be heard. No jack detection yet, so the device is chosen by hand. There is no third analog microphone: ZTE never routes AIN3 |
-| Sensors | SLPI (sensor DSP) enabled (0034); Sensor Manager IIO drivers from msm8996-mainline (Yassine Oudjana's WIP, 0032/0033) with fixes (0035, 0036), a gyroscope/magnetometer driver (0037) and a QMI service lookup instead of the QRTR bus patch (0038); `sns-reg` serves the phone's own `/persist/sensors/sns.reg` (`axon7-sns-reg.service`) | confirmed: accelerometer (Bosch BMI160, ~390/s, 10.5 m/s² lying flat), gyroscope (BMI160, ~385/s, 0.05 rad/s bias at rest), magnetometer (AKM AK09915, ~95/s, uncalibrated); the devices follow an SLPI restart. Proximity/light (ROHM RPR0521, sensor 0x28, two data types) has no driver yet |
+| Sensors | SLPI (sensor DSP) enabled (0034); Sensor Manager IIO drivers from msm8996-mainline (Yassine Oudjana's WIP, 0032/0033) with fixes (0035, 0036), a gyroscope/magnetometer driver (0037) and a QMI service lookup instead of the QRTR bus patch (0038); `sns-reg` serves the phone's own `/persist/sensors/sns.reg` (`axon7-sns-reg.service`) | confirmed: accelerometer (Bosch BMI160, ~390/s, 10.5 m/s² lying flat), gyroscope (BMI160, ~385/s, 0.05 rad/s bias at rest), magnetometer (AKM AK09915, ~95/s, uncalibrated); the devices follow an SLPI restart. proximity/light (ROHM RPR0521, 0039/0040): `qcom-smgr-prox-light` with `in_proximity` (raw count, 4-5 with nothing near) and `in_illuminance` (lux, Q16; 28 lux indoors); "near" still to be measured |
 | Front camera | mainline `ov8856` + `qcom-camss` (0020 VFE power-down fix, 0021 DT; CONFIG_VIDEO_OV8856) | confirmed: 3280x2464 RAW10 frames of the room through CSIPHY2 -> CSID0 -> ISPIF0 -> VFE0 RDI0 (no ISP, no app) |
 | Rear camera | `s5k2t8` (new, 0027; CONFIG_VIDEO_S5K2T8) + DT (0028): CCI 0 at 0x2d, CSIPHY0, 4 lanes; init and mode tables from ZTE's `libmmcamera_s5k2t8.so` | confirmed: chip id 0x2148; colour bars and real light in all three modes, 5952x3348 at 30 fps (834 MHz link), 2976x1674 at 30 fps, 1920x1080 at 60 fps. |
 | Rear camera focus | AK7371 as a variant of mainline `ak7375` (0029), 10-bit position, CCI 0 at 0x0c, `lens-focus` link (0030) | confirmed: `focus_absolute` 0..1023 moves the lens (the torch spot on the table shifts and narrows step by step). No autofocus loop and no OIS (ROHM BU63165) yet |
@@ -252,7 +252,9 @@ which `axon7-sns-registry` generates once from the phone's own
 so Android must have run once). Then the SLPI offers the Sensor Manager
 (QRTR service 256, v1, instance 50) and `smgr` registers one IIO device per
 sensor: `qcom-smgr-accel`, `-gyro`, `-mag` (buffered only, Q16: scale
-1/65536 m/s², rad/s, gauss). Read a few samples:
+1/65536 m/s², rad/s, gauss) and `-prox-light` (proximity count, lux in
+Q16). The report's index TLV lists one entry per data type; the WIP driver
+decoded it as a single struct (0039). Read a few samples:
 
 ```sh
 D=$(grep -l qcom-smgr-accel /sys/bus/iio/devices/iio:device*/name); D=${D%/name}
