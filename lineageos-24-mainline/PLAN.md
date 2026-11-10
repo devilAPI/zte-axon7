@@ -1,6 +1,6 @@
 # LineageOS 24 on mainline Linux for the ZTE Axon 7: plan
 
-Status: **M0: boot path works (M0a''), M0b (Android recovery) failed without USB, M0b' test images ready; full build running** (started 2026-11-09). Codename for this
+Status: **M0: boot path works (M0a''); M0b' found the recovery crash (no DRM device in recovery), kernel #4 with the display built in, M0b'' images ready; full build running** (started 2026-11-09). Codename for this
 port: **`axon7m`** (device `zte/axon7m`, so it can live next to the 4.4
 `axon7` tree of LineageOS 22.2 without clashing).
 
@@ -311,6 +311,59 @@ has booted yet.
    `FRONTEND=0 scripts/make-m0b-recovery.sh` builds the plain recovery with
    the same cmdline additions if needed.
 
+**M0b' result (2026-11-10, main session; logs in
+`logs/m0bprime-20261110/`):**
+- Size test passed: `m0-pad15-boot.img` (45.9 MB) booted, telnet after
+  25 s, `/pad.bin` 15728640 bytes, "Freeing initrd memory: 16476K",
+  kernel #3 ran past 50 s without a watchdog reset; `reboot -f` went to TWRP
+  through the test shim as designed. The image size never was the problem.
+- Front end worked: telnet after 25 s, Android's second stage, ueventd,
+  servicemanager, recovery (and charger) running, SELinux permissive,
+  `ro.boot.boot_devices=soc@0/624000.ufshc` gives the by-name links
+  (`boot -> sde12`). **Cause of M0b:** `recovery` SIGSEGVs ~0.6 s after
+  every start (every 5 s): no DRM device ("Failed to find/open a drm
+  device"), because recovery loads no kernel modules and msm DRM + the
+  panel were modules; fbdev fallback on the 24 bpp simple-framebuffer:
+  "gr_init: Only 4-byte pixel formats supported", then SEGV_ACCERR. It dies
+  before setting `sys.usb.config=adb`, hence no USB at all.
+- **adb works on mainline:** after `/axon7/adb-handover`, `adb devices`
+  showed "7e15695a recovery", fingerprint
+  `ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys`,
+  shell as uid shell.
+- Fix: `CONFIG_DRM_MSM=y`, `CONFIG_DRM_PANEL_SAMSUNG_S6E3HA3=y` in
+  `kernel/android-axon7m.config` (kernel #4); M0b'' image below.
+
+**Switching to the LineageOS entry remotely (works; the Nura route does
+not):** `axon7-bootmenu default los 5` in Nura followed by a reboot came
+back to Nura twice, even with the misc block verified with `iflag=direct`
+(unexplained; needs someone to watch the menu). What works without anyone
+at the phone:
+1. Nura: `sudo systemctl reboot --reboot-argument=recovery` (PON reboot
+   mode 1: LK starts TWRP, adb after ~30 s);
+2. TWRP: `adb push misc-los.bin /tmp/ && adb shell dd if=/tmp/misc-los.bin
+   of=/dev/block/sda3 bs=4096 seek=255` (`misc-los.bin`: "AX7BOOT1",
+   entry 2, 5 s, 2 ^ 0xa5a5a5a5, padded to 4096; `ios/tools/axon7-los-test.sh`
+   writes the same with 1 s);
+3. `adb reboot`: the shim starts LineageOS. With the LOS_TEST shim the next
+   reset after that goes to TWRP; set the default back to postmarketOS there
+   (entry 1).
+
+**M0b'' (display built in), images in `/srv/los24/out-test/`:**
+`m0b2-fe-recovery.img` (46,964,736 bytes, sha256
+`c38aa5491c4fbfbdd8b031dc43e4a10a1fbe3dc9b6dd82819a03e224691012a6`) = the
+same recovery + front end with kernel #4 (12:27 UTC, Image 30 MiB);
+`m0b2-fe-recovery-quiet.img` (same size, sha256
+`d768b34ba044a642046ddf4c3311c5fe3f26de6c85e38634e54966729ebdeee2`) = the
+same plus `androidboot.quiescent=1`
+(recovery skips its UI, `StubRecoveryUI`: adb even if the display fails).
+Expected with the first: the kernel log on the panel through msm DRM's
+fbdev (simplefb replaced, `/proc/fb` "0 msmdrmfb"), `/dev/dri/card0`,
+recovery's UI on the panel, `recovery` stays up (no SIGSEGV in `dmesg`),
+`/tmp/recovery.log` without "gr_init" errors; adb after
+`/axon7/adb-handover`. Collect `dmesg | grep -iE "msm|dpu|dsi|panel|drm"`,
+`cat /proc/fb`, `ls -l /dev/dri`, `/tmp/recovery.log`. The second only if the
+first still crashes.
+
 **M1a procedure (first full boot; images from the build queued in
 `los24next`, see section 9).** On the server after `build-exit 0`:
 `out/target/product/axon7m/boot.img` and `super.img` (sparse). Check boot.img
@@ -434,6 +487,14 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
     init, `copy_userdata_files()` and a /data mount attempt), so any stall
     before that leaves no USB device at all. The busybox front end
     (M0b', section 5) answers which.
+- **M0b' (2026-11-10): recovery has no kernel modules**, so everything the
+  recovery UI needs must be built in: with msm DRM + panel as modules,
+  minui fell back to the 24 bpp simplefb, failed and `recovery` crashed in
+  a loop before enabling adb (section 5). Kernel #4 builds `DRM_MSM` and
+  `DRM_PANEL_SAMSUNG_S6E3HA3` in (Image 28 → 30 MiB, 593 modules). Same
+  rule for a normal boot's first stage: nothing before /vendor may need a
+  module. `configs/modules.load.axon7m` is still empty, so the build lists
+  all vendor modules for `axon7m-modules.sh` (to be narrowed for M2).
 - Build host memory (2026-11-10): the first `m` OOM-killed soong_build in
   Android.bp analysis (container limit 31 GB, peak 30.76 GB, the 8 GB
   "virtual" swap of the unprivileged LXC container was hardly used, swap
@@ -454,12 +515,13 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | Kernel | `/srv/los24/kernel/linux` (v7.3.1 shallow + Nura 0001-0018, branch `axon7-android`) | **built and staged** 2026-11-10 00:40 UTC: `7.3.1-axon7m`, Image image_size 28 MiB, 605 modules, config check clean; rebuilt 07:46 UTC as #3 (`kernel/patches/0001` watchdog node, `WATCHDOG_SYSFS`): in `/srv/los24/kernel/prebuilt`, used by all M0b' images |
 | M0a' test image | `/srv/los24/out-test/m0-test-boot.img` (sha256 `2f66b766...32aad8`, 30 MB) | **passed** on the phone as M0a'' (with the watchdog node, `m0b-test-boot.img`) |
 | M0b images | `out/target/product/axon7m/{boot,recovery}.img` (29 / 42 MB, built 2026-11-10 03:29 UTC; recovery saved as `/srv/los24/out-test/recovery-orig-20261110-0329.img`) | repacked `m0b-recovery.img` **failed** on the phone (no USB, section 8). Recovery ramdisk: adbd, `init.recovery.axon7m.rc` (UDC `6a00000.usb`), no modules needed (UFS, dwc3, gadget built in). LineageOS userdebug is not debuggable and recovery has `ro.adb.secure=1`, so developer builds carry the PC's adb key (`AXON7_ADB_KEYS`, as in 22.2). Its fstab still names the l24_* partitions (built before the slot change) |
-| M0b' test images | `/srv/los24/out-test/m0-pad15-boot.img` (size test, sha256 `61d8bd84...bc09490`), `m0b-fe-recovery.img` (recovery + busybox front end, sha256 `819476ce...cbc1643`) | **built, offline checks pass** (axon7-androidimg.py; `shim-hostcheck.sh`: entry 0x80000000, DTB 0x81e00000, staging to 0xa6bbc000 / 0xa6b59000); waiting for the phone (section 5, M0b') |
+| M0b' test images | `/srv/los24/out-test/m0-pad15-boot.img`, `m0b-fe-recovery.img` | **ran** 2026-11-10: size fine, front end showed recovery's SIGSEGV loop (no DRM device), adb works after handover |
+| M0b'' test images | `/srv/los24/out-test/m0b2-fe-recovery.img` (sha256 `c38aa549...91012a6`), `m0b2-fe-recovery-quiet.img` (`d768b34b...9ebdeee2`, + `androidboot.quiescent=1`) | **built, offline checks pass** (kernel #4 with msm DRM + panel built in; shim host check: entry 0x80000000, DTB 0x81e00000, staging to 0xa6cca000); waiting for the phone |
 | Mesa freedreno | `/srv/los24/mesa/out` → `device/zte/axon7m-mesa` (`scripts/mesa-build.sh`: Mesa 26.2.6, NDK r30, API 35) | **built**: `libEGL_mesa.so`, `libGLESv2_mesa.so` (in `egl/`), `libgallium_dri.so` (19.5 MB); needs only core libdrm + LLNDK libs; used with `AXON7_GPU=mesa` (default stays SwiftShader for the first boot) |
 | Vibrator HAL | `device/zte/axon7m/vibrator/` | written; compiles in the next build after `droid` |
 | Bluetooth address | `device/zte/axon7m/bdaddr/` | dragonboard's `bdaddr` + `--nv` for ZTE's `persist/.bt_nv.bin` (host-tested parser), persist mounted `ro,noload` |
 | Full build (M1a: `droid` incl. `super.img`) | tmux `los24build`, log `/srv/los24/logs/build-20261110-0432.log` | **compiling**, old l24 layout and kernel #2 (started before the slot change): 40 % (68710/170185) at 08:36 UTC, ~300 actions/min, done about 14:00 UTC. Its super.img must **not** be flashed. Left running: compiled objects are reused by the rebuild |
-| Rebuild for 22.2's slot | tmux `los24next`: `scripts/los24-build-after.sh droid` (log of the wait: `/srv/los24/logs/build-after.log`) | **queued**: waits for the first build's `build-exit`, then `los24-build.sh droid` copies the device tree (super = GPT `system`, `los_metadata`, `los_data`, vibrator HAL) and kernel #3 + watchdog DTB from `/srv/los24/axon7/repo` (synced 08:37 UTC, = commit 8a50645 + `los24-build-after.sh`) into the tree: re-analysis + changed modules/images, about 1-2 h, so images about 15:30-16:00 UTC. Then section 5, M1a |
+| Rebuild for 22.2's slot | tmux `los24next`: `scripts/los24-build-after.sh droid` (log of the wait: `/srv/los24/logs/build-after.log`) | **queued**: waits for the first build's `build-exit`, then `los24-build.sh droid` copies the device tree (super = GPT `system`, `los_metadata`, `los_data`, vibrator HAL) and kernel #4 (watchdog DTB, display built in, staged 12:27 UTC) from `/srv/los24/axon7/repo` (synced 08:37 UTC, = commit 8a50645 + `los24-build-after.sh`) into the tree: re-analysis + changed modules/images, about 1-2 h; first build at 70 % (116k/164k) at 12:35 UTC, so its end about 16:30 UTC and the rebuilt images about 18:00 UTC. Then section 5, M1a |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
 
 Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/build-after.log /srv/los24/logs/build-latest.log'`.
