@@ -53,7 +53,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]SMS
 [*]Mobile data
 [*]Earpiece, second/third microphone, headset microphone
-[*]Camera
+[*]Camera apps (the front camera delivers raw pictures, see changelog; the rear camera has no driver yet)
 [*]Sensors
 [*]Charging control
 [*]Suspend
@@ -89,6 +89,8 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]Headphone audio through the Hi-Fi DAC: the sound card "ZTE Axon 7" plays through the AK4490 to the headphone jack ([I]speaker-test -c 2 -t sine[/I]). New, please tell us if you hear it.
 [*]Vibration (force-feedback rumble) and the flashlight ([I]echo 10 | sudo tee /sys/class/leds/white:torch/brightness[/I], 1-16). New, please confirm.
 [*]Flip cover sensor: reported as a lid switch. Closing a cover does nothing yet, because suspend doesn't work.
+[*]Front camera (OV8856): raw 8-megapixel pictures through the mainline camera subsystem (developers: media-ctl + v4l2-ctl, see the README). No camera app yet; the rear camera (Samsung S5K2T8) has no mainline driver.
+[*]Wi-Fi is reliable again: the kernel from 2026-11-08 had been put back by mistake on some development installs.
 [*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). In the sound settings: "Speakers", "Headphones", "Microphone".
 [/LIST]
 [/SPOILER]

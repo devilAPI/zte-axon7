@@ -2,11 +2,12 @@
 # updated with "make olddefconfig" for 7.3.1 + built-in USB gadget configfs;
 # no firmware user-helper fallback (each missing file cost 60 s), S6E3HA3
 # panel and SMBCHG OTG boost as modules; fuel gauge, haptics, torch and
-# the Hi-Fi audio drivers (AK4490, AK8157, ISL98608) and the AK4961 as modules.
+# the Hi-Fi audio drivers (AK4490, AK8157, ISL98608), the AK4961 and the
+# OV8856 front camera as modules.
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=11
+pkgrel=12
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -56,6 +57,8 @@ source="
 	0017-ASoC-tfa989x-receiver-switch-GPIO-for-revisions-othe.patch
 	0018-ASoC-ak4961-port-arrays-per-stream-speakers-were-sil.patch
 	0019-arm64-dts-qcom-msm8996-zte-axon7-speakers-by-positio.patch
+	0020-media-qcom-camss-vfe-don-t-delete-a-VFE-power-domain.patch
+	0021-arm64-dts-qcom-msm8996-zte-axon7-front-camera-OV8856.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -107,5 +110,7 @@ e256c78973a7098796c6dc20e87535a0b38d4ea5e9959824707e64ee4e8becd0c1171883bc8bdeef
 07ab7669379c5d1874d25d836c9955e39bb84d6c7d74f829e4b0ee2367d35de926bbbd7eeb56622fdea40f34cd348718d562fa293f50474b93b10faae9f435f6  0017-ASoC-tfa989x-receiver-switch-GPIO-for-revisions-othe.patch
 551768fc3805c5dff663af064f2155d4849d918dcde6a68df0bc4320f50cde1eaefeefbc8ac1780ecd8e1c771694f06b39c21594c640c14bb28907ab80a983da  0018-ASoC-ak4961-port-arrays-per-stream-speakers-were-sil.patch
 d6889570d5bd26a8335df24144c485add5c2b5dd876aeba55cd0669594fec19741cc0a33341614eaf92f0c9c55f990858a96e71adab1d4a5db688deb43c1890c  0019-arm64-dts-qcom-msm8996-zte-axon7-speakers-by-positio.patch
-b93026cfe9806b81b10a5189b3918c60376fe1c27da337ae873d84bc7bef2636542c2aeae1e86ab26c3bb3e6d48d7bc667320f54cf92b9ad1cbda69493b8ac49  config-zte-axon7.aarch64
+ec4ad8a6c559207a2ec80240981b907aaf2afad95c0f820aeb08a65132f233127ce72e2eeec0419349720ef82edf2c9c9d474cdef06da37be2bcecd189a7bd9f  0020-media-qcom-camss-vfe-don-t-delete-a-VFE-power-domain.patch
+680d4c78ba27b73c6ce06eadeb07743135a57ab9a1669ff096b2d389fd419539ea79f39b672b101ae20f9214d7d803d1e610251e693a23f0c442289c8a7e9985  0021-arm64-dts-qcom-msm8996-zte-axon7-front-camera-OV8856.patch
+46d8392521601c98f15d005294fc74b6d7160ede7243ec1d7c3ada5741a5b3e1256bc74445471fbbcf72a7a7e50d24f89bc7f121079d6df5251b8965ec52fe5c  config-zte-axon7.aarch64
 "

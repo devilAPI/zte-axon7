@@ -163,7 +163,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09 (kernel patches 0010-0019)
+## Hardware added 2026-11-09/10 (kernel patches 0010-0021)
 
 | Part | Driver | State |
 | --- | --- | --- |
@@ -174,6 +174,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 | Hi-Fi audio | `ak4490`, `ak8157`, `isl98608-regulator`, MI2S in `apq8096` (0014) | plays in real time on Quaternary MI2S, clocked by the AK8157; to be heard |
 | Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016, 0018) | confirmed: a -21 dBFS 1 kHz tone saturates the microphone; SBI1 looped back to SLIMbus TX is bit-exact |
 | Microphone 1 | `ak4961` AIF1 capture, SLIM TX7 (0018) | confirmed: the vibrator raises the level by ~30 dB, the speaker tone is recorded |
+| Front camera | mainline `ov8856` + `qcom-camss` (0020 VFE power-down fix, 0021 DT; CONFIG_VIDEO_OV8856) | confirmed: 3280x2464 RAW10 frames of the room through CSIPHY2 -> CSID0 -> ISPIF0 -> VFE0 RDI0 (no ISP, no app) |
 | Earpiece switch | `tfa989x` Receiver Switch on rcv-gpios (PM8994 GPIO 13) (0017, 0019) | measured: only the top speaker (TFA9890 0x35) changes; no UCM Earpiece device yet (the bottom amplifier has no mute of its own) |
 
 Hi-Fi path: the AK8157 is the I2S clock master (the ADSP's Quaternary MI2S
@@ -200,3 +201,17 @@ QUP6 (mainline `tfa989x`, DSP bypass, no NXP container files). UCM device
 runtime-suspends between streams and the bus restarts, which clears the
 AK4961's PGD port arrays: they are written on every hw_params (as ZTE does),
 otherwise the RX data never reaches SBI1 (silent speakers, 0016 alone).
+
+Front camera: OV8856 at 0x36 on CCI bus 1, CSIPHY2, 4 lanes. CAMSS needs
+CAMSS_GDSC as its top power domain (third entry in `power-domains`), or
+`camss_top_ahb_clk` is enabled for the CSIPHY before any VFE domain is up
+and stays stuck off. Test capture (as root):
+
+```sh
+M="media-ctl -d /dev/media0"; F="fmt:SGRBG10_1X10/3280x2464 field:none"
+$M -l '"msm_csiphy2":1->"msm_csid0":0[1],"msm_csid0":1->"msm_ispif0":0[1],"msm_ispif0":1->"msm_vfe0_rdi0":0[1]'
+$M -V "\"ov8856 6-0036\":0[$F],\"msm_csiphy2\":0[$F],\"msm_csid0\":0[$F],\"msm_ispif0\":0[$F],\"msm_vfe0_rdi0\":0[$F]"
+v4l2-ctl -d $($M -e "ov8856 6-0036") --set-ctrl analogue_gain=1024
+V=$($M -e msm_vfe0_video0); v4l2-ctl -d $V --set-fmt-video=width=3280,height=2464,pixelformat=pgAA
+v4l2-ctl -d $V --stream-mmap --stream-count=4 --stream-to=/tmp/front.raw   # MIPI RAW10, GRBG, stride 4104
+```

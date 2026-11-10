@@ -1,0 +1,34 @@
+From 7557aa05720896ac84d3fbeb0b5bd6f3883033d1 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 00:29:35 +0100
+Subject: [PATCH 20/21] media: qcom: camss: vfe: don't delete a VFE
+ power-domain link twice
+
+vfe_pm_domain_off() calls device_link_del() on vfe->genpd_link even
+when the link is already gone (a repeated or failed power-down), which
+dereferences NULL (seen on MSM8996 when stopping a stream after the
+pipeline had failed to power up once).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ drivers/media/platform/qcom/camss/camss-vfe.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
+index 319d19158..45acb1a4a 100644
+--- a/drivers/media/platform/qcom/camss/camss-vfe.c
++++ b/drivers/media/platform/qcom/camss/camss-vfe.c
+@@ -878,7 +878,8 @@ void vfe_isr_reset_ack(struct vfe_device *vfe)
+  */
+ void vfe_pm_domain_off(struct vfe_device *vfe)
+ {
+-	if (!vfe->genpd)
++	/* the link is gone after a failed or repeated power-down */
++	if (!vfe->genpd || !vfe->genpd_link)
+ 		return;
+ 
+ 	device_link_del(vfe->genpd_link);
+-- 
+2.56.0
+

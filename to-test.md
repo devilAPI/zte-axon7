@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0019, installed by hand on the dev phone; in images from
-linux-zte-axon7 r11 / device-zte-axon7 r16 on). Log in over SSH or on the
+0010-0021, installed by hand on the dev phone; in images from
+linux-zte-axon7 r12 / device-zte-axon7 r16 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -114,6 +114,11 @@ cat /sys/class/power_supply/qcom-battery/{capacity,status,voltage_now,current_no
 - [ ] Charger plugged in while below ~95 %: status "Charging", current negative
 - [ ] At 100 % on the charger: "Full" or "Not charging"
 - [ ] Capacity roughly matches what LineageOS shows
+
+## 6. Front camera (raw, developers)
+
+Confirmed: the front camera delivers raw pictures (README "Front camera"
+has the commands). Nothing to test for users until there is a camera app.
 
 ## Afterwards
 
