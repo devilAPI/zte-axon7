@@ -69,9 +69,11 @@ assumption, still to verify, **[D]** decision.
 - **First stage init on a v2 boot image**: Android 17's init reads
   `androidboot.*` from both `/proc/bootconfig` and the kernel command line
   (`system/core/init/property_service.cpp` at `android-17.0.0_r1`:
-  `ProcessBootconfig(); ProcessKernelCmdline();`) [V]. That the super
-  partition can be named by `androidboot.super_partition` (we use
-  `l24_super`) is [A] until checked in the synced tree (`fs_mgr`).
+  `ProcessBootconfig(); ProcessKernelCmdline();`) [V]. The super
+  partition can be named by `androidboot.super_partition` on non-A/B devices
+  (we use `l24_super`): `fs_mgr_get_super_partition_name()` in
+  `system/fs/fs_mgr/fs_mgr.cpp` (fs_mgr moved out of `system/core` in
+  Android 17) [V, synced tree].
 
 ## 2. Prior art: AOSP on mainline Qualcomm kernels
 
@@ -292,6 +294,11 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 - Server: `chown -R` on the kernel tree makes git re-hash all files (an hour
   on the busy HDD); `grep -q` behind `git log` under `pipefail` reports
   "not found" (SIGPIPE). Both handled in `kernel-build.sh`.
+- Synced tree (2026-11-10): drm_hwcomposer ships as the APEX
+  `com.android.hardware.graphics.composer.drm_hwcomposer`; minigbm has the
+  AIDL allocator `android.hardware.graphics.allocator-service.minigbm` and the
+  stable-C mapper `mapper.minigbm` (used here). Nura's config compresses
+  modules with zstd (`MODULE_COMPRESS`, a bool in 7.3): switched off.
 - `ios/` is a submodule (ios-sailfish): the fourth menu entry is prepared as
   `shim/0001-boot-menu-fourth-entry-l24_boot.patch` (host test builds with
   `-Werror`, aarch64 syntax check clean), not applied.
@@ -310,8 +317,8 @@ Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los
 If the sync gives up after 4 tries: `su - build -c "tmux new -d -s los24sync /srv/los24/sync.sh"` (incremental), then restart the build job the same way with `los24-build.sh`.
 
 Next steps without the phone: make the device tree build (`m recoveryimage`),
-verify the [A] items in the synced tree (fs_mgr `super_partition`, release
-config name for lunch, minigbm mapper vs. AIDL mapper in Android 17), Mesa
+verify the remaining [A] items (lunch release config: the tree has
+`cp1a`/`cp2a`; Wi-Fi HAL without a vendor library), Mesa
 NDK build for freedreno, port dragonboard's `bdaddr` for the BT address.
 
 ## 10. Sources

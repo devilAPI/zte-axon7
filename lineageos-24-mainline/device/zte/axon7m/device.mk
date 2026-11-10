@@ -23,7 +23,7 @@ PRODUCT_VENDOR_PROPERTIES += ro.sf.lcd_density=560
 PRODUCT_PACKAGES += \
     com.android.hardware.graphics.composer.drm_hwcomposer \
     android.hardware.graphics.allocator-service.minigbm \
-    android.hardware.graphics.mapper@4.0-impl.minigbm \
+    mapper.minigbm \
     libEGL_angle libGLESv1_CM_angle libGLESv2_angle \
     vulkan.pastel
 $(call soong_config_set,minigbm,platform,msm)
