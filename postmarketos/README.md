@@ -163,12 +163,14 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09/10 (kernel patches 0010-0022)
+## Hardware added 2026-11-09/10 (kernel patches 0010-0025)
 
 | Part | Driver | State |
 | --- | --- | --- |
 | Hall sensor | gpio-keys SW_LID + LVS2 always on (0010) | open confirmed; closed needs a magnet. logind ignores the lid (`50-zte-axon7-lid.conf`) while suspend doesn't work |
-| Fuel gauge | `qcom_fg` from msm8996-mainline, read-only without a charger driver (0011) | confirmed: level, voltage, temperature, current sign (positive = discharging) |
+| Fuel gauge | `qcom_fg` from msm8996-mainline (0011; 0023 fixes an oops when a charger appears: SRAM access was set up after registering) | confirmed: level, voltage, temperature, current sign (positive = discharging) |
+| Charger | `qcom-smbchg` from msm8996-mainline (0024), float 4.4 V, 2 A fast charge, 150 mA termination (no SMB1351 parallel charger) | confirmed: SDP detected, PMIC set to 4.4 V / 2.0 A (bootloader left 4.2 V / 1.7 A), status Full at 99 % |
+| Watchdog | APSS watchdog node in msm8996.dtsi (0025, from the LineageOS 24 work) | bound; a hung kernel resets instead of freezing |
 | Vibrator | `qcom-pmi8994-haptics` (0012), ZTE's 2668 mV / 4255 us | LRA auto-resonance locks while playing; to be felt |
 | Torch | `leds-qcom-pmi8994-torch` (0013), `white:torch`, 1-16 (12.5 mA steps per LED) | registers as downstream, no LED fault; to be seen |
 | Hi-Fi audio | `ak4490`, `ak8157`, `isl98608-regulator`, MI2S in `apq8096` (0014) | plays in real time on Quaternary MI2S, clocked by the AK8157; to be heard |

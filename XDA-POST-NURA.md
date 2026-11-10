@@ -35,7 +35,8 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Bluetooth (mouse, keyboard; factory Bluetooth address)
 [*]SSH over USB and Wi-Fi
 [*]USB OTG (mouse, keyboard, USB stick; automatic)
-[*]Battery level, voltage, current and temperature (no charging control yet)
+[*]Battery level, voltage, current and temperature
+[*]Charging control: charges to 4.4 V like stock, up to 2 A (stock reaches 3 A with a second charger chip that has no driver yet)
 [*]Speakers (heard by the phone's own microphone)
 [*]Microphone (bottom microphone)
 [*]Earpiece (top speaker through the earpiece opening)
@@ -56,7 +57,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Second/third microphone, headset microphone, calls
 [*]Camera apps (the front camera delivers raw pictures, see changelog; the rear camera has no driver yet)
 [*]Sensors
-[*]Charging control
+[*]Fast charging above 2 A (second charger chip SMB1351)
 [*]Suspend
 [*]No graphical desktop yet (text console with an on-screen keyboard)
 [/LIST]
@@ -90,6 +91,8 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]Headphone audio through the Hi-Fi DAC: the sound card "ZTE Axon 7" plays through the AK4490 to the headphone jack ([I]speaker-test -c 2 -t sine[/I]). New, please tell us if you hear it.
 [*]Vibration (force-feedback rumble) and the flashlight ([I]echo 10 | sudo tee /sys/class/leds/white:torch/brightness[/I], 1-16). New, please confirm.
 [*]Flip cover sensor: reported as a lid switch. Closing a cover does nothing yet, because suspend doesn't work.
+[*]Charging: Nura now controls the charger. It charges to 4.4 V like the stock software (before, the bootloader's 4.2 V setting stayed, so the battery never got full) with up to 2 A, and the battery status shows Charging/Full.
+[*]A crash in the battery driver that froze the phone when the charger driver appeared is fixed, and a hardware watchdog now restarts the phone if the kernel ever hangs.
 [*]Front camera (OV8856): raw 8-megapixel pictures through the mainline camera subsystem (developers: media-ctl + v4l2-ctl, see the README). No camera app yet; the rear camera (Samsung S5K2T8) has no mainline driver.
 [*]Wi-Fi is reliable again: the kernel from 2026-11-08 had been put back by mistake on some development installs.
 [*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). In the sound settings: "Speakers", "Headphones", "Earpiece", "Microphone".

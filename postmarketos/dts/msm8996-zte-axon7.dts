@@ -158,12 +158,19 @@
 		pinctrl-0 = <&hifi_ldo_default>;
 	};
 
-	/* ZTE P996A01, 3250 mAh, float voltage 4.4 V (zte_p996a01_3250mah.dtsi) */
+	/*
+	 * ZTE P996A01, 3250 mAh, float voltage 4.4 V (zte_p996a01_3250mah.dtsi);
+	 * termination 150 mA as ZTE's smbcharger. ZTE charges with up to
+	 * 3 A together with the SMB1351 parallel charger, which has no
+	 * driver here: 2 A from the PMI8996 alone.
+	 */
 	battery: battery {
 		compatible = "simple-battery";
 		charge-full-design-microamp-hours = <3250000>;
 		voltage-min-design-microvolt = <3400000>;
 		voltage-max-design-microvolt = <4400000>;
+		constant-charge-current-max-microamp = <2000000>;
+		charge-term-current-microamp = <150000>;
 	};
 
 	gpio-keys {
@@ -1040,7 +1047,12 @@
 };
 
 &pmi8994_fg {
-	/* read-only: no charger driver yet, so no "power-supplies" */
+	monitored-battery = <&battery>;
+	power-supplies = <&pmi8994_smbchg>;
+	status = "okay";
+};
+
+&pmi8994_smbchg {
 	monitored-battery = <&battery>;
 	status = "okay";
 };

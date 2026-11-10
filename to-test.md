@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0022, installed by hand on the dev phone; in images from
-linux-zte-axon7 r13 / device-zte-axon7 r17 on). Log in over SSH or on the
+0010-0025, installed by hand on the dev phone; in images from
+linux-zte-axon7 r14 / device-zte-axon7 r17 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -114,7 +114,10 @@ sudo evtest   # pick "gpio-keys", watch for SW_LID
 - [ ] Opening / magnet away: `SW_LID ... value 0`
 - [ ] Nothing else happens on close (no suspend, no hang): Nura ignores the lid for now
 
-## 5. Battery (already confirmed, just watch it)
+## 5. Battery and charging
+
+Charging control is new (SMBCHG driver, 2026-11-10): 4.4 V float voltage,
+up to 2 A. Watch the temperature the first few times.
 
 ```sh
 cat /sys/class/power_supply/qcom-battery/{capacity,status,voltage_now,current_now,temp}
@@ -124,6 +127,9 @@ cat /sys/class/power_supply/qcom-battery/{capacity,status,voltage_now,current_no
 - [ ] Charger plugged in while below ~95 %: status "Charging", current negative
 - [ ] At 100 % on the charger: "Full" or "Not charging"
 - [ ] Capacity roughly matches what LineageOS shows
+- [ ] With a wall charger (not the PC) at ~50 %: `cat /sys/class/power_supply/qcom-smbchg-usb/{usb_type,input_current_limit}` shows DCP and more than 500 mA, `current_now` around -1500000 to -2000000
+- [ ] The phone gets warm but not hot while charging (`temp` stays below ~420 = 42 °C)
+- [ ] It stops at 100 % (status Full) and the voltage stays around 4.4 V
 
 ## 6. Front camera (raw, developers)
 
