@@ -7,7 +7,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=14
+pkgrel=15
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -63,6 +63,7 @@ source="
 	0023-power-supply-qcom_fg-set-up-SRAM-access-before-regis.patch
 	0024-power-supply-add-Qualcomm-SMBCHG-charger-charging-on.patch
 	0025-arm64-dts-qcom-msm8996-add-the-APSS-watchdog.patch
+	0026-ASoC-ak4961-microphone-2-on-the-right-channel-of-ADC.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -120,5 +121,6 @@ bab3b34a91e1208b7f4e7760c0dd65cbbc605e4bc8bd6842743aabadc537656dd1e401ccf7d6d1aa
 caa22bc4990ee36e731c22a8a9c9eeb79df0bfdfbc28e8286f588a17376279c544edd4b3b8ce1dad2e4176b05a46f60e5d9c48fadc75e2502f86f7b0c4f76982  0023-power-supply-qcom_fg-set-up-SRAM-access-before-regis.patch
 eb1afeb72d8ed70bddf5262c36352ecf061c4360dbac3cba26fc7711ad09717d6f96b9b49f44b2c151f9128808e73e3364f18eca8cade981d1e5f9e8702c9174  0024-power-supply-add-Qualcomm-SMBCHG-charger-charging-on.patch
 3a788c4016aed443943d07626579bdd03f44dae58e67f245d67bf066b83a97851de70220dd738c38d6c3b8e05e1f92b1f5f152c92aaeb52bfef3600b197f2908  0025-arm64-dts-qcom-msm8996-add-the-APSS-watchdog.patch
+5a952f4ff1d19f99cc2b88458a64ed7d5b23b6327db4b41ebeaa3cf67bac8833e7756664e67134bf48fef78ffc9cd97ea8565dc7b37344e7973f518d8f823763  0026-ASoC-ak4961-microphone-2-on-the-right-channel-of-ADC.patch
 6832e6f5afece0c11229e1869b6417547c84deeb46725c1907b2968839f7692744a155f9eebea31444bc6180148cee21a684e8448b1682d163848686f50e71d3  config-zte-axon7.aarch64
 "

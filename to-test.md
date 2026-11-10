@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0025, installed by hand on the dev phone; in images from
-linux-zte-axon7 r14 / device-zte-axon7 r17 on). Log in over SSH or on the
+0010-0026, installed by hand on the dev phone; in images from
+linux-zte-axon7 r15 / device-zte-axon7 r18 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -47,7 +47,8 @@ speaker-test -D hw:0,1 -c 2 -r 48000 -t wav -l 1           # "Front Left" / "Fro
 
 - [x] Sound comes out of the speakers (measured with the microphone)
 - [ ] Both speakers (top and bottom grille) play
-- [ ] Held sideways with the top of the phone to the left, "Front Left" comes from the left (top) speaker (measured: 0x34 = bottom, 0x35 = top)
+- [ ] Both speakers play (UCM sets both to the left channel for now, mono)
+- [ ] Stereo, only if you like (quietly): `amixer -c0 cset name='Speaker Bottom Amp Input' Right`, then `speaker-test -D hw:0,1 -c 2 -t wav -l 1`: does "Front Right" come out of the bottom speaker? (In a measurement it stayed nearly silent; set it back with `... Left`.)
 - [ ] No distortion or crackling at moderate volume
 - [ ] Switching back to headphones works: `alsaucm -c hw:0 set _verb HiFi set _disdev Speaker set _enadev Headphones`
 
@@ -71,7 +72,8 @@ aplay -D hw:0,1 /tmp/mic.wav                                  # play it back (sp
 
 - [x] The microphone records (measured: vibration and speaker tone show up)
 - [ ] Your voice is clear and loud enough (gain: `amixer -c0 cset name='MIC Gain 1L' 0..10`, 3 dB steps, default 5)
-- [ ] Which microphone it is (bottom or top): cover one with a finger while talking
+- [x] Two microphones: left channel = bottom, right channel = top (measured)
+- [ ] Both channels sound alike when you speak from the front
 
 ## 2. Vibration
 

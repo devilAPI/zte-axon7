@@ -163,7 +163,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09/10 (kernel patches 0010-0025)
+## Hardware added 2026-11-09/10 (kernel patches 0010-0026)
 
 | Part | Driver | State |
 | --- | --- | --- |
@@ -175,7 +175,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 | Torch | `leds-qcom-pmi8994-torch` (0013), `white:torch`, 1-16 (12.5 mA steps per LED) | registers as downstream, no LED fault; to be seen |
 | Hi-Fi audio | `ak4490`, `ak8157`, `isl98608-regulator`, MI2S in `apq8096` (0014) | plays in real time on Quaternary MI2S, clocked by the AK8157; to be heard |
 | Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016, 0018) | confirmed: a -21 dBFS 1 kHz tone saturates the microphone; SBI1 looped back to SLIMbus TX is bit-exact |
-| Microphone 1 | `ak4961` AIF1 capture, SLIM TX7 (0018) | confirmed: the vibrator raises the level by ~30 dB, the speaker tone is recorded |
+| Microphones 1 and 2 | `ak4961` AIF1 capture: ADC1 left = AIN1 (bottom, TX7, 0018), right = AIN2 (top, TX8, 0026) | confirmed: the vibrator raises mic 1 by ~30 dB; a tone from the top speaker is 18 dB louder on mic 2 |
 | Front camera | mainline `ov8856` + `qcom-camss` (0020 VFE power-down fix, 0021 DT; CONFIG_VIDEO_OV8856) | confirmed: 3280x2464 RAW10 frames of the room through CSIPHY2 -> CSID0 -> ISPIF0 -> VFE0 RDI0 (no ISP, no app) |
 | Earpiece switch | `tfa989x` Receiver Switch on rcv-gpios (PM8994 GPIO 13) (0017, 0019) | measured: only the top speaker (TFA9890 0x35) changes; UCM device Earpiece switches the bottom speaker's pin off (0022), the microphone level drops 17 dB |
 
@@ -217,3 +217,7 @@ v4l2-ctl -d $($M -e "ov8856 6-0036") --set-ctrl analogue_gain=1024
 V=$($M -e msm_vfe0_video0); v4l2-ctl -d $V --set-fmt-video=width=3280,height=2464,pixelformat=pgAA
 v4l2-ctl -d $V --stream-mmap --stream-count=4 --stream-to=/tmp/front.raw   # MIPI RAW10, GRBG, stride 4104
 ```
+
+Speaker stereo is open: with the bottom amplifier on "Right" its output was
+nearly silent in a measurement (the TFA9890 in DSP bypass may ignore the
+channel select), so UCM puts both amplifiers on the left channel (mono).

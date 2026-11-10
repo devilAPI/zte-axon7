@@ -38,7 +38,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Battery level, voltage, current and temperature
 [*]Charging control: charges to 4.4 V like stock, up to 2 A (stock reaches 3 A with a second charger chip that has no driver yet)
 [*]Speakers (heard by the phone's own microphone)
-[*]Microphone (bottom microphone)
+[*]Microphones (bottom and top, stereo recording)
 [*]Earpiece (top speaker through the earpiece opening)
 [*]Vibration (heard by the microphone)
 [/LIST]
@@ -54,7 +54,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Calls
 [*]SMS
 [*]Mobile data
-[*]Second/third microphone, headset microphone, calls
+[*]Third microphone, headset microphone, calls
 [*]Camera apps (the front camera delivers raw pictures, see changelog; the rear camera has no driver yet)
 [*]Sensors
 [*]Fast charging above 2 A (second charger chip SMB1351)
@@ -95,7 +95,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]A crash in the battery driver that froze the phone when the charger driver appeared is fixed, and a hardware watchdog now restarts the phone if the kernel ever hangs.
 [*]Front camera (OV8856): raw 8-megapixel pictures through the mainline camera subsystem (developers: media-ctl + v4l2-ctl, see the README). No camera app yet; the rear camera (Samsung S5K2T8) has no mainline driver.
 [*]Wi-Fi is reliable again: the kernel from 2026-11-08 had been put back by mistake on some development installs.
-[*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). In the sound settings: "Speakers", "Headphones", "Earpiece", "Microphone".
+[*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). For now both speakers play the left channel (mono); stereo needs a check. In the sound settings: "Speakers", "Headphones", "Earpiece", "Microphone".
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-08"]
