@@ -1,0 +1,12 @@
+[Unit]
+Description=Axon 7: find the Wi-Fi chip if its PCIe link came up late
+After=systemd-udevd.service
+Before=NetworkManager.service network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/axon7-wifi-rescan
+
+[Install]
+WantedBy=multi-user.target

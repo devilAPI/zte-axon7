@@ -7,7 +7,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=18
+pkgrel=19
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -69,6 +69,13 @@ source="
 	0029-media-i2c-ak7375-add-the-AK7371-variant.patch
 	0030-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-focus-a.patch
 	0031-ASoC-ak4961-headset-microphone-on-AIN4.patch
+	0032-WIP-iio-Add-Qualcomm-Sensor-Manager-driver.patch
+	0033-WIP-iio-accel-Add-driver-for-Qualcomm-Sensor-Manager.patch
+	0034-arm64-dts-qcom-msm8996-zte-axon7-enable-the-SLPI-sen.patch
+	0035-iio-qcom_smgr-QMI-length-fields-are-u32-in-the-C-str.patch
+	0036-iio-accel-smgr_accel-fix-read_avail-and-remove.patch
+	0037-iio-qcom_smgr-add-a-gyroscope-and-magnetometer-drive.patch
+	0038-iio-qcom_smgr-find-the-Sensor-Manager-with-a-QMI-loo.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -132,5 +139,12 @@ eb1afeb72d8ed70bddf5262c36352ecf061c4360dbac3cba26fc7711ad09717d6f96b9b49f44b2c1
 5319ff9e2c693d0fd32dfbb661bec443f086ae6f11a1d2a0b4e4b899fae9d5aa1f50c858fae13a8283fce8d5385735dc3047d1ec7cc97059d3ae00bb266cb69a  0029-media-i2c-ak7375-add-the-AK7371-variant.patch
 c00913b30351b8105b77ce10c5c0031a43f04d4ded229c629d1e3afde2f5d86deca42803dcc59071292de3fe9696f5d4807eb00e6c1606c2116118c5b85ba395  0030-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-focus-a.patch
 84bd619e3c78484fc89abbaa782bde35570dba4d973d737aae24c70a624e74f7423a7a5ac09bf216951e497dfc2ed7078201d1cd12d557ef459d16214fd01c76  0031-ASoC-ak4961-headset-microphone-on-AIN4.patch
-45b727106a44558efc6d53f41cb0c220a8484f816ecb9692883021e4ca7ecd57c3b80d44c4a0c204d6dfcdd4407d15870fce20fb4778f9b7dffe91e1a7751241  config-zte-axon7.aarch64
+f793cad6ebdf383e1ace8fdeae394b42267e225b670a8b5df59b1346f6436aeb1f008feaa38f82cf7f628785f5116c086db8f5507ca0aff2a17c0922f4d8e747  0032-WIP-iio-Add-Qualcomm-Sensor-Manager-driver.patch
+e2da9a5b690e45a5475718ca757d1b9ebe71695a95306d12ee1009830d5b69548f37c9bd24ef8704c7d10b502ffcefdd494604f9b2b1a0faaeec241e467f73a3  0033-WIP-iio-accel-Add-driver-for-Qualcomm-Sensor-Manager.patch
+edd05959d0a4b8c9e5ad7a373421598b61998b7cd2b00ab4a4b657222b37fb384a2607d9eafa70af10c9a9c1716cdc4451123eb6f73956da52b41b7d7bd6e895  0034-arm64-dts-qcom-msm8996-zte-axon7-enable-the-SLPI-sen.patch
+dd7cefd066e2d95d8c302313d292d61d0de6e0d7caf956652ea645b72309d3cd7e76c19e31c0a97b69336fad5b269c8d789944e493d8a3a5f129322937cbd312  0035-iio-qcom_smgr-QMI-length-fields-are-u32-in-the-C-str.patch
+34ab9c9bbaa70c77937f0c3abab6123f8d0625ada07cf2f97e9e871c54be0e5f3b40267ccddcc1674676b5b7aa040da0a206e5d73f4ed198a6eab78b14045b6e  0036-iio-accel-smgr_accel-fix-read_avail-and-remove.patch
+32b18c59790b7a348b8c8b2ef1fa231e0bc771f195263892c797cd6dfc04bed8c58e22558e12c0b585ac6fe76be9c10c269a4a39ad7c69fca1b2d7666d9ea1e2  0037-iio-qcom_smgr-add-a-gyroscope-and-magnetometer-drive.patch
+0189b535ef6f9dbd9a3703abb88f3525b82cf3feb510a6ae2665229a8d3496ced363d04f30def512b254d02a98c906f3d5eab31170f5044d34e18e9693b28642  0038-iio-qcom_smgr-find-the-Sensor-Manager-with-a-QMI-loo.patch
+dfd40b6acbd6cbd43bf9a9f7b4509217f9ea73f4db957101f60f3af1e78f59101352bcecf7283e2fa92ffd7e966335acb7e63402f9c0b1480ae0b83924a736ab  config-zte-axon7.aarch64
 "

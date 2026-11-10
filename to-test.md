@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09/10 (kernel patches
-0010-0031, installed by hand on the dev phone; in images from
-linux-zte-axon7 r18 / device-zte-axon7 r19 on). Log in over SSH or on the
+0010-0038, installed by hand on the dev phone; in images from
+linux-zte-axon7 r19 / device-zte-axon7 r20 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -155,6 +155,27 @@ lying on a table (torch reflection, colour bars), never a real scene.
       SSH (nothing to type)
 - [ ] Focus: Claude takes a few pictures at different lens positions; one
       of them should be sharp for the distance of the scene
+
+## 7. Motion sensors
+
+New 2026-11-10. Measured only with the phone lying flat on a table.
+
+```sh
+sensor() {  # sensor accel|anglvel|magn: one second of samples, x y z per line
+	n=qcom-smgr-$( [ $1 = accel ] && echo accel || { [ $1 = anglvel ] && echo gyro || echo mag; } )
+	D=$(grep -l "^$n\$" /sys/bus/iio/devices/iio:device*/name); D=${D%/name}
+	for c in x y z; do echo 1 | sudo tee $D/scan_elements/in_$1_${c}_en >/dev/null; done
+	echo 0 | sudo tee $D/scan_elements/in_timestamp_en >/dev/null
+	echo 1 | sudo tee $D/buffer/enable >/dev/null
+	sudo timeout 1 cat /dev/${D##*/} | od -A n -t d4 -w12 | awk '{printf "%8.2f %8.2f %8.2f\n", $1/65536, $2/65536, $3/65536}' | tail -3
+	echo 0 | sudo tee $D/buffer/enable >/dev/null
+}
+sensor accel
+```
+
+- [ ] Accelerometer: lying flat about 0 0 -10; standing upright, about 10 (or -10) moves to another axis
+- [ ] Gyroscope (`sensor anglvel`): near 0 at rest, clearly larger while you turn the phone
+- [ ] Compass (`sensor magn`): values change when you turn the phone flat on the table
 
 ## Afterwards
 

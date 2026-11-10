@@ -4,3 +4,5 @@ enable axon7-console.service
 enable bluetooth.service
 enable axon7-firmware.service
 enable axon7-modem.service
+enable axon7-sns-reg.service
+enable axon7-wifi-rescan.service

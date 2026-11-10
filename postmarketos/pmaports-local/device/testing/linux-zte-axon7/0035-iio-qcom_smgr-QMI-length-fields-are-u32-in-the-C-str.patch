@@ -1,0 +1,231 @@
+From ee3de3da7bb405b4eab2420f90341948e8fe8b80 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 10:58:40 +0100
+Subject: [PATCH 35/38] iio: qcom_smgr: QMI length fields are u32 in the C
+ structs
+
+The QMI encoder and decoder copy a QMI_DATA_LEN value as a u32 from and
+to the C struct (qmi_encdec.c), with elem_size giving the size on the
+wire only. With u8 length fields the encoder read the next three bytes
+too: a buffering request for any sensor other than ID 0 failed with
+'qmi_encode: Invalid data length', so only the accelerometer could be
+enabled. Make the length fields u32 and set the wire size to one byte
+explicitly, as in other QMI users.
+
+Tested on the ZTE Axon 7: accelerometer, gyroscope and magnetometer all
+stream.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ drivers/iio/common/qcom_smgr/qmi/sns_smgr.c | 37 +++++++--------------
+ drivers/iio/common/qcom_smgr/qmi/sns_smgr.h | 24 ++++++-------
+ 2 files changed, 24 insertions(+), 37 deletions(-)
+
+diff --git a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c
+index c1f45baee..8c673718c 100644
+--- a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c
++++ b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.c
+@@ -23,8 +23,7 @@ static const struct qmi_elem_info sns_smgr_all_sensor_info_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size =
+-			sizeof_field(struct sns_smgr_all_sensor_info, type_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.offset = offsetof(struct sns_smgr_all_sensor_info, type_len),
+ 	},
+@@ -54,8 +53,7 @@ const struct qmi_elem_info sns_smgr_all_sensor_info_resp_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(struct sns_smgr_all_sensor_info_resp,
+-					  item_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x03,
+ 		.offset = offsetof(struct sns_smgr_all_sensor_info_resp,
+@@ -117,8 +115,7 @@ static const struct qmi_elem_info sns_smgr_single_sensor_info_data_type_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_data_type, name_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_data_type,
+ 				   name_len),
+@@ -134,9 +131,7 @@ static const struct qmi_elem_info sns_smgr_single_sensor_info_data_type_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_data_type,
+-			vendor_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_data_type,
+ 				   vendor_len),
+@@ -222,8 +217,7 @@ static const struct qmi_elem_info sns_smgr_single_sensor_info_data4_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_data4, item_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_data4,
+ 				   item_len),
+@@ -255,8 +249,7 @@ const struct qmi_elem_info sns_smgr_single_sensor_info_resp_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_resp, data_type_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x03,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_resp,
+@@ -276,8 +269,7 @@ const struct qmi_elem_info sns_smgr_single_sensor_info_resp_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_resp, data1_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x10,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_resp,
+@@ -305,8 +297,7 @@ const struct qmi_elem_info sns_smgr_single_sensor_info_resp_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_resp, data3_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x12,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_resp,
+@@ -324,8 +315,7 @@ const struct qmi_elem_info sns_smgr_single_sensor_info_resp_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_resp, data4_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x13,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_resp,
+@@ -344,8 +334,7 @@ const struct qmi_elem_info sns_smgr_single_sensor_info_resp_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(
+-			struct sns_smgr_single_sensor_info_resp, data5_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x14,
+ 		.offset = offsetof(struct sns_smgr_single_sensor_info_resp,
+@@ -474,8 +463,7 @@ const struct qmi_elem_info sns_smgr_buffering_req_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size =
+-			sizeof_field(struct sns_smgr_buffering_req, item_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x04,
+ 		.offset = offsetof(struct sns_smgr_buffering_req, item_len),
+@@ -659,8 +647,7 @@ const struct qmi_elem_info sns_smgr_buffering_report_ind_ei[] = {
+ 	{
+ 		.data_type = QMI_DATA_LEN,
+ 		.elem_len = 1,
+-		.elem_size = sizeof_field(struct sns_smgr_buffering_report_ind,
+-					  samples_len),
++		.elem_size = sizeof(u8),
+ 		.array_type = NO_ARRAY,
+ 		.tlv_type = 0x03,
+ 		.offset = offsetof(struct sns_smgr_buffering_report_ind,
+diff --git a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h
+index 9691207fc..8bf66e34a 100644
+--- a/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h
++++ b/drivers/iio/common/qcom_smgr/qmi/sns_smgr.h
+@@ -36,13 +36,13 @@ enum sns_smgr_buffering_action {
+ 
+ struct sns_smgr_all_sensor_info {
+ 	u8 id;
+-	u8 type_len;
++	u32 type_len;
+ 	char type[SNS_SMGR_SENSOR_TYPE_MAX_LEN];
+ };
+ 
+ struct sns_smgr_all_sensor_info_resp {
+ 	u16 result;
+-	u8 item_len;
++	u32 item_len;
+ 	struct sns_smgr_all_sensor_info items[SNS_SMGR_ALL_SENSOR_INFO_MAX_LEN];
+ };
+ 
+@@ -53,9 +53,9 @@ struct sns_smgr_single_sensor_info_req {
+ struct sns_smgr_single_sensor_info_data_type {
+ 	u8 sensor_id;
+ 	u8 data_type;
+-	u8 name_len;
++	u32 name_len;
+ 	char name[0xff];
+-	u8 vendor_len;
++	u32 vendor_len;
+ 	char vendor[0xff];
+ 	u32 val1;
+ 	u16 max_sample_rate;
+@@ -67,22 +67,22 @@ struct sns_smgr_single_sensor_info_data_type {
+ };
+ 
+ struct sns_smgr_single_sensor_info_data4 {
+-	u8 item_len;
++	u32 item_len;
+ 	u16 items[SNS_SMGR_DATA4_MAX_LEN];
+ };
+ 
+ struct sns_smgr_single_sensor_info_resp {
+ 	u16 result;
+-	u8 data_type_len;
++	u32 data_type_len;
+ 	struct sns_smgr_single_sensor_info_data_type data_types[SNS_SMGR_DATA_TYPE_COUNT];
+-	u8 data1_len;
++	u32 data1_len;
+ 	u32 data1[SNS_SMGR_DATA_TYPE_COUNT];
+ 	u32 data2;
+-	u8 data3_len;
++	u32 data3_len;
+ 	u64 data3[SNS_SMGR_DATA_TYPE_COUNT];
+-	u8 data4_len;
++	u32 data4_len;
+ 	struct sns_smgr_single_sensor_info_data4 data4[SNS_SMGR_DATA_TYPE_COUNT];
+-	u8 data5_len;
++	u32 data5_len;
+ 	u32 data5[SNS_SMGR_DATA_TYPE_COUNT];
+ };
+ 
+@@ -103,7 +103,7 @@ struct sns_smgr_buffering_req {
+ 	u8 report_id;
+ 	u8 action;
+ 	u32 report_rate;
+-	u8 item_len;
++	u32 item_len;
+ 	struct sns_smgr_buffering_req_item items[SNS_SMGR_DATA_TYPE_COUNT];
+ 	u8 notify_suspend_valid;
+ 	struct sns_smgr_buffering_req_notify_suspend notify_suspend;
+@@ -132,7 +132,7 @@ struct sns_smgr_buffering_report_sample {
+ struct sns_smgr_buffering_report_ind {
+ 	u8 report_id;
+ 	struct sns_smgr_buffering_report_metadata metadata;
+-	u8 samples_len;
++	u32 samples_len;
+ 	struct sns_smgr_buffering_report_sample samples[SNS_SMGR_SAMPLES_MAX_LEN];
+ 	u8 val2;
+ };
+-- 
+2.56.0
+

@@ -1,0 +1,21 @@
+#!/bin/sh
+# Sensor registry for sns-reg, made from the phone's own calibrated registry
+# (/persist/sensors/sns.reg, written by the stock or LineageOS sensor daemon).
+# The SLPI (sensor DSP) asks sns-reg for it at boot before it offers any
+# sensor; without it there are no sensors.
+set -e
+out=/etc/sns-reg.d/registry.conf
+part=/dev/disk/by-partlabel/persist
+[ -s "$out" ] && exit 0
+[ -b "$part" ] || { echo "axon7-sns-registry: no persist partition" >&2; exit 1; }
+mnt=$(mktemp -d)
+trap 'umount "$mnt" 2>/dev/null; rmdir "$mnt"' EXIT
+mount -o ro "$part" "$mnt"
+if [ ! -s "$mnt/sensors/sns.reg" ]; then
+	echo "axon7-sns-registry: no sensors/sns.reg on persist (boot Android once)" >&2
+	exit 1
+fi
+mkdir -p /etc/sns-reg.d
+sns-reg-generator "$mnt/sensors/sns.reg" > "$out.new"
+mv "$out.new" "$out"
+echo "axon7-sns-registry: $(grep -c '^[0-9]' "$out") keys from persist/sensors/sns.reg"

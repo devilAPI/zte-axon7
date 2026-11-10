@@ -1,0 +1,67 @@
+From 262c8c23e3ba382d1e8509a05aa0ee2580908468 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 10:58:40 +0100
+Subject: [PATCH 36/38] iio: accel: smgr_accel: fix read_avail and remove
+
+read_avail returned a pointer to an array on its stack, which the IIO
+core reads after the call: keep it in the driver data instead. remove()
+fetched the IIO device with platform_get_drvdata() but probe never set
+it, a NULL dereference on unbind.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ drivers/iio/accel/smgr_accel.c       | 13 ++++++++-----
+ include/linux/iio/common/qcom_smgr.h |  1 +
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/iio/accel/smgr_accel.c b/drivers/iio/accel/smgr_accel.c
+index b899c2075..e7b362927 100644
+--- a/drivers/iio/accel/smgr_accel.c
++++ b/drivers/iio/accel/smgr_accel.c
+@@ -67,15 +67,17 @@ static int smgr_accel_read_avail(struct iio_dev *iio_dev,
+ 				 long mask)
+ {
+ 	struct smgr_iio_priv *priv = iio_priv(iio_dev);
+-	const int samp_freq_vals[3] = {
+-		1, 1, priv->sensor->data_types[0].max_sample_rate
+-	};
+ 
+ 	switch (mask) {
+ 	case IIO_CHAN_INFO_SAMP_FREQ:
++		/* not on the stack: the caller reads it after we return */
++		priv->samp_freq_avail[0] = 1;
++		priv->samp_freq_avail[1] = 1;
++		priv->samp_freq_avail[2] =
++			priv->sensor->data_types[0].max_sample_rate;
+ 		*type = IIO_VAL_INT;
+-		*vals = samp_freq_vals;
+-		*length = ARRAY_SIZE(samp_freq_vals);
++		*vals = priv->samp_freq_avail;
++		*length = ARRAY_SIZE(priv->samp_freq_avail);
+ 		return IIO_AVAIL_RANGE;
+ 	}
+ 
+@@ -181,6 +183,7 @@ static int smgr_accel_probe(struct platform_device *pdev)
+ 	priv = iio_priv(iio_dev);
+ 	priv->sensor = *(struct smgr_sensor **)pdev->dev.platform_data;
+ 	priv->sensor->iio_dev = iio_dev;
++	platform_set_drvdata(pdev, iio_dev);	/* for smgr_accel_remove() */
+ 
+ 	iio_dev->name = "qcom-smgr-accel";
+ 	iio_dev->info = &smgr_accel_iio_info;
+diff --git a/include/linux/iio/common/qcom_smgr.h b/include/linux/iio/common/qcom_smgr.h
+index 03a1dec07..41f41cd4b 100644
+--- a/include/linux/iio/common/qcom_smgr.h
++++ b/include/linux/iio/common/qcom_smgr.h
+@@ -46,6 +46,7 @@ struct smgr_sensor
+ struct smgr_iio_priv
+ {
+ 	struct smgr_sensor *sensor;
++	int samp_freq_avail[3];		/* min, step, max for read_avail */
+ };
+ 
+ extern struct iio_buffer_setup_ops smgr_buffer_ops;
+-- 
+2.56.0
+

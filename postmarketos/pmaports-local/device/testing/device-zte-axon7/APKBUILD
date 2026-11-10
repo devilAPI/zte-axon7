@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=19
+pkgrel=20
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -22,6 +22,8 @@ depends="buffyboard
 	rmtfs
 	qrtr
 	qmi-utils
+	sns-reg
+	iio-sensor-proxy
 	"
 makedepends="devicepkg-dev"
 subpackages="$pkgname-openrc"
@@ -55,6 +57,11 @@ source="
 	ucm-zte-axon7.conf
 	ucm-zte-axon7-HiFi.conf
 	50-zte-axon7-lid.conf
+	axon7-sns-registry
+	axon7-sns-reg.service
+	axon7-sensors.conf
+	axon7-wifi-rescan
+	axon7-wifi-rescan.service
 	"
 
 build() {
@@ -91,6 +98,13 @@ package() {
 	# modem: online once rmtfs has started it (radios and GPS on); GPS tool
 	install -Dm755 "$srcdir"/axon7-modem "$pkgdir"/usr/libexec/axon7-modem
 	install -Dm644 "$srcdir"/axon7-modem.service "$pkgdir"/usr/lib/systemd/system/axon7-modem.service
+	# sensors: registry from /persist for the SLPI, then sns-reg serves it
+	install -Dm755 "$srcdir"/axon7-sns-registry "$pkgdir"/usr/libexec/axon7-sns-registry
+	install -Dm644 "$srcdir"/axon7-sns-reg.service "$pkgdir"/usr/lib/systemd/system/axon7-sns-reg.service
+	install -Dm644 "$srcdir"/axon7-sensors.conf "$pkgdir"/usr/lib/modules-load.d/axon7-sensors.conf
+	# Wi-Fi: rescan PCIe when the link came up after the driver gave up
+	install -Dm755 "$srcdir"/axon7-wifi-rescan "$pkgdir"/usr/libexec/axon7-wifi-rescan
+	install -Dm644 "$srcdir"/axon7-wifi-rescan.service "$pkgdir"/usr/lib/systemd/system/axon7-wifi-rescan.service
 	install -Dm755 "$srcdir"/axon7-gps "$pkgdir"/usr/bin/axon7-gps
 	# audio: UCM, speakers and microphone (AK4961, TFA9890) and the Hi-Fi DAC on the jack (card "ZTE Axon 7")
 	install -Dm644 "$srcdir"/ucm-zte-axon7.conf "$pkgdir/usr/share/alsa/ucm2/conf.d/apq8096/ZTE Axon 7.conf"
@@ -114,7 +128,7 @@ cf4153b45cf3254b9085f6d19cdcc710a65d622f0020f24ead1c25da356ca2aa3f597ccf9104361f
 d26ea20b2477eae37500f30c2843d980d4363a0a5ab2dab00b1133890088754765a31913af325eb4d937637fadbc2415d690c40cf335b9f2a0bdb3010a12eaaf  axon7-tripleboot-gpt
 ff013477448430d39343516f17d5b2fdae60c4cf8473f34ad3a7808c73453349684548d8ef8a1be194afe3f6c9ef78ea071e8849fdaf31a049cbd294122c85bd  axon7-dualboot.initd
 0faa1c586fe4a7d18bad58ed722fb698c59c6c5b52d655c9f37368d992a52c8f5d7d94332c76836266f717d0b8c43364b4fc46b4260527b71328279b12def7e4  axon7-dualboot.service
-2cee69185d6a8f0fbd7d1e0281cb5454fe7c61cdbd1938be08fd8cfe3f3f2e273d340ef21de4798aebe9f7bbc0fa6e261298c93dfaccba327994a8ae6caccc8f  80-axon7-dualboot.preset
+664ec205a6a8d9bd8e5fb74435684b466e5ab8f5ace1386a65237ae2d45099eee0a32dd97c5dbf6f5d0a2d9a06f251fb16d328991c7efb54bae2c56ea625fdb4  80-axon7-dualboot.preset
 5de1e80a080e1e28b6445b34b9e5a70f808ef071798f874f6ccaaeb9b8ab52a9aa825c612a71fcf07a725a0d86b53a2250d3f24d3b474ca73987c0a19bd37421  buffyboard-zte-axon7.conf
 351048adabfaf26fbbbfb52c054ee1498ac7dc8e7e2257a4a1d96294d914e47d927c56ca86ae7901614a712e7b1fbf0e039eb7a2ebbc07c617fb55d3ca0f5b4b  buffyboard.service
 b2fa4ae2b7d54f9fcad9de1b71a5e08fb56c1552eeaae5d826bdd005d66b9702d8d6397645c5e00a6ed4eb9b4954c9d24a66cb9bdc8646e968455236d91d8576  axon7-console
@@ -133,4 +147,9 @@ c5011bbbace617cf11399f011fbbe6b76bc68190cc5fbfee3ffcf6497ef8718612aaf5273dc93a06
 e33a332da320dc691c3f96a1b2ab074a458a069f4ac150829e6593760a39dad12b9213879fceb09b30ff24e10bc81c60979d86957ca8963e184c673dedaaa26c  ucm-zte-axon7.conf
 f4ac20573950dc34d4d181347351c3add94cb9adaa43a469108ec8a7109a751ae664097da3d70b3197142e0367efa0af5f5d824d3e5ade57d25fdcf262303880  ucm-zte-axon7-HiFi.conf
 30525eb50fd0554ac8dcd144d3801b57971259b21665f3c03698dc91d1dacb07d4904157014d078177caaac08ceb64c72eb7a3965191f2e3ada4e53d8ce85ec8  50-zte-axon7-lid.conf
+45278ad5bb06052375523667c5e0200b425dcf56328dd0a545197d5c419ef6e3c24d1a3f200323bcf71376efdc93171c71cd2f51a0ac5a8138109d05a7127a7c  axon7-sns-registry
+376f4b6c9dddcd0bbf94236c623d92ff6fd798577ca6c02298d7c1707ae9688ca5aad6d808e7781c0f6ee56f4341fb51f37da7387e80fdd17474181c06fb869a  axon7-sns-reg.service
+f90b8cfc5db97fb49a7c3519a73b34c72e6355600fa3a1d07a890f398e9bea26d68f66f26ac2dafd0ede643fe72f630aab821d4da1701522a9692bdf8dc0206a  axon7-sensors.conf
+468c6fd93ef674c2614336316e4cce583310a83123077865ad42447c47ba209af0f4f1681b03973f4e8e2211b1441963915ae732e6ab6f35da19bade4a86265e  axon7-wifi-rescan
+d72af6975d658f6241a39b783ce0a397af7c9fe21909baa12363ebb2c716a2739618928d4ba532d7ecdd5f24921f9e88c174eaa38a1db740d437d5570c6de6d2  axon7-wifi-rescan.service
 "
