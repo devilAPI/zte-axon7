@@ -1,0 +1,7 @@
+# Firmware partitions mounted under /vendor (modem's vfat as firmware_mnt).
+# Qualcomm's vendor policy (device/qcom/sepolicy_vndr) defines this type, but
+# the mainline port does not include that policy.
+type firmware_file, file_type, contextmount_type, vendor_file_type;
+
+# /dev/block/by-name/persist (Qualcomm's type, as for firmware_file)
+type persist_block_device, dev_type;
