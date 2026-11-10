@@ -163,7 +163,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09/10 (kernel patches 0010-0021)
+## Hardware added 2026-11-09/10 (kernel patches 0010-0022)
 
 | Part | Driver | State |
 | --- | --- | --- |
@@ -175,7 +175,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 | Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016, 0018) | confirmed: a -21 dBFS 1 kHz tone saturates the microphone; SBI1 looped back to SLIMbus TX is bit-exact |
 | Microphone 1 | `ak4961` AIF1 capture, SLIM TX7 (0018) | confirmed: the vibrator raises the level by ~30 dB, the speaker tone is recorded |
 | Front camera | mainline `ov8856` + `qcom-camss` (0020 VFE power-down fix, 0021 DT; CONFIG_VIDEO_OV8856) | confirmed: 3280x2464 RAW10 frames of the room through CSIPHY2 -> CSID0 -> ISPIF0 -> VFE0 RDI0 (no ISP, no app) |
-| Earpiece switch | `tfa989x` Receiver Switch on rcv-gpios (PM8994 GPIO 13) (0017, 0019) | measured: only the top speaker (TFA9890 0x35) changes; no UCM Earpiece device yet (the bottom amplifier has no mute of its own) |
+| Earpiece switch | `tfa989x` Receiver Switch on rcv-gpios (PM8994 GPIO 13) (0017, 0019) | measured: only the top speaker (TFA9890 0x35) changes; UCM device Earpiece switches the bottom speaker's pin off (0022), the microphone level drops 17 dB |
 
 Hi-Fi path: the AK8157 is the I2S clock master (the ADSP's Quaternary MI2S
 is a clock consumer with its EBIT clock gated on, data on SD1 = TLMM 61);

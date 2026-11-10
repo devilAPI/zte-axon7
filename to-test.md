@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0021, installed by hand on the dev phone; in images from
-linux-zte-axon7 r12 / device-zte-axon7 r16 on). Log in over SSH or on the
+0010-0022, installed by hand on the dev phone; in images from
+linux-zte-axon7 r13 / device-zte-axon7 r17 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -50,6 +50,16 @@ speaker-test -D hw:0,1 -c 2 -r 48000 -t wav -l 1           # "Front Left" / "Fro
 - [ ] Held sideways with the top of the phone to the left, "Front Left" comes from the left (top) speaker (measured: 0x34 = bottom, 0x35 = top)
 - [ ] No distortion or crackling at moderate volume
 - [ ] Switching back to headphones works: `alsaucm -c hw:0 set _verb HiFi set _disdev Speaker set _enadev Headphones`
+
+## 1b2. Earpiece
+
+```sh
+alsaucm -c hw:0 set _verb HiFi set _enadev Earpiece
+speaker-test -D hw:0,1 -c 2 -r 48000 -t sine -f 440 -l 1   # hold the phone to your ear, quietly
+```
+
+- [ ] The sound comes out of the earpiece opening at the top, not the bottom speaker
+- [ ] Back to speakers: `alsaucm -c hw:0 set _verb HiFi set _disdev Earpiece set _enadev Speaker`
 
 ## 1c. Microphone
 

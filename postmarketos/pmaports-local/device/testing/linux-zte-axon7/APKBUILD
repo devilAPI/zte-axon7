@@ -7,7 +7,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=12
+pkgrel=13
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -59,6 +59,7 @@ source="
 	0019-arm64-dts-qcom-msm8996-zte-axon7-speakers-by-positio.patch
 	0020-media-qcom-camss-vfe-don-t-delete-a-VFE-power-domain.patch
 	0021-arm64-dts-qcom-msm8996-zte-axon7-front-camera-OV8856.patch
+	0022-arm64-dts-qcom-msm8996-zte-axon7-per-speaker-widgets.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -112,5 +113,6 @@ e256c78973a7098796c6dc20e87535a0b38d4ea5e9959824707e64ee4e8becd0c1171883bc8bdeef
 d6889570d5bd26a8335df24144c485add5c2b5dd876aeba55cd0669594fec19741cc0a33341614eaf92f0c9c55f990858a96e71adab1d4a5db688deb43c1890c  0019-arm64-dts-qcom-msm8996-zte-axon7-speakers-by-positio.patch
 ec4ad8a6c559207a2ec80240981b907aaf2afad95c0f820aeb08a65132f233127ce72e2eeec0419349720ef82edf2c9c9d474cdef06da37be2bcecd189a7bd9f  0020-media-qcom-camss-vfe-don-t-delete-a-VFE-power-domain.patch
 680d4c78ba27b73c6ce06eadeb07743135a57ab9a1669ff096b2d389fd419539ea79f39b672b101ae20f9214d7d803d1e610251e693a23f0c442289c8a7e9985  0021-arm64-dts-qcom-msm8996-zte-axon7-front-camera-OV8856.patch
+bab3b34a91e1208b7f4e7760c0dd65cbbc605e4bc8bd6842743aabadc537656dd1e401ccf7d6d1aa5c4a1454af5f8d0af0c46649bb6428bf333784e56380af70  0022-arm64-dts-qcom-msm8996-zte-axon7-per-speaker-widgets.patch
 46d8392521601c98f15d005294fc74b6d7160ede7243ec1d7c3ada5741a5b3e1256bc74445471fbbcf72a7a7e50d24f89bc7f121079d6df5251b8965ec52fe5c  config-zte-axon7.aarch64
 "

@@ -16,6 +16,7 @@
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/sound/qcom,q6asm.h>
 #include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
+#include <dt-bindings/clock/qcom,mmcc-msm8996.h>
 #include "msm8996.dtsi"
 #include "pm8994.dtsi"
 #include "pmi8994.dtsi"
@@ -123,6 +124,29 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&divclk4_pin_a>;
+	};
+
+	/* front camera supply switches (ZTE CAM_DVDD2 / CAM_IOVDD2) */
+	front_cam_dvdd: front-cam-dvdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_dvdd";
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		gpio = <&tlmm 24 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_l27a_1p0>;
+		startup-delay-us = <3000>;
+	};
+
+	front_cam_dovdd: front-cam-dovdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_dovdd";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		gpio = <&tlmm 25 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_lvs1a_1p8>;
+		startup-delay-us = <3000>;
 	};
 
 	hifi_ldo: hifi-ldo-regulator {
@@ -850,6 +874,69 @@
 	};
 };
 
+/*
+ * Front camera: OmniVision OV8856 (ZTE eeprom "common_ov8856") on CCI
+ * master 1 at 0x36 (ZTE 8-bit 0x6c), CSIPHY2, MCLK2 at 19.2 MHz; reset
+ * TLMM 23, standby TLMM 26 (held high: not in standby), supplies L29
+ * (analog 2.8 V) and the DVDD/IOVDD switches. The lane count is not
+ * known from ZTE's tree (the sensor setup is in their camera blobs).
+ */
+&cci {
+	status = "okay";
+};
+
+&cci_i2c1 {
+	front_camera: camera@36 {
+		compatible = "ovti,ov8856";
+		reg = <0x36>;
+
+		clocks = <&mmcc CAMSS_MCLK2_CLK>;
+		clock-names = "xvclk";
+		assigned-clocks = <&mmcc CAMSS_MCLK2_CLK>;
+		assigned-clock-rates = <19200000>;
+
+		reset-gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
+		avdd-supply = <&vreg_l29a_2p8>;
+		dvdd-supply = <&front_cam_dvdd>;
+		dovdd-supply = <&front_cam_dovdd>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&front_cam_default>;
+
+		port {
+			front_camera_out: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <360000000 180000000>;
+				remote-endpoint = <&csiphy2_in>;
+			};
+		};
+	};
+};
+
+&camss {
+	/*
+	 * CAMSS_GDSC (parent of both VFE domains) as the top domain, linked
+	 * while CAMSS is active: the CSIPHY clocks (camss_top_ahb) are
+	 * enabled before a VFE domain is up and stayed stuck "off".
+	 */
+	power-domains = <&mmcc VFE0_GDSC>,
+			<&mmcc VFE1_GDSC>,
+			<&mmcc CAMSS_GDSC>;
+	vdda-supply = <&vreg_l2a_1p25>;
+	status = "okay";
+
+	ports {
+		port@2 {
+			reg = <2>;
+
+			csiphy2_in: endpoint {
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&front_camera_out>;
+			};
+		};
+	};
+};
+
 &q6afedai {
 	dai@22 {
 		reg = <QUATERNARY_MI2S_RX>;
@@ -871,6 +958,16 @@
 &sound {
 	compatible = "qcom,apq8096-sndcard";
 	model = "ZTE Axon 7";
+
+	/*
+	 * One widget per speaker, so each can be switched off on its own
+	 * (earpiece = top speaker through the receiver switch, bottom off).
+	 */
+	widgets = "Speaker", "Bottom Speaker",
+		  "Speaker", "Top Speaker";
+	audio-routing = "Bottom Speaker", "Speaker Bottom OUT",
+			"Top Speaker", "Speaker Top OUT";
+	pin-switches = "Bottom Speaker", "Top Speaker";
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&quat_mi2s_default>;
@@ -1379,6 +1476,31 @@
 		drive-strength = <2>;
 		bias-disable;
 		output-high;
+	};
+
+	/* front camera: MCLK2, reset, DVDD/IOVDD enables; standby held high */
+	front_cam_default: front-cam-default-state {
+		mclk-pins {
+			pins = "gpio15";
+			function = "cam_mclk";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		ctrl-pins {
+			pins = "gpio23", "gpio24", "gpio25";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		standby-pins {
+			pins = "gpio26";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+			output-high;
+		};
 	};
 
 	/* AK4961 control port (BLSP2 QUP3 SPI, ZTE spi_9) */

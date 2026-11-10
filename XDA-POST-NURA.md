@@ -38,6 +38,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Battery level, voltage, current and temperature (no charging control yet)
 [*]Speakers (heard by the phone's own microphone)
 [*]Microphone (bottom microphone)
+[*]Earpiece (top speaker through the earpiece opening)
 [*]Vibration (heard by the microphone)
 [/LIST]
 [/SPOILER]
@@ -52,7 +53,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Calls
 [*]SMS
 [*]Mobile data
-[*]Earpiece, second/third microphone, headset microphone
+[*]Second/third microphone, headset microphone, calls
 [*]Camera apps (the front camera delivers raw pictures, see changelog; the rear camera has no driver yet)
 [*]Sensors
 [*]Charging control
@@ -91,7 +92,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]Flip cover sensor: reported as a lid switch. Closing a cover does nothing yet, because suspend doesn't work.
 [*]Front camera (OV8856): raw 8-megapixel pictures through the mainline camera subsystem (developers: media-ctl + v4l2-ctl, see the README). No camera app yet; the rear camera (Samsung S5K2T8) has no mainline driver.
 [*]Wi-Fi is reliable again: the kernel from 2026-11-08 had been put back by mistake on some development installs.
-[*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). In the sound settings: "Speakers", "Headphones", "Microphone".
+[*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). In the sound settings: "Speakers", "Headphones", "Earpiece", "Microphone".
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-08"]
