@@ -21,7 +21,7 @@ PRODUCT_VENDOR_PROPERTIES += ro.sf.lcd_density=560
 # drm_hwcomposer on the msm DRM device, minigbm gralloc. Mesa freedreno
 # replaces SwiftShader/ANGLE in milestone M1b.
 PRODUCT_PACKAGES += \
-    android.hardware.composer.hwc3-service.drm \
+    com.android.hardware.graphics.composer.drm_hwcomposer \
     android.hardware.graphics.allocator-service.minigbm \
     android.hardware.graphics.mapper@4.0-impl.minigbm \
     libEGL_angle libGLESv1_CM_angle libGLESv2_angle \

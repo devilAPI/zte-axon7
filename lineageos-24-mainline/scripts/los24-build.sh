@@ -8,7 +8,8 @@
 # with the mainline kernel, adbd and no system partition). Full M1 build: "m"
 # targets superimage etc. (pass them).
 #
-# Waits for a running repo sync to finish (sync.sh writes "sync-exit 0"), then
+# Waits for a running repo sync (sync.sh writes "sync-exit 0") and kernel
+# build (tmux session los24kernel) to finish, then
 # copies the device tree from /srv/los24/axon7/repo and the kernel prebuilts
 # from /srv/los24/kernel/prebuilt into the tree.
 # Time: the first build takes about 2-4 h for recovery/boot images (Soong
@@ -23,8 +24,8 @@ ln -sfn "$LOG" "$LOGDIR/build-latest.log"
 exec >"$LOG" 2>&1
 echo "== $(date -u +%FT%TZ) los24-build.sh ${*:-recoveryimage bootimage}"
 
-# 1. sync finished?
-while pgrep -u build -f "repo/main.py.*sync" >/dev/null; do sleep 60; done
+# 1. sync and kernel build finished?
+while pgrep -u build -f "repo/main.py.*sync" >/dev/null || tmux has-session -t los24kernel 2>/dev/null; do sleep 60; done
 grep -q "sync-exit 0" "$LOGDIR/repo-sync.log" || { echo "repo sync did not finish cleanly, see $LOGDIR/repo-sync.log"; exit 1; }
 df -h /srv | tail -1
 

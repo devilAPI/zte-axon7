@@ -226,6 +226,24 @@ compile-time define today) and `axon7-bootmenu` learns entry 3. Alternative
 without the wipe: keep time-sharing `system`/`vendor` with 22.2 (restored
 after each test: several GB per test, slow) — not recommended past M1.
 
+**M0a' procedure (first phone test, about 20 min, nothing permanent):**
+
+1. PC: `lineageos-24-mainline/scripts/make-m0-testimg.sh` → `/tmp/axon7m-m0/m0-test-boot.img`
+   (checked offline by `axon7-androidimg.py check` and by the shim's own
+   `android.c` built for the host).
+2. Phone in TWRP: save `los_boot` (`dd if=/dev/block/by-name/los_boot of=/tmp/los_boot-before.img`,
+   pull it), push and `dd` the test image into `los_boot`, set the boot menu
+   to entry 2 (LineageOS) once (misc block 255, "AX7BOOT1", see the memory
+   notes / `axon7-bootmenu`), reboot.
+3. Expected: USB network 172.16.42.1 with telnet (no password), as with
+   Nura's test image. Collect `dmesg`, `/proc/cmdline`, `/proc/iomem`
+   (rmtfs, initrd), `ls /sys/class/udc`, `cat /sys/fs/selinux/policy_capabilities/memfd_class`
+   (SELinux is built in but not initialised without a policy; expect "not mounted"),
+   `/proc/config.gz` present.
+4. If nothing comes up within 60 s: hold Power + Volume Up (TWRP), read
+   `/sys/fs/pstore/console-ramoops*` and `pmsg-ramoops-0` (shim log).
+5. Restore `los_boot` from the saved image in TWRP.
+
 Test loop: reuse `axon7-los-test.sh` (unattended, pstore console, testlog on
 the metadata partition), with an `L24` mode that writes `l24_boot`/`l24_super`
 and selects menu entry 3 (IMEM/misc mark as today).
