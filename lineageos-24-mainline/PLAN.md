@@ -296,18 +296,23 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
   `shim/0001-boot-menu-fourth-entry-l24_boot.patch` (host test builds with
   `-Werror`, aarch64 syntax check clean), not applied.
 
-## 9. What is implemented (see README.md for commands)
+## 9. What is implemented, running jobs (2026-11-10)
 
-- `/srv/los24/lineage-24.0`: `repo init -b lineage-24.0 --depth=1 --git-lfs`,
-  sync running in tmux `los24sync` (user `build`), log
-  `/srv/los24/logs/repo-sync.log`, resume with `/srv/los24/sync.sh`.
-- `/srv/los24/kernel/linux`: v7.3.1 (shallow) + Nura 0001-0018, branch
-  `axon7-android`; `scripts/kernel-build.sh` builds and stages to
-  `/srv/los24/kernel/prebuilt`.
-- `kernel/android-axon7m.config`, `scripts/kernel-config-check.sh`.
-- `device/zte/axon7m/`: device tree skeleton (M0/M1 scope).
-- `manifest/axon7m.xml`: local manifest (reference trees stay outside the
-  Android tree).
+| What | Where | State |
+| --- | --- | --- |
+| Plan, scripts, device tree skeleton, shim patch | branch `lineageos-24-mainline` of the zte-axon7 repo (local only, not pushed) | committed |
+| LineageOS 24.0 source | `/srv/los24/lineage-24.0` (`repo init -b lineage-24.0 --depth=1 --git-lfs -g default,-darwin,-mips`) | syncing, tmux `los24sync` (user `build`), `/srv/los24/sync.sh` retries 4x; try 1 ended with googlesource "Broken pipe" errors on ~20 projects, retries resume incrementally. ~80 GB so far, about 1-2 h to go |
+| Kernel | `/srv/los24/kernel/linux` (v7.3.1 shallow + Nura 0001-0018, branch `axon7-android`) | config check clean (0 differences); compiling in tmux `los24kernel`, log `/srv/los24/logs/kernel-build.log` (`kernel-exit 0` + `staged ...` when done; slow while the sync owns the disk: 30-90 min) |
+| First Android build (M0b: `recoveryimage bootimage`) | tmux `los24build`, log `/srv/los24/logs/build-latest.log` | queued: starts by itself when sync and kernel are done; first build 2-4 h, low priority (nice/ionice) so 22.2 builds come first. Expect build errors from the untested skeleton |
+| Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
+
+Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/kernel-build.log /srv/los24/logs/build-latest.log'`.
+If the sync gives up after 4 tries: `su - build -c "tmux new -d -s los24sync /srv/los24/sync.sh"` (incremental), then restart the build job the same way with `los24-build.sh`.
+
+Next steps without the phone: make the device tree build (`m recoveryimage`),
+verify the [A] items in the synced tree (fs_mgr `super_partition`, release
+config name for lunch, minigbm mapper vs. AIDL mapper in Android 17), Mesa
+NDK build for freedreno, port dragonboard's `bdaddr` for the BT address.
 
 ## 10. Sources
 
