@@ -299,6 +299,14 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
   AIDL allocator `android.hardware.graphics.allocator-service.minigbm` and the
   stable-C mapper `mapper.minigbm` (used here). Nura's config compresses
   modules with zstd (`MODULE_COMPRESS`, a bool in 7.3): switched off.
+- Build host memory (2026-11-10): the first `m` OOM-killed soong_build in
+  Android.bp analysis (container limit 31 GB, peak 30.76 GB, the 8 GB
+  "virtual" swap of the unprivileged LXC container was hardly used, swap
+  cannot be added from inside). Android 17's soong_ui dropped
+  `SOONG_GOMEMLIMIT` and starts soong_build with `env -i`; the local patch
+  `aosp/build/blueprint/0001-*` sets `debug.SetMemoryLimit` (80% of
+  MemTotal). If that is not enough: more RAM or real swap for container 107
+  on the Proxmox host (`pct set 107 --memory ... --swap ...`), a host action.
 - `ios/` is a submodule (ios-sailfish): the fourth menu entry is prepared as
   `shim/0001-boot-menu-fourth-entry-l24_boot.patch` (host test builds with
   `-Werror`, aarch64 syntax check clean), not applied.
