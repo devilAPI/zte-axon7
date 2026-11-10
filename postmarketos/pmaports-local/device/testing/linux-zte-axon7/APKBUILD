@@ -7,7 +7,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=17
+pkgrel=18
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -68,6 +68,7 @@ source="
 	0028-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-S5K2T8.patch
 	0029-media-i2c-ak7375-add-the-AK7371-variant.patch
 	0030-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-focus-a.patch
+	0031-ASoC-ak4961-headset-microphone-on-AIN4.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -130,5 +131,6 @@ eb1afeb72d8ed70bddf5262c36352ecf061c4360dbac3cba26fc7711ad09717d6f96b9b49f44b2c1
 773c25bb30f2e65136bd4a5aa1fc168e5f8a89a619bdcb1e8fd3dc3a20a681f78e4c477cef28c3fb41d53b50fcad8236cf21d160599610723ed612ab3e3ad5eb  0028-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-S5K2T8.patch
 5319ff9e2c693d0fd32dfbb661bec443f086ae6f11a1d2a0b4e4b899fae9d5aa1f50c858fae13a8283fce8d5385735dc3047d1ec7cc97059d3ae00bb266cb69a  0029-media-i2c-ak7375-add-the-AK7371-variant.patch
 c00913b30351b8105b77ce10c5c0031a43f04d4ded229c629d1e3afde2f5d86deca42803dcc59071292de3fe9696f5d4807eb00e6c1606c2116118c5b85ba395  0030-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-focus-a.patch
+84bd619e3c78484fc89abbaa782bde35570dba4d973d737aae24c70a624e74f7423a7a5ac09bf216951e497dfc2ed7078201d1cd12d557ef459d16214fd01c76  0031-ASoC-ak4961-headset-microphone-on-AIN4.patch
 45b727106a44558efc6d53f41cb0c220a8484f816ecb9692883021e4ca7ecd57c3b80d44c4a0c204d6dfcdd4407d15870fce20fb4778f9b7dffe91e1a7751241  config-zte-axon7.aarch64
 "

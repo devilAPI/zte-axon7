@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09/10 (kernel patches
-0010-0030, installed by hand on the dev phone; in images from
-linux-zte-axon7 r17 / device-zte-axon7 r18 on). Log in over SSH or on the
+0010-0031, installed by hand on the dev phone; in images from
+linux-zte-axon7 r18 / device-zte-axon7 r19 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -74,6 +74,17 @@ aplay -D hw:0,1 /tmp/mic.wav                                  # play it back (sp
 - [ ] Your voice is clear and loud enough (gain: `amixer -c0 cset name='MIC Gain 1L' 0..10`, 3 dB steps, default 5)
 - [x] Two microphones: left channel = bottom, right channel = top (measured)
 - [ ] Both channels sound alike when you speak from the front
+
+Headset microphone (new 2026-11-10): plug in a headset with a microphone
+(4-pin plug), then
+
+```sh
+alsaucm -c hw:0 set _verb HiFi set _enadev Headset
+arecord -D hw:0,0 -f S16_LE -r 48000 -c 2 -d 5 /tmp/hs.wav   # speak into the headset
+alsaucm -c hw:0 set _verb HiFi set _disdev Headset
+```
+
+- [ ] Your voice is on the left channel of /tmp/hs.wav (play it back quietly, or send it to Claude)
 
 ## 2. Vibration
 
