@@ -19,10 +19,12 @@
 # Read-only towards the phone's storage: mounts nothing from UFS or SD.
 
 B=/axon7/bin
+# the kernel passes no PATH, and ash's default (/bin = /system/bin here)
+# would find Android's toybox before its linker config exists
+export PATH=$B:/system/bin
 /axon7/bin/busybox --install -s $B
 ln -sf /axon7/bin/busybox-extras $B/telnetd
 ln -sf /axon7/bin/busybox-extras $B/udhcpd
-export PATH=$B:/system/bin
 R=/axon7/run
 
 mount -t proc proc /proc

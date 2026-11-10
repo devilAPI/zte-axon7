@@ -276,7 +276,7 @@ has booted yet.
    comes up within 90 s: TWRP (the shim's 30 s watchdog does that by itself
    if the kernel never starts), pstore as above.
 2. M0b front end: `m0b-fe-recovery.img` (45,453,312 bytes, sha256
-   `5912dd2eafa7c793215b9eb93f4e69031799c130117dedaf350ffd4cf6082381`):
+   `819476cea960f2c9915481ee836f2d11501a412a984583136d5ac0bc9cbc1643`):
    the LineageOS 24 recovery (`recovery-orig-20261110-0329.img`) + adb key +
    the busybox front end `scripts/m0b-frontend-init.sh` (`rdinit=/axon7/init`):
    USB NCM + telnet 172.16.42.1 (busybox shell, Android's tools in
@@ -441,7 +441,7 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | Kernel | `/srv/los24/kernel/linux` (v7.3.1 shallow + Nura 0001-0018, branch `axon7-android`) | **built and staged** 2026-11-10 00:40 UTC: `7.3.1-axon7m`, Image image_size 28 MiB, 605 modules, config check clean; rebuilt 07:46 UTC as #3 (`kernel/patches/0001` watchdog node, `WATCHDOG_SYSFS`): in `/srv/los24/kernel/prebuilt`, used by all M0b' images |
 | M0a' test image | `/srv/los24/out-test/m0-test-boot.img` (sha256 `2f66b766...32aad8`, 30 MB) | **passed** on the phone as M0a'' (with the watchdog node, `m0b-test-boot.img`) |
 | M0b images | `out/target/product/axon7m/{boot,recovery}.img` (29 / 42 MB, built 2026-11-10 03:29 UTC; recovery saved as `/srv/los24/out-test/recovery-orig-20261110-0329.img`) | repacked `m0b-recovery.img` **failed** on the phone (no USB, section 8). Recovery ramdisk: adbd, `init.recovery.axon7m.rc` (UDC `6a00000.usb`), no modules needed (UFS, dwc3, gadget built in). LineageOS userdebug is not debuggable and recovery has `ro.adb.secure=1`, so developer builds carry the PC's adb key (`AXON7_ADB_KEYS`, as in 22.2). Its fstab still names the l24_* partitions (built before the slot change) |
-| M0b' test images | `/srv/los24/out-test/m0-pad15-boot.img` (size test, sha256 `61d8bd84...bc09490`), `m0b-fe-recovery.img` (recovery + busybox front end, sha256 `5912dd2e...6082381`) | **built, offline checks pass** (axon7-androidimg.py; `shim-hostcheck.sh`: entry 0x80000000, DTB 0x81e00000, staging to 0xa6bbc000 / 0xa6b59000); waiting for the phone (section 5, M0b') |
+| M0b' test images | `/srv/los24/out-test/m0-pad15-boot.img` (size test, sha256 `61d8bd84...bc09490`), `m0b-fe-recovery.img` (recovery + busybox front end, sha256 `819476ce...cbc1643`) | **built, offline checks pass** (axon7-androidimg.py; `shim-hostcheck.sh`: entry 0x80000000, DTB 0x81e00000, staging to 0xa6bbc000 / 0xa6b59000); waiting for the phone (section 5, M0b') |
 | Mesa freedreno | `/srv/los24/mesa/out` → `device/zte/axon7m-mesa` (`scripts/mesa-build.sh`: Mesa 26.2.6, NDK r30, API 35) | **built**: `libEGL_mesa.so`, `libGLESv2_mesa.so` (in `egl/`), `libgallium_dri.so` (19.5 MB); needs only core libdrm + LLNDK libs; used with `AXON7_GPU=mesa` (default stays SwiftShader for the first boot) |
 | Vibrator HAL | `device/zte/axon7m/vibrator/` | written; compiles in the next build after `droid` |
 | Bluetooth address | `device/zte/axon7m/bdaddr/` | dragonboard's `bdaddr` + `--nv` for ZTE's `persist/.bt_nv.bin` (host-tested parser), persist mounted `ro,noload` |
