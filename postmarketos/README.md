@@ -262,6 +262,10 @@ for c in x y z; do echo 1 | sudo tee $D/scan_elements/in_accel_${c}_en; done
 echo 1 | sudo tee $D/buffer/enable; sudo timeout 1 cat /dev/${D##*/} | od -A d -t d4 | head; echo 0 | sudo tee $D/buffer/enable
 ```
 
+Desktop use: `iio-sensor-proxy` 3.9 wants an IIO trigger on the
+accelerometer ("Could not find trigger name ...") and gives up, so there is
+no auto-rotation yet; the drivers would need a trigger fired per report.
+
 The WIP driver used u8 for QMI length fields; the 7.3 QMI code copies them as
 u32, so every request for a sensor other than ID 0 failed ("qmi_encode:
 Invalid data length") until 0035.
