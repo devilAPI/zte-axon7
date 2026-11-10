@@ -90,8 +90,16 @@ MIN_FREE_GB=${MIN_FREE_GB:-15}
 	done
 ) &
 WD=$!
-# nice: the LineageOS 22.2 builds in /srv/aosp share this machine and come first
-nice -n 15 ionice -c3 bash -c "source build/envsetup.sh >/dev/null; breakfast axon7m >/dev/null 2>&1 || lunch lineage_axon7m-userdebug >/dev/null; m -j7 ${*:-recoveryimage bootimage}"
+# Priority: normal by default. The idle I/O class (ionice -c3) on this HDD
+# pool starved the build for hours whenever anything else touched the disk,
+# and the container cannot raise a running build's priority afterwards (no
+# CAP_SYS_NICE). Only when a LineageOS 22.2 build must come first:
+# LOS24_PRIO="nice -n 15 ionice -c3". Jobs: all 8 threads of the i7-6700
+# (7 in the container plus one to cover I/O waits on the HDD).
+LOS24_PRIO=${LOS24_PRIO-}
+LOS24_JOBS=${LOS24_JOBS:-8}
+echo "priority: ${LOS24_PRIO:-normal}, jobs: $LOS24_JOBS"
+$LOS24_PRIO bash -c "source build/envsetup.sh >/dev/null; breakfast axon7m >/dev/null 2>&1 || lunch lineage_axon7m-userdebug >/dev/null; m -j$LOS24_JOBS ${*:-recoveryimage bootimage}"
 rc=$?
 kill "$WD" 2>/dev/null
 echo "build-exit $rc $(date -u +%FT%TZ)"
