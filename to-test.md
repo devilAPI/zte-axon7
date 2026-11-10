@@ -217,6 +217,16 @@ sudo nfctool -d nfc0 -0     # switch off
 
 - [ ] A "Targets found" line appears when the card touches the back of the phone
 
+## 9. Screen brightness
+
+```sh
+echo 20  | sudo tee /sys/class/backlight/994000.dsi.0/brightness
+echo 255 | sudo tee /sys/class/backlight/994000.dsi.0/brightness
+echo 160 | sudo tee /sys/class/backlight/994000.dsi.0/brightness
+```
+
+- [ ] The console gets dim, bright, and back to normal
+
 ## Afterwards
 
 When kernel r8 is installed as a package, remove the hand-installed copies
