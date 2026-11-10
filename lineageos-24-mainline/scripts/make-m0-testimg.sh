@@ -14,7 +14,7 @@
 # against a stand-in LK DTB (memory + ids + LK-style bootargs).
 #
 # Usage (PC, from the repository root or worktree; needs mkbootimg, dtc, cc, gzip):
-#   lineageos-24-mainline/scripts/make-m0-testimg.sh [OUTDIR]     (default /tmp/axon7m-m0)
+#   [PAD_MB=N] lineageos-24-mainline/scripts/make-m0-testimg.sh [OUTDIR]     (default /tmp/axon7m-m0)
 # Fetches Image and DTB from the build server (AXON7_BUILD_HOST, root@compiler).
 set -euo pipefail
 R=$(git rev-parse --show-toplevel)
@@ -53,7 +53,14 @@ anchor = "# Keep PID 1 alive"
 assert anchor in s
 open(p, "w").write(s.replace(anchor, hb + anchor, 1))
 PYEOF
-(cd "$O/initramfs" && "$TI/gen_init_cpio" "$TI/list.txt" | gzip -9 > initramfs-test-hb.cpio.gz)
+# PAD_MB=N: add N MiB of incompressible data (/pad.bin) to the initramfs, to
+# test the shim with an image as large as a LineageOS recovery image
+cp "$TI/list.txt" "$O/initramfs/list.txt"
+if [ "${PAD_MB:-0}" -gt 0 ]; then
+	head -c $((PAD_MB * 1048576)) /dev/urandom > "$O/initramfs/pad.bin"
+	echo "file /pad.bin pad.bin 0644 0 0" >> "$O/initramfs/list.txt"
+fi
+(cd "$O/initramfs" && "$TI/gen_init_cpio" list.txt | gzip -9 > initramfs-test-hb.cpio.gz)
 INITRD=$O/initramfs/initramfs-test-hb.cpio.gz
 
 # Command line: the shim puts the DTB's bootargs first, then this, then LK's
@@ -65,38 +72,8 @@ mkbootimg --header_version 2 --kernel "$O/Image" --ramdisk "$INITRD" --dtb "$O/m
 	--os_version 17.0.0 --os_patch_level 2026-10 --cmdline "$CMDLINE" -o "$O/m0-test-boot.img"
 python3 -I "$S/ios/tools/axon7-androidimg.py" check "$O/m0-test-boot.img"
 
-# Shim host test: android.c exactly as the phone runs it (+ our patch)
-W=$O/shim-test
-rm -rf "$W"; mkdir -p "$W"
-cp "$S"/ios/shim/*.[ch] "$W/"
-# the shim's host test expects a 4.4 kernel (entry 0x80080000); check against
-# 0x80000000 + the Image's own text_offset instead (mainline: 0)
-python3 -I - "$W/host_android_test.c" <<'PYEOF'
-import sys
-p = sys.argv[1]
-s = open(p).read()
-old = '\tif (j_entry != 0x80080000u) fail("entry not 0x80000000 + text_offset 0x80000");\n'
-new = ('\tuint64_t toff; memcpy(&toff, img + page + 8, 8);\n'
-       '\tif (j_entry != 0x80000000u + toff) fail("entry not 0x80000000 + text_offset");\n')
-assert old in s, "host test changed upstream"
-open(p, "w").write(s.replace(old, new, 1))
-PYEOF
-cc -O1 -Wall -Wextra -Werror -DANDROID_HOST_TEST -I"$W" "$W/host_android_test.c" "$W/android.c" "$W/fdtw.c" -o "$W/ta"
-cat > "$W/lk.dts" <<'EOF'
-/dts-v1/;
-/ {
-	#address-cells = <2>;
-	#size-cells = <2>;
-	model = "stand-in for the DTB ZTE LK patched for the shim";
-	qcom,msm-id = <246 0x30001>;
-	qcom,board-id = <100 0>;
-	memory { device_type = "memory"; reg = <0 0x80000000 0 0x80000000 0x1 0x0 0 0x7e4c0000>; };
-	chosen { bootargs = "console=ttyHSL0", "androidboot.serialno=0123abcd androidboot.baseband=msm skip_initramfs rootwait ro init=/init kpti=1"; };
-};
-EOF
-dtc -q -I dts -O dtb -o "$W/lk.dtb" "$W/lk.dts"
-"$W/ta" "$O/m0-test-boot.img" "$W/lk.dtb" "$W/out.dtb" | grep -E "LOS (cmdline|entry|dtb)|ok:|FAIL"
-dtc -q -I dtb -O dts "$W/out.dtb" 2>/dev/null | grep -E "bootargs|linux,initrd|reg = <0x00 0x80000000" | head -5
+# Shim host test: android.c exactly as the phone runs it
+AXON7_SRC=$S "$R/lineageos-24-mainline/scripts/shim-hostcheck.sh" "$O/m0-test-boot.img" "$O/shim-test"
 echo "kernel: $(cat "$O/version")"
 ls -l "$O/m0-test-boot.img"
 sha256sum "$O/m0-test-boot.img"
