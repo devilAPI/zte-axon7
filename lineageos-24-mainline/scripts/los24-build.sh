@@ -26,6 +26,11 @@ echo "== $(date -u +%FT%TZ) los24-build.sh ${*:-recoveryimage bootimage}"
 
 # 1. sync and kernel build finished?
 while pgrep -u build -f "repo/main.py.*sync" >/dev/null || tmux has-session -t los24kernel 2>/dev/null; do sleep 60; done
+# Soong analysis needs nearly all of the container's 31 GB: never next to a
+# LineageOS 22.2 build (/srv/aosp) or another Android build
+while pgrep -f "/srv/aosp/lineage-22.2/out/(soong_ui|host/linux-x86/bin/soong_build)" >/dev/null; do
+	echo "waiting: a LineageOS 22.2 build is running ($(date -u +%T))"; sleep 120
+done
 grep -q "sync-exit 0" "$LOGDIR/repo-sync.log" || { echo "repo sync did not finish cleanly, see $LOGDIR/repo-sync.log"; exit 1; }
 df -h /srv | tail -1
 
@@ -37,9 +42,23 @@ cp "$REPO/lineageos-24-mainline/manifest/axon7m.xml" "$T/.repo/local_manifests/"
 rsync -a --delete /srv/los24/kernel/prebuilt/ "$T/device/zte/axon7m-kernel/"
 echo "kernel $(cat "$T/device/zte/axon7m-kernel/version")"
 
-# 3. build
+# 3. local patches to the Android tree: lineageos-24-mainline/aosp/<project
+#    path>/*.patch (-p1 inside that project), each applied once
+A=$REPO/lineageos-24-mainline/aosp
+while IFS= read -r p; do
+	proj=$(dirname "${p#$A/}")
+	if patch -d "$T/$proj" -p1 -R -s -f --dry-run < "$p" >/dev/null 2>&1; then
+		echo "patch already in $proj: $(basename "$p")"
+	else
+		patch -d "$T/$proj" -p1 -N -s < "$p" || { echo "patch failed: $p"; exit 1; }
+		echo "applied to $proj: $(basename "$p")"
+	fi
+done < <(find "$A" -name '*.patch' 2>/dev/null | sort)
+
+# 4. build
 cd "$T" && . ~/.profile && ulimit -n 65536
-export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=/srv/los24/ccache SOONG_GOMEMLIMIT=22GiB
+# (SOONG_GOMEMLIMIT is gone in Android 17: aosp/build/blueprint patch instead)
+export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=/srv/los24/ccache
 mkdir -p "$CCACHE_DIR"; ccache -M 15G >/dev/null 2>&1 || true
 source build/envsetup.sh >/dev/null
 breakfast axon7m || lunch lineage_axon7m-userdebug || { echo "lunch failed"; exit 1; }
