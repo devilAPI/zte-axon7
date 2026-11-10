@@ -18,12 +18,15 @@
 # Fetches Image and DTB from the build server (AXON7_BUILD_HOST, root@compiler).
 set -euo pipefail
 R=$(git rev-parse --show-toplevel)
+# ios/ (submodule) and the test initramfs (not in git) come from a full
+# checkout; in a bare worktree point AXON7_SRC at the main checkout (read only).
+S=${AXON7_SRC:-$R}
 O=${1:-/tmp/axon7m-m0}
 H=${AXON7_BUILD_HOST:-root@compiler}
 mkdir -p "$O"
 scp -q "$H:/srv/los24/kernel/prebuilt/Image" "$H:/srv/los24/kernel/prebuilt/dtb/msm8996-zte-axon7.dtb" \
 	"$H:/srv/los24/kernel/prebuilt/version" "$O/"
-INITRD=$R/postmarketos/test-initramfs/initramfs-test.cpio.gz
+INITRD=$S/postmarketos/test-initramfs/initramfs-test.cpio.gz
 [ -r "$INITRD" ] || { echo "missing $INITRD (built by postmarketos/scripts, not in git)" >&2; exit 1; }
 
 # Command line: the shim puts the DTB's bootargs first, then this, then LK's
@@ -33,12 +36,12 @@ mkbootimg --header_version 2 --kernel "$O/Image" --ramdisk "$INITRD" --dtb "$O/m
 	--base 0x80000000 --kernel_offset 0x00008000 --ramdisk_offset 0x01000000 \
 	--tags_offset 0x00000100 --dtb_offset 0x01f00000 --pagesize 4096 \
 	--os_version 17.0.0 --os_patch_level 2026-10 --cmdline "$CMDLINE" -o "$O/m0-test-boot.img"
-python3 -I "$R/ios/tools/axon7-androidimg.py" check "$O/m0-test-boot.img"
+python3 -I "$S/ios/tools/axon7-androidimg.py" check "$O/m0-test-boot.img"
 
 # Shim host test: android.c exactly as the phone runs it (+ our patch)
 W=$O/shim-test
 rm -rf "$W"; mkdir -p "$W"
-cp "$R"/ios/shim/*.[ch] "$W/"
+cp "$S"/ios/shim/*.[ch] "$W/"
 (cd "$W" && sed -n '/^--- a\/shim/,$p' "$R/lineageos-24-mainline/shim/0001-boot-menu-fourth-entry-l24_boot.patch" |
 	sed 's#^\(---\|+++\) [ab]/shim/#\1 #' | patch -s -p0)
 cc -O1 -Wall -Wextra -Werror -DANDROID_HOST_TEST -I"$W" "$W/host_android_test.c" "$W/android.c" "$W/fdtw.c" -o "$W/ta"

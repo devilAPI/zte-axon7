@@ -308,9 +308,10 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | What | Where | State |
 | --- | --- | --- |
 | Plan, scripts, device tree skeleton, shim patch | branch `lineageos-24-mainline` of the zte-axon7 repo (local only, not pushed) | committed |
-| LineageOS 24.0 source | `/srv/los24/lineage-24.0` (`repo init -b lineage-24.0 --depth=1 --git-lfs -g default,-darwin,-mips`) | syncing, tmux `los24sync` (user `build`), `/srv/los24/sync.sh` retries 4x; try 1 ended with googlesource "Broken pipe" errors on ~20 projects, retries resume incrementally. ~80 GB so far, about 1-2 h to go |
-| Kernel | `/srv/los24/kernel/linux` (v7.3.1 shallow + Nura 0001-0018, branch `axon7-android`) | config check clean (0 differences); compiling in tmux `los24kernel`, log `/srv/los24/logs/kernel-build.log` (`kernel-exit 0` + `staged ...` when done; slow while the sync owns the disk: 30-90 min) |
-| First Android build (M0b: `recoveryimage bootimage`) | tmux `los24build`, log `/srv/los24/logs/build-latest.log` | queued: starts by itself when sync and kernel are done; first build 2-4 h, low priority (nice/ionice) so 22.2 builds come first. Expect build errors from the untested skeleton |
+| LineageOS 24.0 source | `/srv/los24/lineage-24.0` (`repo init -b lineage-24.0 --depth=1 --git-lfs -g default,-darwin,-mips`) | **synced** (try 2, 00:37 UTC; 97 GB left on /srv). History: tmux `los24sync` (user `build`), `/srv/los24/sync.sh` retries 4x; try 1 ended with googlesource "Broken pipe" errors on ~20 projects, retries resume incrementally. ~80 GB so far, about 1-2 h to go |
+| Kernel | `/srv/los24/kernel/linux` (v7.3.1 shallow + Nura 0001-0018, branch `axon7-android`) | **built and staged** 2026-11-10 00:40 UTC: `7.3.1-axon7m`, Image image_size 28 MiB, 605 modules, config check clean |
+| M0a' test image | `/srv/los24/out-test/m0-test-boot.img` (sha256 `2f66b766...32aad8`, 30 MB) | **built, offline checks pass** (axon7-androidimg.py; shim android.c on the host: entry 0x80000000, DTB 0x81e00000, LK SAR tokens and kpti dropped); waiting for a phone test |
+| First Android build (M0b: `recoveryimage bootimage`) | tmux `los24build`, log `/srv/los24/logs/build-latest.log` | **running** since 00:40 UTC; first build 2-4 h, low priority (nice/ionice) so 22.2 builds come first. Expect build errors from the untested skeleton |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
 
 Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/kernel-build.log /srv/los24/logs/build-latest.log'`.
