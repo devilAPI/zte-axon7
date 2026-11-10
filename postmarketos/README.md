@@ -158,7 +158,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 
 ## Known gaps
 
-- **Display**: the S6E3HA3 driver and the bonded-DSI setup (patches 0002, 0004) are built but not yet tested on the phone; without `msm.prefer_mdp5=0` the MDP5 driver takes MDSS and cannot drive two links.
+- **Display**: works (S6E3HA3 driver and bonded DSI, patches 0002, 0004; DPU drives DSI-1 at 1440x2560, `msmdrmfb` console). It needs `msm.prefer_mdp5=0`, or the MDP5 driver takes MDSS and cannot drive two links.
 - **USB OTG**: works on PI5USB302 units (automatic host/device); the HD3SS3220 variant is untested on a phone. The PI5USB302 interrupt is unusable (polled).
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
