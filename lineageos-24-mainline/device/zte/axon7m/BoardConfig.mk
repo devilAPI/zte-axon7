@@ -36,7 +36,7 @@ BOARD_RAMDISK_USE_LZ4 := false
 # The shim appends LK's own tokens (serial number, ...) after these.
 BOARD_KERNEL_CMDLINE := androidboot.hardware=axon7m
 BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc@0/624000.ufshc
-# androidboot.super_partition=l24_super is added by the build itself
+# androidboot.super_partition=system is added by the build itself
 # (BOARD_SUPER_PARTITION_BLOCK_DEVICES)
 # bonded DSI needs DPU; keep the splash clocks until the panel driver takes over
 BOARD_KERNEL_CMDLINE += msm.prefer_mdp5=0 clk_ignore_unused pd_ignore_unused
@@ -50,19 +50,23 @@ BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive oops=panic panic=5
 BOARD_VENDOR_KERNEL_MODULES := $(wildcard $(TARGET_KERNEL_DIR)/modules/*.ko)
 BOARD_VENDOR_KERNEL_MODULES_LOAD := $(strip $(shell cat $(DEVICE_PATH)/configs/modules.load.axon7m 2>/dev/null | grep -v '^\#'))
 
-# Partitions: a fourth multi-boot slot (PLAN.md section 5). The super
-# partition is the GPT partition l24_super, found through
-# androidboot.super_partition.
+# Partitions: LineageOS 22.2's multi-boot slot, taken over for testing (user,
+# 2026-11-10; PLAN.md section 5): boot image in los_boot (the shim's
+# LineageOS entry), dynamic partitions on the GPT partition "system"
+# (sde13, 5.5 GiB) as the super device (named by androidboot.super_partition,
+# which the build adds), /metadata on los_metadata, /data on los_data.
+# The 512 MiB "vendor" partition (sde28) is not used.
 BOARD_FLASH_BLOCK_SIZE := 262144
 BOARD_BOOTIMAGE_PARTITION_SIZE := 100663296
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 100663296
 BOARD_USES_METADATA_PARTITION := true
-BOARD_SUPER_PARTITION_SIZE := 4831838208
-BOARD_SUPER_PARTITION_BLOCK_DEVICES := l24_super
-BOARD_SUPER_PARTITION_L24_SUPER_DEVICE_SIZE := $(BOARD_SUPER_PARTITION_SIZE)
-BOARD_SUPER_PARTITION_METADATA_DEVICE := l24_super
+BOARD_SUPER_PARTITION_SIZE := 5905580032
+BOARD_SUPER_PARTITION_BLOCK_DEVICES := system
+BOARD_SUPER_PARTITION_SYSTEM_DEVICE_SIZE := $(BOARD_SUPER_PARTITION_SIZE)
+BOARD_SUPER_PARTITION_METADATA_DEVICE := system
 BOARD_SUPER_PARTITION_GROUPS := axon7m_dynamic_partitions
-BOARD_AXON7M_DYNAMIC_PARTITIONS_SIZE := 4827643904
+# super minus 4 MiB for the LP metadata
+BOARD_AXON7M_DYNAMIC_PARTITIONS_SIZE := 5901385728
 BOARD_AXON7M_DYNAMIC_PARTITIONS_PARTITION_LIST := system system_ext product vendor
 BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := true
 
@@ -71,6 +75,7 @@ BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
+# userdata.img is never flashed (los_data is formatted on the phone)
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 10737418240
 TARGET_USERIMAGES_USE_F2FS := true
 TARGET_USERIMAGES_USE_EXT4 := true

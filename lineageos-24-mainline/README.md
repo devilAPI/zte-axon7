@@ -15,7 +15,6 @@ sources: [PLAN.md](PLAN.md). The 4.4-kernel LineageOS 22.2 port is in
 | `scripts/server-sync-device.sh` | PC: copy these files to the server and into the Android tree |
 | `scripts/los24-build.sh` | server: wait for sync + kernel, install device tree and kernel, build (default `recoveryimage bootimage`) |
 | `scripts/make-m0-testimg.sh` | PC: M0a' test image (Android-config kernel + Nura's test initramfs, header v2), checked with the shim's own parser |
-| `shim/0001-*.patch` | proposed fourth boot menu entry (`l24_boot`) for `ios/shim`, not applied |
 | `device/zte/axon7m/` | LineageOS device tree (codename `axon7m`) |
 | `manifest/axon7m.xml` | repo local manifest |
 

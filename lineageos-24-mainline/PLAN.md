@@ -18,7 +18,7 @@ assumption, still to verify, **[D]** decision.
 | Fallback kernel | rebase the same 18 patches onto ACK `android-mainline` (at 7.3 now) [D] | brings ashmem, dm-default-key, incfs, xt_quota2, f_accessory if one of them turns out to be required |
 | Boot | the multi-boot shim's existing LineageOS path: **boot image header v2, raw `Image`, DTB in the dtb section**, kernel at 0x80000000 [V] | the shim already boots 4.4 this way; a mainline Image (text_offset 0, 2 MiB aligned base) fits the same path |
 | Kernel build | outside the Android tree (`scripts/kernel-build.sh` on the server), result used as prebuilt [D] | fast iteration, same tree as Nura, no LineageOS kernel.mk quirks |
-| Partitions | dynamic partitions (**one `super` image**: system, system_ext, product, vendor), `metadata`, `data`, each in **its own new GPT partition** (`l24_*`) [D, needs the user's OK: §5] | doesn't touch LineageOS 22.2's `system`/`vendor`; one partition for all read-only images |
+| Partitions | LineageOS 24 **takes over LineageOS 22.2's multi-boot slot** (user, 2026-11-10): `los_boot`, 22.2's GPT `system` (5.5 GiB) as the dynamic-partitions super device (system, system_ext, product, vendor), `los_metadata`, `los_data` [D] | no new partitions, no shim change; 22.2 no longer needs to stay bootable |
 | Graphics | Mesa **freedreno** (Adreno 530, GLES 3.x, no Vulkan) + **drm_hwcomposer** + **minigbm** gralloc; SwiftShader/ANGLE as bring-up fallback [D] | the Linaro db845c recipe; turnip (Vulkan) does not support a5xx [A] |
 | Audio | fork of AOSP's **AIDL example audio HAL** (tinyalsa "primary" module) + routing from Nura's UCM [D] | no proprietary HAL can run on the mainline ASoC card; the example HAL already drives ALSA PCMs [V] |
 | Wi-Fi / BT | wpa_supplicant nl80211 on ath10k; AOSP default Bluetooth AIDL HAL (HCI user channel) + a BD-address tool [D] | exactly what db845c does [V] |
@@ -71,7 +71,7 @@ assumption, still to verify, **[D]** decision.
   (`system/core/init/property_service.cpp` at `android-17.0.0_r1`:
   `ProcessBootconfig(); ProcessKernelCmdline();`) [V]. The super
   partition can be named by `androidboot.super_partition` on non-A/B devices
-  (we use `l24_super`): `fs_mgr_get_super_partition_name()` in
+  (we use GPT `system`): `fs_mgr_get_super_partition_name()` in
   `system/fs/fs_mgr/fs_mgr.cpp` (fs_mgr moved out of `system/core` in
   Android 17) [V, synced tree].
 
@@ -148,7 +148,7 @@ configfs FunctionFS (adb/MTP), dma-buf heaps, sync files, firmware user helper
 - Command line = DTB bootargs + image cmdline + LK's tokens (minus LK's
   system-as-root ones). Ours: `msm.prefer_mdp5=0 clk_ignore_unused
   pd_ignore_unused androidboot.hardware=axon7m androidboot.boot_devices=soc@0/624000.ufshc
-  androidboot.super_partition=l24_super firmware_class.path=... console=...`
+  androidboot.super_partition=system (added by the build) console=...`
   (`soc@0` vs `soc`: check the mainline platform device name [A]).
 
 ### 3.5 Modules and firmware
@@ -210,23 +210,27 @@ ramdisk-only image (Android first-stage init + recovery-mode adbd, or a
 minimal init that starts adbd), so no system partition is needed. LineageOS
 22.2 is back after each test.
 
-**M1+ (needs the user's OK): a fourth slot.** Proposal, carved from the end of
-`los_data` (LUN 0, ~32 GiB, last partition):
+**M1+: LineageOS 22.2's slot (user decision, 2026-11-10: "you can replace
+the LOS 22.2 that's currently installed for testing").** No new partitions
+and no shim change; LineageOS 22.2 does not need to stay bootable.
 
-| New partition | Size | Use |
+| Partition | Size | LineageOS 24 use |
 | --- | --- | --- |
-| `l24_boot` | 96 MiB | boot image v2 |
-| `l24_super` | 4.5 GiB | dynamic partitions (system, system_ext, product, vendor) |
-| `l24_meta` | 32 MiB | `/metadata` (ext4) |
-| `l24_data` | 10 GiB | `/data` (f2fs, FBE) |
+| `los_boot` (LUN 0) | 96 MiB | boot image v2 (the shim's LineageOS entry) |
+| `system` (sde13, LUN 4) | 5.5 GiB | super device: `super.img` (system, system_ext, product, vendor) via `androidboot.super_partition=system`. TWRP can no longer mount it as ext4 |
+| `vendor` (sde28) | 512 MiB | unused |
+| `los_metadata` (LUN 0) | 16 MiB | `/metadata` (ext4, formattable); 22.2's raw boot log there ends |
+| `los_data` (LUN 0) | ~32 GiB | `/data` (f2fs, FBE). Must be wiped once (22.2's FBE data cannot be read by 24) |
 
-This shrinks `los_data` from ~32 to ~17 GiB. f2fs cannot shrink safely, so
-LineageOS 22.2's `/data` is **wiped** once (it is a developer install: setup
-wizard again). The shim gets a fourth menu entry "LineageOS 24 (mainline)"
-(`android_boot()` with the partition name as a parameter, `LOS_PART` is a
-compile-time define today) and `axon7-bootmenu` learns entry 3. Alternative
-without the wipe: keep time-sharing `system`/`vendor` with 22.2 (restored
-after each test: several GB per test, slow) — not recommended past M1.
+Writes for a test (by the main session, from TWRP; LUN 1-4 are only
+writable there): `boot.img`/`recovery.img` → `los_boot`, `super.img`
+(sparse: `simg2img`) → `system`, wipe `los_metadata` and the start of
+`los_data` before the first boot. Never: iOS `userdata`, Nura's microSD,
+`persist`, `modemst*`, `fsg`, `fsc`, bootloader partitions, `boot`.
+
+(The earlier proposal, a fourth slot `l24_*` carved from `los_data` with a
+fourth boot menu entry, is dropped; its shim patch is in the git history of
+this branch.)
 
 **M0a' procedure (first phone test, about 20 min, nothing permanent):**
 
@@ -246,9 +250,11 @@ after each test: several GB per test, slow) — not recommended past M1.
    `/sys/fs/pstore/console-ramoops*` and `pmsg-ramoops-0` (shim log).
 5. Restore `los_boot` from the saved image in TWRP.
 
-Test loop: reuse `axon7-los-test.sh` (unattended, pstore console, testlog on
-the metadata partition), with an `L24` mode that writes `l24_boot`/`l24_super`
-and selects menu entry 3 (IMEM/misc mark as today).
+Test loop: reuse `axon7-los-test.sh` (unattended, pstore console; IMEM mark:
+one LineageOS boot, then TWRP) with the same entry 2, writing `super.img` to
+`system` instead of 22.2's system/vendor images. The test shim arms the APSS
+watchdog (30 s) for this entry: the kernel must feed it, see section 8
+(watchdog node, M0a').
 
 ## 6. Milestones
 
@@ -257,7 +263,7 @@ and selects menu entry 3 (IMEM/misc mark as today).
 | M0a | Kernel with Android config builds; boot image v2 builds | Image < 48 MiB, config check clean | no | 2-3 d (**in progress**) |
 | M0a' | **Boot path test without Android**: Android-config kernel + Nura's storage-safe test initramfs (busybox, USB NCM 172.16.42.1 + telnet) as a header-v2 image in `los_boot` | telnet works; `dmesg` shows binder/SELinux/erofs/f2fs, rmtfs address, UDC `6a00000.usb`; pstore console after a crash | yes (1 test, ~20 min) | 1 d |
 | M0b | Mainline kernel + Android first-stage init from `los_boot` | pstore shows init's first stage; adb in a ramdisk-only (recovery-mode) boot | yes (2-4 tests) | 3-5 d |
-| M1a | Full Android boot with SwiftShader | `sys.boot_completed=1`, adb, boot animation then launcher (slow) | yes, + new slot | 1-2 wk |
+| M1a | Full Android boot with SwiftShader | `sys.boot_completed=1`, adb, boot animation then launcher (slow) | yes (22.2's slot) | 1-2 wk |
 | M1b | freedreno + drm_hwcomposer + minigbm | SurfaceFlinger on DRM, smooth UI | yes | 1-2 wk |
 | M2 | Wi-Fi, Bluetooth, USB (MTP/tethering) | connect to AP, pair a device | yes | 1 wk |
 | M3 | Audio: speakers, headphones, mic, vibrator, torch, lights | media playback, recording, haptics | yes | 2 wk |
@@ -299,6 +305,17 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
   AIDL allocator `android.hardware.graphics.allocator-service.minigbm` and the
   stable-C mapper `mapper.minigbm` (used here). Nura's config compresses
   modules with zstd (`MODULE_COMPRESS`, a bool in 7.3): switched off.
+- **M0a' on the phone (2026-11-10, main session): the boot path works.** The
+  mainline kernel booted from `los_boot` via the shim, USB network (NCM) and
+  telnet were up at 5.3 s. Then a silent reset (no oops, log ends at 15.5 s,
+  TWRP through the test shim's IMEM mark): the test shim arms the APSS
+  watchdog (bark = bite = 30 s, `ios/shim/axon7.c` LOS_TEST) for the
+  downstream kernel's msm_watchdog, and mainline `msm8996.dtsi` has **no
+  watchdog node**, so `qcom-wdt` (built in, `WATCHDOG_HANDLE_BOOT_ENABLED`)
+  never bound. Fix: `kernel/patches/0001` adds `watchdog@9830000`
+  (`qcom,apss-wdt-msm8996`, `qcom,kpss-wdt`, bark SPI 28 as downstream).
+  Nura is not affected (the shim's postmarketOS path leaves the watchdog
+  off), but would gain a working watchdog from the same patch.
 - Build host memory (2026-11-10): the first `m` OOM-killed soong_build in
   Android.bp analysis (container limit 31 GB, peak 30.76 GB, the 8 GB
   "virtual" swap of the unprivileged LXC container was hardly used, swap
@@ -307,9 +324,8 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
   `aosp/build/blueprint/0001-*` sets `debug.SetMemoryLimit` (80% of
   MemTotal). If that is not enough: more RAM or real swap for container 107
   on the Proxmox host (`pct set 107 --memory ... --swap ...`), a host action.
-- `ios/` is a submodule (ios-sailfish): the fourth menu entry is prepared as
-  `shim/0001-boot-menu-fourth-entry-l24_boot.patch` (host test builds with
-  `-Werror`, aarch64 syntax check clean), not applied.
+- `ios/` is a submodule (ios-sailfish). A fourth boot menu entry was
+  prepared as a patch; not needed since LineageOS 24 uses 22.2's slot.
 
 ## 9. What is implemented, running jobs (2026-11-10)
 
