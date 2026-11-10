@@ -9,8 +9,8 @@
 # boots from los_boot (ios/shim/android.c).
 #
 # Then checks the image offline twice: ios/tools/axon7-androidimg.py check,
-# and the shim's own android.c built for the host (host_android_test.c,
-# with the lineageos-24-mainline/shim patch applied to a temporary copy)
+# and the shim's own android.c built for the host (host_android_test.c in a
+# temporary copy, expected entry from the Image's text_offset)
 # against a stand-in LK DTB (memory + ids + LK-style bootargs).
 #
 # Usage (PC, from the repository root or worktree; needs mkbootimg, dtc, cc, gzip):
@@ -69,8 +69,18 @@ python3 -I "$S/ios/tools/axon7-androidimg.py" check "$O/m0-test-boot.img"
 W=$O/shim-test
 rm -rf "$W"; mkdir -p "$W"
 cp "$S"/ios/shim/*.[ch] "$W/"
-(cd "$W" && sed -n '/^--- a\/shim/,$p' "$R/lineageos-24-mainline/shim/0001-boot-menu-fourth-entry-l24_boot.patch" |
-	sed 's#^\(---\|+++\) [ab]/shim/#\1 #' | patch -s -p0)
+# the shim's host test expects a 4.4 kernel (entry 0x80080000); check against
+# 0x80000000 + the Image's own text_offset instead (mainline: 0)
+python3 -I - "$W/host_android_test.c" <<'PYEOF'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+old = '\tif (j_entry != 0x80080000u) fail("entry not 0x80000000 + text_offset 0x80000");\n'
+new = ('\tuint64_t toff; memcpy(&toff, img + page + 8, 8);\n'
+       '\tif (j_entry != 0x80000000u + toff) fail("entry not 0x80000000 + text_offset");\n')
+assert old in s, "host test changed upstream"
+open(p, "w").write(s.replace(old, new, 1))
+PYEOF
 cc -O1 -Wall -Wextra -Werror -DANDROID_HOST_TEST -I"$W" "$W/host_android_test.c" "$W/android.c" "$W/fdtw.c" -o "$W/ta"
 cat > "$W/lk.dts" <<'EOF'
 /dts-v1/;
@@ -85,7 +95,7 @@ cat > "$W/lk.dts" <<'EOF'
 };
 EOF
 dtc -q -I dts -O dtb -o "$W/lk.dtb" "$W/lk.dts"
-"$W/ta" "$O/m0-test-boot.img" "$W/lk.dtb" "$W/out.dtb"
+"$W/ta" "$O/m0-test-boot.img" "$W/lk.dtb" "$W/out.dtb" | grep -E "LOS (cmdline|entry|dtb)|ok:|FAIL"
 dtc -q -I dtb -O dts "$W/out.dtb" 2>/dev/null | grep -E "bootargs|linux,initrd|reg = <0x00 0x80000000" | head -5
 echo "kernel: $(cat "$O/version")"
 ls -l "$O/m0-test-boot.img"

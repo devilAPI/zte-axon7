@@ -112,7 +112,9 @@ stage() {
 	kr=$(cat "$KOUT/include/config/kernel.release")
 	cp "$KPRE.new/mod-install/lib/modules/$kr/modules.order" "$KPRE.new/modules/" 2>/dev/null || true
 	rm -rf "$KPRE.new/mod-install"
-	echo "$kr $(git -C "$KSRC" rev-parse --short HEAD) $(date -u +%FT%TZ)" > "$KPRE.new/version"
+	local own
+	own=$(cd "$OURS/patches" 2>/dev/null && ls *.patch 2>/dev/null | cut -c1-4 | tr '\n' ' ')
+	echo "$kr $(git -C "$KSRC" rev-parse --short HEAD) +patches ${own:-none}$(date -u +%FT%TZ)" > "$KPRE.new/version"
 	rm -rf "$KPRE.old"; [ -d "$KPRE" ] && mv "$KPRE" "$KPRE.old"; mv "$KPRE.new" "$KPRE"
 	echo "staged $(cat "$KPRE/version"): $(ls "$KPRE/modules" | grep -c '\.ko$') modules in $KPRE"
 }
