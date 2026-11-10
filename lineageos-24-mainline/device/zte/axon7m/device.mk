@@ -48,7 +48,8 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init/init.axon7m.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.axon7m.usb.rc \
     $(DEVICE_PATH)/init/init.recovery.axon7m.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.axon7m.rc \
     $(DEVICE_PATH)/init/ueventd.axon7m.rc:$(TARGET_COPY_OUT_VENDOR)/etc/ueventd.rc \
-    $(DEVICE_PATH)/bin/axon7m-modules.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-modules.sh
+    $(DEVICE_PATH)/bin/axon7m-modules.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-modules.sh \
+    $(DEVICE_PATH)/bin/axon7m-bdaddr.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bdaddr.sh
 
 # Keep the system awake: suspend is broken on msm8996 mainline (PLAN.md)
 PRODUCT_VENDOR_PROPERTIES += sys.autosuspend.disabled=true
@@ -59,6 +60,7 @@ PRODUCT_PACKAGES += \
     android.hardware.power-service.example \
     com.android.hardware.thermal \
     android.hardware.bluetooth-service.default \
+    bdaddr.axon7m \
     android.hardware.wifi-service \
     hostapd \
     wpa_supplicant
@@ -73,6 +75,11 @@ PRODUCT_COPY_FILES += \
 # Telephony is milestone M7: Wi-Fi-only until then
 PRODUCT_VENDOR_PROPERTIES += ro.radio.noril=yes
 
-# Developer builds
-PRODUCT_SYSTEM_PROPERTIES += persist.sys.usb.config=adb
-PRODUCT_VENDOR_PROPERTIES += ro.adb.secure=0
+# Developer builds: AXON7_ADB_KEYS=FILE (adb public key of the developer host,
+# as in the LineageOS 22.2 axon7 tree) puts the key into system and recovery
+# and starts adbd from the first boot. adb authentication stays on
+# (ro.adb.secure=1; LineageOS userdebug builds are not debuggable either).
+ifneq ($(AXON7_ADB_KEYS),)
+PRODUCT_ADB_KEYS := $(AXON7_ADB_KEYS)
+PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
+endif

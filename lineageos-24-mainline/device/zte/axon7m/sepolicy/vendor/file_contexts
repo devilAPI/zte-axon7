@@ -7,3 +7,8 @@
 /dev/block/by-name/l24_meta                                 u:object_r:metadata_block_device:s0
 /dev/block/by-name/l24_data                                 u:object_r:userdata_block_device:s0
 /vendor/firmware_mnt(/.*)?                                  u:object_r:firmware_file:s0
+/dev/block/platform/soc@0/624000\.ufshc/by-name/persist     u:object_r:persist_block_device:s0
+/dev/block/by-name/persist                                  u:object_r:persist_block_device:s0
+/vendor/bin/axon7m-bdaddr\.sh                               u:object_r:vendor_bdaddr_exec:s0
+/vendor/bin/hw/bdaddr                                       u:object_r:vendor_bdaddr_exec:s0
+/vendor/bin/axon7m-modules\.sh                              u:object_r:vendor_modprobe_exec:s0

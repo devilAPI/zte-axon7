@@ -58,6 +58,10 @@ done < <(find "$A" -name '*.patch' 2>/dev/null | sort)
 # 4. build
 cd "$T" && . ~/.profile && ulimit -n 65536
 # (SOONG_GOMEMLIMIT is gone in Android 17: aosp/build/blueprint patch instead)
+# developer builds (default): adb for the key in test-keys/adbkey.pub (the same
+# PC key as LineageOS 22.2's test-keys); AXON7_ADB_KEYS= for a normal build
+export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
+[ -z "$AXON7_ADB_KEYS" ] || [ -r "$T/$AXON7_ADB_KEYS" ] || { echo "missing $T/$AXON7_ADB_KEYS"; exit 1; }
 export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=/srv/los24/ccache
 mkdir -p "$CCACHE_DIR"; ccache -M 15G >/dev/null 2>&1 || true
 source build/envsetup.sh >/dev/null

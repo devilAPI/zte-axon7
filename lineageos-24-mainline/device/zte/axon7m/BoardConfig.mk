@@ -36,7 +36,8 @@ BOARD_RAMDISK_USE_LZ4 := false
 # The shim appends LK's own tokens (serial number, ...) after these.
 BOARD_KERNEL_CMDLINE := androidboot.hardware=axon7m
 BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc@0/624000.ufshc
-BOARD_KERNEL_CMDLINE += androidboot.super_partition=l24_super
+# androidboot.super_partition=l24_super is added by the build itself
+# (BOARD_SUPER_PARTITION_BLOCK_DEVICES)
 # bonded DSI needs DPU; keep the splash clocks until the panel driver takes over
 BOARD_KERNEL_CMDLINE += msm.prefer_mdp5=0 clk_ignore_unused pd_ignore_unused
 BOARD_KERNEL_CMDLINE += console=ttyMSM0,115200n8 loop.max_part=7

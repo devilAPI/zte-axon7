@@ -1,0 +1,7 @@
+# Bluetooth address for the QCA6174 (hci0 stays "unconfigured" without one)
+service vendor.set_bdaddr /vendor/bin/axon7m-bdaddr.sh
+    class core
+    user root
+    group system bluetooth
+    capabilities NET_ADMIN
+    oneshot

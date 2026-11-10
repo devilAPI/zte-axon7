@@ -1,0 +1,15 @@
+// From device/linaro/dragonboard shared/utils/bdaddr (Apache-2.0), with
+// ZTE's NV file as the address source.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "bdaddr.axon7m",
+    stem: "bdaddr",
+    relative_install_path: "hw",
+    vendor: true,
+    srcs: ["bdaddr.c"],
+    shared_libs: ["liblog"],
+    init_rc: ["bdaddr.rc"],
+}
