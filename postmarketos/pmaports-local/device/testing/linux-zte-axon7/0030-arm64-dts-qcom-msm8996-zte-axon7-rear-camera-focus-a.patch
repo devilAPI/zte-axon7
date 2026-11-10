@@ -1,0 +1,50 @@
+From edb2c47659788a90dfcd4dc62a1bee16b340b99a Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 09:41:14 +0100
+Subject: [PATCH 30/30] arm64: dts: qcom: msm8996-zte-axon7: rear camera focus
+ actuator
+
+The AK7371 sits on CCI master 0 at 0x0c (ZTE 8-bit 0x18), powered from
+L23 (2.8 V) and LVS1; link it to the rear camera with lens-focus.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index aff31403b..2f5796b8f 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -906,9 +906,18 @@ &cci {
+  * master 0, CSIPHY0 with 4 lanes, MCLK0 at 24 MHz; reset TLMM 30,
+  * standby TLMM 29, external DVDD LDO enabled by TLMM 38 (fed from S3).
+  * Supplies from ZTE's camera@0: vio LVS1, vana L17 2.9 V, vaf L23 2.8 V.
+- * The AK7371 actuator and EEPROM (0x50) sit on the same bus.
++ * The AK7371 focus actuator (0x0c, ZTE 8-bit 0x18) and the EEPROM (0x50)
++ * sit on the same bus.
+  */
+ &cci_i2c0 {
++	rear_vcm: camera-lens@c {
++		compatible = "asahi-kasei,ak7371";
++		reg = <0x0c>;
++
++		vdd-supply = <&vreg_l23a_2p8>;
++		vio-supply = <&vreg_lvs1a_1p8>;
++	};
++
+ 	rear_camera: camera@2d {
+ 		compatible = "samsung,s5k2t8";
+ 		reg = <0x2d>;
+@@ -926,6 +935,7 @@ rear_camera: camera@2d {
+ 
+ 		orientation = <1>;
+ 		rotation = <90>;
++		lens-focus = <&rear_vcm>;
+ 
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&rear_cam_default>;
+-- 
+2.56.0
+

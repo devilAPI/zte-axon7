@@ -163,7 +163,7 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
 
-## Hardware added 2026-11-09/10 (kernel patches 0010-0028)
+## Hardware added 2026-11-09/10 (kernel patches 0010-0030)
 
 | Part | Driver | State |
 | --- | --- | --- |
@@ -177,7 +177,8 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 | Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016, 0018) | confirmed: a -21 dBFS 1 kHz tone saturates the microphone; SBI1 looped back to SLIMbus TX is bit-exact |
 | Microphones 1 and 2 | `ak4961` AIF1 capture: ADC1 left = AIN1 (bottom, TX7, 0018), right = AIN2 (top, TX8, 0026) | confirmed: the vibrator raises mic 1 by ~30 dB; a tone from the top speaker is 18 dB louder on mic 2 |
 | Front camera | mainline `ov8856` + `qcom-camss` (0020 VFE power-down fix, 0021 DT; CONFIG_VIDEO_OV8856) | confirmed: 3280x2464 RAW10 frames of the room through CSIPHY2 -> CSID0 -> ISPIF0 -> VFE0 RDI0 (no ISP, no app) |
-| Rear camera | `s5k2t8` (new, 0027; CONFIG_VIDEO_S5K2T8) + DT (0028): CCI 0 at 0x2d, CSIPHY0, 4 lanes; init and mode tables from ZTE's `libmmcamera_s5k2t8.so` | confirmed: chip id 0x2148; colour bars and real light in all three modes, 5952x3348 at 30 fps (834 MHz link), 2976x1674 at 30 fps, 1920x1080 at 60 fps. No autofocus (AK7371) or OIS yet |
+| Rear camera | `s5k2t8` (new, 0027; CONFIG_VIDEO_S5K2T8) + DT (0028): CCI 0 at 0x2d, CSIPHY0, 4 lanes; init and mode tables from ZTE's `libmmcamera_s5k2t8.so` | confirmed: chip id 0x2148; colour bars and real light in all three modes, 5952x3348 at 30 fps (834 MHz link), 2976x1674 at 30 fps, 1920x1080 at 60 fps. |
+| Rear camera focus | AK7371 as a variant of mainline `ak7375` (0029), 10-bit position, CCI 0 at 0x0c, `lens-focus` link (0030) | confirmed: `focus_absolute` 0..1023 moves the lens (the torch spot on the table shifts and narrows step by step). No autofocus loop and no OIS (ROHM BU63165) yet |
 | Earpiece switch | `tfa989x` Receiver Switch on rcv-gpios (PM8994 GPIO 13) (0017, 0019) | measured: only the top speaker (TFA9890 0x35) changes; UCM device Earpiece switches the bottom speaker's pin off (0022), the microphone level drops 17 dB |
 
 Hi-Fi path: the AK8157 is the I2S clock master (the ADSP's Quaternary MI2S
@@ -235,6 +236,11 @@ v4l2-ctl -d $($M -e "s5k2t8 5-002d") --set-ctrl exposure=2000,analogue_gain=64
 V=$($M -e msm_vfe0_video0); v4l2-ctl -d $V --set-fmt-video=width=2976,height=1674,pixelformat=pgAA
 v4l2-ctl -d $V --stream-mmap --stream-count=4 --stream-to=/tmp/rear.raw
 ```
+
+Focus: the lens subdev `ak7375 5-000c` keeps its position only while it is
+open (it powers down on close), so hold it open during the capture:
+`exec 3<>/dev/v4l-subdevN; v4l2-ctl -d /dev/v4l-subdevN --set-ctrl focus_absolute=600`
+(0 = far end of travel, 1023 = the other end).
 
 Speaker stereo is open: with the bottom amplifier on "Right" its output was
 nearly silent in a measurement (the TFA9890 in DSP bypass may ignore the

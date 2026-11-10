@@ -55,7 +55,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]SMS
 [*]Mobile data
 [*]Third microphone, headset microphone, calls
-[*]Camera apps and autofocus (both cameras deliver raw pictures, see changelog)
+[*]Camera apps (both cameras deliver raw pictures, see changelog)
 [*]Sensors
 [*]Fast charging above 2 A (second charger chip SMB1351)
 [*]Suspend
@@ -96,7 +96,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]Front camera (OV8856): raw 8-megapixel pictures through the mainline camera subsystem (developers: media-ctl + v4l2-ctl, see the README). No camera app yet.
 [*]Wi-Fi is reliable again: the kernel from 2026-11-08 had been put back by mistake on some development installs.
 [*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). For now both speakers play the left channel (mono); stereo needs a check. In the sound settings: "Speakers", "Headphones", "Earpiece", "Microphone".
-[*]Rear camera (Samsung S5K2T8): new driver, raw 20-megapixel pictures (5952x3348) and faster 2976x1674 and 1080p60 modes. No autofocus and no camera app yet.
+[*]Rear camera (Samsung S5K2T8): new driver, raw 20-megapixel pictures (5952x3348) and faster 2976x1674 and 1080p60 modes. The lens can be focused by hand (a control from 0 to 1023); automatic focus needs a camera app, which doesn't exist yet. No image stabilisation.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-08"]

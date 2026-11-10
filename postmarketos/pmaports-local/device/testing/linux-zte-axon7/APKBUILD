@@ -7,7 +7,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=16
+pkgrel=17
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -66,6 +66,8 @@ source="
 	0026-ASoC-ak4961-microphone-2-on-the-right-channel-of-ADC.patch
 	0027-media-i2c-add-Samsung-S5K2T8-image-sensor-driver.patch
 	0028-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-S5K2T8.patch
+	0029-media-i2c-ak7375-add-the-AK7371-variant.patch
+	0030-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-focus-a.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -126,5 +128,7 @@ eb1afeb72d8ed70bddf5262c36352ecf061c4360dbac3cba26fc7711ad09717d6f96b9b49f44b2c1
 5a952f4ff1d19f99cc2b88458a64ed7d5b23b6327db4b41ebeaa3cf67bac8833e7756664e67134bf48fef78ffc9cd97ea8565dc7b37344e7973f518d8f823763  0026-ASoC-ak4961-microphone-2-on-the-right-channel-of-ADC.patch
 61ef3ca270bb67ddc43533d18abb56f201faa55b8ef8e1778427f9aa8b1889bb5532a37940691f6261b54450271a055e6f7c525197cf0802812ee33c554014c2  0027-media-i2c-add-Samsung-S5K2T8-image-sensor-driver.patch
 773c25bb30f2e65136bd4a5aa1fc168e5f8a89a619bdcb1e8fd3dc3a20a681f78e4c477cef28c3fb41d53b50fcad8236cf21d160599610723ed612ab3e3ad5eb  0028-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-S5K2T8.patch
+5319ff9e2c693d0fd32dfbb661bec443f086ae6f11a1d2a0b4e4b899fae9d5aa1f50c858fae13a8283fce8d5385735dc3047d1ec7cc97059d3ae00bb266cb69a  0029-media-i2c-ak7375-add-the-AK7371-variant.patch
+c00913b30351b8105b77ce10c5c0031a43f04d4ded229c629d1e3afde2f5d86deca42803dcc59071292de3fe9696f5d4807eb00e6c1606c2116118c5b85ba395  0030-arm64-dts-qcom-msm8996-zte-axon7-rear-camera-focus-a.patch
 45b727106a44558efc6d53f41cb0c220a8484f816ecb9692883021e4ca7ecd57c3b80d44c4a0c204d6dfcdd4407d15870fce20fb4778f9b7dffe91e1a7751241  config-zte-axon7.aarch64
 "

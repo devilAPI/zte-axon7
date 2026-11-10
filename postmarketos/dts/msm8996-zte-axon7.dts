@@ -906,9 +906,18 @@
  * master 0, CSIPHY0 with 4 lanes, MCLK0 at 24 MHz; reset TLMM 30,
  * standby TLMM 29, external DVDD LDO enabled by TLMM 38 (fed from S3).
  * Supplies from ZTE's camera@0: vio LVS1, vana L17 2.9 V, vaf L23 2.8 V.
- * The AK7371 actuator and EEPROM (0x50) sit on the same bus.
+ * The AK7371 focus actuator (0x0c, ZTE 8-bit 0x18) and the EEPROM (0x50)
+ * sit on the same bus.
  */
 &cci_i2c0 {
+	rear_vcm: camera-lens@c {
+		compatible = "asahi-kasei,ak7371";
+		reg = <0x0c>;
+
+		vdd-supply = <&vreg_l23a_2p8>;
+		vio-supply = <&vreg_lvs1a_1p8>;
+	};
+
 	rear_camera: camera@2d {
 		compatible = "samsung,s5k2t8";
 		reg = <0x2d>;
@@ -926,6 +935,7 @@
 
 		orientation = <1>;
 		rotation = <90>;
+		lens-focus = <&rear_vcm>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&rear_cam_default>;
