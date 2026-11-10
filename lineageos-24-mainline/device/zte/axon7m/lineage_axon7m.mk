@@ -2,7 +2,14 @@
 # so it never collides with the 4.4-kernel "axon7" tree of LineageOS 22.2).
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
+# AXON7_MINI (default true): LineageOS's mini phone app set for bring-up
+# (smaller out/ on the build host); AXON7_MINI=false for the full set
+AXON7_MINI ?= true
+ifeq ($(AXON7_MINI),true)
+$(call inherit-product, vendor/lineage/config/common_mini_phone.mk)
+else
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+endif
 $(call inherit-product, device/zte/axon7m/device.mk)
 
 PRODUCT_NAME := lineage_axon7m

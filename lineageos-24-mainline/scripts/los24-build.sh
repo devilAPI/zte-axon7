@@ -74,9 +74,26 @@ mkdir -p "$CCACHE_DIR"; ccache -M 15G >/dev/null 2>&1 || true
 source build/envsetup.sh >/dev/null
 breakfast axon7m || lunch lineage_axon7m-userdebug || { echo "lunch failed"; exit 1; }
 echo "== build $(date -u +%FT%TZ)"
+# Disk watchdog: /srv also holds LineageOS 22.2; stop this build (only this
+# tree's soong_ui/ninja/siso) before /srv drops under MIN_FREE_GB
+MIN_FREE_GB=${MIN_FREE_GB:-15}
+(
+	while sleep 60; do
+		avail=$(df --output=avail -k /srv | tail -1)
+		if [ "$avail" -lt $((MIN_FREE_GB * 1024 * 1024)) ]; then
+			echo "DISK WATCHDOG: under $MIN_FREE_GB GB free on /srv, stopping the build $(date -u +%T)"
+			pkill -u build -f "$T/out/soong_ui"
+			pkill -u build -f "$T/prebuilts/build-tools/linux-x86/bin/(ninja|siso)"
+			pkill -u build -f "$T/out/.*/(ninja|siso)"
+			break
+		fi
+	done
+) &
+WD=$!
 # nice: the LineageOS 22.2 builds in /srv/aosp share this machine and come first
 nice -n 15 ionice -c3 bash -c "source build/envsetup.sh >/dev/null; breakfast axon7m >/dev/null 2>&1 || lunch lineage_axon7m-userdebug >/dev/null; m -j7 ${*:-recoveryimage bootimage}"
 rc=$?
+kill "$WD" 2>/dev/null
 echo "build-exit $rc $(date -u +%FT%TZ)"
 ls -la "$OUT"/*.img 2>/dev/null
 df -h /srv | tail -1
