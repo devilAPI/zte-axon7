@@ -58,7 +58,7 @@ setup() {
 	git config user.email >/dev/null || git config user.email build@compiler
 	# Nura series: applied when its subject line is not in the log yet
 	local p s
-	for p in "$NURA"/00*.patch "$OURS"/patches/*.patch; do
+	for p in "$NURA"/00*.patch; do
 		[ -e "$p" ] || continue
 		# subject as git am would record it (folded Subject: lines joined)
 		s=$(git mailinfo /dev/null /dev/null < "$p" | sed -n 's/^Subject: //p')
@@ -68,6 +68,18 @@ setup() {
 		git am -q --whitespace=nowarn "$p"
 	done
 	git log --oneline v7.3.1..HEAD 2>/dev/null | wc -l | sed 's/^/commits on top of 7.3.1: /' || true
+	# our own patches: plain patch(1), checked by a reverse dry run. git am
+	# would refresh the index first, which re-hashes the whole tree on the
+	# server's busy HDD (an hour); these patches are not git commits here.
+	for p in "$OURS"/patches/*.patch; do
+		[ -e "$p" ] || continue
+		if patch -d "$KSRC" -p1 -R -s -f --dry-run < "$p" >/dev/null 2>&1; then
+			echo "already applied: $(basename "$p")"
+		else
+			patch -d "$KSRC" -p1 -N -s < "$p"
+			echo "applied: $(basename "$p")"
+		fi
+	done
 }
 
 config() {
