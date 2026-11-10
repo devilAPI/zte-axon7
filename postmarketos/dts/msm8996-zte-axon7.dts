@@ -149,6 +149,15 @@
 		startup-delay-us = <3000>;
 	};
 
+	rear_cam_dvdd: rear-cam-dvdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "rear_cam_dvdd";
+		gpio = <&tlmm 38 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_s3a_1p3>;
+		startup-delay-us = <1000>;
+	};
+
 	hifi_ldo: hifi-ldo-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "hifi_ldo";
@@ -892,6 +901,45 @@
 	status = "okay";
 };
 
+/*
+ * Rear camera: Samsung S5K2T8 (ZTE "s5k2t8", 8-bit address 0x5a) on CCI
+ * master 0, CSIPHY0 with 4 lanes, MCLK0 at 24 MHz; reset TLMM 30,
+ * standby TLMM 29, external DVDD LDO enabled by TLMM 38 (fed from S3).
+ * Supplies from ZTE's camera@0: vio LVS1, vana L17 2.9 V, vaf L23 2.8 V.
+ * The AK7371 actuator and EEPROM (0x50) sit on the same bus.
+ */
+&cci_i2c0 {
+	rear_camera: camera@2d {
+		compatible = "samsung,s5k2t8";
+		reg = <0x2d>;
+
+		clocks = <&mmcc CAMSS_MCLK0_CLK>;
+		assigned-clocks = <&mmcc CAMSS_MCLK0_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 30 GPIO_ACTIVE_LOW>;
+		standby-gpios = <&tlmm 29 GPIO_ACTIVE_LOW>;
+		vddio-supply = <&vreg_lvs1a_1p8>;
+		vdda-supply = <&vreg_l17a_2p9>;
+		vddd-supply = <&rear_cam_dvdd>;
+		afvdd-supply = <&vreg_l23a_2p8>;
+
+		orientation = <1>;
+		rotation = <90>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&rear_cam_default>;
+
+		port {
+			rear_camera_out: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <834000000 498000000 300000000>;
+				remote-endpoint = <&csiphy0_in>;
+			};
+		};
+	};
+};
+
 &cci_i2c1 {
 	front_camera: camera@36 {
 		compatible = "ovti,ov8856";
@@ -933,6 +981,15 @@
 	status = "okay";
 
 	ports {
+		port@0 {
+			reg = <0>;
+
+			csiphy0_in: endpoint {
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&rear_camera_out>;
+			};
+		};
+
 		port@2 {
 			reg = <2>;
 
@@ -1491,6 +1548,22 @@
 	};
 
 	/* front camera: MCLK2, reset, DVDD/IOVDD enables; standby held high */
+	rear_cam_default: rear-cam-default-state {
+		mclk-pins {
+			pins = "gpio13";
+			function = "cam_mclk";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		ctrl-pins {
+			pins = "gpio29", "gpio30", "gpio38";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
 	front_cam_default: front-cam-default-state {
 		mclk-pins {
 			pins = "gpio15";

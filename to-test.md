@@ -3,9 +3,9 @@
 Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
-All tests are in **Nura** with the drivers from 2026-11-09 (kernel patches
-0010-0026, installed by hand on the dev phone; in images from
-linux-zte-axon7 r15 / device-zte-axon7 r18 on). Log in over SSH or on the
+All tests are in **Nura** with the drivers from 2026-11-09/10 (kernel patches
+0010-0028, installed by hand on the dev phone; in images from
+linux-zte-axon7 r16 / device-zte-axon7 r18 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -133,10 +133,17 @@ cat /sys/class/power_supply/qcom-battery/{capacity,status,voltage_now,current_no
 - [ ] The phone gets warm but not hot while charging (`temp` stays below ~420 = 42 °C)
 - [ ] It stops at 100 % (status Full) and the voltage stays around 4.4 V
 
-## 6. Front camera (raw, developers)
+## 6. Cameras (raw, developers)
 
-Confirmed: the front camera delivers raw pictures (README "Front camera"
-has the commands). Nothing to test for users until there is a camera app.
+Confirmed: both cameras deliver raw pictures (README "Front camera" and
+"Rear camera" have the commands). The rear camera has only been seen
+lying on a table (torch reflection, colour bars), never a real scene.
+
+- [ ] Rear camera, a real scene: stand the phone up with the back facing
+      a bright window or lamp and tell Claude; it takes the picture over
+      SSH (nothing to type)
+- [ ] The picture is sharp somewhere (there is no autofocus yet: the lens
+      sits wherever the AK7371 left it, so blur is expected up close)
 
 ## Afterwards
 
