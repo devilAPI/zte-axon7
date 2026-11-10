@@ -22,23 +22,39 @@ PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := 560dpi
 PRODUCT_VENDOR_PROPERTIES += ro.sf.lcd_density=560
 
-# Graphics, bring-up path: SwiftShader (Vulkan) + ANGLE (GLES) on the CPU,
-# drm_hwcomposer on the msm DRM device, minigbm gralloc. Mesa freedreno
-# replaces SwiftShader/ANGLE in milestone M1b.
+# Graphics: drm_hwcomposer on the msm DRM device and minigbm gralloc, then
+#   AXON7_GPU=swiftshader (default, bring-up): SwiftShader Vulkan + ANGLE GLES
+#     on the CPU, works without the GPU;
+#   AXON7_GPU=mesa: Mesa freedreno on the Adreno 530 (GLES only: turnip has no
+#     a5xx), prebuilts from scripts/mesa-build.sh in device/zte/axon7m-mesa.
+AXON7_GPU ?= swiftshader
 PRODUCT_PACKAGES += \
     com.android.hardware.graphics.composer.drm_hwcomposer \
     android.hardware.graphics.allocator-service.minigbm \
-    mapper.minigbm \
-    libEGL_angle libGLESv1_CM_angle libGLESv2_angle \
-    vulkan.pastel
+    mapper.minigbm
 $(call soong_config_set,minigbm,platform,msm)
 PRODUCT_VENDOR_PROPERTIES += \
-    ro.hardware.egl=angle \
-    ro.hardware.vulkan=pastel \
     ro.hardware.gralloc=minigbm \
-    ro.opengles.version=196608 \
+    ro.opengles.version=196609 \
     debug.hwui.renderer=skiagl
+# GLES 3.1 (196609); no Android Extension Pack claim until Mesa's a5xx support
+# is checked on the phone
+ifeq ($(AXON7_GPU),mesa)
+PRODUCT_SOONG_NAMESPACES += device/zte/axon7m-mesa
+PRODUCT_PACKAGES += \
+    libEGL_mesa.axon7m \
+    libGLESv2_mesa.axon7m \
+    libgallium_dri.axon7m
+PRODUCT_VENDOR_PROPERTIES += ro.hardware.egl=mesa
+else
+PRODUCT_PACKAGES += \
+    libEGL_angle libGLESv1_CM_angle libGLESv2_angle \
+    vulkan.pastel
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.hardware.egl=angle \
+    ro.hardware.vulkan=pastel
 PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
+endif
 
 # Init, fstab, ueventd
 PRODUCT_COPY_FILES += \

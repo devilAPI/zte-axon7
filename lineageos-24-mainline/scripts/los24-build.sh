@@ -41,6 +41,11 @@ cp "$REPO/lineageos-24-mainline/manifest/axon7m.xml" "$T/.repo/local_manifests/"
 [ -f /srv/los24/kernel/prebuilt/Image ] || { echo "no kernel in /srv/los24/kernel/prebuilt: run kernel-build.sh first"; exit 1; }
 rsync -a --delete /srv/los24/kernel/prebuilt/ "$T/device/zte/axon7m-kernel/"
 echo "kernel $(cat "$T/device/zte/axon7m-kernel/version")"
+# Mesa freedreno prebuilts (scripts/mesa-build.sh), used with AXON7_GPU=mesa
+if [ -f /srv/los24/mesa/out/Android.bp ]; then
+	rsync -a --delete /srv/los24/mesa/out/ "$T/device/zte/axon7m-mesa/"
+	echo "$(cat "$T/device/zte/axon7m-mesa/version")"
+fi
 
 # 3. local patches to the Android tree: lineageos-24-mainline/aosp/<project
 #    path>/*.patch (-p1 inside that project), each applied once
@@ -61,6 +66,8 @@ cd "$T" && . ~/.profile && ulimit -n 65536
 # developer builds (default): adb for the key in test-keys/adbkey.pub (the same
 # PC key as LineageOS 22.2's test-keys); AXON7_ADB_KEYS= for a normal build
 export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
+export AXON7_GPU=${AXON7_GPU:-swiftshader}
+echo "AXON7_GPU=$AXON7_GPU AXON7_ADB_KEYS=$AXON7_ADB_KEYS"
 [ -z "$AXON7_ADB_KEYS" ] || [ -r "$T/$AXON7_ADB_KEYS" ] || { echo "missing $T/$AXON7_ADB_KEYS"; exit 1; }
 export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=/srv/los24/ccache
 mkdir -p "$CCACHE_DIR"; ccache -M 15G >/dev/null 2>&1 || true
