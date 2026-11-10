@@ -77,6 +77,7 @@ PRODUCT_PACKAGES += \
     com.android.hardware.thermal \
     android.hardware.bluetooth-service.default \
     bdaddr.axon7m \
+    android.hardware.vibrator-service.axon7m \
     android.hardware.wifi-service \
     hostapd \
     wpa_supplicant
