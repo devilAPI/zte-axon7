@@ -323,7 +323,7 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | Mesa freedreno | `/srv/los24/mesa/out` → `device/zte/axon7m-mesa` (`scripts/mesa-build.sh`: Mesa 26.2.6, NDK r30, API 35) | **built**: `libEGL_mesa.so`, `libGLESv2_mesa.so` (in `egl/`), `libgallium_dri.so` (19.5 MB); needs only core libdrm + LLNDK libs; used with `AXON7_GPU=mesa` (default stays SwiftShader for the first boot) |
 | Vibrator HAL | `device/zte/axon7m/vibrator/` | written; compiles in the next build after `droid` |
 | Bluetooth address | `device/zte/axon7m/bdaddr/` | dragonboard's `bdaddr` + `--nv` for ZTE's `persist/.bt_nv.bin` (host-tested parser), persist mounted `ro,noload` |
-| Full build (M1a: `droid` incl. `super.img`) | tmux `los24build`, log `/srv/los24/logs/build-latest.log` | **running** since 04:32 UTC: mini LineageOS app set (`AXON7_MINI`), SwiftShader; disk watchdog stops it under 15 GB free on /srv (90 GB free at start) |
+| Full build (M1a: `droid` incl. `super.img`) | tmux `los24build`, log `/srv/los24/logs/build-latest.log` | **compiling** 174921 actions (analysis + Kati passed ~05:20 UTC): mini LineageOS app set (`AXON7_MINI`), SwiftShader, bdaddr included (vibrator HAL not yet); about 5-8 h at low priority; disk watchdog stops it under 15 GB free on /srv (90 GB free at start; LineageOS 22.2's full out/ is 58 GB for comparison) |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
 
 Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/kernel-build.log /srv/los24/logs/build-latest.log'`.
