@@ -183,7 +183,7 @@ unattended test loop).
 | Bluetooth | works, needs BD address (unconfigured until set) | `android.hardware.bluetooth-service.default` (HCI user channel via MGMT) [V], BD-address tool reading persist `.bt_nv.bin` (port of `axon7-btaddr`) | AOSP + dragonboard `bdaddr` | 3-5 d | low-medium |
 | Audio out | headphones (AK4490), speakers (AK4961 + 2x TFA9890), earpiece switch; card "ZTE Axon 7", playback hw:0,1, capture hw:0,0 (r10) | AIDL audio HAL: fork of `hardware/interfaces/audio/aidl/default` primary module (`CARD_x_DEV_y` addresses [V]) + mixer routes from Nura's UCM | AOSP | 2 wk | medium |
 | Microphone | mic 1 works (r10) | same HAL | | incl. | medium |
-| Vibrator | works (ff haptics) | vibrator AIDL on input-ff | AOSPM `external_vibrator-ff` / AOSP default | 2 d | low |
+| Vibrator | works (ff haptics, `spmi_haptics`, FF_RUMBLE) | own AIDL IVibrator V4 on the FF device: `device/zte/axon7m/vibrator` (written 2026-11-10; AOSPM's `external_vibrator-ff` is HIDL 1.1) | own | done, untested | low |
 | Torch, LED | works (`white:torch`, RGB LED) | lights AIDL, camera torch via sysfs later | AOSPM lights HAL | 2 d | low |
 | Battery | FG read-only works | health AIDL default (sysfs power_supply) | AOSP | 2 d | low |
 | Charging | **missing** (SMBCHG unported; SMB1351 no driver) | - (kernel) | msm8996-mainline `qcom_smbchg` | 2-3 wk (shared with Nura) | high; daily use blocker |
@@ -321,6 +321,7 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | M0a' test image | `/srv/los24/out-test/m0-test-boot.img` (sha256 `2f66b766...32aad8`, 30 MB) | **built, offline checks pass** (axon7-androidimg.py; shim android.c on the host: entry 0x80000000, DTB 0x81e00000, LK SAR tokens and kpti dropped); waiting for a phone test |
 | M0b images | `out/target/product/axon7m/{boot,recovery}.img` (29 / 42 MB, built 2026-11-10 03:29 UTC) | **built, offline checks pass** (shim parser: entry 0x80000000, DTB 0x81e00000). Recovery ramdisk: adbd, `init.recovery.axon7m.rc` (UDC `6a00000.usb`), no modules needed (UFS, dwc3, gadget built in). LineageOS userdebug is not debuggable and recovery has `ro.adb.secure=1`, so developer builds carry the PC's adb key (`AXON7_ADB_KEYS`, as in 22.2) |
 | Mesa freedreno | `/srv/los24/mesa/out` → `device/zte/axon7m-mesa` (`scripts/mesa-build.sh`: Mesa 26.2.6, NDK r30, API 35) | **built**: `libEGL_mesa.so`, `libGLESv2_mesa.so` (in `egl/`), `libgallium_dri.so` (19.5 MB); needs only core libdrm + LLNDK libs; used with `AXON7_GPU=mesa` (default stays SwiftShader for the first boot) |
+| Vibrator HAL | `device/zte/axon7m/vibrator/` | written; compiles in the next build after `droid` |
 | Bluetooth address | `device/zte/axon7m/bdaddr/` | dragonboard's `bdaddr` + `--nv` for ZTE's `persist/.bt_nv.bin` (host-tested parser), persist mounted `ro,noload` |
 | Full build (M1a: `droid` incl. `super.img`) | tmux `los24build`, log `/srv/los24/logs/build-latest.log` | **running** since 04:32 UTC: mini LineageOS app set (`AXON7_MINI`), SwiftShader; disk watchdog stops it under 15 GB free on /srv (90 GB free at start) |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
