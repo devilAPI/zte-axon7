@@ -259,7 +259,20 @@ and then overwrites the zone with its own. So read `console-ramoops*` and
 `pmsg-ramoops-0` (the shim's log: `LOS size=`, `LOS cmdline`, `LOS entry`,
 `LOS dtb` right before the jump) **in that TWRP session**, before anything
 reboots. What Nura stores in `/var/lib/systemd/pstore` afterwards is TWRP's
-log.
+log. The shim's log never shows up in a mainline kernel: the shim writes it
+at 0xbff00000, TWRP's pmsg zone, but mainline's ramoops order is dmesg,
+console (0xbfd00000), pmsg (0xbfe00000), ftrace (0xbff00000), and the
+ftrace zone's signature includes LINUX_VERSION_CODE, so Nura and the
+LineageOS 24 kernel discard ("zap") it at boot. Nura's `pmsg-ramoops-0`
+holds Nura's own lines only; ZTE LK rewrites the console zone with its log
+at every start.
+
+What is in `boot` (shim with or without the LineageOS entry, LOS_TEST or
+normal, or a plain kernel that LK starts without any menu):
+`scripts/boot-ident.py` (read-only, stdlib Python, runs on Nura as root).
+Last known content (2026-11-09 11:29 and 12:36, saved by the test runs):
+LOS_TEST shim + postmarketOS bundle, sha256 `e3ace801...0dcbd69`
+(`ios/research/axon7/losdev1/boot-before.img`).
 
 **M0b' procedure (2 tests, ~30 min, only `los_boot` and the boot menu are
 written).** Both images are on the server in `/srv/los24/out-test/`; both
