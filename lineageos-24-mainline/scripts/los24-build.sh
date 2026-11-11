@@ -69,7 +69,7 @@ cd "$T" && . ~/.profile && ulimit -n 65536
 export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
 export AXON7_GPU=${AXON7_GPU:-swiftshader}
 # /vendor/firmware from vendor/zte/axon7m-firmware (scripts/firmware-from-nura.sh)
-export AXON7_FIRMWARE=${AXON7_FIRMWARE:-0}
+export AXON7_FIRMWARE=${AXON7_FIRMWARE:-1}
 [ "$AXON7_FIRMWARE" != 1 ] || [ -f "$T/vendor/zte/axon7m-firmware/qcom/a530_pm4.fw" ] || { echo "AXON7_FIRMWARE=1 but no $T/vendor/zte/axon7m-firmware: run scripts/firmware-from-nura.sh"; exit 1; }
 echo "AXON7_GPU=$AXON7_GPU AXON7_FIRMWARE=$AXON7_FIRMWARE AXON7_ADB_KEYS=$AXON7_ADB_KEYS"
 [ -z "$AXON7_ADB_KEYS" ] || [ -r "$T/$AXON7_ADB_KEYS" ] || { echo "missing $T/$AXON7_ADB_KEYS"; exit 1; }

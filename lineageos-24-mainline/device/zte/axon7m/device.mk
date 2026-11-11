@@ -129,8 +129,8 @@ PRODUCT_PACKAGES += \
 # Android tree on the build server (scripts/firmware-from-nura.sh: the
 # phone's ZTE/Qualcomm images + linux-firmware files; proprietary, never in
 # git). The kernel looks there (firmware_class.path in BoardConfig.mk).
-# AXON7_FIRMWARE=1 (los24-build.sh default 0 until LineageOS reaches the
-# setup wizard without firmware; then remoteprocs, GPU, Wi-Fi, BT get theirs).
+# AXON7_FIRMWARE=1 (los24-build.sh default since build 15: LineageOS reached the
+# setup wizard without firmware first; AXON7_FIRMWARE=0 builds without).
 AXON7_FIRMWARE ?= 0
 AXON7M_FW_DIR := vendor/zte/axon7m-firmware
 ifeq ($(AXON7_FIRMWARE),1)
