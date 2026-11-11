@@ -1,0 +1,234 @@
+From ffcc62e99faf925e4cfed15258c3624733f75c44 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Wed, 11 Nov 2026 10:08:05 +0100
+Subject: [PATCH] ASoC: ak4961, apq8096: headset jack detection (polled)
+
+The AK4961 has a jack detector (ZTE's ak4961_jde_irq): JDS in the jack
+detection status says a plug is in, the mic detector then sets MDS when
+the plug has a microphone ring. ZTE's driver takes 5 MDS hits in a row as
+a headset and 9 rounds without one as headphones, and keeps MPWR on for a
+headset. Do the same from a delayed work that polls the status (500 ms;
+100 ms while the mic detector decides): the codec interrupt on TLMM 54
+reads low with no event pending, so its polarity is not known yet.
+
+apq8096: create a "Headset Jack" with Headphone/Mic Jack pins for codecs
+that implement set_jack.
+---
+ sound/soc/codecs/ak4961.c | 104 ++++++++++++++++++++++++++++++++++++++
+ sound/soc/qcom/apq8096.c  |  33 +++++++++++-
+ 2 files changed, 136 insertions(+), 1 deletion(-)
+
+diff --git a/sound/soc/codecs/ak4961.c b/sound/soc/codecs/ak4961.c
+index 981457d19..83a0ca695 100644
+--- a/sound/soc/codecs/ak4961.c
++++ b/sound/soc/codecs/ak4961.c
+@@ -29,8 +29,10 @@
+ #include <linux/spi/spi.h>
+ #include <sound/pcm_params.h>
+ #include <sound/soc.h>
++#include <sound/jack.h>
+ #include <sound/soc-dapm.h>
+ #include <sound/tlv.h>
++#include <linux/workqueue.h>
+ 
+ #define AK4961_DEVICE_CODE		0x00d5
+ #define AK4961_DEVICE_CODE_VAL		0x61
+@@ -66,6 +68,22 @@
+ #define AK4961_CHARGE_PUMP_1_SETTING_1	0x0016
+ #define AK4961_MIC_INPUT_SELECTOR_1	0x0034
+ 
++/*
++ * Jack detection (ZTE ak4961_jde_irq): JDS says a plug is in; the mic
++ * detector (MICDET in DETECTION_POWER_MANAGEMENT) then sets MDS when the
++ * plug has a microphone ring. ZTE takes 5 MDS hits in a row as a headset
++ * and 9 detection rounds without one as headphones; with a headset MPWR
++ * stays on (mic bias for the headset mic and its buttons).
++ */
++#define AK4961_DETECTION_PM		0x0031
++#define AK4961_DET_MPWR			BIT(6)
++#define AK4961_DET_MICDET		BIT(3)
++#define AK4961_JACK_DET_STATUS		0x00d8
++#define AK4961_JDS			BIT(1)
++#define AK4961_MDS			BIT(7)
++#define AK4961_MIC_HITS			5
++#define AK4961_MIC_TRIES		9
++
+ /* SLIMbus TX: SLIM TX1.. are PGD ports 0..; SB1 capture uses TX7/TX8 (ZTE) */
+ #define AK4961_TX_PORT_SB1		6
+ #define AK4961_MAX_TX_CH		16
+@@ -136,6 +154,11 @@ struct ak4961_priv {
+ 	unsigned int tx_ch[AK4961_MAX_TX_CH];
+ 	unsigned int num_tx_ch;
+ 	struct ak4961_dai_data dai[AK4961_NUM_DAIS];
++
++	struct snd_soc_jack *jack;
++	struct delayed_work jack_work;
++	int jack_report;
++	unsigned int mic_tries, mic_hits;
+ };
+ 
+ static int ak4961_spi_reg_read(void *context, unsigned int reg, unsigned int *val)
+@@ -543,7 +566,87 @@ static struct snd_soc_dai_driver ak4961_dais[] = {
+ 	},
+ };
+ 
++/*
++ * The codec interrupt (TLMM 54) is not used yet: its polarity is unclear
++ * (the line reads low with no event pending), so the status is polled,
++ * every 500 ms while nothing changes and every 100 ms while the mic
++ * detector decides.
++ */
++static void ak4961_jack_work(struct work_struct *work)
++{
++	struct ak4961_priv *ak = container_of(to_delayed_work(work),
++					      struct ak4961_priv, jack_work);
++	unsigned long next = msecs_to_jiffies(500);
++	int report = ak->jack_report;
++	unsigned int st;
++
++	if (regmap_read(ak->regmap, AK4961_JACK_DET_STATUS, &st))
++		goto out;
++
++	if (!(st & AK4961_JDS)) {
++		if (ak->jack_report || ak->mic_tries)
++			regmap_update_bits(ak->regmap, AK4961_DETECTION_PM,
++					   AK4961_DET_MPWR | AK4961_DET_MICDET, 0);
++		report = 0;
++		ak->mic_tries = 0;
++		ak->mic_hits = 0;
++	} else if (!ak->jack_report) {
++		if (!ak->mic_tries)
++			regmap_update_bits(ak->regmap, AK4961_DETECTION_PM,
++					   AK4961_DET_MICDET, AK4961_DET_MICDET);
++		ak->mic_tries++;
++		ak->mic_hits = (st & AK4961_MDS) ? ak->mic_hits + 1 : 0;
++
++		if (ak->mic_hits >= AK4961_MIC_HITS) {
++			report = SND_JACK_HEADSET;
++			regmap_update_bits(ak->regmap, AK4961_DETECTION_PM,
++					   AK4961_DET_MPWR | AK4961_DET_MICDET,
++					   AK4961_DET_MPWR);
++		} else if (ak->mic_tries > AK4961_MIC_TRIES + AK4961_MIC_HITS) {
++			report = SND_JACK_HEADPHONE;
++			regmap_update_bits(ak->regmap, AK4961_DETECTION_PM,
++					   AK4961_DET_MICDET, 0);
++		} else {
++			next = msecs_to_jiffies(100);
++		}
++	}
++
++	if (report != ak->jack_report) {
++		dev_info(ak->dev, "jack: %s (status %#x)\n",
++			 report == SND_JACK_HEADSET ? "headset" :
++			 report ? "headphones" : "unplugged", st);
++		ak->jack_report = report;
++		snd_soc_jack_report(ak->jack, report, SND_JACK_HEADSET);
++	}
++out:
++	schedule_delayed_work(&ak->jack_work, next);
++}
++
++static int ak4961_set_jack(struct snd_soc_component *component,
++			   struct snd_soc_jack *jack, void *data)
++{
++	struct ak4961_priv *ak = snd_soc_component_get_drvdata(component);
++
++	cancel_delayed_work_sync(&ak->jack_work);
++	ak->jack = jack;
++	ak->jack_report = 0;
++	ak->mic_tries = 0;
++	ak->mic_hits = 0;
++	if (jack)
++		schedule_delayed_work(&ak->jack_work, 0);
++	return 0;
++}
++
++static void ak4961_component_remove(struct snd_soc_component *component)
++{
++	struct ak4961_priv *ak = snd_soc_component_get_drvdata(component);
++
++	cancel_delayed_work_sync(&ak->jack_work);
++}
++
+ static const struct snd_soc_component_driver ak4961_component = {
++	.remove = ak4961_component_remove,
++	.set_jack = ak4961_set_jack,
+ 	.name = "ak4961",
+ 	.controls = ak4961_controls,
+ 	.num_controls = ARRAY_SIZE(ak4961_controls),
+@@ -642,6 +745,7 @@ static int ak4961_slim_probe(struct slim_device *sdev)
+ 		return -ENOMEM;
+ 	ak->dev = dev;
+ 	ak->slim = sdev;
++	INIT_DELAYED_WORK(&ak->jack_work, ak4961_jack_work);
+ 
+ 	spi_np = of_parse_phandle(dev->of_node, "akm,spi", 0);
+ 	if (!spi_np)
+diff --git a/sound/soc/qcom/apq8096.c b/sound/soc/qcom/apq8096.c
+index 78b6c98d4..4e4af8fb4 100644
+--- a/sound/soc/qcom/apq8096.c
++++ b/sound/soc/qcom/apq8096.c
+@@ -7,6 +7,7 @@
+ #include <sound/soc-dapm.h>
+ #include <sound/pcm.h>
+ #include <sound/pcm_params.h>
++#include <sound/jack.h>
+ #include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
+ #include "common.h"
+ #include "qdsp6/q6afe.h"
+@@ -66,6 +67,8 @@ static const struct snd_soc_ops apq8096_ops = {
+ 	.hw_params = msm_snd_hw_params,
+ };
+ 
++static int apq8096_jack_setup(struct snd_soc_pcm_runtime *rtd);
++
+ static int apq8096_init(struct snd_soc_pcm_runtime *rtd)
+ {
+ 	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
+@@ -88,14 +91,42 @@ static int apq8096_init(struct snd_soc_pcm_runtime *rtd)
+ 	snd_soc_dai_set_sysclk(codec_dai, 0, WCD9335_DEFAULT_MCLK_RATE,
+ 				SNDRV_PCM_STREAM_PLAYBACK);
+ 
+-	return 0;
++	return apq8096_jack_setup(rtd);
+ }
+ 
+ struct apq8096_card_data {
+ 	/* MI2S ports whose bit and frame clocks come from the codec side */
+ 	DECLARE_BITMAP(mi2s_clk_consumer, LPASS_MAX_PORT);
++	struct snd_soc_jack jack;
++	bool jack_setup;
++};
++
++static struct snd_soc_jack_pin apq8096_jack_pins[] = {
++	{ .pin = "Headphone Jack", .mask = SND_JACK_HEADPHONE },
++	{ .pin = "Mic Jack", .mask = SND_JACK_MICROPHONE },
+ };
+ 
++/* a headset jack for codecs that detect one (AK4961 on the ZTE Axon 7) */
++static int apq8096_jack_setup(struct snd_soc_pcm_runtime *rtd)
++{
++	struct apq8096_card_data *data = snd_soc_card_get_drvdata(rtd->card);
++	struct snd_soc_component *component = snd_soc_rtd_to_codec(rtd, 0)->component;
++	int ret;
++
++	if (data->jack_setup || !component->driver->set_jack)
++		return 0;
++
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET, &data->jack,
++					 apq8096_jack_pins,
++					 ARRAY_SIZE(apq8096_jack_pins));
++	if (ret)
++		return ret;
++	data->jack_setup = true;
++
++	return snd_soc_component_set_jack(component, &data->jack, NULL);
++}
++
+ static bool apq8096_is_mi2s(int id)
+ {
+ 	return id >= PRIMARY_MI2S_RX && id <= QUATERNARY_MI2S_TX;
+-- 
+2.56.0
+

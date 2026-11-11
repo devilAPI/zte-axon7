@@ -4,8 +4,8 @@ Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
 All tests are in **Nura** with the drivers from 2026-11-09/11 (kernel patches
-0010-0042, installed by hand on the dev phone; in images from
-linux-zte-axon7 r22 / device-zte-axon7 r22 on). Log in over SSH or on the
+0010-0043, installed by hand on the dev phone; in images from
+linux-zte-axon7 r23 / device-zte-axon7 r22 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -238,6 +238,23 @@ sudo evtest   # pick "Synaptics S3718AR", then touch each key once
 - [ ] Each key gives one press (value 1) and one release (value 0), no repeats
 - [ ] The key lights (if any) come on: there is no driver for them yet, so
   probably not
+
+## 11. Headset / headphone detection (silent)
+
+No sound needed. Watch the kernel log and the jack controls while plugging:
+
+```sh
+sudo dmesg -w | grep jack &       # prints "ak4961 ... jack: headset" etc.
+watch -n1 'amixer -c0 cget iface=CARD,name="Headphone Jack" | tail -1; amixer -c0 cget iface=CARD,name="Mic Jack" | tail -1'
+```
+
+- [ ] Plug in a **headset** (with microphone): `jack: headset`, both controls `on` within ~1 s
+- [ ] Unplug: `jack: unplugged`, both `off`
+- [ ] Plug in **headphones** without microphone: `jack: headphones`, only `Headphone Jack` on (~1.5 s)
+- [ ] Plugging slowly or wiggling the plug doesn't leave a wrong state after it is fully in
+
+If it works, the sound settings can switch to headphones and the headset mic
+by themselves (UCM jack controls, next step).
 
 ## Afterwards
 

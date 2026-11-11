@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-11 (touch keys)
+Last update: 2026-11-11 (touch keys, headset detection)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -49,6 +49,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Flashlight (torch)
 [*]Flip cover sensor (open is confirmed, closed not yet)
 [*]Touch keys under the screen (Back, Home, App switch)
+[*]Headset detection (plugging in a headset or headphones)
 [/LIST]
 [B]Not yet:[/B]
 [LIST]
@@ -84,6 +85,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [SPOILER="2026-11-11"]
 [LIST]
 [*]Touch keys: the three keys under the screen now work as Back, Home and App switch (they are part of the touchscreen; the kernel had their driver switched off). Please confirm they react. Their backlight stays off for now.
+[*]Headset detection: Nura sees when a headset or headphones are plugged in and whether they have a microphone (it shows as "Headphone Jack" / "Mic Jack"). Please tell us if that is right for yours. The sound settings don't switch by themselves yet; that comes once this is confirmed.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-09"]
