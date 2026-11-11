@@ -43,6 +43,9 @@ BOARD_KERNEL_CMDLINE += msm.prefer_mdp5=0 clk_ignore_unused pd_ignore_unused
 BOARD_KERNEL_CMDLINE += console=ttyMSM0,115200n8 loop.max_part=7
 # bring-up: permissive SELinux, panic on oops so the test loop restarts
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive oops=panic panic=5
+# bring-up: no rate limit on /dev/kmsg, so init/ueventd/apexd messages reach
+# the pstore console (first M1a runs lost them: "output lines suppressed")
+BOARD_KERNEL_CMDLINE += printk.devkmsg=on
 
 # Kernel modules: everything goes to /vendor/lib/modules; init loads the list
 # in modules.load (configs/modules.load.axon7m) after /vendor is mounted, so
