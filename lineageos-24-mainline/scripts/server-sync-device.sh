@@ -6,6 +6,10 @@
 #   /srv/los24/axon7/repo/                 copy of the needed repo parts
 #   /srv/los24/lineage-24.0/device/zte/axon7m          device tree (rsync --delete)
 #   /srv/los24/lineage-24.0/device/zte/axon7m-kernel   copy of /srv/los24/kernel/prebuilt (no symlink out of the tree)
+# Into the Android tree by checksum and without the PC's file times: a changed
+# file gets the time of the sync, so it is newer than its copy in out/ (with
+# rsync -a, fstab.axon7m kept its commit time and the ramdisk kept an older
+# copy: first M1a boot waited for "l24_meta", 2026-11-11).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 H=${AXON7_BUILD_HOST:-root@compiler}
@@ -15,7 +19,7 @@ ssh "$H" 'chown -R build:build /srv/los24/axon7/repo
 su - build -c "T=/srv/los24/lineage-24.0
 [ -d \$T/device ] || { echo \"Android tree not synced yet\"; exit 0; }
 mkdir -p \$T/device/zte \$T/.repo/local_manifests
-rsync -a --delete /srv/los24/axon7/repo/lineageos-24-mainline/device/zte/axon7m/ \$T/device/zte/axon7m/
-[ -d /srv/los24/kernel/prebuilt ] && rsync -a --delete /srv/los24/kernel/prebuilt/ \$T/device/zte/axon7m-kernel/
+rsync -rlpgoD --checksum --delete /srv/los24/axon7/repo/lineageos-24-mainline/device/zte/axon7m/ \$T/device/zte/axon7m/
+[ -d /srv/los24/kernel/prebuilt ] && rsync -rlpgoD --checksum --delete /srv/los24/kernel/prebuilt/ \$T/device/zte/axon7m-kernel/
 cp /srv/los24/axon7/repo/lineageos-24-mainline/manifest/axon7m.xml \$T/.repo/local_manifests/
 echo synced device tree"'

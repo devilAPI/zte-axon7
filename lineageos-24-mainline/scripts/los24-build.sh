@@ -34,16 +34,17 @@ done
 grep -q "sync-exit 0" "$LOGDIR/repo-sync.log" || { echo "repo sync did not finish cleanly, see $LOGDIR/repo-sync.log"; exit 1; }
 df -h /srv | tail -1
 
-# 2. device tree + kernel prebuilts into the tree
+# 2. device tree + kernel prebuilts into the tree (by checksum, without the
+# source file times: a changed file must be newer than its copy in out/)
 mkdir -p "$T/device/zte" "$T/.repo/local_manifests"
-rsync -a --delete "$REPO/lineageos-24-mainline/device/zte/axon7m/" "$T/device/zte/axon7m/"
+rsync -rlpgoD --checksum --delete "$REPO/lineageos-24-mainline/device/zte/axon7m/" "$T/device/zte/axon7m/"
 cp "$REPO/lineageos-24-mainline/manifest/axon7m.xml" "$T/.repo/local_manifests/"
 [ -f /srv/los24/kernel/prebuilt/Image ] || { echo "no kernel in /srv/los24/kernel/prebuilt: run kernel-build.sh first"; exit 1; }
-rsync -a --delete /srv/los24/kernel/prebuilt/ "$T/device/zte/axon7m-kernel/"
+rsync -rlpgoD --checksum --delete /srv/los24/kernel/prebuilt/ "$T/device/zte/axon7m-kernel/"
 echo "kernel $(cat "$T/device/zte/axon7m-kernel/version")"
 # Mesa freedreno prebuilts (scripts/mesa-build.sh), used with AXON7_GPU=mesa
 if [ -f /srv/los24/mesa/out/Android.bp ]; then
-	rsync -a --delete /srv/los24/mesa/out/ "$T/device/zte/axon7m-mesa/"
+	rsync -rlpgoD --checksum --delete /srv/los24/mesa/out/ "$T/device/zte/axon7m-mesa/"
 	echo "$(cat "$T/device/zte/axon7m-mesa/version")"
 fi
 
