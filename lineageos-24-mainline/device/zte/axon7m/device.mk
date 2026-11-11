@@ -114,3 +114,9 @@ endif
 PRODUCT_PACKAGES += \
     android.hardware.security.keymint-service \
     android.hardware.hardware_keystore.xml
+
+# Audio: audioserver crashes without any audio HAL, and system_server then
+# blocks on AudioSystem until its watchdog kills it (M1a run 9). For bring-up
+# AOSP's example AIDL audio HAL + effects (APEX); the audio policy comes from
+# the HAL. No real output yet: the sound card needs the ADSP (milestone M3).
+PRODUCT_PACKAGES += com.android.hardware.audio
