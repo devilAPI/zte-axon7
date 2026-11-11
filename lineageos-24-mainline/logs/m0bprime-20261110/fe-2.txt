@@ -1,0 +1,58 @@
+stty -echo 2>/dev/null; cat /proc/uptime; cat /tmp/recovery.log 2>&1 | tail 
+-30; dmesg | grep -iE "UDC|usb_gadget|configfs|adbd|init: .*(fail|error)|Service
+41.09 144.93
+[    0.031178] recovery filesystem table
+[    0.031248] =========================
+[    0.031329]   0 /system  erofs system 0
+[    0.033245]   1 /system_ext  erofs system_ext 0
+[    0.034897]   2 /product  erofs product 0
+[    0.036505]   3 /vendor  erofs vendor 0
+[    0.038038]   4 /metadata  ext4 /dev/block/by-name/l24_meta 0
+[    0.038479]   5 /data  f2fs /dev/block/by-name/l24_data 0
+[    0.038957]   6 /vendor/firmware_mnt  vfat /dev/block/by-name/modem 0
+[    0.046675]   7 /misc  emmc /dev/block/by-name/misc 0
+[    0.051512]   8 none  swap /dev/block/zram0 0
+[    0.052012]   9 /tmp  ramdisk ramdisk 0
+[    0.052171]
+[    0.054613] Loading make_device from librecovery_ui_ext.so
+[    0.072356] I:vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[    0.098509] W:Failed to read max brightness: No such file or directory
+[    0.126708] I:Screensaver disabled
+[    0.133483] Failed to find/open a drm device: No such file or directory
+[    0.133585] fb0 reports (possibly inaccurate):
+[    0.133633]   vi.bits_per_pixel = 24
+[    0.133682]   vi.red.offset   =  16   .length =   8
+[    0.133729]   vi.green.offset =   8   .length =   8
+[    0.133774]   vi.blue.offset  =   0   .length =   8
+[    0.147570] framebuffer: 6 (1440 x 2560)
+[    0.246639] ioctl(): blank: Invalid argument
+[    0.252641] gr_init: Only 4-byte pixel formats supported
+[    0.257969]           erasing_text: en (488 x 48 @ 712)
+[    0.260786]        no_command_text: en (560 x 48 @ 712)
+[    0.263199]             error_text: en (472 x 48 @ 712)
+[    0.604222] libc: Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0xb400e084c8d04000 in tid 226 (recovery), pid 226 (recovery)
+[   28.837000] audit: type=1400 audit(16755258.411:1117): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.858453] audit: type=1400 audit(16755258.411:1118): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.879916] audit: type=1400 audit(16755258.411:1119): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.900883] audit: type=1400 audit(16755258.411:1120): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.921997] audit: type=1400 audit(16755258.415:1121): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.483124] audit: type=1400 audit(16755263.423:1124): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.536344] audit: type=1400 audit(16755263.423:1125): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.589128] audit: type=1400 audit(16755263.423:1126): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.589139] audit: type=1400 audit(16755263.423:1127): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.589150] audit: type=1400 audit(16755263.423:1128): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.589159] audit: type=1400 audit(16755263.423:1129): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.641586] audit: type=1400 audit(16755263.423:1130): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.641597] audit: type=1400 audit(16755263.423:1131): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.949749] audit: type=1400 audit(16755263.423:1132): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.986579] audit: type=1400 audit(16755263.427:1133): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.551091] audit: type=1400 audit(16755268.491:1136): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.579805] audit: type=1400 audit(16755268.491:1137): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.608205] audit: type=1400 audit(16755268.491:1138): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.636415] audit: type=1400 audit(16755268.491:1139): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.746847] audit: type=1400 audit(16755268.491:1140): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.746857] audit: type=1400 audit(16755268.491:1141): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.805524] audit: type=1400 audit(16755268.491:1142): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.826900] audit: type=1400 audit(16755268.491:1143): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.847862] audit: type=1400 audit(16755268.491:1144): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.868958] audit: type=1400 audit(16755268.491:1145): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1

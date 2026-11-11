@@ -1,0 +1,3 @@
+ls: /system/bin/debuggerd: No such file or directory
+ls: /tombstones: No such file or directory
+ls: /data/tombstones: No such file or directory

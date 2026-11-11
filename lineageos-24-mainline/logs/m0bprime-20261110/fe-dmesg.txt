@@ -1,0 +1,1017 @@
+[    5.594011] init: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[    5.600808] init: Skipped setting INIT_AVB_VERSION (not vbmeta compatible)
+[    6.365678] random: crng init done
+[    6.396437] init: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[    6.398641] init: Failed to open device-mapper: No such file or directory
+[    6.403793] init: DM_DEV_STATUS failed for system_ext: Bad file descriptor
+[    6.410738] init: Could not update logical partition
+[    6.417800] init: DM_DEV_STATUS failed for product: Bad file descriptor
+[    6.422675] init: Could not update logical partition
+[    6.428985] init: Opening SELinux policy
+[    6.434179] init: Opening SELinux policy from monolithic file /sepolicy
+[    6.440798] init: Loading SELinux policy
+[    6.477478] SELinux:  Permission watch_mountns in class file not defined in policy.
+[    6.477839] SELinux:  Permission watch_mountns in class dir not defined in policy.
+[    6.484246] SELinux:  Permission watch_mountns in class lnk_file not defined in policy.
+[    6.491831] SELinux:  Permission watch_mountns in class chr_file not defined in policy.
+[    6.499727] SELinux:  Permission watch_mountns in class blk_file not defined in policy.
+[    6.507744] SELinux:  Permission watch_mountns in class sock_file not defined in policy.
+[    6.515794] SELinux:  Permission watch_mountns in class fifo_file not defined in policy.
+[    6.524093] SELinux:  Permission map_create_as in class bpf not defined in policy.
+[    6.532117] SELinux:  Permission prog_load_as in class bpf not defined in policy.
+[    6.539468] SELinux:  Permission watch_mountns in class anon_inode not defined in policy.
+[    6.547015] SELinux:  Permission watch_mountns in class memfd_file not defined in policy.
+[    6.555165] SELinux: the above unknown classes and permissions will be denied
+[    6.568984] SELinux:  policy capability network_peer_controls=1
+[    6.574011] SELinux:  policy capability open_perms=1
+[    6.578875] SELinux:  policy capability extended_socket_class=1
+[    6.583907] SELinux:  policy capability always_check_network=0
+[    6.589549] SELinux:  policy capability cgroup_seclabel=0
+[    6.595452] SELinux:  policy capability nnp_nosuid_transition=1
+[    6.600920] SELinux:  policy capability genfs_seclabel_symlinks=0
+[    6.606650] SELinux:  policy capability ioctl_skip_cloexec=0
+[    6.612900] SELinux:  policy capability userspace_initial_context=0
+[    6.618629] SELinux:  policy capability netlink_xperm=1
+[    6.624619] SELinux:  policy capability netif_wildcard=0
+[    6.629840] SELinux:  policy capability genfs_seclabel_wildcard=0
+[    6.635384] SELinux:  policy capability functionfs_seclabel=1
+[    6.641372] SELinux:  policy capability memfd_class=0
+[    6.647101] SELinux:  policy capability bpf_token_perms=0
+[    6.693799] audit: type=1403 audit(16755236.635:2): auid=4294967295 ses=4294967295 lsm=selinux res=1
+[    6.697409] selinux: SELinux: Loaded file context from:
+[    6.739269] selinux: 		/plat_file_contexts
+[    6.744210] selinux: 		/system_ext_file_contexts
+[    6.749111] selinux: 		/product_file_contexts
+[    6.753997] selinux: 		/vendor_file_contexts
+[    6.758844] selinux: 		/odm_file_contexts
+[    6.784913] init: init second stage started!
+[    6.811134] selinux: SELinux: Loaded file context from:
+[    6.816250] selinux: 		/plat_file_contexts
+[    6.821300] selinux: 		/system_ext_file_contexts
+[    6.826337] selinux: 		/product_file_contexts
+[    6.831340] selinux: 		/vendor_file_contexts
+[    6.836330] selinux: 		/odm_file_contexts
+[    6.905086] init: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[    6.914667] init: Overriding previous property 'ro.config.notification_sound':'OnTheHunt.ogg' with new value 'Argon.ogg'
+[    6.919230] init: Overriding previous property 'ro.config.alarm_alert':'Alarm_Classic.ogg' with new value 'Hassium.ogg'
+[    6.929257] init: Overriding previous property 'ro.config.ringtone':'Ring_Synth_04.ogg' with new value 'Orion.ogg'
+[    6.940047] init: Overriding previous property 'ro.adb.secure':'0' with new value '1'
+[    6.950248] init: Couldn't load property file '/system/build.prop': open() failed: No such file or directory
+[    6.960732] init: Setting product property ro.product.brand to 'ZTE' (from ro.product.product.brand)
+[    6.967865] init: Setting product property ro.product.device to 'axon7m' (from ro.product.product.device)
+[    6.976976] init: Setting product property ro.product.manufacturer to 'ZTE' (from ro.product.product.manufacturer)
+[    6.986451] init: Setting product property ro.product.model to 'A2017G' (from ro.product.product.model)
+[    6.996679] init: Setting product property ro.product.name to 'lineage_axon7m' (from ro.product.product.name)
+[    7.005998] init: Setting property 'ro.product.cpu.abilist' to 'arm64-v8a'
+[    7.016036] init: Setting property 'ro.product.cpu.abilist32' to ''
+[    7.022806] init: Setting property 'ro.product.cpu.abilist64' to 'arm64-v8a'
+[    7.029628] init: Running restorecon...
+[    7.041214] selinux: SELinux:  Could not stat /dev/block: No such file or directory.
+[    7.048008] init: Created socket '/dev/socket/property_service_for_system', mode 660, user 0, group 1000
+[    7.053180] init: Created socket '/dev/socket/property_service', mode 666, user 0, group 0
+[    7.063804] init: [libfs_mgr] vendor overlay: vndk version not defined
+[    7.073721] init: SetupMountNamespaces done
+[    7.087105] init: Forked subcontext for 'u:r:vendor_init:s0' with pid 156
+[    7.091623] init: Parsing file /system/etc/init/hw/init.rc...
+[    7.096734] audit: type=1400 audit(16755237.035:3): avc:  denied  { read } for  pid=156 comm="init" name="bin" dev="rootfs" ino=105 scontext=u:r:vendor_init:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[    7.097356] init: Added '/init.recovery.axon7m.rc' to import list
+[    7.144113] init: Parsing file /init.recovery.axon7m.rc...
+[    7.149455] init: Parsing directory /system/etc/init...
+[    7.154797] init: Parsing file /system/etc/init/servicemanager.recovery.rc...
+[    7.159962] init: Parsing file /system_ext/etc/init...
+[    7.167207] init: Unable to read config file '/system_ext/etc/init': open() failed: No such file or directory
+[    7.172216] init: Parsing file /vendor/etc/init...
+[    7.182218] init: Unable to read config file '/vendor/etc/init': open() failed: No such file or directory
+[    7.186897] init: Parsing file /odm/etc/init...
+[    7.196543] init: Unable to read config file '/odm/etc/init': open() failed: No such file or directory
+[    7.200997] init: Parsing file /product/etc/init...
+[    7.210255] init: Unable to read config file '/product/etc/init': open() failed: No such file or directory
+[    7.217282] init: processing action (SetupCgroups) from (<Builtin Action>:0)
+[    7.247040] libprocessgroup: Using system/app isolation under: /sys/fs/cgroup
+[    7.254080] init: processing action (early-init) from (/system/etc/init/hw/init.rc:3)
+[    7.259671] init: starting service 'ueventd'...
+[    7.268579] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0
+[    7.274386] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_157
+[    7.293789] libprocessgroup: Failed to read task profiles from /etc/task_profiles.json
+[    7.299464] libprocessgroup: Loading /etc/task_profiles.json for [1] failed
+[    7.306267] libprocessgroup: Failed to find NormalIoPriority process profile
+[    7.315737] init: ... started service 'ueventd' has pid 157
+[    7.320435] init: Command 'start ueventd' action=early-init (/system/etc/init/hw/init.rc:11) took 60ms and succeeded
+[    7.325762] init: processing action (ConnectEarlyStageSnapuserd) from (<Builtin Action>:0)
+[    7.336542] init: processing action (wait_for_coldboot_done) from (<Builtin Action>:0)
+[    7.338833] audit: type=1400 audit(16755237.279:4): avc:  denied  { sys_nice } for  pid=157 comm="ueventd" capability=23  scontext=u:r:ueventd:s0 tcontext=u:r:ueventd:s0 tclass=capability permissive=1
+[    7.339053] ueventd: ueventd started!
+[    7.342403] selinux: SELinux: Loaded file context from:
+[    7.398807] selinux: 		/plat_file_contexts
+[    7.403954] selinux: 		/system_ext_file_contexts
+[    7.409076] selinux: 		/product_file_contexts
+[    7.414180] selinux: 		/vendor_file_contexts
+[    7.419267] selinux: 		/odm_file_contexts
+[    7.424675] ueventd: Parsing file /system/etc/ueventd.rc...
+[    7.429757] ueventd: Added '/vendor/etc/ueventd.rc' to import list
+[    7.434755] ueventd: Added '/odm/etc/ueventd.rc' to import list
+[    7.440592] ueventd: Parsing file /vendor/etc/ueventd.rc...
+[    7.446125] ueventd: Unable to read config file '/vendor/etc/ueventd.rc': open() failed: No such file or directory
+[    7.451678] ueventd: Parsing file /odm/etc/ueventd.rc...
+[    7.462205] ueventd: Unable to read config file '/odm/etc/ueventd.rc': open() failed: No such file or directory
+[    7.467939] ueventd: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[    7.625386] ueventd: Failed to symlink /dev/block/mmcblk0p2 to /dev/block/platform/soc@0/74a4900.mmc/by-name/primary, which already links to: /dev/block/mmcblk0p1: File exists
+[    7.714528] init: Wait for property 'ro.cold_boot_done=true' took 373ms
+[    7.728760] init: processing action (CheckTradeInModeStatus) from (<Builtin Action>:0)
+[    7.730054] ueventd: Coldboot took 0.252 seconds
+[    7.733877] init: processing action (SetMmapRndBits) from (<Builtin Action>:0)
+[    7.755331] init: processing action (KeychordInit) from (<Builtin Action>:0)
+[    7.762030] init: processing action (init) from (/system/etc/init/hw/init.rc:13)
+[    7.771289] init: Command 'symlink /system/bin /bin' action=init (/system/etc/init/hw/init.rc:22) took 0ms and failed: symlink() failed: File exists
+[    7.777382] init: Command 'symlink /system/etc /etc' action=init (/system/etc/init/hw/init.rc:23) took 0ms and failed: symlink() failed: File exists
+[    7.789906] init: Command 'rmdir /sbin' action=init (/system/etc/init/hw/init.rc:24) took 0ms and failed: rmdir() failed: No such file or directory
+[    7.806585] init: starting service 'servicemanager'...
+[    7.818994] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_163
+[    7.841756] libprocessgroup: Failed to find NormalIoPriority process profile
+[    7.849137] init: ... started service 'servicemanager' has pid 163
+[    7.854823] init: processing action (init) from (/init.recovery.axon7m.rc:2)
+[    7.860877] init: processing action (CopyRollbackLogs) from (<Builtin Action>:0)
+[    7.867551] init: processing action (late-init) from (/system/etc/init/hw/init.rc:78)
+[    7.875227] init: processing action (queue_property_triggers) from (<Builtin Action>:0)
+[    7.881266] servicemanager: Starting sm instance on /dev/binder
+[    7.882678] init: processing action (sys.usb.configfs=1 && fs) from (/system/etc/init/hw/init.rc:133)
+[    7.904279] file system registered
+[    7.905710] SELinux: SELinux: Loaded service context from:
+[    7.910148] init: processing action (fs) from (/system/etc/init/hw/init.rc:155)
+[    7.923956] SELinux: 		/plat_service_contexts
+[    7.931102] init: processing action (firmware_mounts_complete) from (/system/etc/init/hw/init.rc:74)
+[    7.933205] SELinux: 		/system_ext_service_contexts
+[    7.939791] init: processing action (boot) from (/system/etc/init/hw/init.rc:66)
+[    7.942435] SELinux: 		/product_service_contexts
+[    7.952007] init: service 'ueventd' requested start, but it is already running (flags: 36, pid: 157, started 683ms ago)
+[    7.953472] SELinux: 		/vendor_service_contexts
+[    7.960049] init: starting service 'charger'...
+[    8.032821] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_164
+[    8.049724] libprocessgroup: Failed to find NormalIoPriority process profile
+[    8.049812] audit: type=1400 audit(16755237.991:5): avc:  denied  { create } for  pid=145 comm="udhcpd" scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=packet_socket permissive=1
+[    8.056355] init: ... started service 'charger' has pid 164
+[    8.076234] charger: Charger uses system defaults.
+[    8.076812] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[    8.076912] healthd: No battery devices found
+[    8.077617] HealthLoop: failed to load BPF program /sys/fs/bpf/vendor/prog_filterPowerSupplyEvents_skfilter_power_supply: No such file or directory (expected - recovery mode).
+[    8.077793] healthd: battery none chg=
+[    8.081953] audit: type=1400 audit(16755237.991:6): avc:  denied  { net_raw } for  pid=145 comm="udhcpd" capability=13  scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=capability permissive=1
+[    8.095125] init: starting service 'recovery'...
+[    8.102865] audit: type=1400 audit(16755238.015:7): avc:  denied  { wake_alarm } for  pid=164 comm="charger" capability=35  scontext=u:r:charger:s0 tcontext=u:r:charger:s0 tclass=capability2 permissive=1
+[    8.108256] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[    8.237451] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_165
+[    8.245756] audit: type=1400 audit(16755238.187:8): avc:  denied  { read } for  pid=145 comm="udhcpd" path="socket:[10964]" dev="sockfs" ino=10964 scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=udp_socket permissive=1
+[    8.257841] libprocessgroup: Failed to find NormalIoPriority process profile
+[    8.276526] init: ... started service 'recovery' has pid 165
+[    8.282356] init: service 'servicemanager' requested start, but it is already running (flags: 132, pid: 163, started 463ms ago)
+[    8.287952] init: Command 'class_start default' action=boot (/system/etc/init/hw/init.rc:71) took 336ms and succeeded
+[    8.299211] init: processing action (enable_property_trigger) from (<Builtin Action>:0)
+[    8.325886] audit: type=1400 audit(16755238.267:9): avc:  denied  { write } for  pid=145 comm="udhcpd" name="udhcpd.leases" dev="rootfs" ino=905 scontext=u:r:kernel:s0 tcontext=u:object_r:rootfs:s0 tclass=file permissive=1
+[    8.346650] audit: type=1400 audit(16755238.287:10): avc:  denied  { search } for  pid=165 comm="recovery" name="/" dev="pstore" ino=11034 scontext=u:r:recovery:s0 tcontext=u:object_r:pstorefs:s0 tclass=dir permissive=1
+[    8.349471] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[    8.358526] audit: type=1400 audit(16755238.287:11): avc:  denied  { search } for  pid=165 comm="recovery" name="/" dev="pstore" ino=11034 scontext=u:r:recovery:s0 tcontext=u:object_r:pstorefs:s0 tclass=dir permissive=1
+[    8.385078] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[    8.422943] recovery: Failed to read max brightness: No such file or directory
+[    8.431324] recovery: Screensaver disabled
+[    8.799716] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[    8.812438] healthd: No battery devices found
+[    8.996684] init: Service 'recovery' (pid 165) received SIGSEGV
+[    8.996923] recovery: getline failed: Invalid argument
+[    9.002793] init: Sending SIGKILL to service 'recovery' (pid 165) process group...
+[    9.025307] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_165
+[    9.033451] init: Untracked process (pid: 166 name: (recovery) ppid: 1 pgrp: 165 state: Z) exited with status 1
+[    9.039801] init: Untracked process (pid: 166 name: (recovery) ppid: 1 pgrp: 165 state: Z) did not have an associated service entry and will not be reaped
+[   13.242320] init: starting service 'recovery'...
+[   13.249045] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   13.258154] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_173
+[   13.281801] libprocessgroup: Failed to find NormalIoPriority process profile
+[   13.291915] init: ... started service 'recovery' has pid 173
+[   13.359194] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   13.369894] kauditd_printk_skb: 18 callbacks suppressed
+[   13.369910] audit: type=1400 audit(16755243.311:30): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.391337] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   13.397683] audit: type=1400 audit(16755243.311:31): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.406178] recovery: Failed to read max brightness: No such file or directory
+[   13.434670] audit: type=1400 audit(16755243.311:32): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.434688] audit: type=1400 audit(16755243.311:33): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.449932] recovery: Screensaver disabled
+[   13.476206] audit: type=1400 audit(16755243.311:34): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.627552] audit: type=1400 audit(16755243.311:35): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.627567] audit: type=1400 audit(16755243.311:36): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.703328] audit: type=1400 audit(16755243.311:37): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.731915] audit: type=1400 audit(16755243.311:38): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   13.760796] audit: type=1400 audit(16755243.311:39): avc:  denied  { ioctl } for  pid=173 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   14.328182] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   14.343683] healthd: No battery devices found
+[   14.508109] init: Service 'recovery' (pid 173) received SIGSEGV
+[   14.510400] recovery: getline failed: Invalid argument
+[   14.520575] init: Sending SIGKILL to service 'recovery' (pid 173) process group...
+[   14.632651] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_173
+[   14.649207] init: Untracked process (pid: 174 name: (recovery) ppid: 1 pgrp: 173 state: Z) received SIGKILL
+[   14.668221] init: Untracked process (pid: 174 name: (recovery) ppid: 1 pgrp: 173 state: Z) did not have an associated service entry and will not be reaped
+[   15.476145] axon7-fe: alive 15.46
+[   15.596413] platform 400f000.spmi:pmic@0:temp-alarm@2400: deferred probe pending: (reason unknown)
+[   15.648104] gcc-msm8996 300000.clock-controller: sync_state() pending due to 83000.rng
+[   15.685692] gcc-msm8996 300000.clock-controller: sync_state() pending due to 644000.dma-controller
+[   15.704509] gcc-msm8996 300000.clock-controller: sync_state() pending due to 67a000.crypto
+[   15.719799] mmcc-msm8996 8c0000.clock-controller: sync_state() pending due to 900000.display-subsystem
+[   15.731842] qnoc-msm8996 408000.interconnect: sync_state() pending due to 900000.display-subsystem
+[   15.753324] qnoc-msm8996 5a4000.interconnect: sync_state() pending due to 900000.display-subsystem
+[   15.773120] qnoc-msm8996 408000.interconnect: sync_state() pending due to b00000.gpu
+[   15.792807] gcc-msm8996 300000.clock-controller: sync_state() pending due to b00000.gpu
+[   15.812481] mmcc-msm8996 8c0000.clock-controller: sync_state() pending due to b00000.gpu
+[   15.832149] qnoc-msm8996 408000.interconnect: sync_state() pending due to c00000.video-codec
+[   15.851795] qnoc-msm8996 5a4000.interconnect: sync_state() pending due to c00000.video-codec
+[   15.871339] mmcc-msm8996 8c0000.clock-controller: sync_state() pending due to c00000.video-codec
+[   15.890865] gcc-msm8996 300000.clock-controller: sync_state() pending due to 2080000.remoteproc
+[   15.910469] gcc-msm8996 300000.clock-controller: sync_state() pending due to 9300000.remoteproc
+[   18.262206] init: starting service 'recovery'...
+[   18.278076] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   18.297896] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_182
+[   18.329983] libprocessgroup: Failed to find NormalIoPriority process profile
+[   18.364302] init: ... started service 'recovery' has pid 182
+[   18.411832] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   18.425494] kauditd_printk_skb: 7 callbacks suppressed
+[   18.425512] audit: type=1400 audit(16755248.363:47): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.484589] audit: type=1400 audit(16755248.363:48): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.524498] audit: type=1400 audit(16755248.363:49): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.541045] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   18.543356] audit: type=1400 audit(16755248.367:50): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.550948] recovery: Failed to read max brightness: No such file or directory
+[   18.567037] audit: type=1400 audit(16755248.367:51): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.574649] recovery: Screensaver disabled
+[   18.591228] audit: type=1400 audit(16755248.367:52): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.698332] audit: type=1400 audit(16755248.367:53): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.698343] audit: type=1400 audit(16755248.367:54): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.698348] audit: type=1400 audit(16755248.367:55): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   18.698354] audit: type=1400 audit(16755248.367:56): avc:  denied  { ioctl } for  pid=182 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   19.122793] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   19.140019] healthd: No battery devices found
+[   19.287292] init: Service 'recovery' (pid 182) received SIGSEGV
+[   19.289328] recovery: getline failed: Invalid argument
+[   19.302190] init: Sending SIGKILL to service 'recovery' (pid 182) process group...
+[   19.388446] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_182
+[   19.412072] init: Untracked process (pid: 183 name: (recovery) ppid: 1 pgrp: 182 state: Z) exited with status 1
+[   19.421131] init: Untracked process (pid: 183 name: (recovery) ppid: 1 pgrp: 182 state: Z) did not have an associated service entry and will not be reaped
+[   23.301920] init: starting service 'recovery'...
+[   23.310661] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   23.321814] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_190
+[   23.345897] libprocessgroup: Failed to find NormalIoPriority process profile
+[   23.369759] init: ... started service 'recovery' has pid 190
+[   23.432878] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   23.458668] kauditd_printk_skb: 2 callbacks suppressed
+[   23.458676] audit: type=1400 audit(16755253.399:59): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.479936] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   23.483687] audit: type=1400 audit(16755253.399:60): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.492217] recovery: Failed to read max brightness: No such file or directory
+[   23.508771] audit: type=1400 audit(16755253.399:61): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.517484] recovery: Screensaver disabled
+[   23.534362] audit: type=1400 audit(16755253.399:62): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.642094] audit: type=1400 audit(16755253.399:63): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.642103] audit: type=1400 audit(16755253.399:64): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.697559] audit: type=1400 audit(16755253.399:65): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.718455] audit: type=1400 audit(16755253.399:66): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.739640] audit: type=1400 audit(16755253.399:67): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   23.760537] audit: type=1400 audit(16755253.399:68): avc:  denied  { ioctl } for  pid=190 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   24.012716] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   24.144923] init: Service 'recovery' (pid 190) received SIGSEGV
+[   24.145353] recovery: getline failed: Invalid argument
+[   24.166733] init: Sending SIGKILL to service 'recovery' (pid 190) process group...
+[   24.209784] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_190
+[   24.229003] init: Untracked process (pid: 191 name: (recovery) ppid: 1 pgrp: 190 state: Z) exited with status 1
+[   24.246821] init: Untracked process (pid: 191 name: (recovery) ppid: 1 pgrp: 190 state: Z) did not have an associated service entry and will not be reaped
+[   25.498819] axon7-fe: alive 25.48
+[   28.326229] init: starting service 'recovery'...
+[   28.335616] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   28.347342] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_210
+[   28.365860] libprocessgroup: Failed to find NormalIoPriority process profile
+[   28.390668] init: ... started service 'recovery' has pid 210
+[   28.462108] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   28.472445] kauditd_printk_skb: 1043 callbacks suppressed
+[   28.472481] audit: type=1400 audit(16755258.411:1112): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.491952] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   28.508893] audit: type=1400 audit(16755258.411:1113): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.544983] recovery: Failed to read max brightness: No such file or directory
+[   28.570002] audit: type=1400 audit(16755258.411:1114): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.605228] recovery: Screensaver disabled
+[   28.628185] audit: type=1400 audit(16755258.411:1115): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.815875] audit: type=1400 audit(16755258.411:1116): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.837000] audit: type=1400 audit(16755258.411:1117): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.858453] audit: type=1400 audit(16755258.411:1118): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.879916] audit: type=1400 audit(16755258.411:1119): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.900883] audit: type=1400 audit(16755258.411:1120): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   28.921997] audit: type=1400 audit(16755258.415:1121): avc:  denied  { ioctl } for  pid=210 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   29.173854] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   29.320620] init: Service 'recovery' (pid 210) received SIGSEGV
+[   29.321300] recovery: getline failed: Invalid argument
+[   29.333537] init: Sending SIGKILL to service 'recovery' (pid 210) process group...
+[   29.363676] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_210
+[   29.374753] init: Untracked process (pid: 211 name: (recovery) ppid: 1 pgrp: 210 state: Z) exited with status 1
+[   29.387565] init: Untracked process (pid: 211 name: (recovery) ppid: 1 pgrp: 210 state: Z) did not have an associated service entry and will not be reaped
+[   33.351653] init: starting service 'recovery'...
+[   33.362111] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   33.375017] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_217
+[   33.409859] libprocessgroup: Failed to find NormalIoPriority process profile
+[   33.424650] init: ... started service 'recovery' has pid 217
+[   33.470099] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   33.483115] kauditd_printk_skb: 2 callbacks suppressed
+[   33.483124] audit: type=1400 audit(16755263.423:1124): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.508517] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   33.536344] audit: type=1400 audit(16755263.423:1125): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.554197] recovery: Failed to read max brightness: No such file or directory
+[   33.589128] audit: type=1400 audit(16755263.423:1126): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.589139] audit: type=1400 audit(16755263.423:1127): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.589150] audit: type=1400 audit(16755263.423:1128): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.589159] audit: type=1400 audit(16755263.423:1129): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.606633] recovery: Screensaver disabled
+[   33.641586] audit: type=1400 audit(16755263.423:1130): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.641597] audit: type=1400 audit(16755263.423:1131): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.949749] audit: type=1400 audit(16755263.423:1132): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   33.986579] audit: type=1400 audit(16755263.427:1133): avc:  denied  { ioctl } for  pid=217 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   34.592033] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   34.612704] healthd: No battery devices found
+[   34.788259] init: Service 'recovery' (pid 217) received SIGSEGV
+[   34.789053] recovery: getline failed: Invalid argument
+[   34.802793] init: Sending SIGKILL to service 'recovery' (pid 217) process group...
+[   34.894302] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_217
+[   34.904830] init: Untracked process (pid: 218 name: (recovery) ppid: 1 pgrp: 217 state: Z) exited with status 1
+[   34.918024] init: Untracked process (pid: 218 name: (recovery) ppid: 1 pgrp: 217 state: Z) did not have an associated service entry and will not be reaped
+[   35.535306] axon7-fe: alive 35.52
+[   35.817766] panel_vddio: disabling
+[   38.379593] init: starting service 'recovery'...
+[   38.389658] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   38.402089] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_226
+[   38.433820] libprocessgroup: Failed to find NormalIoPriority process profile
+[   38.456209] init: ... started service 'recovery' has pid 226
+[   38.519867] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   38.551055] kauditd_printk_skb: 2 callbacks suppressed
+[   38.551091] audit: type=1400 audit(16755268.491:1136): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.578257] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   38.579805] audit: type=1400 audit(16755268.491:1137): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.591711] recovery: Failed to read max brightness: No such file or directory
+[   38.608205] audit: type=1400 audit(16755268.491:1138): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.617594] recovery: Screensaver disabled
+[   38.636415] audit: type=1400 audit(16755268.491:1139): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.746847] audit: type=1400 audit(16755268.491:1140): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.746857] audit: type=1400 audit(16755268.491:1141): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.805524] audit: type=1400 audit(16755268.491:1142): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.826900] audit: type=1400 audit(16755268.491:1143): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.847862] audit: type=1400 audit(16755268.491:1144): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   38.868958] audit: type=1400 audit(16755268.491:1145): avc:  denied  { ioctl } for  pid=226 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   39.120076] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   39.251797] init: Service 'recovery' (pid 226) received SIGSEGV
+[   39.253828] recovery: getline failed: Invalid argument
+[   39.277832] init: Sending SIGKILL to service 'recovery' (pid 226) process group...
+[   39.373790] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_226
+[   39.394489] init: Untracked process (pid: 227 name: (recovery) ppid: 1 pgrp: 226 state: Z) exited with status 1
+[   39.412389] init: Untracked process (pid: 227 name: (recovery) ppid: 1 pgrp: 226 state: Z) did not have an associated service entry and will not be reaped
+[   43.406927] init: starting service 'recovery'...
+[   43.417005] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   43.429412] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_241
+[   43.449758] libprocessgroup: Failed to find NormalIoPriority process profile
+[   43.468759] init: ... started service 'recovery' has pid 241
+[   43.535571] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   43.563651] kauditd_printk_skb: 4 callbacks suppressed
+[   43.563660] audit: type=1400 audit(16755273.503:1150): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   43.602685] audit: type=1400 audit(16755273.503:1151): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   43.619256] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   43.629385] audit: type=1400 audit(16755273.503:1152): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   43.646271] recovery: Failed to read max brightness: No such file or directory
+[   43.672147] audit: type=1400 audit(16755273.503:1153): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   43.683028] recovery: Screensaver disabled
+[   43.940233] audit: type=1400 audit(16755273.503:1154): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   44.074315] audit: type=1400 audit(16755273.503:1155): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   44.094363] audit: type=1400 audit(16755273.503:1156): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   44.115779] audit: type=1400 audit(16755273.503:1157): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   44.136787] audit: type=1400 audit(16755273.503:1158): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   44.157896] audit: type=1400 audit(16755273.503:1159): avc:  denied  { ioctl } for  pid=241 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   44.406372] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   44.552226] init: Service 'recovery' (pid 241) received SIGSEGV
+[   44.554304] recovery: getline failed: Invalid argument
+[   44.564380] init: Sending SIGKILL to service 'recovery' (pid 241) process group...
+[   44.675555] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_241
+[   44.691319] init: Untracked process (pid: 242 name: (recovery) ppid: 1 pgrp: 241 state: Z) received SIGKILL
+[   44.710760] init: Untracked process (pid: 242 name: (recovery) ppid: 1 pgrp: 241 state: Z) did not have an associated service entry and will not be reaped
+[   45.591226] axon7-fe: alive 45.58
+[   48.433827] init: starting service 'recovery'...
+[   48.450861] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   48.471169] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_250
+[   48.506261] libprocessgroup: Failed to find NormalIoPriority process profile
+[   48.523196] init: ... started service 'recovery' has pid 250
+[   48.580197] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   48.621555] kauditd_printk_skb: 2 callbacks suppressed
+[   48.641385] audit: type=1400 audit(16755278.559:1162): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   48.651429] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   48.679410] audit: type=1400 audit(16755278.559:1163): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   48.699279] recovery: Failed to read max brightness: No such file or directory
+[   48.736511] audit: type=1400 audit(16755278.563:1164): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   48.756115] recovery: Screensaver disabled
+[   48.794103] audit: type=1400 audit(16755278.563:1165): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   48.934762] audit: type=1400 audit(16755278.563:1166): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   48.973134] audit: type=1400 audit(16755278.563:1167): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   49.011396] audit: type=1400 audit(16755278.563:1168): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   49.049707] audit: type=1400 audit(16755278.563:1169): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   49.087916] audit: type=1400 audit(16755278.563:1170): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   49.126138] audit: type=1400 audit(16755278.563:1171): avc:  denied  { ioctl } for  pid=250 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   49.608184] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   49.628829] healthd: No battery devices found
+[   49.782766] init: Service 'recovery' (pid 250) received SIGSEGV
+[   49.784611] recovery: getline failed: Invalid argument
+[   49.799084] init: Sending SIGKILL to service 'recovery' (pid 250) process group...
+[   49.940207] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_250
+[   49.962015] init: Untracked process (pid: 251 name: (recovery) ppid: 1 pgrp: 250 state: Z) received SIGKILL
+[   49.983757] init: Untracked process (pid: 251 name: (recovery) ppid: 1 pgrp: 250 state: Z) did not have an associated service entry and will not be reaped
+[   53.475318] init: starting service 'recovery'...
+[   53.493166] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   53.514433] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_257
+[   53.545833] libprocessgroup: Failed to find NormalIoPriority process profile
+[   53.577753] init: ... started service 'recovery' has pid 257
+[   53.641527] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   53.671045] kauditd_printk_skb: 2 callbacks suppressed
+[   53.671054] audit: type=1400 audit(16755283.611:1174): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   53.696359] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   53.727798] audit: type=1400 audit(16755283.611:1175): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   53.746927] recovery: Failed to read max brightness: No such file or directory
+[   53.784374] audit: type=1400 audit(16755283.611:1176): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   53.803089] recovery: Screensaver disabled
+[   53.840874] audit: type=1400 audit(16755283.611:1177): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   53.979480] audit: type=1400 audit(16755283.611:1178): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   53.979496] audit: type=1400 audit(16755283.611:1179): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   53.979506] audit: type=1400 audit(16755283.611:1180): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   54.113058] audit: type=1400 audit(16755283.611:1181): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   54.151092] audit: type=1400 audit(16755283.611:1182): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   54.189041] audit: type=1400 audit(16755283.615:1183): avc:  denied  { ioctl } for  pid=257 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   54.693126] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   54.713976] healthd: No battery devices found
+[   54.900760] init: Service 'recovery' (pid 257) received SIGSEGV
+[   54.902292] recovery: getline failed: Invalid argument
+[   54.919011] init: Sending SIGKILL to service 'recovery' (pid 257) process group...
+[   55.013742] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_257
+[   55.025851] init: Untracked process (pid: 258 name: (recovery) ppid: 1 pgrp: 257 state: Z) exited with status 1
+[   55.047274] init: Untracked process (pid: 258 name: (recovery) ppid: 1 pgrp: 257 state: Z) did not have an associated service entry and will not be reaped
+[   55.647654] axon7-fe: alive 55.63
+[   58.518229] init: starting service 'recovery'...
+[   58.528252] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   58.540595] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_279
+[   58.569796] libprocessgroup: Failed to find NormalIoPriority process profile
+[   58.592129] init: ... started service 'recovery' has pid 279
+[   58.660579] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   58.676067] kauditd_printk_skb: 7 callbacks suppressed
+[   58.676081] audit: type=1400 audit(16755288.615:1191): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   58.702682] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   58.732791] audit: type=1400 audit(16755288.615:1192): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   58.760952] recovery: Failed to read max brightness: No such file or directory
+[   58.794294] audit: type=1400 audit(16755288.615:1193): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   58.813072] recovery: Screensaver disabled
+[   58.850953] audit: type=1400 audit(16755288.615:1194): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   58.850964] audit: type=1400 audit(16755288.615:1195): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   58.850974] audit: type=1400 audit(16755288.615:1196): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   58.850983] audit: type=1400 audit(16755288.619:1197): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   58.850993] audit: type=1400 audit(16755288.619:1198): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   59.169680] audit: type=1400 audit(16755288.619:1199): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   59.208013] audit: type=1400 audit(16755288.619:1200): avc:  denied  { ioctl } for  pid=279 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   59.846450] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   59.867220] healthd: No battery devices found
+[   60.023931] init: Service 'recovery' (pid 279) received SIGSEGV
+[   60.024553] recovery: getline failed: Invalid argument
+[   60.036827] init: Sending SIGKILL to service 'recovery' (pid 279) process group...
+[   60.072582] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_279
+[   60.087154] init: Untracked process (pid: 280 name: (recovery) ppid: 1 pgrp: 279 state: Z) exited with status 1
+[   60.099208] init: Untracked process (pid: 280 name: (recovery) ppid: 1 pgrp: 279 state: Z) did not have an associated service entry and will not be reaped
+[   63.545057] init: starting service 'recovery'...
+[   63.557671] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   63.572899] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_286
+[   63.605771] libprocessgroup: Failed to find NormalIoPriority process profile
+[   63.619117] init: ... started service 'recovery' has pid 286
+[   63.688254] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   63.718886] kauditd_printk_skb: 2 callbacks suppressed
+[   63.718895] audit: type=1400 audit(16755293.659:1203): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   63.757381] audit: type=1400 audit(16755293.659:1204): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   63.775073] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   63.776555] audit: type=1400 audit(16755293.659:1205): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   63.786250] recovery: Failed to read max brightness: No such file or directory
+[   63.805014] audit: type=1400 audit(16755293.659:1206): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   63.814798] recovery: Screensaver disabled
+[   63.833750] audit: type=1400 audit(16755293.659:1207): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   63.833756] audit: type=1400 audit(16755293.659:1208): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   63.966794] audit: type=1400 audit(16755293.659:1209): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   63.966804] audit: type=1400 audit(16755293.659:1210): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   64.025228] audit: type=1400 audit(16755293.659:1211): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   64.046300] audit: type=1400 audit(16755293.659:1212): avc:  denied  { ioctl } for  pid=286 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   64.336454] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   64.516280] init: Service 'recovery' (pid 286) received SIGSEGV
+[   64.517942] recovery: getline failed: Invalid argument
+[   64.530833] init: Sending SIGKILL to service 'recovery' (pid 286) process group...
+[   64.632809] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_286
+[   64.643501] init: Untracked process (pid: 287 name: (recovery) ppid: 1 pgrp: 286 state: Z) exited with status 1
+[   64.656756] init: Untracked process (pid: 287 name: (recovery) ppid: 1 pgrp: 286 state: Z) did not have an associated service entry and will not be reaped
+[   65.701068] axon7-fe: alive 65.69
+[   68.577894] init: starting service 'recovery'...
+[   68.587924] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   68.600342] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_295
+[   68.621778] libprocessgroup: Failed to find NormalIoPriority process profile
+[   68.640747] init: ... started service 'recovery' has pid 295
+[   68.707303] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   68.735023] kauditd_printk_skb: 2 callbacks suppressed
+[   68.735032] audit: type=1400 audit(16755298.675:1215): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   68.755804] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   68.763662] audit: type=1400 audit(16755298.675:1216): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   68.773384] recovery: Failed to read max brightness: No such file or directory
+[   68.792180] audit: type=1400 audit(16755298.675:1217): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   68.801966] recovery: Screensaver disabled
+[   68.821078] audit: type=1400 audit(16755298.675:1218): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   68.932156] audit: type=1400 audit(16755298.675:1219): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   68.932166] audit: type=1400 audit(16755298.675:1220): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   68.932172] audit: type=1400 audit(16755298.675:1221): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   69.012393] audit: type=1400 audit(16755298.675:1222): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   69.033352] audit: type=1400 audit(16755298.675:1223): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   69.054460] audit: type=1400 audit(16755298.675:1224): avc:  denied  { ioctl } for  pid=295 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   69.304976] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   69.424110] init: Service 'recovery' (pid 295) received SIGSEGV
+[   69.425914] recovery: getline failed: Invalid argument
+[   69.437189] init: Sending SIGKILL to service 'recovery' (pid 295) process group...
+[   69.471773] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_295
+[   69.494525] init: Untracked process (pid: 296 name: (recovery) ppid: 1 pgrp: 295 state: Z) exited with status 1
+[   69.515128] init: Untracked process (pid: 296 name: (recovery) ppid: 1 pgrp: 295 state: Z) did not have an associated service entry and will not be reaped
+[   73.604806] init: starting service 'recovery'...
+[   73.614897] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   73.627358] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_306
+[   73.661847] libprocessgroup: Failed to find NormalIoPriority process profile
+[   73.675969] init: ... started service 'recovery' has pid 306
+[   73.720040] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   73.753178] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   73.767436] recovery: Failed to read max brightness: No such file or directory
+[   73.781119] recovery: Screensaver disabled
+[   74.157678] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   74.279674] init: Service 'recovery' (pid 306) received SIGSEGV
+[   74.280024] recovery: getline failed: Invalid argument
+[   74.292206] init: Sending SIGKILL to service 'recovery' (pid 306) process group...
+[   74.328312] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_306
+[   74.342333] init: Untracked process (pid: 307 name: (recovery) ppid: 1 pgrp: 306 state: Z) exited with status 1
+[   74.354743] init: Untracked process (pid: 307 name: (recovery) ppid: 1 pgrp: 306 state: Z) did not have an associated service entry and will not be reaped
+[   75.743540] axon7-fe: alive 75.73
+[   77.073352] kauditd_printk_skb: 14 callbacks suppressed
+[   77.073368] audit: type=1400 audit(16755307.011:1239): avc:  denied  { write } for  pid=317 comm="sh" name="axon7fe" dev="configfs" ino=3483 scontext=u:r:kernel:s0 tcontext=u:object_r:configfs:s0 tclass=dir permissive=1
+[   77.096105] init: processing action (sys.usb.config=none && sys.usb.configfs=1) from (/system/etc/init/hw/init.rc:193)
+[   77.130586] audit: type=1400 audit(16755307.011:1240): avc:  denied  { add_name } for  pid=317 comm="sh" name="UDC" scontext=u:r:kernel:s0 tcontext=u:object_r:configfs:s0 tclass=dir permissive=1
+[   77.156273] UDC core: g1: couldn't find an available UDC or it's busy
+[   77.191887] audit: type=1400 audit(16755307.011:1241): avc:  denied  { create } for  pid=317 comm="sh" name="UDC" scontext=u:r:kernel:s0 tcontext=u:object_r:configfs:s0 tclass=file permissive=1
+[   77.210327] init: Command 'write /config/usb_gadget/g1/UDC none' action=sys.usb.config=none && sys.usb.configfs=1 (/system/etc/init/hw/init.rc:194) took 54ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+[   77.246284] audit: type=1400 audit(16755307.011:1242): avc:  denied  { write } for  pid=317 comm="sh" name="UDC" dev="configfs" ino=11407 scontext=u:r:kernel:s0 tcontext=u:object_r:configfs:s0 tclass=file permissive=1
+[   77.246295] audit: type=1400 audit(16755307.011:1243): avc:  denied  { open } for  pid=317 comm="sh" path="/config/usb_gadget/axon7fe/UDC" dev="configfs" ino=11407 scontext=u:r:kernel:s0 tcontext=u:object_r:configfs:s0 tclass=file permissive=1
+[   77.285031] init: Command 'rm /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=none && sys.usb.configfs=1 (/system/etc/init/hw/init.rc:198) took 0ms and failed: unlink() failed: No such file or directory
+[   77.318967] audit: type=1400 audit(16755307.035:1244): avc:  denied  { write } for  pid=318 comm="setprop" name="property_service" dev="tmpfs" ino=793 scontext=u:r:kernel:s0 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=1
+[   77.563722] audit: type=1400 audit(16755307.035:1245): avc:  denied  { connectto } for  pid=318 comm="setprop" path="/dev/socket/property_service" scontext=u:r:kernel:s0 tcontext=u:r:init:s0 tclass=unix_stream_socket permissive=1
+[   77.563734] audit: type=1107 audit(16755307.035:1246): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=u:r:init:s0 msg='avc:  denied  { set } for property=sys.usb.config pid=318 uid=0 gid=0 scontext=u:r:kernel:s0 tcontext=u:object_r:usb_control_prop:s0 tclass=property_service permissive=1'
+[   78.629467] init: starting service 'recovery'...
+[   78.639556] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   78.652019] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_320
+[   78.677816] libprocessgroup: Failed to find NormalIoPriority process profile
+[   78.699183] init: ... started service 'recovery' has pid 320
+[   78.750143] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   78.763897] audit: type=1400 audit(16755308.703:1247): avc:  denied  { ioctl } for  pid=320 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   78.783439] audit: type=1400 audit(16755308.703:1248): avc:  denied  { ioctl } for  pid=320 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   78.785707] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   78.832584] recovery: Failed to read max brightness: No such file or directory
+[   78.842539] recovery: Screensaver disabled
+[   79.113277] init: processing action (sys.usb.config=adb) from (/system/etc/init/hw/init.rc:162)
+[   79.139158] init: starting service 'adbd'...
+[   79.149361] init: Created socket '/dev/socket/adbd', mode 660, user 1000, group 1000
+[   79.161865] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_324
+[   79.185871] libprocessgroup: Failed to find NormalIoPriority process profile
+[   79.197085] init: ... started service 'adbd' has pid 324
+[   79.209878] init: Command 'start adbd' action=sys.usb.config=adb (/system/etc/init/hw/init.rc:163) took 70ms and succeeded
+[   79.217167] read descriptors
+[   79.218807] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   79.218853] healthd: No battery devices found
+[   79.271497] bcdVersion must be 0x0100, stored in Little Endian order. Userspace driver should be fixed, accepting 0x0001 for compatibility.
+[   79.284015] bcdVersion must be 0x0100, stored in Little Endian order. Userspace driver should be fixed, accepting 0x0001 for compatibility.
+[   79.296602] read strings
+[   79.308571] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.rc:208)
+[   79.419806] init: Service 'recovery' (pid 320) received SIGSEGV
+[   79.420591] recovery: getline failed: Invalid argument
+[   79.441688] init: Sending SIGKILL to service 'recovery' (pid 320) process group...
+[   79.539879] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_320
+[   79.554908] init: Untracked process (pid: 321 name: (recovery) ppid: 1 pgrp: 320 state: Z) received SIGKILL
+[   79.569469] init: Untracked process (pid: 321 name: (recovery) ppid: 1 pgrp: 320 state: Z) did not have an associated service entry and will not be reaped
+[   83.656573] init: starting service 'recovery'...
+[   83.672955] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   83.692823] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_335
+[   83.729866] libprocessgroup: Failed to find NormalIoPriority process profile
+[   83.746067] init: ... started service 'recovery' has pid 335
+[   83.793753] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   83.821718] kauditd_printk_skb: 11 callbacks suppressed
+[   83.821733] audit: type=1400 audit(16755313.759:1260): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   83.842793] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   83.875688] audit: type=1400 audit(16755313.759:1261): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   83.893931] recovery: Failed to read max brightness: No such file or directory
+[   83.930052] audit: type=1400 audit(16755313.759:1262): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   83.930066] audit: type=1400 audit(16755313.763:1263): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   83.930076] audit: type=1400 audit(16755313.763:1264): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   83.948765] recovery: Screensaver disabled
+[   83.985104] audit: type=1400 audit(16755313.763:1265): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   84.212037] audit: type=1400 audit(16755313.763:1266): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   84.212052] audit: type=1400 audit(16755313.763:1267): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   84.305286] audit: type=1400 audit(16755313.763:1268): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   84.342216] audit: type=1400 audit(16755313.763:1269): avc:  denied  { ioctl } for  pid=335 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   84.926858] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   84.944821] healthd: No battery devices found
+[   85.152443] init: Service 'recovery' (pid 335) received SIGSEGV
+[   85.153966] recovery: getline failed: Invalid argument
+[   85.215154] init: Sending SIGKILL to service 'recovery' (pid 335) process group...
+[   85.279994] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_335
+[   85.292969] init: Untracked process (pid: 336 name: (recovery) ppid: 1 pgrp: 335 state: Z) exited with status 1
+[   85.305419] init: Untracked process (pid: 336 name: (recovery) ppid: 1 pgrp: 335 state: Z) did not have an associated service entry and will not be reaped
+[   85.795925] axon7-fe: alive 85.78
+[   88.697157] init: starting service 'recovery'...
+[   88.706967] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   88.719239] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_344
+[   88.753840] libprocessgroup: Failed to find NormalIoPriority process profile
+[   88.779607] init: ... started service 'recovery' has pid 344
+[   88.834250] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   88.849040] kauditd_printk_skb: 2 callbacks suppressed
+[   88.849050] audit: type=1400 audit(16755318.787:1272): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.870191] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   88.876003] audit: type=1400 audit(16755318.787:1273): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.885176] recovery: Failed to read max brightness: No such file or directory
+[   88.903034] audit: type=1400 audit(16755318.787:1274): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.903043] audit: type=1400 audit(16755318.791:1275): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.903048] audit: type=1400 audit(16755318.791:1276): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.903053] audit: type=1400 audit(16755318.791:1277): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.903059] audit: type=1400 audit(16755318.791:1278): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.903064] audit: type=1400 audit(16755318.791:1279): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   88.912398] recovery: Screensaver disabled
+[   88.930374] audit: type=1400 audit(16755318.791:1280): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   89.165750] audit: type=1400 audit(16755318.791:1281): avc:  denied  { ioctl } for  pid=344 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   89.528897] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   89.663337] init: Service 'recovery' (pid 344) received SIGSEGV
+[   89.665014] recovery: getline failed: Invalid argument
+[   89.680711] init: Sending SIGKILL to service 'recovery' (pid 344) process group...
+[   89.780545] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_344
+[   89.799719] init: Untracked process (pid: 345 name: (recovery) ppid: 1 pgrp: 344 state: Z) received SIGKILL
+[   89.820032] init: Untracked process (pid: 345 name: (recovery) ppid: 1 pgrp: 344 state: Z) did not have an associated service entry and will not be reaped
+[   93.723934] init: starting service 'recovery'...
+[   93.740730] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   93.761030] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_351
+[   93.797861] libprocessgroup: Failed to find NormalIoPriority process profile
+[   93.814105] init: ... started service 'recovery' has pid 351
+[   93.877383] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   93.904651] kauditd_printk_skb: 2 callbacks suppressed
+[   93.904665] audit: type=1400 audit(16755323.843:1284): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   93.926374] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   93.957975] audit: type=1400 audit(16755323.843:1285): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   93.957988] audit: type=1400 audit(16755323.843:1286): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   93.976139] recovery: Failed to read max brightness: No such file or directory
+[   94.011735] audit: type=1400 audit(16755323.843:1287): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   94.011747] audit: type=1400 audit(16755323.843:1288): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   94.047902] recovery: Screensaver disabled
+[   94.066111] audit: type=1400 audit(16755323.843:1289): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   94.292672] audit: type=1400 audit(16755323.843:1290): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   94.330577] audit: type=1400 audit(16755323.843:1291): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   94.330593] audit: type=1400 audit(16755323.843:1292): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   94.330603] audit: type=1400 audit(16755323.843:1293): avc:  denied  { ioctl } for  pid=351 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   94.969433] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   94.990445] healthd: No battery devices found
+[   95.143719] init: Service 'recovery' (pid 351) received SIGSEGV
+[   95.144059] recovery: getline failed: Invalid argument
+[   95.160656] init: Sending SIGKILL to service 'recovery' (pid 351) process group...
+[   95.204142] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_351
+[   95.221895] init: Untracked process (pid: 352 name: (recovery) ppid: 1 pgrp: 351 state: Z) exited with status 1
+[   95.236127] init: Untracked process (pid: 352 name: (recovery) ppid: 1 pgrp: 351 state: Z) did not have an associated service entry and will not be reaped
+[   95.850419] axon7-fe: alive 95.83
+[   98.765308] init: starting service 'recovery'...
+[   98.779174] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[   98.796031] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_360
+[   98.833846] libprocessgroup: Failed to find NormalIoPriority process profile
+[   98.849163] init: ... started service 'recovery' has pid 360
+[   98.900294] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[   98.916375] kauditd_printk_skb: 2 callbacks suppressed
+[   98.916391] audit: type=1400 audit(16755328.855:1296): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   98.938919] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[   98.940287] audit: type=1400 audit(16755328.855:1297): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   98.976298] recovery: Failed to read max brightness: No such file or directory
+[   98.993741] audit: type=1400 audit(16755328.855:1298): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   98.993753] audit: type=1400 audit(16755328.859:1299): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   99.030864] recovery: Screensaver disabled
+[   99.048670] audit: type=1400 audit(16755328.859:1300): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   99.259301] audit: type=1400 audit(16755328.859:1301): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   99.296055] audit: type=1400 audit(16755328.859:1302): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   99.333131] audit: type=1400 audit(16755328.859:1303): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   99.370512] audit: type=1400 audit(16755328.859:1304): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   99.408178] audit: type=1400 audit(16755328.859:1305): avc:  denied  { ioctl } for  pid=360 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[   99.935121] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[   99.955832] healthd: No battery devices found
+[  100.087972] init: Service 'recovery' (pid 360) received SIGSEGV
+[  100.089919] recovery: getline failed: Invalid argument
+[  100.154021] init: Sending SIGKILL to service 'recovery' (pid 360) process group...
+[  100.223870] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_360
+[  100.249079] init: Untracked process (pid: 361 name: (recovery) ppid: 1 pgrp: 360 state: Z) exited with status 1
+[  100.268996] init: Untracked process (pid: 361 name: (recovery) ppid: 1 pgrp: 360 state: Z) did not have an associated service entry and will not be reaped
+[  103.799998] init: starting service 'recovery'...
+[  103.813141] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  103.829072] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_367
+[  103.849782] libprocessgroup: Failed to find NormalIoPriority process profile
+[  103.870720] init: ... started service 'recovery' has pid 367
+[  103.917868] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  103.933456] kauditd_printk_skb: 2 callbacks suppressed
+[  103.933470] audit: type=1400 audit(16755333.871:1308): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  103.956802] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  103.990655] audit: type=1400 audit(16755333.871:1309): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  103.990667] audit: type=1400 audit(16755333.871:1310): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  104.009981] recovery: Failed to read max brightness: No such file or directory
+[  104.047746] audit: type=1400 audit(16755333.875:1311): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  104.087083] recovery: Screensaver disabled
+[  104.106050] audit: type=1400 audit(16755333.875:1312): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  104.106061] audit: type=1400 audit(16755333.875:1313): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  104.106073] audit: type=1400 audit(16755333.875:1314): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  104.375099] audit: type=1400 audit(16755333.875:1315): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  104.375113] audit: type=1400 audit(16755333.875:1316): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  104.471200] audit: type=1400 audit(16755333.875:1317): avc:  denied  { ioctl } for  pid=367 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  105.088235] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  105.109039] healthd: No battery devices found
+[  105.266774] init: Service 'recovery' (pid 367) received SIGSEGV
+[  105.267545] recovery: getline failed: Invalid argument
+[  105.294662] init: Sending SIGKILL to service 'recovery' (pid 367) process group...
+[  105.357413] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_367
+[  105.381387] init: Untracked process (pid: 368 name: (recovery) ppid: 1 pgrp: 367 state: Z) exited with status 1
+[  105.403854] init: Untracked process (pid: 368 name: (recovery) ppid: 1 pgrp: 367 state: Z) did not have an associated service entry and will not be reaped
+[  105.919873] axon7-fe: alive 105.90
+[  108.833346] init: starting service 'recovery'...
+[  108.844531] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  108.858312] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_376
+[  108.893846] libprocessgroup: Failed to find NormalIoPriority process profile
+[  108.920694] init: ... started service 'recovery' has pid 376
+[  108.970842] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  108.986643] kauditd_printk_skb: 2 callbacks suppressed
+[  108.986656] audit: type=1400 audit(16755338.927:1320): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.009705] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  109.043848] audit: type=1400 audit(16755338.927:1321): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.069698] recovery: Failed to read max brightness: No such file or directory
+[  109.107328] audit: type=1400 audit(16755338.927:1322): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.107343] audit: type=1400 audit(16755338.927:1323): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.107355] audit: type=1400 audit(16755338.927:1324): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.132835] recovery: Screensaver disabled
+[  109.170775] audit: type=1400 audit(16755338.927:1325): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.400154] audit: type=1400 audit(16755338.927:1326): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.438299] audit: type=1400 audit(16755338.927:1327): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.476325] audit: type=1400 audit(16755338.927:1328): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  109.514551] audit: type=1400 audit(16755338.927:1329): avc:  denied  { ioctl } for  pid=376 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  110.073198] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  110.094073] healthd: No battery devices found
+[  110.268085] init: Service 'recovery' (pid 376) received SIGSEGV
+[  110.270072] recovery: getline failed: Invalid argument
+[  110.283484] init: Sending SIGKILL to service 'recovery' (pid 376) process group...
+[  110.424135] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_376
+[  110.444527] init: Untracked process (pid: 377 name: (recovery) ppid: 1 pgrp: 376 state: Z) received SIGKILL
+[  110.464254] init: Untracked process (pid: 377 name: (recovery) ppid: 1 pgrp: 376 state: Z) did not have an associated service entry and will not be reaped
+[  113.861891] init: starting service 'recovery'...
+[  113.879969] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  113.901119] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_383
+[  113.941852] libprocessgroup: Failed to find NormalIoPriority process profile
+[  113.973861] init: ... started service 'recovery' has pid 383
+[  114.035600] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  114.066835] kauditd_printk_skb: 2 callbacks suppressed
+[  114.066846] audit: type=1400 audit(16755344.007:1332): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.088066] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  114.097837] audit: type=1400 audit(16755344.007:1333): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.107434] recovery: Failed to read max brightness: No such file or directory
+[  114.126987] audit: type=1400 audit(16755344.007:1334): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.136739] recovery: Screensaver disabled
+[  114.156367] audit: type=1400 audit(16755344.007:1335): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.268199] audit: type=1400 audit(16755344.007:1336): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.289646] audit: type=1400 audit(16755344.007:1337): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.311111] audit: type=1400 audit(16755344.007:1338): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.332509] audit: type=1400 audit(16755344.007:1339): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.353515] audit: type=1400 audit(16755344.007:1340): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.374626] audit: type=1400 audit(16755344.007:1341): avc:  denied  { ioctl } for  pid=383 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  114.624425] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  114.816587] init: Service 'recovery' (pid 383) received SIGSEGV
+[  114.816940] recovery: getline failed: Invalid argument
+[  114.834896] init: Sending SIGKILL to service 'recovery' (pid 383) process group...
+[  114.881899] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_383
+[  114.898204] init: Untracked process (pid: 384 name: (recovery) ppid: 1 pgrp: 383 state: Z) exited with status 1
+[  114.912844] init: Untracked process (pid: 384 name: (recovery) ppid: 1 pgrp: 383 state: Z) did not have an associated service entry and will not be reaped
+[  115.976182] axon7-fe: alive 115.96
+[  118.906025] init: starting service 'recovery'...
+[  118.921217] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  118.939640] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_392
+[  118.973941] libprocessgroup: Failed to find NormalIoPriority process profile
+[  118.990047] init: ... started service 'recovery' has pid 392
+[  119.041539] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  119.080335] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  119.099512] recovery: Failed to read max brightness: No such file or directory
+[  119.114552] recovery: Screensaver disabled
+[  119.851527] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  119.872581] healthd: No battery devices found
+[  120.011357] init: Service 'recovery' (pid 392) received SIGSEGV
+[  120.011854] recovery: getline failed: Invalid argument
+[  120.024930] init: Sending SIGKILL to service 'recovery' (pid 392) process group...
+[  120.063776] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_392
+[  120.078907] init: Untracked process (pid: 393 name: (recovery) ppid: 1 pgrp: 392 state: Z) exited with status 1
+[  120.092110] init: Untracked process (pid: 393 name: (recovery) ppid: 1 pgrp: 392 state: Z) did not have an associated service entry and will not be reaped
+[  123.943825] init: starting service 'recovery'...
+[  123.957076] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  123.973223] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_399
+[  124.001832] libprocessgroup: Failed to find NormalIoPriority process profile
+[  124.027284] init: ... started service 'recovery' has pid 399
+[  124.083800] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  124.099519] kauditd_printk_skb: 14 callbacks suppressed
+[  124.099535] audit: type=1400 audit(16755354.039:1356): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.121952] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  124.148301] audit: type=1400 audit(16755354.039:1357): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.164630] recovery: Failed to read max brightness: No such file or directory
+[  124.187532] audit: type=1400 audit(16755354.039:1358): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.187542] audit: type=1400 audit(16755354.039:1359): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.199643] recovery: Screensaver disabled
+[  124.235763] audit: type=1400 audit(16755354.039:1360): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.411150] audit: type=1400 audit(16755354.039:1361): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.411166] audit: type=1400 audit(16755354.043:1362): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.504214] audit: type=1400 audit(16755354.043:1363): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.541185] audit: type=1400 audit(16755354.043:1364): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  124.578499] audit: type=1400 audit(16755354.043:1365): avc:  denied  { ioctl } for  pid=399 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  125.124796] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  125.145415] healthd: No battery devices found
+[  125.320662] init: Service 'recovery' (pid 399) received SIGSEGV
+[  125.321018] recovery: getline failed: Invalid argument
+[  125.337472] init: Sending SIGKILL to service 'recovery' (pid 399) process group...
+[  125.381269] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_399
+[  125.396846] init: Untracked process (pid: 400 name: (recovery) ppid: 1 pgrp: 399 state: Z) exited with status 1
+[  125.411064] init: Untracked process (pid: 400 name: (recovery) ppid: 1 pgrp: 399 state: Z) did not have an associated service entry and will not be reaped
+[  126.048522] axon7-fe: alive 126.03
+[  128.977404] init: starting service 'recovery'...
+[  128.992079] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  129.008979] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_408
+[  129.037848] libprocessgroup: Failed to find NormalIoPriority process profile
+[  129.055690] init: ... started service 'recovery' has pid 408
+[  129.115983] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  129.138746] kauditd_printk_skb: 2 callbacks suppressed
+[  129.138761] audit: type=1400 audit(16755359.079:1368): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.162776] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  129.191572] audit: type=1400 audit(16755359.079:1369): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.209275] recovery: Failed to read max brightness: No such file or directory
+[  129.243942] audit: type=1400 audit(16755359.079:1370): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.243954] audit: type=1400 audit(16755359.079:1371): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.243965] audit: type=1400 audit(16755359.079:1372): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.243975] audit: type=1400 audit(16755359.079:1373): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.261292] recovery: Screensaver disabled
+[  129.296197] audit: type=1400 audit(16755359.079:1374): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.296209] audit: type=1400 audit(16755359.079:1375): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.296219] audit: type=1400 audit(16755359.079:1376): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  129.296229] audit: type=1400 audit(16755359.079:1377): avc:  denied  { ioctl } for  pid=408 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  130.357512] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  130.378266] healthd: No battery devices found
+[  130.568607] init: Service 'recovery' (pid 408) received SIGSEGV
+[  130.570639] recovery: getline failed: Invalid argument
+[  130.583768] init: Sending SIGKILL to service 'recovery' (pid 408) process group...
+[  130.687159] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_408
+[  130.707477] init: Untracked process (pid: 409 name: (recovery) ppid: 1 pgrp: 408 state: Z) received SIGKILL
+[  130.728518] init: Untracked process (pid: 409 name: (recovery) ppid: 1 pgrp: 408 state: Z) did not have an associated service entry and will not be reaped
+[  134.012272] init: starting service 'recovery'...
+[  134.029433] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  134.050030] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_415
+[  134.077870] libprocessgroup: Failed to find NormalIoPriority process profile
+[  134.096110] init: ... started service 'recovery' has pid 415
+[  134.156754] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  134.179422] kauditd_printk_skb: 2 callbacks suppressed
+[  134.179439] audit: type=1400 audit(16755364.119:1380): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.251468] audit: type=1400 audit(16755364.119:1381): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.271069] audit: type=1400 audit(16755364.119:1382): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.274557] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  134.288907] audit: type=1400 audit(16755364.119:1383): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.288916] audit: type=1400 audit(16755364.119:1384): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.288922] audit: type=1400 audit(16755364.119:1385): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.288927] audit: type=1400 audit(16755364.119:1386): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.288933] audit: type=1400 audit(16755364.119:1387): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.288938] audit: type=1400 audit(16755364.119:1388): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.288944] audit: type=1400 audit(16755364.123:1389): avc:  denied  { ioctl } for  pid=415 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  134.669069] recovery: Failed to read max brightness: No such file or directory
+[  134.689632] recovery: Screensaver disabled
+[  135.060206] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  135.196383] init: Service 'recovery' (pid 415) received SIGSEGV
+[  135.197920] recovery: getline failed: Invalid argument
+[  135.261631] init: Sending SIGKILL to service 'recovery' (pid 415) process group...
+[  135.303981] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_415
+[  135.319715] init: Untracked process (pid: 416 name: (recovery) ppid: 1 pgrp: 415 state: Z) exited with status 1
+[  135.334844] init: Untracked process (pid: 416 name: (recovery) ppid: 1 pgrp: 415 state: Z) did not have an associated service entry and will not be reaped
+[  136.091058] axon7-fe: alive 136.08
+[  139.054242] init: starting service 'recovery'...
+[  139.070769] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  139.090604] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_424
+[  139.121924] libprocessgroup: Failed to find NormalIoPriority process profile
+[  139.153944] init: ... started service 'recovery' has pid 424
+[  139.210114] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  139.226453] kauditd_printk_skb: 2 callbacks suppressed
+[  139.226466] audit: type=1400 audit(16755369.167:1392): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.247945] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  139.279958] audit: type=1400 audit(16755369.167:1393): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.297904] recovery: Failed to read max brightness: No such file or directory
+[  139.332922] audit: type=1400 audit(16755369.167:1394): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.350341] recovery: Screensaver disabled
+[  139.385539] audit: type=1400 audit(16755369.167:1395): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.385552] audit: type=1400 audit(16755369.167:1396): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.385582] audit: type=1400 audit(16755369.167:1397): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.385593] audit: type=1400 audit(16755369.167:1398): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.385603] audit: type=1400 audit(16755369.167:1399): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.385614] audit: type=1400 audit(16755369.167:1400): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  139.385624] audit: type=1400 audit(16755369.167:1401): avc:  denied  { ioctl } for  pid=424 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  140.457850] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  140.478510] healthd: No battery devices found
+[  140.611908] init: Service 'recovery' (pid 424) received SIGSEGV
+[  140.613917] recovery: getline failed: Invalid argument
+[  140.631467] init: Sending SIGKILL to service 'recovery' (pid 424) process group...
+[  140.737442] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_424
+[  140.760739] init: Untracked process (pid: 425 name: (recovery) ppid: 1 pgrp: 424 state: Z) received SIGKILL
+[  140.788674] init: Untracked process (pid: 425 name: (recovery) ppid: 1 pgrp: 424 state: Z) did not have an associated service entry and will not be reaped
+[  144.094528] init: starting service 'recovery'...
+[  144.112410] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  144.133760] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_431
+[  144.165859] libprocessgroup: Failed to find NormalIoPriority process profile
+[  144.197897] init: ... started service 'recovery' has pid 431
+[  144.260237] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  144.292766] kauditd_printk_skb: 2 callbacks suppressed
+[  144.292777] audit: type=1400 audit(16755374.231:1404): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.314056] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  144.321396] audit: type=1400 audit(16755374.231:1405): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.331041] recovery: Failed to read max brightness: No such file or directory
+[  144.349832] audit: type=1400 audit(16755374.231:1406): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.349839] audit: type=1400 audit(16755374.235:1407): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.349846] audit: type=1400 audit(16755374.235:1408): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.349852] audit: type=1400 audit(16755374.235:1409): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.349858] audit: type=1400 audit(16755374.235:1410): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.349863] audit: type=1400 audit(16755374.235:1411): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.349869] audit: type=1400 audit(16755374.235:1412): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.359290] recovery: Screensaver disabled
+[  144.378295] audit: type=1400 audit(16755374.235:1413): avc:  denied  { ioctl } for  pid=431 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  144.988908] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  145.130513] init: Service 'recovery' (pid 431) received SIGSEGV
+[  145.131108] recovery: getline failed: Invalid argument
+[  145.149209] init: Sending SIGKILL to service 'recovery' (pid 431) process group...
+[  145.196767] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_431
+[  145.221750] init: Untracked process (pid: 432 name: (recovery) ppid: 1 pgrp: 431 state: Z) exited with status 1
+[  145.242294] init: Untracked process (pid: 432 name: (recovery) ppid: 1 pgrp: 431 state: Z) did not have an associated service entry and will not be reaped
+[  146.143252] axon7-fe: alive 146.13
+[  149.138402] init: starting service 'recovery'...
+[  149.148550] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  149.161021] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_446
+[  149.181838] libprocessgroup: Failed to find NormalIoPriority process profile
+[  149.208613] init: ... started service 'recovery' has pid 446
+[  149.253499] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  149.286013] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  149.295918] recovery: Failed to read max brightness: No such file or directory
+[  149.309490] recovery: Screensaver disabled
+[  149.682789] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  149.840113] init: Service 'recovery' (pid 446) received SIGSEGV
+[  149.840803] recovery: getline failed: Invalid argument
+[  149.853108] init: Sending SIGKILL to service 'recovery' (pid 446) process group...
+[  149.888048] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_446
+[  149.953973] init: Untracked process (pid: 447 name: (recovery) ppid: 1 pgrp: 446 state: Z) exited with status 1
+[  149.965118] init: Untracked process (pid: 447 name: (recovery) ppid: 1 pgrp: 446 state: Z) did not have an associated service entry and will not be reaped
+[  154.165397] init: starting service 'recovery'...
+[  154.175528] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  154.188110] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_453
+[  154.221830] libprocessgroup: Failed to find NormalIoPriority process profile
+[  154.246168] init: ... started service 'recovery' has pid 453
+[  154.297532] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  154.313205] kauditd_printk_skb: 21 callbacks suppressed
+[  154.313224] audit: type=1400 audit(16755384.251:1435): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.385611] audit: type=1400 audit(16755384.251:1436): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.434147] audit: type=1400 audit(16755384.251:1437): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.473177] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  154.564303] audit: type=1400 audit(16755384.255:1438): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.569221] recovery: Failed to read max brightness: No such file or directory
+[  154.586758] audit: type=1400 audit(16755384.255:1439): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.586765] audit: type=1400 audit(16755384.255:1440): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.586772] audit: type=1400 audit(16755384.255:1441): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.586778] audit: type=1400 audit(16755384.255:1442): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.586785] audit: type=1400 audit(16755384.255:1443): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  154.596058] recovery: Screensaver disabled
+[  154.614021] audit: type=1400 audit(16755384.255:1444): avc:  denied  { ioctl } for  pid=453 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  155.183145] healthd: Failed to lookup glob /sys/devices/platform/*gcdd/system_dev_stat: -3
+[  155.195454] healthd: No battery devices found
+[  155.343931] init: Service 'recovery' (pid 453) received SIGSEGV
+[  155.346328] recovery: getline failed: Invalid argument
+[  155.358708] init: Sending SIGKILL to service 'recovery' (pid 453) process group...
+[  155.395820] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_453
+[  155.411635] init: Untracked process (pid: 454 name: (recovery) ppid: 1 pgrp: 453 state: Z) exited with status 1
+[  155.426067] init: Untracked process (pid: 454 name: (recovery) ppid: 1 pgrp: 453 state: Z) did not have an associated service entry and will not be reaped
+[  156.197724] axon7-fe: alive 156.18
+[  159.192769] init: starting service 'recovery'...
+[  159.206041] init: Created socket '/dev/socket/recovery', mode 422, user 1000, group 1000
+[  159.222215] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_0/pid_473
+[  159.245865] libprocessgroup: Failed to find NormalIoPriority process profile
+[  159.269540] init: ... started service 'recovery' has pid 473
+[  159.323991] recovery: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[  159.349368] kauditd_printk_skb: 4 callbacks suppressed
+[  159.349382] audit: type=1400 audit(16755389.287:1449): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.375127] recovery: vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[  159.404049] audit: type=1400 audit(16755389.287:1450): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.404062] audit: type=1400 audit(16755389.287:1451): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/system" dev="rootfs" ino=104 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.404074] audit: type=1400 audit(16755389.291:1452): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.404085] audit: type=1400 audit(16755389.291:1453): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.426936] recovery: Failed to read max brightness: No such file or directory
+[  159.457250] audit: type=1400 audit(16755389.291:1454): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/system_ext" dev="rootfs" ino=577 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.457263] audit: type=1400 audit(16755389.291:1455): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.492190] recovery: Screensaver disabled
+[  159.527543] audit: type=1400 audit(16755389.291:1456): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x1260 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.527555] audit: type=1400 audit(16755389.291:1457): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/product" dev="rootfs" ino=45 ioctlcmd=0x204 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+[  159.527566] audit: type=1400 audit(16755389.291:1458): avc:  denied  { ioctl } for  pid=473 comm="recovery" path="/vendor" dev="rootfs" ino=582 ioctlcmd=0x1272 scontext=u:r:recovery:s0 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1

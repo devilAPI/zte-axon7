@@ -1,0 +1,27 @@
+stty -echo 2>/dev/null; cat /proc/uptime; cat /proc/fb; ls -l /dev/dri; dmes
+g | grep -ciE "SIGSEGV"; dmesg | grep -iE "msm_dpu|dsi|panel|drm|s6e3ha3" | grep
+ -v "dependency cycle" | head -20; grep -iE "gr_init|drm|framebuffer|fatal|error
+" /tmp/recovery.log | head -10; ps -A -o pid,args | grep -E "recovery|adbd" | gr
+17.99 60.88
+0 msmdrmfb
+total 0
+crw-rw-rw-    1 0        1003      226,   0 Jul 13 22:34 card0
+crw-rw-rw-    1 0        1003      226, 128 Jul 13 22:34 renderD128
+0
+[    0.000000] Kernel command line: androidboot.hardware=axon7m androidboot.boot_devices=soc@0/624000.ufshc msm.prefer_mdp5=0 clk_ignore_unused pd_ignore_unused console=ttyMSM0,115200n8 loop.max_part=7 androidboot.selinux=permissive oops=panic panic=5 console=tty0 loglevel=7 printk.devkmsg=on watchdog.open_timeout=120 rdinit=/axon7/init sched_enable_hmp=1 sched_enable_power_aware=1 app_setting.use_32bit_app_setting=1 androidboot.bootdevice=624000.ufshc androidboot.verifiedbootstate=orange androidboot.veritymode=enforcing androidboot.keymaster=1 androidboot.serialno=7e15695a androidboot.baseband=msm mdss_mdp.panel=1:dsi:0:qcom,mdss_dsi_zte_samsung_5p5_wqhd_dualmipi_cmd:1:qcom,mdss_dsi_zte_samsung_5p5_wqhd_dualmipi_cmd:cfg:split_dsi androidboot.dmverity_disabled=0 androidboot.fastboot=0 androidboot.adbtradefed=0 androidboot.emmcid=7e15695a androidboot.wp.check= N_OTA_O
+[    4.746232] msm_dpu 901000.display-controller: bound 994000.dsi (ops 0xffff800081466690)
+[    4.747198] msm_dpu 901000.display-controller: bound 996000.dsi (ops 0xffff800081466690)
+[    4.874930] msm_dpu 901000.display-controller: bound b00000.gpu (ops 0xffff80008142d2c0)
+[    5.205288] [drm:dpu_kms_hw_init:1168] dpu hardware revision:0x10070002
+[    5.221804] [drm] Initialized msm 1.13.0 for 901000.display-controller on minor 0
+[    5.229422] msm_dpu 901000.display-controller: Direct firmware load for qcom/a530_pm4.fw failed with error -2
+[    5.242884] msm_dpu 901000.display-controller: [drm:adreno_request_fw] *ERROR* failed to load a530_pm4.fw
+[    5.665539] msm_dpu 901000.display-controller: [drm] fb0: msmdrmfb frame buffer device
+[    5.746651] axon7-fe: front end started, kernel 7.3.1-axon7m, cmdline: androidboot.hardware=axon7m androidboot.boot_devices=soc@0/624000.ufshc msm.prefer_mdp5=0 clk_ignore_unused pd_ignore_unused console=ttyMSM0,115200n8 loop.max_part=7 androidboot.selinux=permissive oops=panic panic=5 console=tty0 loglevel=7 printk.devkmsg=on watchdog.open_timeout=120 rdinit=/axon7/init sched_enable_hmp=1 sched_enable_power_aware=1 app_setting.use_32bit_app_setting=1 androidboot.bootdevice=624000.ufshc androidboot.verifiedbootstate=orange androidboot.veritymode=enforcing androidboot.keymaster=1 androidboot.serialno=7e15695a androidboot.baseband=msm mdss_mdp.panel=1:dsi:0:qcom,mdss_dsi_zte_samsung_5p5_wqhd_dualmipi_cmd:1:qcom,mdss_dsi_zte_samsung_5p5_wqhd_dualmipi_cmd:cfg:split_dsi androidboot.dmverity_disabled=0 androidboot.fastboot=0 androidboot.adbtradefed=0 androidboot.emmcid=7e15695a androidboot.wp.check= N_OTA_O
+[    8.460406] msm_dpu 901000.display-controller: Direct firmware load for qcom/a530_pm4.fw failed with error -2
+[    8.471262] msm_dpu 901000.display-controller: [drm:adreno_request_fw] *ERROR* failed to load a530_pm4.fw
+[    0.235983] Framebuffer of size 14745600 allocated @ 0xf1c4bd7f0000
+[    0.236001] Framebuffer of size 14745600 allocated @ 0xf1c4bc9e0000
+[    0.359433]             error_text: en (472 x 48 @ 712)
+  188 /system/bin/recovery
+  189 /system/bin/recovery

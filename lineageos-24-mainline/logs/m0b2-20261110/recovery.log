@@ -1,0 +1,420 @@
+[    0.000695] I:[libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+[    0.002157] recovery filesystem table
+[    0.002195] =========================
+[    0.002293]   0 /system  erofs system 0
+[    0.002868]   1 /system_ext  erofs system_ext 0
+[    0.003292]   2 /product  erofs product 0
+[    0.003676]   3 /vendor  erofs vendor 0
+[    0.004087]   4 /metadata  ext4 /dev/block/by-name/l24_meta 0
+[    0.004274]   5 /data  f2fs /dev/block/by-name/l24_data 0
+[    0.004444]   6 /vendor/firmware_mnt  vfat /dev/block/by-name/modem 0
+[    0.012110]   7 /misc  emmc /dev/block/by-name/misc 0
+[    0.017044]   8 none  swap /dev/block/zram0 0
+[    0.017741]   9 /tmp  ramdisk ramdisk 0
+[    0.017876]
+[    0.020217] Loading make_device from librecovery_ui_ext.so
+[    0.032817] I:vkeys: could not open /sys/board_properties/virtualkeys.Synaptics S3718AR
+[    0.044720] W:Failed to read max brightness: No such file or directory
+[    0.055807] I:Screensaver disabled
+[    0.235909] Display Mode 0 resolution: 1440 x 2560 @ 60 FPS
+[    0.235951] Choosing display mode #0
+[    0.235966] Allocating buffer with resolution 1440 x 2560 pitch: 5760 bpp: 32, size: 14745600
+[    0.235983] Framebuffer of size 14745600 allocated @ 0xf1c4bd7f0000
+[    0.235993] Allocating buffer with resolution 1440 x 2560 pitch: 5760 bpp: 32, size: 14745600
+[    0.236001] Framebuffer of size 14745600 allocated @ 0xf1c4bc9e0000
+[    0.352384]           erasing_text: en (488 x 48 @ 712)
+[    0.356183]        no_command_text: en (560 x 48 @ 712)
+[    0.359433]             error_text: en (472 x 48 @ 712)
+[    0.935674] W:Trying again for reinitializing battery info
+[    0.951574] I:Starting recovery (pid 188) on Mon Jul 13 22:34:30 1970
+[    0.951665]
+[    0.955500] I:locale is [en-US]
+[    0.960899] SELinux: Loaded file context from:
+[    0.960960] 		/plat_file_contexts
+[    0.960998] 		/system_ext_file_contexts
+[    0.961062] 		/product_file_contexts
+[    0.961144] 		/vendor_file_contexts
+[    0.961179] 		/odm_file_contexts
+[    1.099497] recovery: Trying again for reinitializing battery info
+[    1.233038] recovery: Trying again for reinitializing battery info
+[    1.366972] recovery: Trying again for reinitializing battery info
+[    1.499809] recovery: Trying again for reinitializing battery info
+[    1.634064] recovery: Trying again for reinitializing battery info
+[    1.783316] recovery: Trying again for reinitializing battery info
+[    1.935482] recovery: Trying again for reinitializing battery info
+[    2.083776] recovery: Trying again for reinitializing battery info
+[    2.237047] recovery: Trying again for reinitializing battery info
+[    2.407168] recovery: Trying again for reinitializing battery info
+[    2.567862] recovery: Trying again for reinitializing battery info
+[    2.734910] recovery: Trying again for reinitializing battery info
+[    2.904114] recovery: Trying again for reinitializing battery info
+[    3.068715] recovery: Trying again for reinitializing battery info
+[    3.235378] recovery: Trying again for reinitializing battery info
+[    3.405634] recovery: Trying again for reinitializing battery info
+[    3.574958] recovery: Trying again for reinitializing battery info
+[    3.735987] recovery: Trying again for reinitializing battery info
+[    3.908858] recovery: Trying again for reinitializing battery info
+[    4.073203] recovery: Trying again for reinitializing battery info
+[    4.237531] recovery: Trying again for reinitializing battery info
+[    4.403526] recovery: Trying again for reinitializing battery info
+[    4.575198] recovery: Trying again for reinitializing battery info
+[    4.739670] recovery: Trying again for reinitializing battery info
+[    4.904466] recovery: Trying again for reinitializing battery info
+[    5.071126] recovery: Trying again for reinitializing battery info
+[    5.241667] recovery: Trying again for reinitializing battery info
+[    5.406172] recovery: Trying again for reinitializing battery info
+[    5.571824] recovery: Trying again for reinitializing battery info
+[    5.744321] recovery: Trying again for reinitializing battery info
+[    5.908375] recovery: Trying again for reinitializing battery info
+[   20.983060] recovery: [libfs_mgr] Skipping mounting '/dev/block/by-name/l24_data'
+[   20.983319] recovery: [libfs_mgr] Failed to open '/dev/block/by-name/l24_data': No such file or directory
+[   20.987582] [libfs_mgr] __mount(source=/dev/block/by-name/l24_data(missing),target=/data,type=f2fs)=-1: No such file or directory
+[   20.987639] recovery: [libfs_mgr] Failed to mount /data: No such file or directory
+[   20.987690] recovery: [libfs_mgr] Failed to mount for path [/data]
+[   21.146325] stage is []
+[   21.146411] reason is []
+[   21.231853] emulated failed to mount /dev/block/by-name/l24_data on /mnt/staging/emulated: No such file or directoryI:VolumeManager initialized
+[   21.243824]        installing_text: en (1052 x 48 @ 712)
+[   21.275878] Command: "/system/bin/recovery"
+[   21.275932]
+[   21.283243] apexd.config.compressed_apex=true
+[   21.283322] ro.boot.wp.check=
+[   21.283346] ro.boot.emmcid=7e15695a
+[   21.283367] ro.boot.selinux=permissive
+[   21.283389] ro.boot.baseband=msm
+[   21.283410] ro.boot.fastboot=0
+[   21.283430] ro.boot.hardware=axon7m
+[   21.283450] ro.boot.hardware.cpu.pagesize=4096
+[   21.283469] ro.boot.keymaster=1
+[   21.283489] ro.boot.bootdevice=624000.ufshc
+[   21.283509] ro.boot.veritymode=enforcing
+[   21.283530] ro.boot.adbtradefed=0
+[   21.283551] ro.boot.boot_devices=soc@0/624000.ufshc
+[   21.283572] ro.boot.dmverity_disabled=0
+[   21.283592] ro.boot.verifiedbootstate=orange
+[   21.283611] ro.baseband=msm
+[   21.283631] ro.bootmode=unknown
+[   21.283651] ro.hardware=axon7m
+[   21.283671] ro.revision=0
+[   21.283691] ro.bootloader=unknown
+[   21.283763] ro.boottime.adbd=29394262071
+[   21.283785] ro.boottime.init=5949654580
+[   21.283804] ro.boottime.init.selinux=379407343
+[   21.283824] ro.boottime.init.first_stage=771879375
+[   21.283844] ro.boottime.init.cold_boot_wait=356
+[   21.283865] ro.boottime.event.fs=8164216871
+[   21.283885] ro.boottime.event.boot=8202229006
+[   21.283896] ro.boottime.event.init=8027656246
+[   21.283907] ro.boottime.event.post-fs=8195747912
+[   21.283918] ro.boottime.event.early-fs=8163839423
+[   21.283928] ro.boottime.event.late-init=8148379475
+[   21.283940] ro.boottime.event.early-boot=8201900777
+[   21.283951] ro.boottime.event.early-init=7572893798
+[   21.283961] ro.boottime.event.post-fs-data=8196503485
+[   21.283973] ro.boottime.event.firmware_mounts_complete=8196789110
+[   21.283984] ro.boottime.charger=8262769214
+[   21.283995] ro.boottime.ueventd=7586107600
+[   21.284006] ro.boottime.recovery=8303075985
+[   21.284017] ro.boottime.servicemanager=8077027965
+[   21.287936] ro.odm.build.date=Tue Nov 10 02:52:41 UTC 2026
+[   21.287990] ro.odm.build.date.utc=1794279161
+[   21.288011] ro.odm.build.version.incremental=1794279161
+[   21.288026] ro.odm.build.fingerprint=ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys
+[   21.288041] ro.product.odm.name=lineage_axon7m
+[   21.288060] ro.product.odm.brand=ZTE
+[   21.288074] ro.product.odm.model=A2017G
+[   21.288091] ro.product.odm.device=axon7m
+[   21.288106] ro.product.odm.manufacturer=ZTE
+[   21.288124] ro.adb.secure=1
+[   21.288139] ro.build.id=CP2A.260605.016
+[   21.288156] ro.build.date=Tue Nov 10 02:52:41 UTC 2026
+[   21.288171] ro.build.date.utc=1794279161
+[   21.288189] ro.build.host=compiler
+[   21.288205] ro.build.tags=test-keys
+[   21.288219] ro.build.type=userdebug
+[   21.288234] ro.build.user=build
+[   21.288251] ro.build.flavor=lineage_axon7m-userdebug
+[   21.288266] ro.build.display.id=CP2A.260605.016 test-keys
+[   21.288282] ro.build.product=axon7m
+[   21.288296] ro.build.version.sdk=37
+[   21.288312] ro.build.version.base_os=
+[   21.288327] ro.build.version.release=17
+[   21.288341] ro.build.version.codename=REL
+[   21.288357] ro.build.version.incremental=1794279161
+[   21.288372] ro.build.version.preview_sdk=0
+[   21.288389] ro.build.version.all_codenames=REL
+[   21.288402] ro.build.version.security_patch=2026-11-01
+[   21.288419] ro.build.version.release_or_codename=17
+[   21.288472] ro.build.version.preview_sdk_fingerprint=REL
+[   21.288488] ro.build.version.min_supported_target_sdk=28
+[   21.288506] ro.build.description=lineage_axon7m-userdebug 17 CP2A.260605.016 eng.build test-keys
+[   21.288521] ro.build.characteristics=default
+[   21.288537] ro.build.backported_fixes.alias_bitset.long_list=114
+[   21.288553] ro.force.debuggable=0
+[   21.288565] ro.llndk.api_level=202604
+[   21.288584] ro.system.build.id=CP2A.260605.016
+[   21.288599] ro.system.build.date=Tue Nov 10 02:52:41 UTC 2026
+[   21.288616] ro.system.build.date.utc=1794279161
+[   21.288630] ro.system.build.tags=test-keys
+[   21.288646] ro.system.build.type=userdebug
+[   21.288663] ro.system.build.version.sdk=37
+[   21.288676] ro.system.build.version.release=17
+[   21.288692] ro.system.build.version.incremental=1794279161
+[   21.288709] ro.system.build.version.release_or_codename=17
+[   21.288724] ro.system.build.fingerprint=ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys
+[   21.288739] ro.treble.enabled=true
+[   21.288757] ro.product.cpu.abi=arm64-v8a
+[   21.288770] ro.product.cpu.abilist=arm64-v8a
+[   21.288787] ro.product.cpu.pagesize.max=16384
+[   21.288802] ro.product.cpu.abilist32=
+[   21.288817] ro.product.cpu.abilist64=arm64-v8a
+[   21.288831] ro.product.name=lineage_axon7m
+[   21.288844] ro.product.brand=ZTE
+[   21.288857] ro.product.build.id=CP2A.260605.016
+[   21.288870] ro.product.build.date=Tue Nov 10 02:52:41 UTC 2026
+[   21.288883] ro.product.build.date.utc=1794279161
+[   21.288894] ro.product.build.tags=test-keys
+[   21.288906] ro.product.build.type=userdebug
+[   21.288918] ro.product.build.version.sdk=37
+[   21.288929] ro.product.build.version.release=17
+[   21.288941] ro.product.build.version.incremental=1794279161
+[   21.288952] ro.product.build.version.release_or_codename=17
+[   21.288964] ro.product.build.fingerprint=ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys
+[   21.288975] ro.product.model=A2017G
+[   21.288987] ro.product.device=axon7m
+[   21.288999] ro.product.system.name=lineage_axon7m
+[   21.289011] ro.product.system.brand=ZTE
+[   21.289025] ro.product.system.model=A2017G
+[   21.289041] ro.product.system.device=axon7m
+[   21.289057] ro.product.system.manufacturer=ZTE
+[   21.289073] ro.product.product.name=lineage_axon7m
+[   21.289087] ro.product.product.brand=ZTE
+[   21.289102] ro.product.product.model=A2017G
+[   21.289119] ro.product.product.device=axon7m
+[   21.289133] ro.product.product.manufacturer=ZTE
+[   21.289147] ro.product.system_ext.name=lineage_axon7m
+[   21.289163] ro.product.system_ext.brand=ZTE
+[   21.289177] ro.product.system_ext.model=A2017G
+[   21.289192] ro.product.system_ext.device=axon7m
+[   21.289209] ro.product.system_ext.manufacturer=ZTE
+[   21.289225] ro.product.manufacturer=ZTE
+[   21.289238] ro.system_ext.build.id=CP2A.260605.016
+[   21.289253] ro.system_ext.build.date=Tue Nov 10 02:52:41 UTC 2026
+[   21.289268] ro.system_ext.build.date.utc=1794279161
+[   21.289281] ro.system_ext.build.tags=test-keys
+[   21.289297] ro.system_ext.build.type=userdebug
+[   21.289312] ro.system_ext.build.version.sdk=37
+[   21.289325] ro.system_ext.build.version.release=17
+[   21.289341] ro.system_ext.build.version.incremental=1794279161
+[   21.289357] ro.system_ext.build.version.release_or_codename=17
+[   21.289371] ro.system_ext.build.fingerprint=ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys
+[   21.289387] ro.actionable_compatible_property.enabled=true
+[   21.289404] ro.board.api_level=202604
+[   21.289418] ro.board.api_frozen=true
+[   21.289433] ro.vendor.build.id=CP2A.260605.016
+[   21.289450] ro.vendor.build.date=Tue Nov 10 02:52:41 UTC 2026
+[   21.289463] ro.vendor.build.date.utc=1794279161
+[   21.289478] ro.vendor.build.tags=test-keys
+[   21.289494] ro.vendor.build.type=userdebug
+[   21.289508] ro.vendor.build.version.sdk=37
+[   21.289523] ro.vendor.build.version.release=17
+[   21.289536] ro.vendor.build.version.incremental=1794279161
+[   21.289549] ro.vendor.build.version.release_or_codename=17
+[   21.289576] ro.vendor.build.fingerprint=ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys
+[   21.289591] ro.vendor.product.cpu.abilist=arm64-v8a
+[   21.289622] ro.vendor.product.cpu.abilist32=
+[   21.289635] ro.vendor.product.cpu.abilist64=arm64-v8a
+[   21.289651] ro.vendor.api_level=34
+[   21.289666] ro.product.board=msm8996
+[   21.289682] ro.product.vendor.name=lineage_axon7m
+[   21.289695] ro.product.vendor.brand=ZTE
+[   21.289710] ro.product.vendor.model=A2017G
+[   21.289724] ro.product.vendor.device=axon7m
+[   21.289738] ro.product.vendor.manufacturer=ZTE
+[   21.289754] ro.product.first_api_level=34
+[   21.289769] ro.cold_boot_done=true
+[   21.289783] ro.bionic.arch=arm64
+[   21.289798] ro.bionic.2nd_arch=
+[   21.289814] ro.bionic.cpu_variant=kryo
+[   21.289828] ro.bionic.2nd_cpu_variant=
+[   21.293519] ro.lineage.build.version=24.0
+[   21.293565] ro.lineage.device=axon7m
+[   21.293586] ro.lineage.display.version=24-20261110-UNOFFICIAL-axon7m
+[   21.293618] ro.lineage.version=24.0-20261110-UNOFFICIAL-axon7m
+[   21.293638] ro.lineage.releasetype=UNOFFICIAL
+[   21.293666] ro.dalvik.vm.native.bridge=0
+[   21.293686] ro.dalvik.vm.enable_uffd_gc=true
+[   21.293704] ro.zygote=zygote64
+[   21.293723] dalvik.vm.isa.arm64.variant=kryo
+[   21.293742] dalvik.vm.isa.arm64.features=default
+[   21.293769] dalvik.vm.dexopt.secondary=true
+[   21.293789] dalvik.vm.dexopt.thermal-cutoff=2
+[   21.293808] dalvik.vm.usejit=true
+[   21.293827] dalvik.vm.madvise.odexfile.size=104857600
+[   21.293846] dalvik.vm.madvise.vdexfile.size=104857600
+[   21.293865] dalvik.vm.dex2oat64.enabled=true
+[   21.293884] dalvik.vm.dex2oat-Xms=64m
+[   21.293902] dalvik.vm.dex2oat-Xmx=512m
+[   21.293921] dalvik.vm.minidebuginfo=true
+[   21.293940] dalvik.vm.useartservice=true
+[   21.293959] dalvik.vm.appimageformat=lz4
+[   21.293987] dalvik.vm.enable_pr_dexopt=true
+[   21.294006] dalvik.vm.image-dex2oat-Xms=64m
+[   21.294026] dalvik.vm.image-dex2oat-Xmx=512m
+[   21.294045] dalvik.vm.usap_pool_enabled=false
+[   21.294063] dalvik.vm.usap_pool_size_max=3
+[   21.294082] dalvik.vm.usap_pool_size_min=1
+[   21.294101] dalvik.vm.dex2oat-minidebuginfo=true
+[   21.294120] dalvik.vm.usap_refill_threshold=1
+[   21.294139] dalvik.vm.systemuicompilerfilter=speed
+[   21.294157] dalvik.vm.usap_pool_refill_delay_ms=3000
+[   21.294175] dalvik.vm.dex2oat-max-image-block-size=524288
+[   21.294194] dalvik.vm.dex2oat-resolve-startup-strings=true
+[   21.294248] persist.sys.dalvik.vm.lib.2=libart.so
+[   21.294355] debug.sf.enable_transaction_tracing=false
+[   21.294376] debug.hwui.renderer=skiagl
+[   21.294396] debug.atrace.tags.enableflags=0
+[   21.294682] ro.product.debugfs_restrictions.enabled=true
+[   21.294776] ro.com.google.clientidbase=android-zte
+[   21.294796] ro.com.android.mobiledata=false
+[   21.294816] ro.wifi.channels=
+[   21.294844] ro.allow.mock.location=0
+[   21.294863] ro.build.uuid=D-WoXGeuUV1_wt29AI5RNS3wHFQjgIuZisyKQDCfnDY
+[   21.294883] ro.build.version.sdk_full=37.0
+[   21.295062] ro.build.version.known_codenames=Base,Base11,Cupcake,Donut,Eclair,Eclair01,EclairMr1,Froyo,Gingerbread,GingerbreadMr1,Honeycomb,HoneycombMr1,HoneycombMr2,IceCreamSandwich,IceCreamSandwichMr1,JellyBean,JellyBeanMr1,JellyBeanMr2,Kitkat,KitkatWatch,Lollipop,LollipopMr1,M,N,NMr1,O,OMr1,P,Q,R,S,Sv2,Tiramisu,UpsideDownCake,VanillaIceCream,Baklava,CANARY,CinnamonBun
+[   21.295084] ro.build.version.release_or_preview_display=17
+[   21.295103] ro.kernel.version=7.3
+[   21.295144] ro.system.build.uuid=D-WoXGeuUV1_wt29AI5RNS3wHFQjgIuZisyKQDCfnDY
+[   21.295173] ro.system.build.version.sdk_full=37.0
+[   21.295192] ro.system.product.cpu.abilist=arm64-v8a
+[   21.295211] ro.system.product.cpu.abilist32=
+[   21.295230] ro.system.product.cpu.abilist64=arm64-v8a
+[   21.295250] ro.product.build.uuid=D-WoXGeuUV1_wt29AI5RNS3wHFQjgIuZisyKQDCfnDY
+[   21.295308] ro.product.build.version.sdk_full=37.0
+[   21.295327] ro.product.locale=en-US
+[   21.295346] ro.system_ext.build.uuid=D-WoXGeuUV1_wt29AI5RNS3wHFQjgIuZisyKQDCfnDY
+[   21.295365] ro.system_ext.build.version.sdk_full=37.0
+[   21.295384] ro.postinstall.fstab.prefix=/system
+[   21.295426] ro.support_one_handed_mode=true
+[   21.295446] persist.wm.extensions.enabled=true
+[   21.295466] persist.pcc.audit_mode.max_log_file_size_kb=10240
+[   21.301369] ro.product.build.16k_page.enabled=false
+[   21.301687] ro.apex.updatable=true
+[   21.301710] ro.boot.dynamic_partitions=true
+[   21.301732] ro.hwui.use_vulkan=
+[   21.301763] ro.board.platform=msm8996
+[   21.301783] ro.build.ab_update=true
+[   21.301802] ro.carrier=unknown
+[   21.301822] ro.hardware.egl=angle
+[   21.301841] ro.hardware.vulkan=pastel
+[   21.301861] ro.hardware.gralloc=minigbm
+[   21.302128] pm.dexopt.ab-ota=speed-profile
+[   21.302149] pm.dexopt.shared=speed
+[   21.302169] pm.dexopt.cmdline=verify
+[   21.302199] pm.dexopt.install=speed-profile
+[   21.302220] pm.dexopt.inactive=verify
+[   21.302239] pm.dexopt.bg-dexopt=speed-profile
+[   21.302259] pm.dexopt.post-boot=verify
+[   21.302279] pm.dexopt.first-boot=verify
+[   21.302298] pm.dexopt.install-bulk=speed-profile
+[   21.302318] pm.dexopt.install-fast=skip
+[   21.302347] pm.dexopt.boot-after-ota=verify
+[   21.302367] pm.dexopt.install-bulk-secondary=verify
+[   21.302387] pm.dexopt.install-bulk-downgraded=verify
+[   21.302407] pm.dexopt.boot-after-mainline-update=verify
+[   21.302427] pm.dexopt.install-bulk-secondary-downgraded=verify
+[   21.302586] sys.usb.ffs.ready=0
+[   21.302688] ro.build.fingerprint=ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys
+[   21.303871] ro.opengles.version=196608
+[   21.304041] ro.gsid.image_running=0
+[   21.304063] gsid.image_installed=0
+[   21.305301] hwservicemanager.always_sets_disabled=true
+[   21.306150] ro.init.mnt_ns.count=1
+[   21.306413] init.svc.charger=running
+[   21.306427] init.svc.ueventd=running
+[   21.306444] init.svc.recovery=running
+[   21.306455] init.svc.fastbootd=stopped
+[   21.306465] init.svc.servicemanager=running
+[   21.306546] init.svc.adbd=running
+[   21.306889] init.svc_debug_pid.adbd=231
+[   21.306901] init.svc_debug_pid.charger=187
+[   21.306917] init.svc_debug_pid.ueventd=180
+[   21.306927] init.svc_debug_pid.recovery=188
+[   21.306938] init.svc_debug_pid.fastbootd=
+[   21.306953] init.svc_debug_pid.servicemanager=186
+[   21.307441] keyguard.no_require_sim=true
+[   21.308284] ro.lineagelegal.url=https://lineageos.org/legal
+[   21.309017] log.tag.stats_log=I
+[   21.309278] ro.logd.size.stats=64K
+[   21.310054] media.recorder.show_manufacturer_and_model=true
+[   21.313635] ro.vendor.build.ab_ota_partitions=
+[   21.313698] ro.product.ab_ota_partitions=
+[   21.314051] ro.cp_system_other_odex=1
+[   21.314073] ro.control_privapp_permissions=enforce
+[   21.314224] ro.product.page_size=4096
+[   21.314483] persist.pcc.audit_mode.batching.enabled=1
+[   21.314505] persist.pcc.audit_mode.batching.flush_time_ms=10000
+[   21.314527] persist.pcc.audit_mode.batching.max_batch_size=100
+[   21.314678] persist.pcc.audit_mode.enabled=0
+[   21.314702] persist.pcc.audit_mode.max_log_files=10
+[   21.316830] ro.property_service.version=2
+[   21.317911] ro.minui.pixel_format=RGBX_8888
+[   21.318220] ro.recovery.usb.adb.pid=D001
+[   21.318239] ro.recovery.usb.vid=18D1
+[   21.318257] ro.recovery.usb.fastboot.pid=4EE0
+[   21.319568] ro.boot.serialno=7e15695a
+[   21.319587] ro.serialno=7e15695a
+[   21.319820] servicemanager.ready=true
+[   21.319996] setupwizard.theme=glif_expressive
+[   21.320015] setupwizard.feature.day_night_mode_enabled=true
+[   21.320099] service.adb.root=1
+[   21.320117] security.perf_harden=1
+[   21.320981] ro.storage_manager.enabled=true
+[   21.321336] ro.sf.lcd_density=560
+[   21.321354] ro.surface_flinger.game_default_frame_rate_override=60
+[   21.322502] net.bt.name=Android
+[   21.322523] net.tethering.noprovisioning=true
+[   21.322540] sys.autosuspend.disabled=true
+[   21.322566] persist.sys.usb.config=adb
+[   21.322584] persist.sys.strictmode.disable=true
+[   21.327193] ro.config.ringtone=Orion.ogg
+[   21.327231] ro.config.alarm_alert=Hassium.ogg
+[   21.327244] ro.config.notification_sound=Argon.ogg
+[   21.327255] ro.com.android.dataroaming=true
+[   21.327312] ro.radio.noril=yes
+[   21.327324] tombstoned.max_tombstone_count=50
+[   21.327335] persist.traced.enable=1
+[   21.327346] sys.usb.state=adb
+[   21.327357] sys.usb.config=adb
+[   21.327368] sys.usb.configfs=1
+[   21.327378] sys.usb.controller=6a00000.usb
+[   21.327924] sys.use_memfd=true
+[   21.328092] ro.secure=1
+[   21.328104] ro.debuggable=0
+[   21.329401] ro.odm.build.id=CP2A.260605.016
+[   21.329413] ro.odm.build.tags=test-keys
+[   21.329430] ro.odm.build.type=userdebug
+[   21.329441] ro.odm.build.uuid=D-WoXGeuUV1_wt29AI5RNS3wHFQjgIuZisyKQDCfnDY
+[   21.329452] ro.odm.build.version.sdk=37
+[   21.329467] ro.odm.build.version.release=17
+[   21.329478] ro.odm.build.version.sdk_full=37.0
+[   21.329489] ro.odm.build.version.release_or_codename=17
+[   21.329499] ro.odm.product.cpu.abilist=arm64-v8a
+[   21.329515] ro.odm.product.cpu.abilist32=
+[   21.329526] ro.odm.product.cpu.abilist64=arm64-v8a
+[   21.329536] ro.vendor.build.uuid=D-WoXGeuUV1_wt29AI5RNS3wHFQjgIuZisyKQDCfnDY
+[   21.329547] ro.vendor.build.version.sdk_full=37.0
+[   21.330289] ro.vendor.build.security_patch=
+[   21.333420]
+[   21.413956] I:Clearing BCB
+[   32.623959] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   32.814935] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   34.522839] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   37.970596] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   43.535272] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   44.441501] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   44.476233] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   44.597513] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   44.643216] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   44.753931] failed to open /sys/class/android_usb/android0/state: No such file or directory
+[   45.692953] failed to open /sys/class/android_usb/android0/state: No such file or directory

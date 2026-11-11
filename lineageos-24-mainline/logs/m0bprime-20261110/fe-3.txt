@@ -1,0 +1,12 @@
+ls: /lib/modules: No such file or directory
+ls: /vendor/lib/modules: No such file or directory
+ls: /vendor_dlkm/lib/modules: Invalid argument
+ls: /system/lib/modules: No such file or directory
+[  114.816587] init: Service 'recovery' (pid 383) received SIGSEGV
+[  120.011357] init: Service 'recovery' (pid 392) received SIGSEGV
+[  125.320662] init: Service 'recovery' (pid 399) received SIGSEGV
+[  130.568607] init: Service 'recovery' (pid 408) received SIGSEGV
+[  135.196383] init: Service 'recovery' (pid 415) received SIGSEGV
+[  140.611908] init: Service 'recovery' (pid 424) received SIGSEGV
+[  145.130513] init: Service 'recovery' (pid 431) received SIGSEGV
+[  149.840113] init: Service 'recovery' (pid 446) received SIGSEGV

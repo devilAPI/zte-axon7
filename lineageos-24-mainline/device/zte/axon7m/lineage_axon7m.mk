@@ -1,5 +1,12 @@
 # LineageOS 24 product for the ZTE Axon 7 on mainline Linux (codename axon7m,
 # so it never collides with the 4.4-kernel "axon7" tree of LineageOS 22.2).
+# Bring-up: debuggable userdebug, set before LineageOS's common.mk (patched in
+# lineageos-24-mainline/aosp/vendor/lineage). Without it init is built without
+# ALLOW_PERMISSIVE_SELINUX: androidboot.selinux=permissive was ignored and, in
+# enforcing mode, ueventd could not set ro.cold_boot_done, so init waited
+# forever (M1a run 4, 2026-11-11). adb authentication stays on.
+LINEAGE_DEBUGGABLE_USERDEBUG := true
+
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 # AXON7_MINI (default true): LineageOS's mini phone app set for bring-up
@@ -19,8 +26,3 @@ PRODUCT_MODEL := A2017G
 PRODUCT_MANUFACTURER := ZTE
 PRODUCT_GMS_CLIENTID_BASE := android-zte
 
-# Bring-up: debuggable userdebug. LineageOS sets PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG,
-# which builds init without ALLOW_PERMISSIVE_SELINUX: androidboot.selinux=permissive
-# was ignored, and in enforcing mode ueventd could not set ro.cold_boot_done, so
-# init waited forever (M1a run 4, 2026-11-11). Also gives adb root.
-PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false
