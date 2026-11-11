@@ -101,3 +101,11 @@ ifneq ($(AXON7_ADB_KEYS),)
 PRODUCT_ADB_KEYS := $(AXON7_ADB_KEYS)
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
 endif
+
+# KeyMint: keystore2 is a critical service and aborts without a TEE KeyMint
+# (M1a run 7: init rebooted after 4 crashes). ZTE's keymaster runs in QSEE
+# (milestone M8 at the earliest); for bring-up AOSP's software KeyMint, which
+# is not secure (keys live in normal-world memory).
+PRODUCT_PACKAGES += \
+    android.hardware.security.keymint-service \
+    android.hardware.hardware_keystore.xml

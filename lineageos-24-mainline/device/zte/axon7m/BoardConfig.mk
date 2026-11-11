@@ -46,6 +46,9 @@ BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive oops=panic panic=5
 # bring-up: no rate limit on /dev/kmsg, so init/ueventd/apexd messages reach
 # the pstore console (first M1a runs lost them: "output lines suppressed")
 BOARD_KERNEL_CMDLINE += printk.devkmsg=on
+# bring-up: a fatal init error (critical service crash loop) goes to recovery
+# (TWRP, where the test loop collects the log) instead of a boot loop
+BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=recovery
 
 # Kernel modules: everything goes to /vendor/lib/modules; init loads the list
 # in modules.load (configs/modules.load.axon7m) after /vendor is mounted, so
