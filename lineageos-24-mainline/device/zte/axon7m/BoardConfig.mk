@@ -56,6 +56,11 @@ BOARD_VENDOR_KERNEL_MODULES_LOAD := $(strip $(shell cat $(DEVICE_PATH)/configs/m
 # (sde13, 5.5 GiB) as the super device (named by androidboot.super_partition,
 # which the build adds), /metadata on los_metadata, /data on los_data.
 # The 512 MiB "vendor" partition (sde28) is not used.
+# Not A/B: one slot (los_boot), no _a/_b partitions in super. AOSP 17 turns
+# AB_OTA_UPDATER on when it is left empty (build/make/core/board_config.mk),
+# which named the super partitions system_a/system_b and allowed only half
+# of super per slot.
+AB_OTA_UPDATER := false
 BOARD_FLASH_BLOCK_SIZE := 262144
 BOARD_BOOTIMAGE_PARTITION_SIZE := 100663296
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 100663296
