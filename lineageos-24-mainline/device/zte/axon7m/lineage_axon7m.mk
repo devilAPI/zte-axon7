@@ -18,3 +18,9 @@ PRODUCT_BRAND := ZTE
 PRODUCT_MODEL := A2017G
 PRODUCT_MANUFACTURER := ZTE
 PRODUCT_GMS_CLIENTID_BASE := android-zte
+
+# Bring-up: debuggable userdebug. LineageOS sets PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG,
+# which builds init without ALLOW_PERMISSIVE_SELINUX: androidboot.selinux=permissive
+# was ignored, and in enforcing mode ueventd could not set ro.cold_boot_done, so
+# init waited forever (M1a run 4, 2026-11-11). Also gives adb root.
+PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false
