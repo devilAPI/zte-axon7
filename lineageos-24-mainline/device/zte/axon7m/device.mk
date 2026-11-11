@@ -17,6 +17,16 @@ PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 # Shared memory: no ashmem in mainline, use memfd (libcutils ashmem-dev.cpp)
 PRODUCT_SYSTEM_PROPERTIES += sys.use_memfd=true
 
+# Dalvik heap for 4 GB RAM: without it every Java process got the 16 MB
+# default heap, and system_server and SystemUI died with OutOfMemoryError
+# (M1a run 13)
+$(call inherit-product, frameworks/native/build/phone-xhdpi-4096-dalvik-heap.mk)
+
+# Bluetooth (QCA6174 over UART, no rampatch yet): the stack's Qualcomm vendor
+# LE commands (LE_ADV_FILTER 0xfd57) get "unknown opcode" and the stack
+# aborts in a loop (M1a run 13); plain Bluetooth LE without them
+PRODUCT_VENDOR_PROPERTIES += bluetooth.core.le.vendor_capabilities.enabled=false
+
 # Display: 1440x2560 at about 534 ppi
 PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := 560dpi
