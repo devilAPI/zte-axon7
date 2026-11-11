@@ -115,6 +115,19 @@ PRODUCT_PACKAGES += \
     android.hardware.security.keymint-service \
     android.hardware.hardware_keystore.xml
 
+# Firmware (M2): /vendor/firmware from vendor/zte/axon7m-firmware in the
+# Android tree on the build server (scripts/firmware-from-nura.sh: the
+# phone's ZTE/Qualcomm images + linux-firmware files; proprietary, never in
+# git). The kernel looks there (firmware_class.path in BoardConfig.mk).
+# AXON7_FIRMWARE=1 (los24-build.sh default 0 until LineageOS reaches the
+# setup wizard without firmware; then remoteprocs, GPU, Wi-Fi, BT get theirs).
+AXON7_FIRMWARE ?= 0
+AXON7M_FW_DIR := vendor/zte/axon7m-firmware
+ifeq ($(AXON7_FIRMWARE),1)
+PRODUCT_COPY_FILES += $(foreach f,$(shell cd $(AXON7M_FW_DIR) 2>/dev/null && find . -type f | sed 's|^\./||' | sort),\
+    $(AXON7M_FW_DIR)/$(f):$(TARGET_COPY_OUT_VENDOR)/firmware/$(f))
+endif
+
 # Audio: audioserver crashes without any audio HAL, and system_server then
 # blocks on AudioSystem until its watchdog kills it (M1a run 9). For bring-up
 # AOSP's example AIDL audio HAL + effects (APEX); the audio policy comes from

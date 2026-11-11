@@ -50,6 +50,11 @@ BOARD_KERNEL_CMDLINE += printk.devkmsg=on
 # (TWRP, where the test loop collects the log) instead of a boot loop
 BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=recovery
 
+# Firmware from /vendor/firmware (device.mk, AXON7_FIRMWARE); the remoteproc
+# .mbn images are ELF files, which PRODUCT_COPY_FILES refuses otherwise
+BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/firmware
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+
 # Kernel modules: everything goes to /vendor/lib/modules; init loads the list
 # in modules.load (configs/modules.load.axon7m) after /vendor is mounted, so
 # drivers that need firmware from /vendor find it.
