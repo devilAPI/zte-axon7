@@ -8,6 +8,10 @@
     <modules>
         <xi:include href="primary_audio_policy_configuration.xml"/>
         <xi:include href="r_submix_audio_policy_configuration.xml"/>
+        <!-- the HAL APEX's VINTF manifest declares IModule/bluetooth, and
+             audioserver opens every declared module: without this module the
+             HAL never registers it and audioserver waits forever (M1a run 12) -->
+        <xi:include href="bluetooth_with_le_audio_policy_configuration_7_0.xml"/>
     </modules>
     <xi:include href="audio_policy_volumes.xml"/>
     <xi:include href="default_volume_tables.xml"/>
