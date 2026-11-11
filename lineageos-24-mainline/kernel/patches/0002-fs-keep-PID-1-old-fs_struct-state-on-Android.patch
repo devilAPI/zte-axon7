@@ -1,0 +1,32 @@
+From: axon7m bring-up
+Subject: [PATCH] fs: keep PID 1's old fs_struct state on Android
+
+Linux 7.3 reverts PID 1's shared fs_struct to nullfs when PID 1 unshares
+it. Android's init unshares its mount namespace while the property
+service thread still uses the old state; that thread then cannot reach
+/sys/fs/selinux, every property set is denied and init waits forever for
+ro.cold_boot_done (LineageOS 24 M1a runs 4 and 6, 2026-11-11). Keep the
+old behaviour when binder (Android) is built in.
+---
+--- a/fs/fs_struct.c	2026-11-11 15:15:18.413969610 +0100
++++ b/fs/fs_struct.c	2026-11-11 15:15:18.563970404 +0100
+@@ -193,8 +193,17 @@
+ 	if (old_fs != userspace_init_fs)
+ 		return;
+ 	pr_warn("VFS: Pid 1 stopped sharing filesystem state\n");
+-	set_fs_root(userspace_init_fs, &init_fs.root);
+-	set_fs_pwd(userspace_init_fs, &init_fs.root);
++	/*
++	 * Android's init does unshare(CLONE_NEWNS) as PID 1 while its
++	 * property service thread still shares the old fs_struct. Reverting
++	 * that to nullfs leaves the thread without /sys/fs/selinux: every
++	 * property permission check fails and the boot stops. Keep the old
++	 * state, as kernels before 7.3 did.
++	 */
++	if (!IS_ENABLED(CONFIG_ANDROID_BINDER_IPC)) {
++		set_fs_root(userspace_init_fs, &init_fs.root);
++		set_fs_pwd(userspace_init_fs, &init_fs.root);
++	}
+ }
+ 
+ struct fs_struct *switch_fs_struct(struct fs_struct *new_fs)
