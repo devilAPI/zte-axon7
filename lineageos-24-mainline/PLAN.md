@@ -393,7 +393,7 @@ watchdog (30 s) for this entry: the kernel must feed it, see section 8
 | M0a | Kernel with Android config builds; boot image v2 builds | Image < 48 MiB, config check clean | no | 2-3 d (**in progress**) |
 | M0a' | **Boot path test without Android**: Android-config kernel + Nura's storage-safe test initramfs (busybox, USB NCM 172.16.42.1 + telnet) as a header-v2 image in `los_boot` | telnet works; `dmesg` shows binder/SELinux/erofs/f2fs, rmtfs address, UDC `6a00000.usb`; pstore console after a crash | yes (1 test, ~20 min) | 1 d |
 | M0b | Mainline kernel + Android first-stage init from `los_boot` | pstore shows init's first stage; adb in a ramdisk-only (recovery-mode) boot | yes (2-4 tests) | 3-5 d |
-| M1a | Full Android boot with SwiftShader | `sys.boot_completed=1`, adb, boot animation then launcher (slow) | yes (22.2's slot) | 1-2 wk |
+| M1a | Full Android boot with SwiftShader | `sys.boot_completed=1`, adb, boot animation then launcher (slow) | yes (22.2's slot) | **reached 2026-11-11** (run 14b: setup wizard "Welcome to LineageOS", SystemUI ANRs from CPU rendering) |
 | M1b | freedreno + drm_hwcomposer + minigbm | SurfaceFlinger on DRM, smooth UI | yes | 1-2 wk |
 | M2 | Wi-Fi, Bluetooth, USB (MTP/tethering) | connect to AP, pair a device | yes | 1 wk |
 | M3 | Audio: speakers, headphones, mic, vibrator, torch, lights | media playback, recording, haptics | yes | 2 wk |
@@ -520,22 +520,18 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | Mesa freedreno | `/srv/los24/mesa/out` → `device/zte/axon7m-mesa` (`scripts/mesa-build.sh`: Mesa 26.2.6, NDK r30, API 35) | **built**: `libEGL_mesa.so`, `libGLESv2_mesa.so` (in `egl/`), `libgallium_dri.so` (19.5 MB); needs only core libdrm + LLNDK libs; used with `AXON7_GPU=mesa` (default stays SwiftShader for the first boot) |
 | Vibrator HAL | `device/zte/axon7m/vibrator/` | written; compiles in the next build after `droid` |
 | Bluetooth address | `device/zte/axon7m/bdaddr/` | dragonboard's `bdaddr` + `--nv` for ZTE's `persist/.bt_nv.bin` (host-tested parser), persist mounted `ro,noload` |
-| Full build (M1a: `droid` incl. `super.img`) | tmux `los24build`, log `/srv/los24/logs/build-20261110-0432.log` | **compiling**, old l24 layout and kernel #2 (started before the slot change): 40 % (68710/170185) at 08:36 UTC, ~300 actions/min, done about 14:00 UTC. Its super.img must **not** be flashed. Left running: compiled objects are reused by the rebuild |
-| Rebuild for 22.2's slot | tmux `los24next`: `scripts/los24-build-after.sh droid` (log of the wait: `/srv/los24/logs/build-after.log`) | **queued**: waits for the first build's `build-exit`, then `los24-build.sh droid` copies the device tree (super = GPT `system`, `los_metadata`, `los_data`, vibrator HAL) and kernel #4 (watchdog DTB, display built in, staged 12:27 UTC) from `/srv/los24/axon7/repo` (synced 08:37 UTC, = commit 8a50645 + `los24-build-after.sh`) into the tree: re-analysis + changed modules/images, about 1-2 h; first build at 70 % (116k/164k) at 12:35 UTC, so its end about 16:30 UTC and the rebuilt images about 18:00 UTC. Then section 5, M1a |
+| M1a runs 1-14b (2026-11-11) | `ios/logs/los24-m1a-N-*` (pstore console, logcat, getprop, screenshot), images `research/los24-build-N` on the PC | **setup wizard reached** in run 14b. Fixes on the way: stale fstab from rsync -a (--checksum syncs), modules.load = the 81 Nura modules, debuggable userdebug (`LINEAGE_DEBUGGABLE_USERDEBUG`), kernel patch 0002 (PID 1 fs_struct), boot guard (recovery after 240 s without adbd), software KeyMint, minigbm `nocompression`, example AIDL audio HAL with a policy file naming default/r_submix/bluetooth modules, 4 GB dalvik heap. Each build ~16 min, each test ~10 min (delta flash) |
+| Firmware (M2) | `vendor/zte/axon7m-firmware` in the server tree (`scripts/firmware-from-nura.sh`, 15 files, not in git) | build 15 is the first with `AXON7_FIRMWARE=1` (remoteprocs, a530, ath10k, QCA BT rampatch, regulatory.db) |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
 
 Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/build-after.log /srv/los24/logs/build-latest.log'`.
 `build-latest.log` points at the queued rebuild once it starts.
 
-Next steps: phone tests M0b' (section 5) decide whether the recovery
-problem is userspace (expected) and where; meanwhile the rebuild for 22.2's
-slot; then M1a. The recovery in that rebuild gets the new fstab
-(`los_metadata`, `los_data`): recovery mounts /data at start
-(`copy_userdata_files()`), which now means 22.2's los_data (allowed). Still
-[A]: Wi-Fi HAL without a vendor library. Idea for M1a, if adb does not come
-up: the same front end in boot.img; first stage init frees the ramdisk after
-switching root, so telnetd's login shell would have to live in a mount that
-survives (not done).
+Next steps (2026-11-11 evening): firmware in /vendor (build 15; the BT
+stack's crash loop is the unpatched QCA ROM: rampatch missing), then
+M1b with `AXON7_GPU=mesa` (the SwiftShader UI is too slow: SystemUI ANRs,
+91 s shader cache), then Wi-Fi/BT HALs (M2) and audio (M3). All phone tests
+run unattended (`ios/tools/axon7-los-test.sh`, `LOS_SETTLE`).
 
 ## 10. Sources
 
