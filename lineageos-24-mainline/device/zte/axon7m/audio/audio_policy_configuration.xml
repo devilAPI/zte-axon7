@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- ZTE Axon 7 (axon7m), bring-up: modules of AOSP's example AIDL audio HAL
+     (com.android.hardware.audio), which builds its modules from this file.
+     primary = Cuttlefish's primary module (same HAL); no real ALSA output
+     until the ADSP and the sound card work (milestone M3). -->
+<audioPolicyConfiguration version="7.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <globalConfiguration speaker_drc_enabled="false"/>
+    <modules>
+        <xi:include href="primary_audio_policy_configuration.xml"/>
+        <xi:include href="r_submix_audio_policy_configuration.xml"/>
+    </modules>
+    <xi:include href="audio_policy_volumes.xml"/>
+    <xi:include href="default_volume_tables.xml"/>
+</audioPolicyConfiguration>
