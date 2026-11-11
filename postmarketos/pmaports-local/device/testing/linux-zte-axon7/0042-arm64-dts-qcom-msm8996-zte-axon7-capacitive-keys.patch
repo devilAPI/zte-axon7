@@ -1,0 +1,35 @@
+From 091c00c158648e3e3cc0bdc3be22d0a432b5c3e0 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Wed, 11 Nov 2026 09:44:06 +0100
+Subject: [PATCH] arm64: dts: qcom: msm8996-zte-axon7: capacitive keys
+
+The keys under the screen are 0D buttons of the Synaptics S3718 (RMI4
+function 1A). Map them in ZTE's order: back, home, app switch.
+---
+ arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 56515f12c..2047339e0 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -455,6 +455,16 @@ rmi4-f12@12 {
+ 			touchscreen-x-mm = <68>;
+ 			touchscreen-y-mm = <121>;
+ 		};
++
++		/*
++		 * Capacitive keys under the screen, 0D buttons of the touch
++		 * controller in ZTE's order (synaptics,cap-button-codes:
++		 * back, home, app switch).
++		 */
++		rmi4-f1a@1a {
++			reg = <0x1a>;
++			linux,keycodes = <KEY_BACK KEY_HOMEPAGE KEY_APPSELECT>;
++		};
+ 	};
+ 
+ 	/* ndt,stress-i2c pressure sensor @50: no mainline driver */
+-- 
+2.56.0
+

@@ -7,7 +7,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=21
+pkgrel=22
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -79,6 +79,7 @@ source="
 	0039-iio-qcom_smgr-decode-the-report-index-list-request-l.patch
 	0040-iio-qcom_smgr-proximity-and-light-channels.patch
 	0041-iio-qcom_smgr-per-sensor-trigger-polled-light-and-pr.patch
+	0042-arm64-dts-qcom-msm8996-zte-axon7-capacitive-keys.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -152,5 +153,6 @@ dd7cefd066e2d95d8c302313d292d61d0de6e0d7caf956652ea645b72309d3cd7e76c19e31c0a97b
 728da5607aef1f6445676d51df057dc665cdafe1c73e0098ce9722b502298b58b9e22d29f564c1d1876424182599a9bdd86a113bd3a2f875964f6331d04acf75  0039-iio-qcom_smgr-decode-the-report-index-list-request-l.patch
 779e88c14684da39585b52e5fc7b52c39ae5df67e089b02d51d8674aff2e6eecfe93522b592eb1cb1d4651641b180c8a16a6e4e9e22a6d0e140d434c74eadfd5  0040-iio-qcom_smgr-proximity-and-light-channels.patch
 d9b3be9bf9a249f24e97b308229bdfec2bce1f3007006d266dcf0be61a3861c7a798066753ca7935b0311ed0828fecfa5fe96b069f8773b16fd33bf9e85ca4ea  0041-iio-qcom_smgr-per-sensor-trigger-polled-light-and-pr.patch
-dfd40b6acbd6cbd43bf9a9f7b4509217f9ea73f4db957101f60f3af1e78f59101352bcecf7283e2fa92ffd7e966335acb7e63402f9c0b1480ae0b83924a736ab  config-zte-axon7.aarch64
+a969d356dd17e9a14d7eaa858d43a21aa02e167d31851b482266d50f5dd9cfaa431a04c8c6206789a17eda99f28774308b6995314d6fcc1e3ffce90846bb587c  0042-arm64-dts-qcom-msm8996-zte-axon7-capacitive-keys.patch
+2a9b1796bd1a112fe0d4f0f20bf63c511925333823f374c4c094f665c8968a9eb2c76e7f2fbcf66db414871ed049c8fbcec34dc4b34e545b3964c79985961921  config-zte-axon7.aarch64
 "

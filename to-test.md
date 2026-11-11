@@ -3,9 +3,9 @@
 Things that run on the phone but that only eyes, ears or hands can confirm.
 Tick a box, or write what you saw/heard below it, and tell Claude.
 
-All tests are in **Nura** with the drivers from 2026-11-09/10 (kernel patches
-0010-0041, installed by hand on the dev phone; in images from
-linux-zte-axon7 r21 / device-zte-axon7 r22 on). Log in over SSH or on the
+All tests are in **Nura** with the drivers from 2026-11-09/11 (kernel patches
+0010-0042, installed by hand on the dev phone; in images from
+linux-zte-axon7 r22 / device-zte-axon7 r22 on). Log in over SSH or on the
 console, `sudo` password as usual.
 
 To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
@@ -226,6 +226,18 @@ echo 160 | sudo tee /sys/class/backlight/994000.dsi.0/brightness
 ```
 
 - [ ] The console gets dim, bright, and back to normal
+
+## 10. Touch keys (the three keys under the screen)
+
+```sh
+sudo evtest   # pick "Synaptics S3718AR", then touch each key once
+```
+
+- [ ] Left key gives `KEY_BACK`, middle `KEY_HOMEPAGE`, right `KEY_APPSELECT`
+  (write down the order if it differs)
+- [ ] Each key gives one press (value 1) and one release (value 0), no repeats
+- [ ] The key lights (if any) come on: there is no driver for them yet, so
+  probably not
 
 ## Afterwards
 

@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-09 (evening: battery, Hi-Fi audio, vibration, torch, cover)
+Last update: 2026-11-11 (touch keys)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -48,6 +48,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Headphone audio through the Hi-Fi DAC (AK4490)
 [*]Flashlight (torch)
 [*]Flip cover sensor (open is confirmed, closed not yet)
+[*]Touch keys under the screen (Back, Home, App switch)
 [/LIST]
 [B]Not yet:[/B]
 [LIST]
@@ -80,6 +81,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-11"]
+[LIST]
+[*]Touch keys: the three keys under the screen now work as Back, Home and App switch (they are part of the touchscreen; the kernel had their driver switched off). Please confirm they react. Their backlight stays off for now.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-09"]
 [LIST]
 [*]The modem starts and switches itself on (it needed room for its file-system buffer above the kernel, and someone to set it online). It restarts itself a few times in the first two minutes after power-on; it is switched on again each time.
