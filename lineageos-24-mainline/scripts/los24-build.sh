@@ -69,7 +69,7 @@ export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
 export AXON7_GPU=${AXON7_GPU:-swiftshader}
 echo "AXON7_GPU=$AXON7_GPU AXON7_ADB_KEYS=$AXON7_ADB_KEYS"
 [ -z "$AXON7_ADB_KEYS" ] || [ -r "$T/$AXON7_ADB_KEYS" ] || { echo "missing $T/$AXON7_ADB_KEYS"; exit 1; }
-export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=/srv/los24/ccache
+export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=$(readlink -f /srv/los24/ccache)  # real path: nsjail cannot bind-mount a symlink
 mkdir -p "$CCACHE_DIR"; ccache -M 15G >/dev/null 2>&1 || true
 source build/envsetup.sh >/dev/null
 breakfast axon7m || lunch lineage_axon7m-userdebug || { echo "lunch failed"; exit 1; }
