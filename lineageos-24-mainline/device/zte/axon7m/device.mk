@@ -120,3 +120,7 @@ PRODUCT_PACKAGES += \
 # AOSP's example AIDL audio HAL + effects (APEX); the audio policy comes from
 # the HAL. No real output yet: the sound card needs the ADSP (milestone M3).
 PRODUCT_PACKAGES += com.android.hardware.audio
+# the effects HAL exits without its config, and its onrestart restarts
+# audioserver every time (M1a run 10)
+PRODUCT_COPY_FILES += \
+    hardware/interfaces/audio/aidl/default/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects_config.xml
