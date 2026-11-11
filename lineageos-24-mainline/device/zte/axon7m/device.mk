@@ -46,7 +46,14 @@ $(call soong_config_set,minigbm,platform,msm)
 PRODUCT_VENDOR_PROPERTIES += \
     ro.hardware.gralloc=minigbm \
     ro.opengles.version=196609 \
-    debug.hwui.renderer=skiagl
+    debug.hwui.renderer=skiagl \
+    vendor.minigbm.debug=nocompression
+# nocompression (linear buffers only), for both GPU choices: minigbm's msm
+# backend gives render targets UBWC (Qualcomm compressed) layout.
+# - SwiftShader: msm_bo_map() refuses to map UBWC, SurfaceFlinger aborted
+#   ("Failed to create a valid texture", M1a run 8).
+# - Mesa: freedreno renders UBWC, but mainline MDP5 (MSM8996) scans planes
+#   out as linear only, so the panel showed garbage (M1a run 16).
 # GLES 3.1 (196609); no Android Extension Pack claim until Mesa's a5xx support
 # is checked on the phone
 ifeq ($(AXON7_GPU),mesa)
@@ -62,12 +69,7 @@ PRODUCT_PACKAGES += \
     vulkan.pastel
 PRODUCT_VENDOR_PROPERTIES += \
     ro.hardware.egl=angle \
-    ro.hardware.vulkan=pastel \
-    vendor.minigbm.debug=nocompression
-# nocompression: minigbm's msm backend gives render targets UBWC (Qualcomm
-# compressed) layout, which msm_bo_map() refuses to map; SwiftShader locks
-# every buffer for the CPU, so SurfaceFlinger aborted ("Failed to create a
-# valid texture", Gralloc5 lock failed: M1a run 8). Linear buffers only.
+    ro.hardware.vulkan=pastel
 PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
 endif
 
@@ -111,10 +113,14 @@ PRODUCT_VENDOR_PROPERTIES += ro.radio.noril=yes
 # Developer builds: AXON7_ADB_KEYS=FILE (adb public key of the developer host,
 # as in the LineageOS 22.2 axon7 tree) puts the key into system and recovery
 # and starts adbd from the first boot. adb authentication stays on
-# (ro.adb.secure=1; LineageOS userdebug builds are not debuggable either).
+# (ro.adb.secure=1).
 ifneq ($(AXON7_ADB_KEYS),)
 PRODUCT_ADB_KEYS := $(AXON7_ADB_KEYS)
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.usb.config=adb
+# adbd as root from the start (ro.debuggable=1 via LINEAGE_DEBUGGABLE_USERDEBUG):
+# LineageOS gates `adb root` behind a Developer options switch kept in /data,
+# which unattended test boots cannot flip (M1a run 16).
+PRODUCT_SYSTEM_DEFAULT_PROPERTIES += service.adb.root=1
 endif
 
 # KeyMint: keystore2 is a critical service and aborts without a TEE KeyMint
