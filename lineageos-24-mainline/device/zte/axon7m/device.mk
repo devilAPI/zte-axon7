@@ -52,7 +52,12 @@ PRODUCT_PACKAGES += \
     vulkan.pastel
 PRODUCT_VENDOR_PROPERTIES += \
     ro.hardware.egl=angle \
-    ro.hardware.vulkan=pastel
+    ro.hardware.vulkan=pastel \
+    vendor.minigbm.debug=nocompression
+# nocompression: minigbm's msm backend gives render targets UBWC (Qualcomm
+# compressed) layout, which msm_bo_map() refuses to map; SwiftShader locks
+# every buffer for the CPU, so SurfaceFlinger aborted ("Failed to create a
+# valid texture", Gralloc5 lock failed: M1a run 8). Linear buffers only.
 PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
 endif
 
