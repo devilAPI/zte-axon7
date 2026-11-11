@@ -13,4 +13,5 @@
 /vendor/bin/axon7m-bdaddr\.sh                               u:object_r:vendor_bdaddr_exec:s0
 /vendor/bin/hw/bdaddr                                       u:object_r:vendor_bdaddr_exec:s0
 /vendor/bin/axon7m-modules\.sh                              u:object_r:vendor_toolbox_exec:s0
+/vendor/bin/axon7m-bootguard\.sh                            u:object_r:vendor_toolbox_exec:s0
 /vendor/bin/hw/android\.hardware\.vibrator-service\.axon7m  u:object_r:hal_vibrator_default_exec:s0

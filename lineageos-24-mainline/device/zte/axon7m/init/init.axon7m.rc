@@ -2,6 +2,8 @@
 import /vendor/etc/init/hw/init.axon7m.usb.rc
 
 on early-init
+    # bring-up: reboot to recovery with a state dump if the boot hangs
+    start axon7m-bootguard
     # Kernel modules whose drivers need /vendor (firmware, user helper via
     # ueventd): first stage mounted /vendor already.
     exec u:r:vendor_modprobe:s0 -- /vendor/bin/axon7m-modules.sh
@@ -40,3 +42,11 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant -Dnl80211 -g@android:wpa_wl
     class main
     disabled
     oneshot
+
+service axon7m-bootguard /vendor/bin/axon7m-bootguard.sh
+    class core
+    user root
+    group root
+    seclabel u:r:vendor_modprobe:s0
+    oneshot
+    disabled

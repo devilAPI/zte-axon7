@@ -65,6 +65,7 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init/init.recovery.axon7m.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.axon7m.rc \
     $(DEVICE_PATH)/init/ueventd.axon7m.rc:$(TARGET_COPY_OUT_VENDOR)/etc/ueventd.rc \
     $(DEVICE_PATH)/bin/axon7m-modules.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-modules.sh \
+    $(DEVICE_PATH)/bin/axon7m-bootguard.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bootguard.sh \
     $(DEVICE_PATH)/bin/axon7m-bdaddr.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bdaddr.sh
 
 # Keep the system awake: suspend is broken on msm8996 mainline (PLAN.md)
