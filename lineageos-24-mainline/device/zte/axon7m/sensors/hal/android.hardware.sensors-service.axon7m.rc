@@ -1,0 +1,6 @@
+# root: the HAL writes the IIO trigger, buffer and sampling sysfs attributes
+service vendor.sensors-axon7m /vendor/bin/hw/android.hardware.sensors-service.axon7m
+    class hal
+    user root
+    group system input wakelock
+    rlimit rtprio 10 10

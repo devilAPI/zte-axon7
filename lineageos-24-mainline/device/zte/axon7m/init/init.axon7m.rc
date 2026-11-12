@@ -28,6 +28,8 @@ on post-fs-data
     mkdir /data/vendor/wifi 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
+    start axon7m-sns-reg
+    start axon7m-slpi-kick
 
 on boot
     # suspend is broken on msm8996 mainline: keep one wakelock (PLAN.md, M4)
@@ -59,6 +61,21 @@ service axon7m-bootguard /vendor/bin/axon7m-bootguard.sh
 service axon7m-audio-routes /vendor/bin/axon7m-audio-routes.sh
     user root
     group root audio
+    seclabel u:r:vendor_modprobe:s0
+    oneshot
+    disabled
+
+# Sensors: registry server for the SLPI, then a one-time SLPI restart if the
+# Sensor Manager did not come up (the SLPI asked before sns-reg ran)
+service axon7m-sns-reg /vendor/bin/axon7m-sns-reg.sh
+    user root
+    group root system
+    seclabel u:r:vendor_modprobe:s0
+    disabled
+
+service axon7m-slpi-kick /vendor/bin/axon7m-slpi-kick.sh
+    user root
+    group root
     seclabel u:r:vendor_modprobe:s0
     oneshot
     disabled

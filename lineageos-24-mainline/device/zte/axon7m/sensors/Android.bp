@@ -1,0 +1,74 @@
+// Sensors on the SLPI (sensor DSP) of the ZTE Axon 7, as on Nura:
+// - libqrtr: QRTR/QMI helpers (linux-msm qrtr, as in device/linaro/dragonboard)
+// - sns-reg, sns-reg-generator: the sensor registry server the SLPI asks
+//   before it offers the Sensor Manager (gitlab.com/msm8996-mainline/sns-reg
+//   4d238e5f, with Nura's generator fix, no argp, registry path argument)
+// - android.hardware.sensors-service.axon7m: AIDL sensors HAL on the kernel's
+//   qcom-smgr IIO devices (hal/)
+
+cc_library {
+    name: "libqrtr",
+    vendor: true,
+    srcs: [
+        "qrtr/lib/logging.c",
+        "qrtr/lib/qrtr.c",
+        "qrtr/lib/qmi.c",
+    ],
+    cflags: ["-fPIC", "-Wno-unused-parameter"],
+    export_include_dirs: ["qrtr/lib"],
+}
+
+cc_binary {
+    name: "sns-reg",
+    vendor: true,
+    srcs: [
+        "sns-reg/main.c",
+        "sns-reg/qmi/sns_reg.c",
+        "sns-reg/map.c",
+    ],
+    local_include_dirs: ["sns-reg"],
+    shared_libs: ["libqrtr"],
+    cflags: ["-Wno-unused-parameter", "-Wno-sign-compare"],
+}
+
+cc_binary {
+    name: "sns-reg-generator",
+    vendor: true,
+    srcs: [
+        "sns-reg/generator.c",
+        "sns-reg/map.c",
+    ],
+    local_include_dirs: ["sns-reg"],
+    cflags: ["-Wno-unused-parameter", "-Wno-sign-compare"],
+}
+
+cc_binary {
+    name: "android.hardware.sensors-service.axon7m",
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["hal/android.hardware.sensors-service.axon7m.rc"],
+    vintf_fragments: ["hal/android.hardware.sensors-service.axon7m.xml"],
+    srcs: [
+        "hal/main.cpp",
+        "hal/Sensor.cpp",
+        "hal/Sensors.cpp",
+        "hal/IioSensor.cpp",
+    ],
+    local_include_dirs: ["hal/include"],
+    // as android.hardware.sensors-service.example
+    shared_libs: [
+        "libbinder_ndk",
+        "liblog",
+    ],
+    static_libs: [
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.sensors-V3-ndk",
+        "android.system.suspend-V1-ndk",
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libpower",
+        "libutils",
+    ],
+}

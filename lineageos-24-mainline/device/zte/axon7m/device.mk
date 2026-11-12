@@ -90,7 +90,9 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/bin/axon7m-modules.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-modules.sh \
     $(DEVICE_PATH)/bin/axon7m-bootguard.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bootguard.sh \
     $(DEVICE_PATH)/bin/axon7m-bdaddr.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bdaddr.sh \
-    $(DEVICE_PATH)/bin/axon7m-audio-routes.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-audio-routes.sh
+    $(DEVICE_PATH)/bin/axon7m-audio-routes.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-audio-routes.sh \
+    $(DEVICE_PATH)/bin/axon7m-sns-reg.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-sns-reg.sh \
+    $(DEVICE_PATH)/bin/axon7m-slpi-kick.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-slpi-kick.sh
 # q6asm takes period sizes in steps of 480 frames only (capture periods up to
 # 4096 bytes): with aosp/hardware/interfaces 0001 the AIDL HAL rounds its PCM
 # buffers to 4 periods of 480-frame steps (85 ms at 48 kHz -> 3840 frames,
@@ -185,3 +187,16 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/bluetooth_with_le_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_with_le_audio_policy_configuration_7_0.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml
+
+# Sensors (SLPI Sensor Manager through the kernel's qcom-smgr IIO drivers):
+# sns-reg registry server, AIDL sensors HAL on IIO (sensors/)
+PRODUCT_PACKAGES += \
+    android.hardware.sensors-service.axon7m \
+    sns-reg \
+    sns-reg-generator
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
+    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml \
+    frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
+    frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
+    frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml

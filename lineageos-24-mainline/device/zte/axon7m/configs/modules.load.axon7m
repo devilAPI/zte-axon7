@@ -84,3 +84,7 @@ videobuf2-dma-sg.ko
 videobuf2-memops.ko
 videobuf2-v4l2.ko
 videodev.ko
+smgr.ko
+smgr_accel.ko
+smgr_motion.ko
+sns_smgr.ko
