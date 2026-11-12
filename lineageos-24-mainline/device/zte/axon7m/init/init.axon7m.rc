@@ -29,7 +29,7 @@ on post-fs-data
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start axon7m-sns-reg
-    start axon7m-slpi-kick
+    # no axon7m-slpi-kick: restarting the SLPI froze the phone (run 24)
 
 on boot
     # suspend is broken on msm8996 mainline: keep one wakelock (PLAN.md, M4)

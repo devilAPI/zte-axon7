@@ -42,6 +42,7 @@ unsigned long *parse_registry(int fd)
 
 	if (!file) {
 		fprintf(stderr, "Failed to open registry file: %s\n", strerror(errno));
+		close(fd);
 		return NULL;
 	}
 
@@ -52,6 +53,8 @@ unsigned long *parse_registry(int fd)
 		registry[key] = value;
 	}
 
+	/* the FILE owns fd now (bionic's fdsan aborts on a plain close) */
+	fclose(file);
 	return registry;
 }
 
@@ -149,8 +152,7 @@ int main(int argc, const char **argv)
 		fprintf(stderr, "Failed to open registry: %s\n", strerror(errno));
 		return 1;
 	}
-	registry = parse_registry(fd);
-	close(fd);
+	registry = parse_registry(fd);	/* closes fd */
 	if (!registry) {
 		fprintf(stderr, "Failed to parse registry\n");
 		return 1;
