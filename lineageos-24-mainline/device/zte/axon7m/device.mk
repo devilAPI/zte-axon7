@@ -33,11 +33,11 @@ PRODUCT_AAPT_PREF_CONFIG := 560dpi
 PRODUCT_VENDOR_PROPERTIES += ro.sf.lcd_density=560
 
 # Graphics: drm_hwcomposer on the msm DRM device and minigbm gralloc, then
-#   AXON7_GPU=swiftshader (default, bring-up): SwiftShader Vulkan + ANGLE GLES
+#   AXON7_GPU=swiftshader (bring-up fallback): SwiftShader Vulkan + ANGLE GLES
 #     on the CPU, works without the GPU;
-#   AXON7_GPU=mesa: Mesa freedreno on the Adreno 530 (GLES only: turnip has no
+#   AXON7_GPU=mesa (default since M1a run 19): Mesa freedreno on the Adreno 530 (GLES only: turnip has no
 #     a5xx), prebuilts from scripts/mesa-build.sh in device/zte/axon7m-mesa.
-AXON7_GPU ?= swiftshader
+AXON7_GPU ?= mesa
 PRODUCT_PACKAGES += \
     com.android.hardware.graphics.composer.drm_hwcomposer \
     android.hardware.graphics.allocator-service.minigbm \

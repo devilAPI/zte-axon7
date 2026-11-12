@@ -67,7 +67,7 @@ cd "$T" && . ~/.profile && ulimit -n 65536
 # developer builds (default): adb for the key in test-keys/adbkey.pub (the same
 # PC key as LineageOS 22.2's test-keys); AXON7_ADB_KEYS= for a normal build
 export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
-export AXON7_GPU=${AXON7_GPU:-swiftshader}
+export AXON7_GPU=${AXON7_GPU:-mesa}
 # /vendor/firmware from vendor/zte/axon7m-firmware (scripts/firmware-from-nura.sh)
 export AXON7_FIRMWARE=${AXON7_FIRMWARE:-1}
 [ "$AXON7_FIRMWARE" != 1 ] || [ -f "$T/vendor/zte/axon7m-firmware/qcom/a530_pm4.fw" ] || { echo "AXON7_FIRMWARE=1 but no $T/vendor/zte/axon7m-firmware: run scripts/firmware-from-nura.sh"; exit 1; }
