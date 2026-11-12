@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=22
+pkgrel=23
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -62,6 +62,8 @@ source="
 	axon7-sensors.conf
 	axon7-wifi-rescan
 	axon7-wifi-rescan.service
+	axon7-audio-kick
+	axon7-audio-kick.service
 	61-axon7-sensors.rules
 	"
 
@@ -107,6 +109,8 @@ package() {
 	# Wi-Fi: rescan PCIe when the link came up after the driver gave up
 	install -Dm755 "$srcdir"/axon7-wifi-rescan "$pkgdir"/usr/libexec/axon7-wifi-rescan
 	install -Dm644 "$srcdir"/axon7-wifi-rescan.service "$pkgdir"/usr/lib/systemd/system/axon7-wifi-rescan.service
+	install -Dm755 "$srcdir"/axon7-audio-kick "$pkgdir"/usr/libexec/axon7-audio-kick
+	install -Dm644 "$srcdir"/axon7-audio-kick.service "$pkgdir"/usr/lib/systemd/system/axon7-audio-kick.service
 	install -Dm755 "$srcdir"/axon7-gps "$pkgdir"/usr/bin/axon7-gps
 	# audio: UCM, speakers and microphone (AK4961, TFA9890) and the Hi-Fi DAC on the jack (card "ZTE Axon 7")
 	install -Dm644 "$srcdir"/ucm-zte-axon7.conf "$pkgdir/usr/share/alsa/ucm2/conf.d/apq8096/ZTE Axon 7.conf"
@@ -130,7 +134,7 @@ cf4153b45cf3254b9085f6d19cdcc710a65d622f0020f24ead1c25da356ca2aa3f597ccf9104361f
 d26ea20b2477eae37500f30c2843d980d4363a0a5ab2dab00b1133890088754765a31913af325eb4d937637fadbc2415d690c40cf335b9f2a0bdb3010a12eaaf  axon7-tripleboot-gpt
 ff013477448430d39343516f17d5b2fdae60c4cf8473f34ad3a7808c73453349684548d8ef8a1be194afe3f6c9ef78ea071e8849fdaf31a049cbd294122c85bd  axon7-dualboot.initd
 0faa1c586fe4a7d18bad58ed722fb698c59c6c5b52d655c9f37368d992a52c8f5d7d94332c76836266f717d0b8c43364b4fc46b4260527b71328279b12def7e4  axon7-dualboot.service
-664ec205a6a8d9bd8e5fb74435684b466e5ab8f5ace1386a65237ae2d45099eee0a32dd97c5dbf6f5d0a2d9a06f251fb16d328991c7efb54bae2c56ea625fdb4  80-axon7-dualboot.preset
+1b62f85a97327eb24f8faf0b821a9859a9d89a0fb82e55862bf9233b509c0e14feb2b8a736002d5fc8d2c02a0c9611344ce9d95fc0d9dd290bc4ed0b5e562018  80-axon7-dualboot.preset
 5de1e80a080e1e28b6445b34b9e5a70f808ef071798f874f6ccaaeb9b8ab52a9aa825c612a71fcf07a725a0d86b53a2250d3f24d3b474ca73987c0a19bd37421  buffyboard-zte-axon7.conf
 351048adabfaf26fbbbfb52c054ee1498ac7dc8e7e2257a4a1d96294d914e47d927c56ca86ae7901614a712e7b1fbf0e039eb7a2ebbc07c617fb55d3ca0f5b4b  buffyboard.service
 b2fa4ae2b7d54f9fcad9de1b71a5e08fb56c1552eeaae5d826bdd005d66b9702d8d6397645c5e00a6ed4eb9b4954c9d24a66cb9bdc8646e968455236d91d8576  axon7-console
@@ -154,5 +158,7 @@ f4ac20573950dc34d4d181347351c3add94cb9adaa43a469108ec8a7109a751ae664097da3d70b31
 f90b8cfc5db97fb49a7c3519a73b34c72e6355600fa3a1d07a890f398e9bea26d68f66f26ac2dafd0ede643fe72f630aab821d4da1701522a9692bdf8dc0206a  axon7-sensors.conf
 468c6fd93ef674c2614336316e4cce583310a83123077865ad42447c47ba209af0f4f1681b03973f4e8e2211b1441963915ae732e6ab6f35da19bade4a86265e  axon7-wifi-rescan
 d72af6975d658f6241a39b783ce0a397af7c9fe21909baa12363ebb2c716a2739618928d4ba532d7ecdd5f24921f9e88c174eaa38a1db740d437d5570c6de6d2  axon7-wifi-rescan.service
+892c5ab68d6d16c99b31c6dc92372060c9753ea877cff2ce7ec9c102c77d8648bb8b0cc80b4f47651ae3f99c7a4bcc12ca7157bf850bf83ecec556ce7f2eadbd  axon7-audio-kick
+92afe7c053e8c93d252581fb88c54e0a4c6029b6aebf0044e7ddf4b3dc0d139b872ad7502872a1180e78bbbf44acd5303c19b0e277f591eeec434a180e4b79ef  axon7-audio-kick.service
 c91ff6cd3110f2cb8b40f2c6682b71945e89b89f3a5c4d29f4710495dec19b8f53467ca9ff6d0da36d3433655dd9a17017a103065d9473db6e0faa99c915faf4  61-axon7-sensors.rules
 "

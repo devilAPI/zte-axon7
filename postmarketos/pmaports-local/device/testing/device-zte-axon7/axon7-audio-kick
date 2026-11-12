@@ -1,0 +1,31 @@
+#!/bin/sh
+# On some boots the SLIMbus controller never gets the ADSP's "master
+# capability" message: no AK4961 codec, no sound card. A restart of the
+# ADSP brings it back (seen 2026-11-12). Wait for the card, restart the
+# ADSP at most twice.
+card() { grep -q "ZTE Axon 7" /proc/asound/cards 2>/dev/null; }
+adsp=
+for r in /sys/class/remoteproc/remoteproc*; do
+	[ "$(cat "$r/name" 2>/dev/null)" = adsp ] && adsp=$r
+done
+[ -n "$adsp" ] || { echo "axon7-audio-kick: no ADSP remoteproc" >&2; exit 1; }
+for attempt in 0 1 2; do
+	i=0
+	while [ $i -lt 45 ]; do
+		if card; then
+			[ $attempt -gt 0 ] && echo "axon7-audio-kick: sound card after $attempt ADSP restart(s)"
+			exit 0
+		fi
+		sleep 1
+		i=$((i + 1))
+	done
+	[ $attempt = 2 ] && break
+	echo "axon7-audio-kick: no sound card after 45 s, restarting the ADSP"
+	if [ "$(cat "$adsp/state")" = running ]; then
+		echo stop > "$adsp/state"
+		sleep 2
+	fi
+	echo start > "$adsp/state"
+done
+echo "axon7-audio-kick: still no sound card" >&2
+exit 1

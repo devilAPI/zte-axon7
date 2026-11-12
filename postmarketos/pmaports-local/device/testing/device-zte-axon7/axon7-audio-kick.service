@@ -1,0 +1,11 @@
+[Unit]
+Description=Axon 7: restart the ADSP when the sound card does not appear
+After=systemd-udevd.service axon7-firmware.service
+
+[Service]
+# simple, not oneshot: waiting for the card must not hold up the boot
+Type=simple
+ExecStart=/usr/libexec/axon7-audio-kick
+
+[Install]
+WantedBy=multi-user.target

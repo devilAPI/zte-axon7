@@ -6,3 +6,4 @@ enable axon7-firmware.service
 enable axon7-modem.service
 enable axon7-sns-reg.service
 enable axon7-wifi-rescan.service
+enable axon7-audio-kick.service

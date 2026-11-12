@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-11 (touch keys, headset detection)
+Last update: 2026-11-12 (sound card after a cold start)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -82,6 +82,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-12"]
+[LIST]
+[*]Sound: on some starts the sound card did not appear at all (no speaker, no microphone until a reboot). Nura now notices that within a minute after start and restarts the audio processor, which brings the card back.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-11"]
 [LIST]
 [*]Touch keys: the three keys under the screen now work as Back, Home and App switch (they are part of the touchscreen; the kernel had their driver switched off). Please confirm they react. Their backlight stays off for now.
