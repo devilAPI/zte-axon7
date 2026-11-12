@@ -11,3 +11,8 @@ modalias_handling enabled
 /dev/rfkill               0660   bluetooth  bluetooth
 /dev/ttyMSM1              0660   bluetooth  bluetooth
 /dev/snd/*                0660   system     audio
+
+# backlight for drm_hwcomposer (system): brightness slider, screen off
+# (it failed with EACCES, LOS 24 run 27p)
+/sys/class/backlight/*  brightness  0664  system  system
+/sys/class/backlight/*  bl_power    0664  system  system
