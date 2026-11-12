@@ -1,0 +1,6 @@
+// framework-res overrides for the Axon 7: the headset jack reports through
+// an input device (SW_HEADPHONE_INSERT, SW_MICROPHONE_INSERT), not h2w
+runtime_resource_overlay {
+    name: "FrameworksResAxon7m",
+    vendor: true,
+}

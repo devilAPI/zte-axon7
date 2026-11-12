@@ -18,6 +18,7 @@
 <module name="primary" halVersion="3.0">
     <attachedDevices>
         <item>Speaker</item>
+        <item>Earpiece</item>
         <item>Built-In Mic</item>
         <item>Telephony Tx</item>
         <item>Telephony Rx</item>
@@ -77,6 +78,14 @@
    <devicePorts>
         <devicePort tagName="Speaker" type="AUDIO_DEVICE_OUT_SPEAKER" role="sink" address="CARD_0_DEV_1">
         </devicePort>
+        <devicePort tagName="Earpiece" type="AUDIO_DEVICE_OUT_EARPIECE" role="sink" address="earpiece_CARD_0_DEV_1">
+        </devicePort>
+        <!-- wired: the jack's input events (config_useDevInputEventForAudioJack);
+             the HAL takes their ALSA device from ro.vendor.audio.tinyalsa.default_*_address -->
+        <devicePort tagName="Wired Headset" type="AUDIO_DEVICE_OUT_WIRED_HEADSET" role="sink">
+        </devicePort>
+        <devicePort tagName="Wired Headphones" type="AUDIO_DEVICE_OUT_WIRED_HEADPHONE" role="sink">
+        </devicePort>
         <devicePort tagName="Telephony Tx" type="AUDIO_DEVICE_OUT_TELEPHONY_TX" role="sink">
             <gains>
                 <gain defaultValueMB="0" maxValueMB="4000" minValueMB="-8800" mode="AUDIO_GAIN_MODE_JOINT" name="" stepValueMB="100" useForVolume="false" />
@@ -84,6 +93,8 @@
         </devicePort>
 
         <devicePort tagName="Built-In Mic" type="AUDIO_DEVICE_IN_BUILTIN_MIC" address="CARD_0_DEV_0" role="source">
+        </devicePort>
+        <devicePort tagName="Wired Headset Mic" type="AUDIO_DEVICE_IN_WIRED_HEADSET" role="source">
         </devicePort>
         <devicePort tagName="Telephony Rx" type="AUDIO_DEVICE_IN_TELEPHONY_RX" role="source">
         </devicePort>
@@ -94,8 +105,14 @@
     <routes>
         <route type="mix" sink="Speaker"
                sources="primary output,compressed_offload,mmap_no_irq_out"/>
+        <route type="mix" sink="Earpiece"
+               sources="primary output"/>
+        <route type="mix" sink="Wired Headset"
+               sources="primary output"/>
+        <route type="mix" sink="Wired Headphones"
+               sources="primary output"/>
         <route type="mix" sink="primary input"
-               sources="Built-In Mic"/>
+               sources="Built-In Mic,Wired Headset Mic"/>
         <route type="mix" sink="mmap_no_irq_in"
                sources="Built-In Mic"/>
 

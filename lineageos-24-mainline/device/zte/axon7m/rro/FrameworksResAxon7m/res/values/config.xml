@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- "ZTE Axon 7 Headset Jack" (ASoC jack on the AK4961): input switch events -->
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+</resources>

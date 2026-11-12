@@ -98,6 +98,13 @@ PRODUCT_COPY_FILES += \
 # buffers to 4 periods of 480-frame steps (85 ms at 48 kHz -> 3840 frames,
 # periods of 960). Without it: "cannot set hw params" (M1a run 22h).
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.audio.tinyalsa.period_step_frames=480
+# mixer routes per device (hardware/interfaces patch 0002); wired devices
+# play on MultiMedia2 and record on MultiMedia1 like the built-in ones
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.vendor.audio.tinyalsa.routes=/vendor/etc/audio_routes.conf \
+    ro.vendor.audio.tinyalsa.default_out_address=CARD_0_DEV_1 \
+    ro.vendor.audio.tinyalsa.default_in_address=CARD_0_DEV_0
+PRODUCT_PACKAGES += FrameworksResAxon7m
 # tinymix for the mixer routes (vendor variant of external/tinyalsa)
 PRODUCT_PACKAGES += tinymix.vendor tinycap.vendor
 # AXON7_SPEAKER_MUTE=1: speaker switches stay off (unattended test boots in
@@ -105,6 +112,9 @@ PRODUCT_PACKAGES += tinymix.vendor tinycap.vendor
 AXON7_SPEAKER_MUTE ?= 0
 ifeq ($(AXON7_SPEAKER_MUTE),1)
 PRODUCT_VENDOR_PROPERTIES += ro.vendor.axon7m.speaker_mute=1
+PRODUCT_COPY_FILES += $(DEVICE_PATH)/audio/audio_routes_muted.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_routes.conf
+else
+PRODUCT_COPY_FILES += $(DEVICE_PATH)/audio/audio_routes.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_routes.conf
 endif
 
 # Keep the system awake: suspend is broken on msm8996 mainline (PLAN.md)

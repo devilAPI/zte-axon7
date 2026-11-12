@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.lineageos.overlay.axon7m.frameworkres">
+    <overlay android:targetPackage="android"
+        android:isStatic="true"
+        android:priority="0" />
+</manifest>

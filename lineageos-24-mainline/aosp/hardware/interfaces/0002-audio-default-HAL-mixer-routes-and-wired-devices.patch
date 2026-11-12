@@ -1,0 +1,226 @@
+From: axon7m bring-up
+Subject: [PATCH] audio: default HAL: mixer routes and wired devices on the primary card
+
+- StreamPrimary sets the card's mixer for the connected device from the
+  file named by ro.vendor.audio.tinyalsa.routes ([speaker], [earpiece],
+  [headphones], [mic], [headset-mic]; "control = value" lines).
+- Devices without a CARD_x_DEV_y address (wired headsets, named by the
+  framework) use ro.vendor.audio.tinyalsa.default_{in,out}_address.
+- ModulePrimary accepts analog (wired) device connections; the stock
+  Module refuses external devices unless the module overrides
+  populateConnectedDevicePort.
+---
+diff --color -ruN a/audio/aidl/default/include/core-impl/ModulePrimary.h b/audio/aidl/default/include/core-impl/ModulePrimary.h
+--- a/audio/aidl/default/include/core-impl/ModulePrimary.h	2026-11-10 00:06:44.000000000 +0100
++++ b/audio/aidl/default/include/core-impl/ModulePrimary.h	2026-11-12 11:23:42.050205665 +0100
+@@ -52,6 +52,9 @@
+             int32_t bufferSizeFrames, int32_t frameSizeBytes, MmapBufferDescriptor* desc) override;
+     int32_t getNominalLatencyMs(
+             const ::aidl::android::media::audio::common::AudioPortConfig& portConfig) override;
++    ndk::ScopedAStatus populateConnectedDevicePort(
++            ::aidl::android::media::audio::common::AudioPort* audioPort,
++            int32_t nextPortId) override;
+ 
+   private:
+     ChildInterface<ITelephony> mTelephony;
+diff --color -ruN a/audio/aidl/default/include/core-impl/StreamPrimary.h b/audio/aidl/default/include/core-impl/StreamPrimary.h
+--- a/audio/aidl/default/include/core-impl/StreamPrimary.h	2026-11-10 00:06:44.000000000 +0100
++++ b/audio/aidl/default/include/core-impl/StreamPrimary.h	2026-11-12 11:23:42.050326134 +0100
+@@ -64,6 +64,7 @@
+             primary::PrimaryMixer::kInvalidAlsaCard, primary::PrimaryMixer::kInvalidAlsaDevice};
+ 
+     static AlsaDeviceId getCardAndDeviceId(
++            bool isInput,
+             const std::vector<::aidl::android::media::audio::common::AudioDevice>& devices);
+     static bool useStubStream(bool isInput,
+                               const ::aidl::android::media::audio::common::AudioDevice& device);
+diff --color -ruN a/audio/aidl/default/ModulePrimary.cpp b/audio/aidl/default/ModulePrimary.cpp
+--- a/audio/aidl/default/ModulePrimary.cpp	2026-11-12 04:21:55.000000000 +0100
++++ b/audio/aidl/default/ModulePrimary.cpp	2026-11-12 11:23:42.050276020 +0100
+@@ -177,6 +177,21 @@
+     return hasMmapFlag(portConfig.flags.value()) ? kLowLatencyMs : kStandardLatencyMs;
+ }
+ 
++// Analog devices (wired headset, headphones) on the primary card: their
++// streams are routed by the mixer (StreamPrimary), the template's profiles
++// stay as they are (the mix ports have static profiles).
++ndk::ScopedAStatus ModulePrimary::populateConnectedDevicePort(AudioPort* audioPort,
++                                                              int32_t nextPortId) {
++    if (audioPort->ext.getTag() == AudioPortExt::device &&
++        audioPort->ext.get<AudioPortExt::device>().device.type.connection ==
++                ::aidl::android::media::audio::common::AudioDeviceDescription::CONNECTION_ANALOG) {
++        LOG(DEBUG) << __func__ << ": analog device, static routing: "
++                   << audioPort->ext.get<AudioPortExt::device>().device.toString();
++        return ndk::ScopedAStatus::ok();
++    }
++    return Module::populateConnectedDevicePort(audioPort, nextPortId);
++}
++
+ ndk::ScopedAStatus ModulePrimary::getFlushFromFrameSupport(const AudioPortConfig& in_config,
+                                                            FlushFromFrameSupport* _aidl_return) {
+     LOG(DEBUG) << __func__ << ": config=" << in_config.toString();
+diff --color -ruN a/audio/aidl/default/primary/StreamPrimary.cpp b/audio/aidl/default/primary/StreamPrimary.cpp
+--- a/audio/aidl/default/primary/StreamPrimary.cpp	2026-11-10 00:06:44.000000000 +0100
++++ b/audio/aidl/default/primary/StreamPrimary.cpp	2026-11-12 11:23:52.071449451 +0100
+@@ -17,6 +17,12 @@
+ #define LOG_TAG "AHAL_StreamPrimary"
+ 
+ #include <cstdio>
++#include <cstdlib>
++#include <fstream>
++#include <map>
++#include <string>
++#include <utility>
++#include <vector>
+ 
+ #include <Log.h>
+ #include <android-base/parseint.h>
+@@ -27,6 +33,8 @@
+ 
+ #include "core-impl/StreamPrimary.h"
+ 
++#include <tinyalsa/mixer.h>
++
+ using aidl::android::hardware::audio::common::SinkMetadata;
+ using aidl::android::hardware::audio::common::SourceMetadata;
+ using aidl::android::media::audio::common::AudioDevice;
+@@ -36,9 +44,107 @@
+ using aidl::android::media::audio::common::AudioOffloadInfo;
+ using aidl::android::media::audio::common::MicrophoneInfo;
+ using android::base::GetBoolProperty;
++using android::base::GetProperty;
+ 
+ namespace aidl::android::hardware::audio::core {
+ 
++namespace {
++
++// Mixer routes for the primary card, from the file named by
++// ro.vendor.audio.tinyalsa.routes:
++//   [route]                 speaker, earpiece, headphones, mic, headset-mic
++//   control name = value    enum by name; on/off or a number otherwise
++// Each route sets the whole state it needs (no disable sequences).
++using Route = std::vector<std::pair<std::string, std::string>>;
++
++std::string trim(const std::string& s) {
++    const auto b = s.find_first_not_of(" \t\r");
++    if (b == std::string::npos) return "";
++    return s.substr(b, s.find_last_not_of(" \t\r") - b + 1);
++}
++
++const std::map<std::string, Route>& mixerRoutes() {
++    static const std::map<std::string, Route> kRoutes = [] {
++        std::map<std::string, Route> routes;
++        const std::string path = GetProperty("ro.vendor.audio.tinyalsa.routes", "");
++        if (path.empty()) return routes;
++        std::ifstream file(path);
++        std::string line, current;
++        while (std::getline(file, line)) {
++            line = trim(line);
++            if (line.empty() || line[0] == '#') continue;
++            if (line.front() == '[' && line.back() == ']') {
++                current = trim(line.substr(1, line.size() - 2));
++                routes[current];
++                continue;
++            }
++            const auto eq = line.find('=');
++            if (current.empty() || eq == std::string::npos) continue;
++            routes[current].emplace_back(trim(line.substr(0, eq)), trim(line.substr(eq + 1)));
++        }
++        LOG(INFO) << "mixerRoutes: " << routes.size() << " routes from " << path;
++        return routes;
++    }();
++    return kRoutes;
++}
++
++const char* routeName(const AudioDevice& device) {
++    switch (device.type.type) {
++        case AudioDeviceType::OUT_SPEAKER:
++            return "speaker";
++        case AudioDeviceType::OUT_SPEAKER_EARPIECE:
++            return "earpiece";
++        case AudioDeviceType::OUT_HEADSET:
++        case AudioDeviceType::OUT_HEADPHONE:
++            return "headphones";
++        case AudioDeviceType::IN_MICROPHONE:
++            return "mic";
++        case AudioDeviceType::IN_HEADSET:
++            return "headset-mic";
++        default:
++            return nullptr;
++    }
++}
++
++void applyMixerRoute(int card, const AudioDevice& device) {
++    const char* name = routeName(device);
++    if (name == nullptr) return;
++    const auto it = mixerRoutes().find(name);
++    if (it == mixerRoutes().end()) return;
++    struct mixer* mixer = mixer_open(card);
++    if (mixer == nullptr) {
++        LOG(ERROR) << __func__ << ": cannot open the mixer of card " << card;
++        return;
++    }
++    int failed = 0;
++    for (const auto& [control, value] : it->second) {
++        struct mixer_ctl* ctl = mixer_get_ctl_by_name(mixer, control.c_str());
++        if (ctl == nullptr) {
++            LOG(WARNING) << __func__ << ": no control '" << control << "'";
++            failed++;
++            continue;
++        }
++        int ret = 0;
++        if (mixer_ctl_get_type(ctl) == MIXER_CTL_TYPE_ENUM) {
++            ret = mixer_ctl_set_enum_by_string(ctl, value.c_str());
++        } else {
++            const int v = value == "on" ? 1 : value == "off" ? 0 : atoi(value.c_str());
++            for (unsigned i = 0; i < mixer_ctl_get_num_values(ctl); i++) {
++                ret |= mixer_ctl_set_value(ctl, i, v);
++            }
++        }
++        if (ret != 0) {
++            LOG(WARNING) << __func__ << ": '" << control << "' = '" << value << "' failed";
++            failed++;
++        }
++    }
++    mixer_close(mixer);
++    LOG(INFO) << __func__ << ": card " << card << " route " << name << " ("
++              << it->second.size() << " controls, " << failed << " failed)";
++}
++
++}  // namespace
++
+ StreamPrimary::StreamPrimary(StreamContext* context, const Metadata& metadata)
+     : StreamAlsaMonoPipe(context, metadata, 3 /*readWriteRetries*/),
+       mIsAsynchronous(!!getContext().getAsyncCallback()),
+@@ -151,7 +257,8 @@
+     {
+         const bool useStubDriver = devices.empty() || useStubStream(mIsInput, devices[0]);
+         std::lock_guard l(mLock);
+-        mAlsaDeviceId = useStubDriver ? kStubDeviceId : getCardAndDeviceId(devices);
++        mAlsaDeviceId = useStubDriver ? kStubDeviceId : getCardAndDeviceId(mIsInput, devices);
++        if (!useStubDriver) applyMixerRoute(mAlsaDeviceId.first, devices[0]);
+     }
+     if (!devices.empty()) {
+         auto streamDataProcessor = getContext().getStreamDataProcessor().lock();
+@@ -176,11 +283,17 @@
+ 
+ // static
+ StreamPrimary::AlsaDeviceId StreamPrimary::getCardAndDeviceId(
+-        const std::vector<AudioDevice>& devices) {
+-    if (devices.empty() || devices[0].address.getTag() != AudioDeviceAddress::id) {
+-        return kDefaultCardAndDeviceId;
++        bool isInput, const std::vector<AudioDevice>& devices) {
++    // Devices without a CARD_x_DEV_y address (wired headsets: the framework
++    // names them) use ro.vendor.audio.tinyalsa.default_{in,out}_address.
++    std::string deviceAddress =
++            GetProperty(isInput ? "ro.vendor.audio.tinyalsa.default_in_address"
++                                : "ro.vendor.audio.tinyalsa.default_out_address",
++                        "");
++    if (!devices.empty() && devices[0].address.getTag() == AudioDeviceAddress::id &&
++        devices[0].address.get<AudioDeviceAddress::id>().rfind("CARD_") != std::string::npos) {
++        deviceAddress = devices[0].address.get<AudioDeviceAddress::id>();
+     }
+-    std::string deviceAddress = devices[0].address.get<AudioDeviceAddress::id>();
+     AlsaDeviceId cardAndDeviceId;
+     if (const size_t suffixPos = deviceAddress.rfind("CARD_");
+         suffixPos == std::string::npos ||
