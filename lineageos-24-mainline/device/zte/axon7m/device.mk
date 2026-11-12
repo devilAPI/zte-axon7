@@ -91,6 +91,11 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/bin/axon7m-bootguard.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bootguard.sh \
     $(DEVICE_PATH)/bin/axon7m-bdaddr.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bdaddr.sh \
     $(DEVICE_PATH)/bin/axon7m-audio-routes.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-audio-routes.sh
+# q6asm takes period sizes in steps of 480 frames only (capture periods up to
+# 4096 bytes): with aosp/hardware/interfaces 0001 the AIDL HAL rounds its PCM
+# buffers to 4 periods of 480-frame steps (85 ms at 48 kHz -> 3840 frames,
+# periods of 960). Without it: "cannot set hw params" (M1a run 22h).
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.audio.tinyalsa.period_step_frames=480
 # tinymix for the mixer routes (vendor variant of external/tinyalsa)
 PRODUCT_PACKAGES += tinymix.vendor tinycap.vendor
 # AXON7_SPEAKER_MUTE=1: speaker switches stay off (unattended test boots in

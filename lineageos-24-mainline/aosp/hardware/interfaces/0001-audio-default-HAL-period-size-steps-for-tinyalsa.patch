@@ -1,0 +1,51 @@
+From: axon7m
+Subject: [PATCH] audio: default HAL: period size steps for tinyalsa (q6asm)
+
+ro.vendor.audio.tinyalsa.period_step_frames rounds PCM buffers to whole
+periods of that many frames: Qualcomm q6asm accepts only multiples of 480,
+the 4096-frame default gave 1024-frame periods and "cannot set hw params"
+(LineageOS 24 on the ZTE Axon 7, M1a run 22h).
+---
+--- a/audio/aidl/default/ModulePrimary.cpp
++++ b/audio/aidl/default/ModulePrimary.cpp
+@@ -14,10 +14,12 @@
+  * limitations under the License.
+  */
+ 
++#include <algorithm>
+ #include <vector>
+ 
+ #define LOG_TAG "AHAL_ModulePrimary"
+ #include <Log.h>
++#include <android-base/properties.h>
+ #include <Utils.h>
+ 
+ #include "core-impl/Configuration.h"
+@@ -65,8 +67,25 @@
+         *bufferSizeFrames = sampleRateHz / 2;  // 1/2 of a second.
+         return ndk::ScopedAStatus::ok();
+     }
+-    return Module::calculateBufferSizeFrames(format, flags, latencyMs, sampleRateHz,
+-                                             bufferSizeFrames);
++    if (auto status = Module::calculateBufferSizeFrames(format, flags, latencyMs, sampleRateHz,
++                                                        bufferSizeFrames);
++        !status.isOk()) {
++        return status;
++    }
++    // Some ALSA drivers accept only period sizes in fixed steps (Qualcomm q6asm:
++    // multiples of 480 frames). The tinyalsa proxy uses buffer / period_count
++    // frames per period, so round the buffer to whole steps per period.
++    static const int32_t kStep =
++            ::android::base::GetIntProperty("ro.vendor.audio.tinyalsa.period_step_frames", 0);
++    if (kStep > 0 && format.type == ::aidl::android::media::audio::common::AudioFormatType::PCM) {
++        static const int32_t kPeriods = std::max(
++                1, ::android::base::GetIntProperty("ro.hardware.audio.tinyalsa.period_count", 4));
++        const int32_t unit = kStep * kPeriods;
++        const int32_t raw = aidl::android::hardware::audio::common::frameCountFromDurationMs(
++                latencyMs, sampleRateHz);
++        *bufferSizeFrames = std::max(1, (raw + unit / 2) / unit) * unit;
++    }
++    return ndk::ScopedAStatus::ok();
+ }
+ 
+ ndk::ScopedAStatus ModulePrimary::createInputStream(StreamContext&& context,
