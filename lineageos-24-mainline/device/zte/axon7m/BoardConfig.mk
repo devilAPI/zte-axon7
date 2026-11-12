@@ -108,7 +108,11 @@ TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 
 DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/manifest.xml
 
-# Wi-Fi: ath10k through cfg80211/nl80211, no vendor Wi-Fi HAL library
+# Wi-Fi: ath10k through cfg80211/nl80211. Legacy Wi-Fi HAL: the generic
+# nl80211 one from goldfish (libwifi-hal-emu, wlan0/wlan1); without one the
+# AIDL Wi-Fi service fails ("Can not initialize the vendor function pointer
+# table", M1a run 17).
+BOARD_WLAN_DEVICE := emulator
 WPA_SUPPLICANT_VERSION := VER_0_8_X
 BOARD_WPA_SUPPLICANT_DRIVER := NL80211
 BOARD_HOSTAPD_DRIVER := NL80211
