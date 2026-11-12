@@ -62,7 +62,13 @@ PRODUCT_PACKAGES += \
     libEGL_mesa.axon7m \
     libGLESv2_mesa.axon7m \
     libgallium_dri.axon7m
-PRODUCT_VENDOR_PROPERTIES += ro.hardware.egl=mesa
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.hardware.egl=mesa \
+    debug.renderengine.backend=skiagl
+# skiagl: SurfaceFlinger's default threaded Skia RenderEngine on freedreno
+# composed black (first boot) or striped garbage (after a restart) whenever
+# the GPU composed (client composition, screencap); the plain one is
+# correct (M1a run 18h, checked by dumping the scanned-out DRM planes).
 else
 PRODUCT_PACKAGES += \
     libEGL_angle libGLESv1_CM_angle libGLESv2_angle \
