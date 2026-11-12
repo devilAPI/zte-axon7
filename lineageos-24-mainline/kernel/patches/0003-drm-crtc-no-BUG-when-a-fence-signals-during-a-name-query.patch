@@ -1,0 +1,32 @@
+From: axon7m bring-up
+Subject: [PATCH] drm/crtc: no BUG when a CRTC fence signals during a name query
+
+dma_fence_signal_locked() sets fence->ops to NULL for fences that have
+neither release nor wait, which includes drm_crtc_fence_ops.
+dma_fence_driver_name() checks "not signalled and ops set" and then calls
+drm_crtc_fence_get_driver_name(); when the vblank interrupt signals the
+fence on another CPU in between, fence_to_crtc() reads ops again, finds
+NULL and hits its BUG_ON. Android's HWUI asks for fence names through
+SYNC_IOC_FILE_INFO all the time: kernel panic in RenderThread
+(drm_crtc.c:161, LineageOS 24 run 25, 2026-11-12). The CRTC is still
+reachable through the fence's lock pointer, so only warn on a foreign ops.
+---
+--- a/drivers/gpu/drm/drm_crtc.c	2026-11-12 10:41:18.226999396 +0100
++++ b/drivers/gpu/drm/drm_crtc.c	2026-11-12 10:41:18.296702973 +0100
+@@ -158,7 +158,15 @@
+ 
+ static struct drm_crtc *fence_to_crtc(struct dma_fence *fence)
+ {
+-	BUG_ON(rcu_access_pointer(fence->ops) != &drm_crtc_fence_ops);
++	const struct dma_fence_ops *ops = rcu_access_pointer(fence->ops);
++
++	/*
++	 * dma_fence_signal_locked() sets ops to NULL for fences without
++	 * release and wait, like these: a name query that saw the fence
++	 * unsignalled can get here after a vblank signalled it on another
++	 * CPU. The lock pointer is still the CRTC's.
++	 */
++	WARN_ON_ONCE(ops && ops != &drm_crtc_fence_ops);
+ 	return container_of(fence->extern_lock, struct drm_crtc, fence_lock);
+ }
+ 
