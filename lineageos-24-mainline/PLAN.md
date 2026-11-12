@@ -522,15 +522,16 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
 | Bluetooth address | `device/zte/axon7m/bdaddr/` | dragonboard's `bdaddr` + `--nv` for ZTE's `persist/.bt_nv.bin` (host-tested parser), persist mounted `ro,noload` |
 | M1a runs 1-14b (2026-11-11) | `ios/logs/los24-m1a-N-*` (pstore console, logcat, getprop, screenshot), images `research/los24-build-N` on the PC | **setup wizard reached** in run 14b. Fixes on the way: stale fstab from rsync -a (--checksum syncs), modules.load = the 81 Nura modules, debuggable userdebug (`LINEAGE_DEBUGGABLE_USERDEBUG`), kernel patch 0002 (PID 1 fs_struct), boot guard (recovery after 240 s without adbd), software KeyMint, minigbm `nocompression`, example AIDL audio HAL with a policy file naming default/r_submix/bluetooth modules, 4 GB dalvik heap. Each build ~16 min, each test ~10 min (delta flash) |
 | Firmware (M2) | `vendor/zte/axon7m-firmware` in the server tree (`scripts/firmware-from-nura.sh`, 15 files, not in git) | build 15 is the first with `AXON7_FIRMWARE=1` (remoteprocs, a530, ath10k, QCA BT rampatch, regulatory.db) |
+| M1b/M2 runs 15-18 (2026-11-11/12) | `ios/logs/los24-m1a-N-*` | firmware on (15: ADSP, BT rampatch/NVM), Mesa freedreno FD530 GLES 3.1 (16; panel garbled until `nocompression` also applied to Mesa, 17: MDP5 scans out linear only; no ANRs), Wi-Fi scans (18: PCIe rescan + goldfish `libwifi-hal-emu` via `BOARD_WLAN_DEVICE := emulator`), Bluetooth on. Developer builds run adbd as root. Open: adb screenshots black with Mesa, panel picture not yet confirmed |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
 
 Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/build-after.log /srv/los24/logs/build-latest.log'`.
 `build-latest.log` points at the queued rebuild once it starts.
 
-Next steps (2026-11-11 evening): firmware in /vendor (build 15; the BT
-stack's crash loop is the unpatched QCA ROM: rampatch missing), then
-M1b with `AXON7_GPU=mesa` (the SwiftShader UI is too slow: SystemUI ANRs,
-91 s shader cache), then Wi-Fi/BT HALs (M2) and audio (M3). All phone tests
+Next steps (2026-11-12): make Mesa the default once the panel picture is
+confirmed (adb screencap returns black with Mesa), Wi-Fi association test,
+audio (M3; audible tests only 17:30-03:00), SELinux policy for the
+firmware/DRM/minigbm denials, modem (rmtfs/qrtr) and sensors. All phone tests
 run unattended (`ios/tools/axon7-los-test.sh`, `LOS_SETTLE`).
 
 ## 10. Sources
