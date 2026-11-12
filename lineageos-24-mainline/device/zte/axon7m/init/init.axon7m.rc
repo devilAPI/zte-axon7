@@ -32,6 +32,7 @@ on post-fs-data
 on boot
     # suspend is broken on msm8996 mainline: keep one wakelock (PLAN.md, M4)
     write /sys/power/wake_lock axon7m-nosuspend
+    start axon7m-audio-routes
 
 # Qualcomm remote filesystem for the modem's EFS (modemst1/2, fsg), QRTR name
 # service, TFTP for the modem: from linux-msm userspace, added in M4/M7.
@@ -50,6 +51,14 @@ service axon7m-bootguard /vendor/bin/axon7m-bootguard.sh
     class core
     user root
     group root
+    seclabel u:r:vendor_modprobe:s0
+    oneshot
+    disabled
+
+# ALSA mixer routes (speaker, built-in mic) once the sound card is up
+service axon7m-audio-routes /vendor/bin/axon7m-audio-routes.sh
+    user root
+    group root audio
     seclabel u:r:vendor_modprobe:s0
     oneshot
     disabled

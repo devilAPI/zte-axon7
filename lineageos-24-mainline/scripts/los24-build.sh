@@ -68,10 +68,11 @@ cd "$T" && . ~/.profile && ulimit -n 65536
 # PC key as LineageOS 22.2's test-keys); AXON7_ADB_KEYS= for a normal build
 export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
 export AXON7_GPU=${AXON7_GPU:-mesa}
+export AXON7_SPEAKER_MUTE=${AXON7_SPEAKER_MUTE:-0}
 # /vendor/firmware from vendor/zte/axon7m-firmware (scripts/firmware-from-nura.sh)
 export AXON7_FIRMWARE=${AXON7_FIRMWARE:-1}
 [ "$AXON7_FIRMWARE" != 1 ] || [ -f "$T/vendor/zte/axon7m-firmware/qcom/a530_pm4.fw" ] || { echo "AXON7_FIRMWARE=1 but no $T/vendor/zte/axon7m-firmware: run scripts/firmware-from-nura.sh"; exit 1; }
-echo "AXON7_GPU=$AXON7_GPU AXON7_FIRMWARE=$AXON7_FIRMWARE AXON7_ADB_KEYS=$AXON7_ADB_KEYS"
+echo "AXON7_GPU=$AXON7_GPU AXON7_FIRMWARE=$AXON7_FIRMWARE AXON7_SPEAKER_MUTE=$AXON7_SPEAKER_MUTE AXON7_ADB_KEYS=$AXON7_ADB_KEYS"
 [ -z "$AXON7_ADB_KEYS" ] || [ -r "$T/$AXON7_ADB_KEYS" ] || { echo "missing $T/$AXON7_ADB_KEYS"; exit 1; }
 export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=$(readlink -f /srv/los24/ccache)  # real path: nsjail cannot bind-mount a symlink
 mkdir -p "$CCACHE_DIR"; ccache -M 15G >/dev/null 2>&1 || true

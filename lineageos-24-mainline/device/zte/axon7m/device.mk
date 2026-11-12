@@ -89,7 +89,16 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/init/ueventd.axon7m.rc:$(TARGET_COPY_OUT_VENDOR)/etc/ueventd.rc \
     $(DEVICE_PATH)/bin/axon7m-modules.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-modules.sh \
     $(DEVICE_PATH)/bin/axon7m-bootguard.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bootguard.sh \
-    $(DEVICE_PATH)/bin/axon7m-bdaddr.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bdaddr.sh
+    $(DEVICE_PATH)/bin/axon7m-bdaddr.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bdaddr.sh \
+    $(DEVICE_PATH)/bin/axon7m-audio-routes.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-audio-routes.sh
+# tinymix for the mixer routes (vendor variant of external/tinyalsa)
+PRODUCT_PACKAGES += tinymix.vendor tinycap.vendor
+# AXON7_SPEAKER_MUTE=1: speaker switches stay off (unattended test boots in
+# the owner's quiet hours; routes and the mic are still set)
+AXON7_SPEAKER_MUTE ?= 0
+ifeq ($(AXON7_SPEAKER_MUTE),1)
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.axon7m.speaker_mute=1
+endif
 
 # Keep the system awake: suspend is broken on msm8996 mainline (PLAN.md)
 PRODUCT_VENDOR_PROPERTIES += sys.autosuspend.disabled=true
