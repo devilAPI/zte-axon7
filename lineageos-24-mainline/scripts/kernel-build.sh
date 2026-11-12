@@ -56,8 +56,17 @@ setup() {
 	cd "$KSRC"
 	git config user.name >/dev/null || git config user.name build
 	git config user.email >/dev/null || git config user.email build@compiler
-	# Nura series: applied when its subject line is not in the log yet
 	local p s
+	# our plain patches come off first: git am refuses files that differ
+	# from the index (Nura's 0025 touches msm8996.dtsi like our old 0001)
+	for p in "$OURS"/patches/*.patch; do
+		[ -e "$p" ] || continue
+		if patch -d "$KSRC" -p1 -R -s -f --dry-run < "$p" >/dev/null 2>&1; then
+			patch -d "$KSRC" -p1 -R -s < "$p"
+			echo "taken off for git am: $(basename "$p")"
+		fi
+	done
+	# Nura series: applied when its subject line is not in the log yet
 	for p in "$NURA"/00*.patch; do
 		[ -e "$p" ] || continue
 		# subject as git am would record it (folded Subject: lines joined)
