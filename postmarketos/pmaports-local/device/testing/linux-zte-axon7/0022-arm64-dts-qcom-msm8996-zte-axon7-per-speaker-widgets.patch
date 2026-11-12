@@ -1,0 +1,41 @@
+From 3aee38b778e788e2177e685732408c600f8d20e2 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 08:02:29 +0100
+Subject: [PATCH] arm64: dts: qcom: msm8996-zte-axon7: per-speaker widgets and
+ pin switches
+
+A speaker widget behind each TFA9890 output with a pin switch, so the
+bottom speaker can be switched off for earpiece use (top speaker through
+the receiver switch). Tested: earpiece mode powers the bottom amplifier
+down (status 0x085d) and the microphone level drops by 17 dB.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 401a410cf..5728a75d2 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -959,6 +959,16 @@ &sound {
+ 	compatible = "qcom,apq8096-sndcard";
+ 	model = "ZTE Axon 7";
+ 
++	/*
++	 * One widget per speaker, so each can be switched off on its own
++	 * (earpiece = top speaker through the receiver switch, bottom off).
++	 */
++	widgets = "Speaker", "Bottom Speaker",
++		  "Speaker", "Top Speaker";
++	audio-routing = "Bottom Speaker", "Speaker Bottom OUT",
++			"Top Speaker", "Speaker Top OUT";
++	pin-switches = "Bottom Speaker", "Top Speaker";
++
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&quat_mi2s_default>;
+ 
+-- 
+2.56.0
+

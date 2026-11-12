@@ -16,6 +16,7 @@
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/sound/qcom,q6asm.h>
 #include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
+#include <dt-bindings/clock/qcom,mmcc-msm8996.h>
 #include "msm8996.dtsi"
 #include "pm8994.dtsi"
 #include "pmi8994.dtsi"
@@ -125,6 +126,38 @@
 		pinctrl-0 = <&divclk4_pin_a>;
 	};
 
+	/* front camera supply switches (ZTE CAM_DVDD2 / CAM_IOVDD2) */
+	front_cam_dvdd: front-cam-dvdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_dvdd";
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		gpio = <&tlmm 24 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_l27a_1p0>;
+		startup-delay-us = <3000>;
+	};
+
+	front_cam_dovdd: front-cam-dovdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_dovdd";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		gpio = <&tlmm 25 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_lvs1a_1p8>;
+		startup-delay-us = <3000>;
+	};
+
+	rear_cam_dvdd: rear-cam-dvdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "rear_cam_dvdd";
+		gpio = <&tlmm 38 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_s3a_1p3>;
+		startup-delay-us = <1000>;
+	};
+
 	hifi_ldo: hifi-ldo-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "hifi_ldo";
@@ -134,12 +167,19 @@
 		pinctrl-0 = <&hifi_ldo_default>;
 	};
 
-	/* ZTE P996A01, 3250 mAh, float voltage 4.4 V (zte_p996a01_3250mah.dtsi) */
+	/*
+	 * ZTE P996A01, 3250 mAh, float voltage 4.4 V (zte_p996a01_3250mah.dtsi);
+	 * termination 150 mA as ZTE's smbcharger. ZTE charges with up to
+	 * 3 A together with the SMB1351 parallel charger, which has no
+	 * driver here: 2 A from the PMI8996 alone.
+	 */
 	battery: battery {
 		compatible = "simple-battery";
 		charge-full-design-microamp-hours = <3250000>;
 		voltage-min-design-microvolt = <3400000>;
 		voltage-max-design-microvolt = <4400000>;
+		constant-charge-current-max-microamp = <2000000>;
+		charge-term-current-microamp = <150000>;
 	};
 
 	gpio-keys {
@@ -747,32 +787,33 @@
 
 	/*
 	 * TFA9890 speaker amplifiers, fed by the AK4961's PORT2 (SDTO2) I2S;
-	 * resets on PMI8994 GPIO 2/3 (low = running). Left/right as ZTE's
-	 * stereo_qc_spk_l/r is not verified yet.
+	 * resets on PMI8994 GPIO 2/3 (low = running). 0x34 drives the bottom
+	 * speaker (next to the microphone), 0x35 the top one, which the
+	 * receiver switch turns into the earpiece (measured with the
+	 * microphone, 2026-11-09).
 	 */
 	speaker_l: audio-amplifier@34 {
 		compatible = "nxp,tfa9890";
 		reg = <0x34>;
 		#sound-dai-cells = <0>;
-		sound-name-prefix = "Speaker Left";
+		sound-name-prefix = "Speaker Bottom";
 		vddd-supply = <&vreg_s4a_1p8>;
-		/*
-		 * ZTE's "Receiver Switch" (PM8994 GPIO 13): routes the top
-		 * speaker as earpiece. Which amplifier is the top one is not
-		 * verified yet.
-		 */
-		rcv-gpios = <&pm8994_gpios 13 GPIO_ACTIVE_HIGH>;
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&speaker_reset_default &rcv_switch_default>;
+		pinctrl-0 = <&speaker_reset_default>;
 	};
 
 	speaker_r: audio-amplifier@35 {
 		compatible = "nxp,tfa9890";
 		reg = <0x35>;
 		#sound-dai-cells = <0>;
-		sound-name-prefix = "Speaker Right";
+		sound-name-prefix = "Speaker Top";
 		vddd-supply = <&vreg_s4a_1p8>;
+		/* ZTE's "Receiver Switch" (PM8994 GPIO 13): top speaker as earpiece */
+		rcv-gpios = <&pm8994_gpios 13 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&rcv_switch_default>;
 	};
 
 	hifi_clk: clock-generator@11 {
@@ -849,6 +890,127 @@
 	};
 };
 
+/*
+ * Front camera: OmniVision OV8856 (ZTE eeprom "common_ov8856") on CCI
+ * master 1 at 0x36 (ZTE 8-bit 0x6c), CSIPHY2, MCLK2 at 19.2 MHz; reset
+ * TLMM 23, standby TLMM 26 (held high: not in standby), supplies L29
+ * (analog 2.8 V) and the DVDD/IOVDD switches. The lane count is not
+ * known from ZTE's tree (the sensor setup is in their camera blobs).
+ */
+&cci {
+	status = "okay";
+};
+
+/*
+ * Rear camera: Samsung S5K2T8 (ZTE "s5k2t8", 8-bit address 0x5a) on CCI
+ * master 0, CSIPHY0 with 4 lanes, MCLK0 at 24 MHz; reset TLMM 30,
+ * standby TLMM 29, external DVDD LDO enabled by TLMM 38 (fed from S3).
+ * Supplies from ZTE's camera@0: vio LVS1, vana L17 2.9 V, vaf L23 2.8 V.
+ * The AK7371 focus actuator (0x0c, ZTE 8-bit 0x18) and the EEPROM (0x50)
+ * sit on the same bus.
+ */
+&cci_i2c0 {
+	rear_vcm: camera-lens@c {
+		compatible = "asahi-kasei,ak7371";
+		reg = <0x0c>;
+
+		vdd-supply = <&vreg_l23a_2p8>;
+		vio-supply = <&vreg_lvs1a_1p8>;
+	};
+
+	rear_camera: camera@2d {
+		compatible = "samsung,s5k2t8";
+		reg = <0x2d>;
+
+		clocks = <&mmcc CAMSS_MCLK0_CLK>;
+		assigned-clocks = <&mmcc CAMSS_MCLK0_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 30 GPIO_ACTIVE_LOW>;
+		standby-gpios = <&tlmm 29 GPIO_ACTIVE_LOW>;
+		vddio-supply = <&vreg_lvs1a_1p8>;
+		vdda-supply = <&vreg_l17a_2p9>;
+		vddd-supply = <&rear_cam_dvdd>;
+		afvdd-supply = <&vreg_l23a_2p8>;
+
+		orientation = <1>;
+		rotation = <90>;
+		lens-focus = <&rear_vcm>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&rear_cam_default>;
+
+		port {
+			rear_camera_out: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <834000000 498000000 300000000>;
+				remote-endpoint = <&csiphy0_in>;
+			};
+		};
+	};
+};
+
+&cci_i2c1 {
+	front_camera: camera@36 {
+		compatible = "ovti,ov8856";
+		reg = <0x36>;
+
+		clocks = <&mmcc CAMSS_MCLK2_CLK>;
+		clock-names = "xvclk";
+		assigned-clocks = <&mmcc CAMSS_MCLK2_CLK>;
+		assigned-clock-rates = <19200000>;
+
+		reset-gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
+		avdd-supply = <&vreg_l29a_2p8>;
+		dvdd-supply = <&front_cam_dvdd>;
+		dovdd-supply = <&front_cam_dovdd>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&front_cam_default>;
+
+		port {
+			front_camera_out: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <360000000 180000000>;
+				remote-endpoint = <&csiphy2_in>;
+			};
+		};
+	};
+};
+
+&camss {
+	/*
+	 * CAMSS_GDSC (parent of both VFE domains) as the top domain, linked
+	 * while CAMSS is active: the CSIPHY clocks (camss_top_ahb) are
+	 * enabled before a VFE domain is up and stayed stuck "off".
+	 */
+	power-domains = <&mmcc VFE0_GDSC>,
+			<&mmcc VFE1_GDSC>,
+			<&mmcc CAMSS_GDSC>;
+	vdda-supply = <&vreg_l2a_1p25>;
+	status = "okay";
+
+	ports {
+		port@0 {
+			reg = <0>;
+
+			csiphy0_in: endpoint {
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&rear_camera_out>;
+			};
+		};
+
+		port@2 {
+			reg = <2>;
+
+			csiphy2_in: endpoint {
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&front_camera_out>;
+			};
+		};
+	};
+};
+
 &q6afedai {
 	dai@22 {
 		reg = <QUATERNARY_MI2S_RX>;
@@ -870,6 +1032,16 @@
 &sound {
 	compatible = "qcom,apq8096-sndcard";
 	model = "ZTE Axon 7";
+
+	/*
+	 * One widget per speaker, so each can be switched off on its own
+	 * (earpiece = top speaker through the receiver switch, bottom off).
+	 */
+	widgets = "Speaker", "Bottom Speaker",
+		  "Speaker", "Top Speaker";
+	audio-routing = "Bottom Speaker", "Speaker Bottom OUT",
+			"Top Speaker", "Speaker Top OUT";
+	pin-switches = "Bottom Speaker", "Top Speaker";
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&quat_mi2s_default>;
@@ -942,7 +1114,12 @@
 };
 
 &pmi8994_fg {
-	/* read-only: no charger driver yet, so no "power-supplies" */
+	monitored-battery = <&battery>;
+	power-supplies = <&pmi8994_smbchg>;
+	status = "okay";
+};
+
+&pmi8994_smbchg {
 	monitored-battery = <&battery>;
 	status = "okay";
 };
@@ -1378,6 +1555,47 @@
 		drive-strength = <2>;
 		bias-disable;
 		output-high;
+	};
+
+	/* front camera: MCLK2, reset, DVDD/IOVDD enables; standby held high */
+	rear_cam_default: rear-cam-default-state {
+		mclk-pins {
+			pins = "gpio13";
+			function = "cam_mclk";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		ctrl-pins {
+			pins = "gpio29", "gpio30", "gpio38";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	front_cam_default: front-cam-default-state {
+		mclk-pins {
+			pins = "gpio15";
+			function = "cam_mclk";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		ctrl-pins {
+			pins = "gpio23", "gpio24", "gpio25";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		standby-pins {
+			pins = "gpio26";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+			output-high;
+		};
 	};
 
 	/* AK4961 control port (BLSP2 QUP3 SPI, ZTE spi_9) */

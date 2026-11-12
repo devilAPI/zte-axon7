@@ -1,0 +1,24 @@
+From: Claude <noreply@anthropic.com>
+Subject: [PATCH] generator: braces around the key map update
+
+Without them, the length was also written for unmapped keys (id -1),
+i.e. to key_map[-1].
+---
+ generator.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/generator.c b/generator.c
+--- a/generator.c
++++ b/generator.c
+@@ -44,9 +44,10 @@ void generate_map()
+ 			continue;
+ 
+ 		while ((key = group->keys[key_index++]).len) {
+-			if (key.id != -1)
++			if (key.id != -1) {
+ 				key_map[key.id].id = entry->addr + size;
+ 				key_map[key.id].len = key.len;
++			}
+ 
+ 			size += key.len;
+ 		}

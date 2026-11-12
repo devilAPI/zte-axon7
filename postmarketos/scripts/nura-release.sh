@@ -26,8 +26,10 @@ if [ "$(pmb config ssh_keys)" != False ]; then
 fi
 aports=$(pmb config aports)
 cp -r pmaports-local/device/testing/device-zte-axon7 pmaports-local/device/testing/linux-zte-axon7 "$aports/device/testing/"
+mkdir -p "$aports/temp"
+cp -r pmaports-local/temp/sns-reg "$aports/temp/"
 pmb -y checksum device-zte-axon7
-pmb -y build device-zte-axon7 linux-zte-axon7
+pmb -y build sns-reg device-zte-axon7 linux-zte-axon7
 pmb -y zap		# fresh chroots: nothing left over from a developer install
 pmb -y install --password "$NURA_PASSWORD"
 

@@ -1,0 +1,278 @@
+From 64e7ccd38021d0966f83f9d40e5d2b0cf89cf180 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 10:58:41 +0100
+Subject: [PATCH 37/38] iio: qcom_smgr: add a gyroscope and magnetometer driver
+
+Both report three axes of primary data in Q16 fixed point, rad/s and
+gauss, so one driver covers them (scale 1/65536), modelled on
+smgr_accel and using the same mount matrix.
+
+Tested on the ZTE Axon 7 lying still: gyroscope about 385 samples/s
+with a 0.05 rad/s bias, magnetometer about 95 samples/s.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ drivers/iio/common/qcom_smgr/Kconfig       |  10 +
+ drivers/iio/common/qcom_smgr/Makefile      |   1 +
+ drivers/iio/common/qcom_smgr/smgr_motion.c | 221 +++++++++++++++++++++
+ 3 files changed, 232 insertions(+)
+ create mode 100644 drivers/iio/common/qcom_smgr/smgr_motion.c
+
+diff --git a/drivers/iio/common/qcom_smgr/Kconfig b/drivers/iio/common/qcom_smgr/Kconfig
+index a0067b28b..dc28ad2b9 100644
+--- a/drivers/iio/common/qcom_smgr/Kconfig
++++ b/drivers/iio/common/qcom_smgr/Kconfig
+@@ -15,3 +15,13 @@ config IIO_QCOM_SMGR
+ 
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called smgr.
++
++config IIO_QCOM_SMGR_MOTION
++	tristate "Qualcomm SSC Sensor Manager gyroscope and magnetometer"
++	depends on IIO_QCOM_SMGR
++	select IIO_BUFFER
++	select IIO_KFIFO_BUF
++	help
++	  Say yes here to get support for gyroscopes and magnetometers
++	  connected to a Qualcomm Snapdragon Sensor Core and accessed
++	  through its Sensor Manager service.
+diff --git a/drivers/iio/common/qcom_smgr/Makefile b/drivers/iio/common/qcom_smgr/Makefile
+index 25a613912..fd39c8abb 100644
+--- a/drivers/iio/common/qcom_smgr/Makefile
++++ b/drivers/iio/common/qcom_smgr/Makefile
+@@ -6,3 +6,4 @@
+ obj-y += qmi/
+ 
+ obj-$(CONFIG_IIO_QCOM_SMGR)	+= smgr.o
++obj-$(CONFIG_IIO_QCOM_SMGR_MOTION)	+= smgr_motion.o
+diff --git a/drivers/iio/common/qcom_smgr/smgr_motion.c b/drivers/iio/common/qcom_smgr/smgr_motion.c
+new file mode 100644
+index 000000000..9aa3dbd2b
+--- /dev/null
++++ b/drivers/iio/common/qcom_smgr/smgr_motion.c
+@@ -0,0 +1,221 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Qualcomm Sensor Manager gyroscope and magnetometer driver
++ *
++ * Both report three axes of primary data in Q16 fixed point: rad/s for
++ * the gyroscope and gauss for the magnetometer (the IIO base units), so
++ * the scale is 1/65536. Modelled on smgr_accel.
++ */
++
++#include <linux/mod_devicetable.h>
++#include <linux/platform_device.h>
++#include <linux/iio/buffer.h>
++#include <linux/iio/common/qcom_smgr.h>
++#include <linux/iio/iio.h>
++#include <linux/iio/kfifo_buf.h>
++
++static int smgr_motion_read_raw(struct iio_dev *iio_dev,
++				struct iio_chan_spec const *chan, int *val,
++				int *val2, long mask)
++{
++	struct smgr_iio_priv *priv = iio_priv(iio_dev);
++
++	switch (mask) {
++	case IIO_CHAN_INFO_SAMP_FREQ:
++		*val = priv->sensor->data_types[0].cur_sample_rate;
++		return IIO_VAL_INT;
++	case IIO_CHAN_INFO_SCALE:
++		*val = 1;
++		*val2 = 16;	/* Q16 */
++		return IIO_VAL_FRACTIONAL_LOG2;
++	}
++
++	return -EINVAL;
++}
++
++static int smgr_motion_write_raw(struct iio_dev *iio_dev,
++				 struct iio_chan_spec const *chan, int val,
++				 int val2, long mask)
++{
++	struct smgr_iio_priv *priv = iio_priv(iio_dev);
++
++	switch (mask) {
++	case IIO_CHAN_INFO_SAMP_FREQ:
++		if (val < 1 || val > priv->sensor->data_types[0].max_sample_rate)
++			return -EINVAL;
++		priv->sensor->data_types[0].cur_sample_rate = val;
++		if (iio_buffer_enabled(iio_dev))
++			return iio_dev->setup_ops->postenable(iio_dev);
++		return 0;
++	}
++
++	return -EINVAL;
++}
++
++static int smgr_motion_read_avail(struct iio_dev *iio_dev,
++				  struct iio_chan_spec const *chan,
++				  const int **vals, int *type, int *length,
++				  long mask)
++{
++	struct smgr_iio_priv *priv = iio_priv(iio_dev);
++
++	switch (mask) {
++	case IIO_CHAN_INFO_SAMP_FREQ:
++		priv->samp_freq_avail[0] = 1;
++		priv->samp_freq_avail[1] = 1;
++		priv->samp_freq_avail[2] =
++			priv->sensor->data_types[0].max_sample_rate;
++		*type = IIO_VAL_INT;
++		*vals = priv->samp_freq_avail;
++		*length = 3;
++		return IIO_AVAIL_RANGE;
++	}
++
++	return -EINVAL;
++}
++
++static const struct iio_info smgr_motion_iio_info = {
++	.read_raw = smgr_motion_read_raw,
++	.write_raw = smgr_motion_write_raw,
++	.read_avail = smgr_motion_read_avail,
++};
++
++/* Same as smgr_accel; TODO: per device from the SSC or the device tree */
++static const struct iio_mount_matrix smgr_motion_mount_matrix = {
++	.rotation = {
++		"0", "-1", "0",
++		"-1", "0", "0",
++		"0", "0", "1"
++	}
++};
++
++static const struct iio_mount_matrix *
++smgr_motion_get_mount_matrix(const struct iio_dev *iio_dev,
++			     const struct iio_chan_spec *chan)
++{
++	return &smgr_motion_mount_matrix;
++}
++
++static const struct iio_chan_spec_ext_info smgr_motion_ext_info[] = {
++	IIO_MOUNT_MATRIX(IIO_SHARED_BY_DIR, smgr_motion_get_mount_matrix),
++	{}
++};
++
++#define SMGR_MOTION_CHANNEL(_type, _axis, _index) {			\
++	.type = _type,							\
++	.modified = true,						\
++	.channel2 = IIO_MOD_##_axis,					\
++	.scan_index = _index,						\
++	.scan_type = {							\
++		.sign = 's',						\
++		.realbits = 32,						\
++		.storagebits = 32,					\
++		.endianness = IIO_LE,					\
++	},								\
++	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) |		\
++				    BIT(IIO_CHAN_INFO_SAMP_FREQ),	\
++	.info_mask_shared_by_type_available = BIT(IIO_CHAN_INFO_SAMP_FREQ), \
++	.ext_info = smgr_motion_ext_info,				\
++}
++
++#define SMGR_MOTION_TIMESTAMP {						\
++	.type = IIO_TIMESTAMP,						\
++	.channel = -1,							\
++	.scan_index = 3,						\
++	.scan_type = {							\
++		.sign = 'u',						\
++		.realbits = 32,						\
++		.storagebits = 64,					\
++		.endianness = IIO_LE,					\
++	},								\
++}
++
++static const struct iio_chan_spec smgr_gyro_channels[] = {
++	SMGR_MOTION_CHANNEL(IIO_ANGL_VEL, X, 0),
++	SMGR_MOTION_CHANNEL(IIO_ANGL_VEL, Y, 1),
++	SMGR_MOTION_CHANNEL(IIO_ANGL_VEL, Z, 2),
++	SMGR_MOTION_TIMESTAMP,
++};
++
++static const struct iio_chan_spec smgr_mag_channels[] = {
++	SMGR_MOTION_CHANNEL(IIO_MAGN, X, 0),
++	SMGR_MOTION_CHANNEL(IIO_MAGN, Y, 1),
++	SMGR_MOTION_CHANNEL(IIO_MAGN, Z, 2),
++	SMGR_MOTION_TIMESTAMP,
++};
++
++struct smgr_motion_variant {
++	const char *name;
++	const struct iio_chan_spec *channels;
++	unsigned int num_channels;
++};
++
++static const struct smgr_motion_variant smgr_gyro_variant = {
++	.name = "qcom-smgr-gyro",
++	.channels = smgr_gyro_channels,
++	.num_channels = ARRAY_SIZE(smgr_gyro_channels),
++};
++
++static const struct smgr_motion_variant smgr_mag_variant = {
++	.name = "qcom-smgr-mag",
++	.channels = smgr_mag_channels,
++	.num_channels = ARRAY_SIZE(smgr_mag_channels),
++};
++
++static int smgr_motion_probe(struct platform_device *pdev)
++{
++	const struct smgr_motion_variant *variant =
++		(const void *)platform_get_device_id(pdev)->driver_data;
++	struct iio_dev *iio_dev;
++	struct smgr_iio_priv *priv;
++	int ret;
++
++	iio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*priv));
++	if (!iio_dev)
++		return -ENOMEM;
++
++	priv = iio_priv(iio_dev);
++	priv->sensor = *(struct smgr_sensor **)pdev->dev.platform_data;
++	priv->sensor->iio_dev = iio_dev;
++	platform_set_drvdata(pdev, iio_dev);
++
++	iio_dev->name = variant->name;
++	iio_dev->info = &smgr_motion_iio_info;
++	iio_dev->channels = variant->channels;
++	iio_dev->num_channels = variant->num_channels;
++
++	ret = devm_iio_kfifo_buffer_setup(&pdev->dev, iio_dev,
++					  &smgr_buffer_ops);
++	if (ret)
++		return dev_err_probe(&pdev->dev, ret, "failed to set up buffer\n");
++
++	return devm_iio_device_register(&pdev->dev, iio_dev);
++}
++
++static void smgr_motion_remove(struct platform_device *pdev)
++{
++	struct iio_dev *iio_dev = platform_get_drvdata(pdev);
++	struct smgr_iio_priv *priv = iio_priv(iio_dev);
++
++	priv->sensor->iio_dev = NULL;
++}
++
++static const struct platform_device_id smgr_motion_ids[] = {
++	{ .name = "qcom-smgr-gyro", .driver_data = (kernel_ulong_t)&smgr_gyro_variant },
++	{ .name = "qcom-smgr-mag", .driver_data = (kernel_ulong_t)&smgr_mag_variant },
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(platform, smgr_motion_ids);
++
++static struct platform_driver smgr_motion_driver = {
++	.probe = smgr_motion_probe,
++	.remove = smgr_motion_remove,
++	.driver	= {
++		.name = "smgr_motion",
++	},
++	.id_table = smgr_motion_ids,
++};
++module_platform_driver(smgr_motion_driver);
++
++MODULE_DESCRIPTION("Qualcomm Sensor Manager gyroscope and magnetometer driver");
++MODULE_LICENSE("GPL");
+-- 
+2.56.0
+

@@ -158,23 +158,33 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 
 ## Known gaps
 
-- **Display**: the S6E3HA3 driver and the bonded-DSI setup (patches 0002, 0004) are built but not yet tested on the phone; without `msm.prefer_mdp5=0` the MDP5 driver takes MDSS and cannot drive two links.
+- **Display**: works (S6E3HA3 driver and bonded DSI, patches 0002, 0004; DPU drives DSI-1 at 1440x2560, `msmdrmfb` console). It needs `msm.prefer_mdp5=0`, or the MDP5 driver takes MDSS and cannot drive two links.
 - **USB OTG**: works on PI5USB302 units (automatic host/device); the HD3SS3220 variant is untested on a phone. The PI5USB302 interrupt is unusable (polled).
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
-- Charging control (PMI8996 SMBCharger/FG drivers are only in the msm8996 fork; SMB1351 has no driver), audio (WCD9335 + AK4490), sensors, cameras, suspend (broken on msm8996 mainline in general).
+- Still missing: the SMB1351 parallel charger (charging stops at 2 A), headset buttons, camera autofocus loop and OIS, fingerprint (TrustZone), suspend (broken on msm8996 mainline in general). Charging, audio, sensors and both cameras are in the table below.
 
-## Hardware added 2026-11-09 (kernel patches 0010-0018)
+## Hardware added 2026-11-09/11 (kernel patches 0010-0043)
 
 | Part | Driver | State |
 | --- | --- | --- |
 | Hall sensor | gpio-keys SW_LID + LVS2 always on (0010) | open confirmed; closed needs a magnet. logind ignores the lid (`50-zte-axon7-lid.conf`) while suspend doesn't work |
-| Fuel gauge | `qcom_fg` from msm8996-mainline, read-only without a charger driver (0011) | confirmed: level, voltage, temperature, current sign (positive = discharging) |
+| Fuel gauge | `qcom_fg` from msm8996-mainline (0011; 0023 fixes an oops when a charger appears: SRAM access was set up after registering) | confirmed: level, voltage, temperature, current sign (positive = discharging) |
+| Charger | `qcom-smbchg` from msm8996-mainline (0024), float 4.4 V, 2 A fast charge, 150 mA termination (no SMB1351 parallel charger) | confirmed: SDP detected, PMIC set to 4.4 V / 2.0 A (bootloader left 4.2 V / 1.7 A), status Full at 99 % |
+| Watchdog | APSS watchdog node in msm8996.dtsi (0025, from the LineageOS 24 work) | bound; a hung kernel resets instead of freezing |
 | Vibrator | `qcom-pmi8994-haptics` (0012), ZTE's 2668 mV / 4255 us | LRA auto-resonance locks while playing; to be felt |
 | Torch | `leds-qcom-pmi8994-torch` (0013), `white:torch`, 1-16 (12.5 mA steps per LED) | registers as downstream, no LED fault; to be seen |
 | Hi-Fi audio | `ak4490`, `ak8157`, `isl98608-regulator`, MI2S in `apq8096` (0014) | plays in real time on Quaternary MI2S, clocked by the AK8157; to be heard |
 | Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016, 0018) | confirmed: a -21 dBFS 1 kHz tone saturates the microphone; SBI1 looped back to SLIMbus TX is bit-exact |
-| Microphone 1 | `ak4961` AIF1 capture, SLIM TX7 (0018) | confirmed: the vibrator raises the level by ~30 dB, the speaker tone is recorded |
-| Earpiece switch | `tfa989x` Receiver Switch on rcv-gpios (PM8994 GPIO 13) (0017) | control present; which amplifier is the top one is unverified |
+| Microphones 1 and 2 | `ak4961` AIF1 capture: ADC1 left = AIN1 (bottom, TX7, 0018), right = AIN2 (top, TX8, 0026) | confirmed: the vibrator raises mic 1 by ~30 dB; a tone from the top speaker is 18 dB louder on mic 2 |
+| NFC | mainline `nxp-nci-i2c` (NXP PN5xx at 0x28 on `blsp2_i2c2`, IRQ TLMM 9, enable TLMM 12, firmware TLMM 96; in the DT since the start) | confirmed: the controller answers NCI (`tools/axon7-nfc-test.py up`: 3 interrupts for reset/init; `poll`: RF discovery runs). Reading a tag not tried (no tag at hand) |
+| Headset microphone | `ak4961` AIN4 with MPWR2 bias on Mic_1L (0031), UCM device `Headset` | measured without a headset: PM4/PM5 = 0x0a while recording, open-input bias noise; voice to be heard. There is no third analog microphone: ZTE never routes AIN3 |
+| Headset detection | `ak4961` jack detector as in ZTE's driver (0043): plug status (0xD8 bit 1), then the mic detector (bit 7, 5 hits in a row = headset, 9 rounds without = headphones), polled every 500 ms (the codec interrupt on TLMM 54 reads low with nothing pending, polarity unknown); `apq8096` makes a "Headset Jack" (ALSA controls `Headphone Jack`, `Mic Jack`, input device "ZTE Axon 7 Headset Jack") | registered and reads "unplugged" with nothing plugged in; plugging in still to be tested (to-test 11). UCM does not use the jack controls yet (added once a plug test confirms them), so the device is still chosen by hand |
+| Sensors | SLPI (sensor DSP) enabled (0034); Sensor Manager IIO drivers from msm8996-mainline (Yassine Oudjana's WIP, 0032/0033) with fixes (0035, 0036), a gyroscope/magnetometer driver (0037) and a QMI service lookup instead of the QRTR bus patch (0038); `sns-reg` serves the phone's own `/persist/sensors/sns.reg` (`axon7-sns-reg.service`) | confirmed: accelerometer (Bosch BMI160, ~390/s, 10.5 m/s² lying flat), gyroscope (BMI160, ~385/s, 0.05 rad/s bias at rest), magnetometer (AKM AK09915, ~95/s, uncalibrated); the devices follow an SLPI restart. proximity/light (ROHM RPR0521, 0039/0040): `qcom-smgr-prox-light` with `in_proximity` (raw count, 4-5 with nothing near) and `in_illuminance` (lux, Q16; 28 lux indoors); "near" still to be measured |
+| Front camera | mainline `ov8856` + `qcom-camss` (0020 VFE power-down fix, 0021 DT; CONFIG_VIDEO_OV8856) | confirmed: 3280x2464 RAW10 frames of the room through CSIPHY2 -> CSID0 -> ISPIF0 -> VFE0 RDI0 (no ISP, no app) |
+| Rear camera | `s5k2t8` (new, 0027; CONFIG_VIDEO_S5K2T8) + DT (0028): CCI 0 at 0x2d, CSIPHY0, 4 lanes; init and mode tables from ZTE's `libmmcamera_s5k2t8.so` | confirmed: chip id 0x2148; colour bars and real light in all three modes, 5952x3348 at 30 fps (834 MHz link), 2976x1674 at 30 fps, 1920x1080 at 60 fps. |
+| Rear camera focus | AK7371 as a variant of mainline `ak7375` (0029), 10-bit position, CCI 0 at 0x0c, `lens-focus` link (0030) | confirmed: `focus_absolute` 0..1023 moves the lens (the torch spot on the table shifts and narrows step by step). No autofocus loop and no OIS (ROHM BU63165) yet |
+| Touch keys | mainline RMI4 F1A (0D buttons of the Synaptics S3718, `CONFIG_RMI4_F1A`) + DT key map (0042): back, home, app switch as `KEY_BACK`, `KEY_HOMEPAGE`, `KEY_APPSELECT`, in ZTE's order (`synaptics,cap-button-codes = <158 102 187>`) | the touchscreen input device declares the three keys (kernel #14 on the dev phone); pressing them is still to be felt (to-test 10). No key backlight driver |
+| Earpiece switch | `tfa989x` Receiver Switch on rcv-gpios (PM8994 GPIO 13) (0017, 0019) | measured: only the top speaker (TFA9890 0x35) changes; UCM device Earpiece switches the bottom speaker's pin off (0022), the microphone level drops 17 dB |
 
 Hi-Fi path: the AK8157 is the I2S clock master (the ADSP's Quaternary MI2S
 is a clock consumer with its EBIT clock gated on, data on SD1 = TLMM 61);
@@ -200,3 +210,81 @@ QUP6 (mainline `tfa989x`, DSP bypass, no NXP container files). UCM device
 runtime-suspends between streams and the bus restarts, which clears the
 AK4961's PGD port arrays: they are written on every hw_params (as ZTE does),
 otherwise the RX data never reaches SBI1 (silent speakers, 0016 alone).
+
+Front camera: OV8856 at 0x36 on CCI bus 1, CSIPHY2, 4 lanes. CAMSS needs
+CAMSS_GDSC as its top power domain (third entry in `power-domains`), or
+`camss_top_ahb_clk` is enabled for the CSIPHY before any VFE domain is up
+and stays stuck off. Test capture (as root):
+
+```sh
+M="media-ctl -d /dev/media0"; F="fmt:SGRBG10_1X10/3280x2464 field:none"
+$M -l '"msm_csiphy2":1->"msm_csid0":0[1],"msm_csid0":1->"msm_ispif0":0[1],"msm_ispif0":1->"msm_vfe0_rdi0":0[1]'
+$M -V "\"ov8856 6-0036\":0[$F],\"msm_csiphy2\":0[$F],\"msm_csid0\":0[$F],\"msm_ispif0\":0[$F],\"msm_vfe0_rdi0\":0[$F]"
+v4l2-ctl -d $($M -e "ov8856 6-0036") --set-ctrl analogue_gain=1024
+V=$($M -e msm_vfe0_video0); v4l2-ctl -d $V --set-fmt-video=width=3280,height=2464,pixelformat=pgAA
+v4l2-ctl -d $V --stream-mmap --stream-count=4 --stream-to=/tmp/front.raw   # MIPI RAW10, GRBG, stride 4104
+```
+
+Rear camera: S5K2T8 at 0x2d on CCI bus 0 (`s5k2t8 5-002d`), CSIPHY0, 4 lanes,
+SGRBG10. Its register tables come from ZTE's sensor library
+(`libmmcamera_s5k2t8.so` in the vendor partition: `sensor_lib_t` at the
+start of `.data`; init blocks of 0x4010 bytes from 0x8e28, mode tables from
+0x40f0c). Same capture as above with `msm_csiphy0` and one of the three
+sizes; exposure is in lines, `analogue_gain` 32 = 1x up to 512 = 16x,
+`test_pattern=2` gives colour bars:
+
+```sh
+M="media-ctl -d /dev/media0"; F="fmt:SGRBG10_1X10/2976x1674 field:none"   # or 5952x3348, 1920x1080
+$M -l '"msm_csiphy0":1->"msm_csid0":0[1],"msm_csid0":1->"msm_ispif0":0[1],"msm_ispif0":1->"msm_vfe0_rdi0":0[1]'
+$M -V "\"s5k2t8 5-002d\":0[$F],\"msm_csiphy0\":0[$F],\"msm_csid0\":0[$F],\"msm_ispif0\":0[$F],\"msm_vfe0_rdi0\":0[$F]"
+v4l2-ctl -d $($M -e "s5k2t8 5-002d") --set-ctrl exposure=2000,analogue_gain=64
+V=$($M -e msm_vfe0_video0); v4l2-ctl -d $V --set-fmt-video=width=2976,height=1674,pixelformat=pgAA
+v4l2-ctl -d $V --stream-mmap --stream-count=4 --stream-to=/tmp/rear.raw
+```
+
+Focus: the lens subdev `ak7375 5-000c` keeps its position only while it is
+open (it powers down on close), so hold it open during the capture:
+`exec 3<>/dev/v4l-subdevN; v4l2-ctl -d /dev/v4l-subdevN --set-ctrl focus_absolute=600`
+(0 = far end of travel, 1023 = the other end).
+
+Sensors: all of them hang off the SLPI. At boot it asks the apps side for
+its sensor registry (QMI service SNS_REG); `sns-reg` (package in
+`pmaports-local/temp/sns-reg`) answers from `/etc/sns-reg.d/registry.conf`,
+which `axon7-sns-registry` generates once from the phone's own
+`/persist/sensors/sns.reg` (written by the stock or LineageOS sensor daemon,
+so Android must have run once). Then the SLPI offers the Sensor Manager
+(QRTR service 256, v1, instance 50) and `smgr` registers one IIO device per
+sensor: `qcom-smgr-accel`, `-gyro`, `-mag` (buffered only, Q16: scale
+1/65536 m/s², rad/s, gauss) and `-prox-light` (proximity count, lux in
+Q16). The report's index TLV lists one entry per data type; the WIP driver
+decoded it as a single struct (0039). Read a few samples:
+
+```sh
+D=$(grep -l qcom-smgr-accel /sys/bus/iio/devices/iio:device*/name); D=${D%/name}
+for c in x y z; do echo 1 | sudo tee $D/scan_elements/in_accel_${c}_en; done
+echo 1 | sudo tee $D/buffer/enable; sudo timeout 1 cat /dev/${D##*/} | od -A d -t d4 | head; echo 0 | sudo tee $D/buffer/enable
+```
+
+Desktop use: `iio-sensor-proxy` (in the device package) finds the
+accelerometer, light and proximity sensor (`monitor-sensor`). It needs a
+trigger on buffered accelerometers, named `<name>-dev<IIO device number>`,
+and polls `in_illuminance_raw` / `in_proximity_raw`: each sensor gets its
+own trigger fired per report, and the light/proximity sensor reports at
+10 Hz all the time (0041). `61-axon7-sensors.rules` sets ZTE's accelerometer
+axes (x = -y, y = -x, z = -z: lying flat screen up gives "face-up") and a
+first-guess `PROXIMITY_NEAR_LEVEL` of 100. The compass is not used: the
+proxy wants a tilt-compensated heading.
+
+The WIP driver used u8 for QMI length fields; the 7.3 QMI code copies them as
+u32, so every request for a sensor other than ID 0 failed ("qmi_encode:
+Invalid data length") until 0035.
+
+Wi-Fi: the QCA6174's PCIe link sometimes comes up only after `qcom-pcie`
+has given up at boot ("Device found, but not active"; 3 of 16 boots before
+the SLPI was enabled, more often since). The root port then shows the link
+active; `axon7-wifi-rescan.service` rescans the bus and the chip appears
+(5 of 5 test boots with Wi-Fi, 3 of them rescued).
+
+Speaker stereo is open: with the bottom amplifier on "Right" its output was
+nearly silent in a measurement (the TFA9890 in DSP bypass may ignore the
+channel select), so UCM puts both amplifiers on the left channel (mono).

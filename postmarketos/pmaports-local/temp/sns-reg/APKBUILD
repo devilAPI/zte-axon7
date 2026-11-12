@@ -1,0 +1,30 @@
+# Maintainer: devilAPI <felixseiboldt@gmail.com>
+# Qualcomm Sensor Registry (SNS_REG) server for the MSM8996 sensor core (SLPI)
+pkgname=sns-reg
+pkgver=0_git20250706
+_commit=4d238e5f0baba3fb77456fe2bffbf8e8f18a71a0
+pkgrel=0
+pkgdesc="Qualcomm Sensor Registry server (SSC on MSM8996)"
+url="https://gitlab.com/msm8996-mainline/sns-reg"
+arch="aarch64"
+license="GPL-3.0-or-later"
+makedepends="qrtr-dev linux-headers argp-standalone"
+options="!check"	# no tests
+source="$pkgname-$_commit.tar.gz::https://gitlab.com/msm8996-mainline/sns-reg/-/archive/$_commit/sns-reg-$_commit.tar.gz
+	0001-generator-braces-around-the-key-map-update.patch
+	"
+builddir="$srcdir/$pkgname-$_commit"
+
+build() {
+	${CC:-cc} $CFLAGS $LDFLAGS -o sns-reg main.c qmi/sns_reg.c map.c -lqrtr
+	${CC:-cc} $CFLAGS $LDFLAGS -o sns-reg-generator generator.c map.c -largp
+}
+
+package() {
+	install -Dm755 sns-reg "$pkgdir"/usr/bin/sns-reg
+	install -Dm755 sns-reg-generator "$pkgdir"/usr/bin/sns-reg-generator
+}
+sha512sums="
+5174bd26f74a1a332c526823c661592b831ee0719c2eb373ed6d40863214f24bea92a4d51567333187a05815a35243a25f5d7b4e174f3995c5c00d70afcad83e  sns-reg-4d238e5f0baba3fb77456fe2bffbf8e8f18a71a0.tar.gz
+2b57e9e10905fe6eac087392c7099de2550b7b7212edc3ccc5768d2f67bb1e014cba7e2ace08b55134485173122ae4b1b14f202d5fb5a412f836206aa71faecc  0001-generator-braces-around-the-key-map-update.patch
+"

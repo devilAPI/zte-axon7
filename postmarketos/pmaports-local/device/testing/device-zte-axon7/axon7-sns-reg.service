@@ -1,0 +1,11 @@
+[Unit]
+Description=Axon 7 sensor registry server for the sensor DSP (SLPI)
+
+[Service]
+ExecStartPre=/usr/libexec/axon7-sns-registry
+ExecStart=/usr/bin/sns-reg
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

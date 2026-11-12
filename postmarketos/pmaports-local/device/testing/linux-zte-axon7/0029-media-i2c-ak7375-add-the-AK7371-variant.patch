@@ -1,0 +1,56 @@
+From 8baac734429312151e9caea886e608103e1753bd Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 09:41:14 +0100
+Subject: [PATCH 29/30] media: i2c: ak7375: add the AK7371 variant
+
+The AK7371 focus actuator (rear camera of the ZTE Axon 7) has the same
+register layout as the AK7345/AK7375 with a 10 bit position (MSB in
+0x00, the two low bits on top of 0x01) and CONT 0x02 = 0x00 for active,
+as ZTE's actuator library programs it. Standby is left unused.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ drivers/media/i2c/ak7375.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/drivers/media/i2c/ak7375.c b/drivers/media/i2c/ak7375.c
+index 9a2432cea..2776c7c3b 100644
+--- a/drivers/media/i2c/ak7375.c
++++ b/drivers/media/i2c/ak7375.c
+@@ -51,6 +51,24 @@ static const struct ak73xx_chipdef ak7345_cdef = {
+ 	.power_delay_us	= 20000,
+ };
+ 
++/*
++ * AK7371: 10 bit position, MSB in 0x00 and the low bits on top of 0x01,
++ * CONT 0x02 = 0x00 for active as in ZTE's libactuator_ak7371.so (Axon 7).
++ * Standby isn't used: the driver cuts the supplies instead.
++ */
++static const struct ak73xx_chipdef ak7371_cdef = {
++	.reg_position	= 0x0,
++	.reg_cont	= 0x2,
++	.shift_pos	= 6,	/* 10 bits position values, need to << 6 */
++	.mode_active	= 0x0,
++	.has_standby	= false,
++	.focus_pos_max	= 1023,
++	.focus_steps	= 1,
++	.ctrl_steps	= 32,
++	.ctrl_delay_us	= 1000,
++	.power_delay_us	= 10000,
++};
++
+ static const struct ak73xx_chipdef ak7375_cdef = {
+ 	.reg_position	= 0x0,
+ 	.reg_cont	= 0x2,
+@@ -330,6 +348,7 @@ static int __maybe_unused ak7375_vcm_resume(struct device *dev)
+ 
+ static const struct of_device_id ak7375_of_table[] = {
+ 	{ .compatible = "asahi-kasei,ak7345", .data = &ak7345_cdef, },
++	{ .compatible = "asahi-kasei,ak7371", .data = &ak7371_cdef, },
+ 	{ .compatible = "asahi-kasei,ak7375", .data = &ak7375_cdef, },
+ 	{ /* sentinel */ }
+ };
+-- 
+2.56.0
+

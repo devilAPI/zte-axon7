@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-09 (evening: battery, Hi-Fi audio, vibration, torch, cover)
+Last update: 2026-11-11 (touch keys, headset detection)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -35,9 +35,11 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Bluetooth (mouse, keyboard; factory Bluetooth address)
 [*]SSH over USB and Wi-Fi
 [*]USB OTG (mouse, keyboard, USB stick; automatic)
-[*]Battery level, voltage, current and temperature (no charging control yet)
+[*]Battery level, voltage, current and temperature
+[*]Charging control: charges to 4.4 V like stock, up to 2 A (stock reaches 3 A with a second charger chip that has no driver yet)
 [*]Speakers (heard by the phone's own microphone)
-[*]Microphone (bottom microphone)
+[*]Microphones (bottom and top, stereo recording)
+[*]Earpiece (top speaker through the earpiece opening)
 [*]Vibration (heard by the microphone)
 [/LIST]
 [/SPOILER]
@@ -46,16 +48,17 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Headphone audio through the Hi-Fi DAC (AK4490)
 [*]Flashlight (torch)
 [*]Flip cover sensor (open is confirmed, closed not yet)
+[*]Touch keys under the screen (Back, Home, App switch)
+[*]Headset detection (plugging in a headset or headphones)
 [/LIST]
 [B]Not yet:[/B]
 [LIST]
 [*]Calls
 [*]SMS
 [*]Mobile data
-[*]Earpiece, second/third microphone, headset microphone
-[*]Camera
-[*]Sensors
-[*]Charging control
+[*]Camera apps (both cameras deliver raw pictures, see changelog)
+[*]Automatic screen rotation (the sensors work, see changelog; no graphical desktop yet)
+[*]Fast charging above 2 A (second charger chip SMB1351)
 [*]Suspend
 [*]No graphical desktop yet (text console with an on-screen keyboard)
 [/LIST]
@@ -79,6 +82,12 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-11"]
+[LIST]
+[*]Touch keys: the three keys under the screen now work as Back, Home and App switch (they are part of the touchscreen; the kernel had their driver switched off). Please confirm they react. Their backlight stays off for now.
+[*]Headset detection: Nura sees when a headset or headphones are plugged in and whether they have a microphone (it shows as "Headphone Jack" / "Mic Jack"). Please tell us if that is right for yours. The sound settings don't switch by themselves yet; that comes once this is confirmed.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-09"]
 [LIST]
 [*]The modem starts and switches itself on (it needed room for its file-system buffer above the kernel, and someone to set it online). It restarts itself a few times in the first two minutes after power-on; it is switched on again each time.
@@ -89,7 +98,15 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [*]Headphone audio through the Hi-Fi DAC: the sound card "ZTE Axon 7" plays through the AK4490 to the headphone jack ([I]speaker-test -c 2 -t sine[/I]). New, please tell us if you hear it.
 [*]Vibration (force-feedback rumble) and the flashlight ([I]echo 10 | sudo tee /sys/class/leds/white:torch/brightness[/I], 1-16). New, please confirm.
 [*]Flip cover sensor: reported as a lid switch. Closing a cover does nothing yet, because suspend doesn't work.
-[*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). In the sound settings: "Speakers", "Headphones", "Microphone".
+[*]Charging: Nura now controls the charger. It charges to 4.4 V like the stock software (before, the bootloader's 4.2 V setting stayed, so the battery never got full) with up to 2 A, and the battery status shows Charging/Full.
+[*]A crash in the battery driver that froze the phone when the charger driver appeared is fixed, and a hardware watchdog now restarts the phone if the kernel ever hangs.
+[*]Front camera (OV8856): raw 8-megapixel pictures through the mainline camera subsystem (developers: media-ctl + v4l2-ctl, see the README). No camera app yet.
+[*]Wi-Fi is reliable again: the kernel from 2026-11-08 had been put back by mistake on some development installs.
+[*]Speakers and microphone: the main codec (AK4961) runs on the mainline kernel and feeds both speaker amplifiers; a test tone on the speakers is picked up loudly by the bottom microphone. Keep the volume moderate (no speaker protection profile yet). For now both speakers play the left channel (mono); stereo needs a check. In the sound settings: "Speakers", "Headphones", "Earpiece", "Microphone".
+[*]Headset microphone: new sound device "Headset" (pick it by hand, plug detection is still missing). Please tell us if it records your voice.
+[*]Rear camera (Samsung S5K2T8): new driver, raw 20-megapixel pictures (5952x3348) and faster 2976x1674 and 1080p60 modes. The lens can be focused by hand (a control from 0 to 1023); automatic focus needs a camera app, which doesn't exist yet. No image stabilisation.
+[*]Motion sensors: accelerometer, gyroscope and compass work. They sit on the phone's sensor processor, which Nura now starts; it needs the phone's own sensor settings, which Nura reads from the persist partition at every start (nothing to do). The proximity and light sensor works too (light in lux), and the standard sensor service (iio-sensor-proxy) sees accelerometer, light and proximity, so a desktop can rotate the screen once there is one. The compass is not calibrated yet.
+[*]Wi-Fi comes up at every start: sometimes the Wi-Fi chip answered too late and there was no Wi-Fi until the next restart; Nura now looks for it again.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-08"]

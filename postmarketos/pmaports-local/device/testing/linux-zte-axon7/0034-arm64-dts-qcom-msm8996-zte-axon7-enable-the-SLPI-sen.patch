@@ -1,0 +1,43 @@
+From ecb50fbfcb8d1ae93af262c89b2f80b8071da6e5 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Tue, 10 Nov 2026 10:49:00 +0100
+Subject: [PATCH 34/38] arm64: dts: qcom: msm8996-zte-axon7: enable the SLPI
+ (sensor DSP)
+
+All the Axon 7's motion and ambient sensors hang off the SLPI (ZTE ran
+them through sensors.ssc.so over QMI); nothing is on an apps-side bus.
+Boot it with the phone's own slpi.mbn; PX from LVS2 as on other msm8996
+phones. With the sensor registry served from the apps side (sns-reg),
+it offers the Sensor Manager service (256, v1, instance 50), which lists
+an accelerometer, gyroscope, magnetometer and proximity/light sensor.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i64chehV1XxwjxyaGp
+---
+ arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 2f5796b8f..56515f12c 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -582,6 +582,16 @@ &rmtfs_mem {
+ 	alloc-ranges = <0x0 0xa0000000 0x0 0x20000000>;
+ };
+ 
++/*
++ * Sensor DSP: accelerometer, gyroscope, compass, light/proximity are all
++ * on the SLPI (ZTE: sensors.ssc.so over QMI), none on the apps side.
++ */
++&slpi_pil {
++	status = "okay";
++	firmware-name = "qcom/msm8996/zte/axon7/slpi.mbn";
++	px-supply = <&vreg_lvs2a_1p8>;
++};
++
+ &mss_pil {
+ 	status = "okay";
+ 
+-- 
+2.56.0
+
