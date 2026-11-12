@@ -16,6 +16,7 @@ cc_library {
     ],
     cflags: ["-fPIC", "-Wno-unused-parameter"],
     export_include_dirs: ["qrtr/lib"],
+    local_include_dirs: ["qrtr/src"],
 }
 
 cc_binary {
