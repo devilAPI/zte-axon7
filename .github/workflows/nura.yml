@@ -40,6 +40,9 @@ env:
   # the pmbootstrap the port is developed with
   PMBOOTSTRAP_COMMIT: e0dfe2c
   PMB_WORK: /home/runner/pmbootstrap-work
+  # the kernel package between runs (see "Kernel package from the cache")
+  KERNEL_APORT: postmarketos/pmaports-local/device/testing/linux-zte-axon7
+  KERNEL_CACHE: /home/runner/nura-kernel-cache
 
 jobs:
   images:
@@ -88,10 +91,57 @@ jobs:
           sed -i 's/^ *//' ~/.config/pmbootstrap_v3.cfg
           python3 postmarketos/pmbootstrap/pmbootstrap.py config
 
-      # No actions/cache here: restored files belong to the runner user, and
-      # the build user inside pmbootstrap's chroot cannot write to them
-      # (ccache "Permission denied", the kernel build fails). A clean build
-      # takes about an hour.
+      # The kernel package (linux-zte-axon7) is about 55 of the 65 minutes of a
+      # clean build and changes rarely, so the built .apk is kept between runs.
+      # The key covers everything in this repository that defines it: all
+      # files of the package (APKBUILD, patches, config) and the pmbootstrap
+      # commit. Only an exact match is used (no restore-keys), so any change
+      # to the kernel builds it again; raise "v1" to throw the cache away by
+      # hand. Alpine's compiler is not part of the key: GitHub drops a cache
+      # that was not used for 7 days, then the kernel is built fresh.
+      #
+      # Only the .apk and the public key it was signed with are cached, never
+      # pmbootstrap's work directory or ccache: restored files belong to the
+      # runner user, and the build user inside pmbootstrap's chroot cannot
+      # write to them (ccache "Permission denied", the kernel build fails).
+      - name: Look for a cached kernel package
+        id: kernel
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.KERNEL_CACHE }}
+          key: nura-kernel-v1-${{ env.PMBOOTSTRAP_COMMIT }}-${{ hashFiles('postmarketos/pmaports-local/device/testing/linux-zte-axon7/**') }}
+
+      # pmbootstrap builds a package only if its version (pkgver-rN) is not in
+      # the index of its local repository, so the cached .apk is put there and
+      # the index is made again (and signed with this run's key). Every run
+      # makes a new signing key, and apk refuses packages signed with a key it
+      # does not know: the public key of the run that built the kernel goes
+      # next to pmbootstrap's own keys (config_apk_keys is /etc/apk/keys in
+      # all chroots). If anything here fails, the package is removed again and
+      # the kernel is built as usual.
+      - name: Kernel package from the cache
+        if: steps.kernel.outputs.cache-hit == 'true'
+        run: |
+          apk=linux-zte-axon7-$(sed -n 's/^pkgver=//p' "$KERNEL_APORT/APKBUILD")-r$(sed -n 's/^pkgrel=//p' "$KERNEL_APORT/APKBUILD").apk
+          channel=$(sed -n 's/^channel *= *//p' "$PMB_WORK/cache_git/pmaports/pmaports.cfg")
+          repo=$PMB_WORK/packages/$channel/aarch64
+          if [ -z "$channel" ] || [ ! -f "$KERNEL_CACHE/$apk" ] || ! ls "$KERNEL_CACHE"/*.rsa.pub >/dev/null 2>&1; then
+            echo "::warning::cached kernel package is incomplete ($apk), building the kernel"
+            exit 0
+          fi
+          # 12345 is the build user (pmos) in pmbootstrap's chroots, it writes the index
+          sudo install -d -o 12345 -g 12345 "$PMB_WORK/packages" "$PMB_WORK/packages/$channel" "$repo"
+          sudo install -o 12345 -g 12345 -m 644 "$KERNEL_CACHE/$apk" "$repo/"
+          sudo install -d "$PMB_WORK/config_apk_keys"
+          sudo install -m 644 "$KERNEL_CACHE"/*.rsa.pub "$PMB_WORK/config_apk_keys/"
+          if python3 postmarketos/pmbootstrap/pmbootstrap.py -y index \
+            && sudo tar -xzOf "$repo/APKINDEX.tar.gz" APKINDEX | grep -qx "P:linux-zte-axon7"; then
+            echo "using the cached $apk, the kernel is not built"
+          else
+            echo "::warning::could not add the cached $apk to pmbootstrap's repository, building the kernel"
+            sudo rm -rf "$PMB_WORK/packages"
+            for key in "$KERNEL_CACHE"/*.rsa.pub; do sudo rm -f "$PMB_WORK/config_apk_keys/$(basename "$key")"; done
+          fi
 
       - name: Build the images
         env:
@@ -100,6 +150,33 @@ jobs:
           cd postmarketos
           bash scripts/nura-release.sh
           ls -la out/release
+
+      # Keep a freshly built kernel package, also when a later package or the
+      # image failed. abuild puts a package into the index when it is
+      # complete, so a half written .apk is never cached.
+      - name: Kernel package for the cache
+        id: kernel-built
+        if: ${{ !cancelled() && steps.kernel.outcome == 'success' && steps.kernel.outputs.cache-hit != 'true' }}
+        run: |
+          apk=linux-zte-axon7-$(sed -n 's/^pkgver=//p' "$KERNEL_APORT/APKBUILD")-r$(sed -n 's/^pkgrel=//p' "$KERNEL_APORT/APKBUILD").apk
+          channel=$(sed -n 's/^channel *= *//p' "$PMB_WORK/cache_git/pmaports/pmaports.cfg")
+          repo=$PMB_WORK/packages/$channel/aarch64
+          sudo tar -xzOf "$repo/APKINDEX.tar.gz" APKINDEX 2>/dev/null | grep -qx "P:linux-zte-axon7" || exit 0
+          [ -f "$repo/$apk" ] || exit 0
+          # the public half of this run's signing key (the private key stays here)
+          [ "$(sudo sh -c "ls '$PMB_WORK'/config_abuild/*.rsa.pub" | wc -l)" = 1 ] || exit 0
+          mkdir -p "$KERNEL_CACHE"
+          sudo sh -c "cp '$repo/$apk' '$PMB_WORK'/config_abuild/*.rsa.pub '$KERNEL_CACHE/'"
+          sudo chown -R "$(id -u):$(id -g)" "$KERNEL_CACHE"
+          ls -la "$KERNEL_CACHE"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Save the kernel package
+        if: ${{ !cancelled() && steps.kernel-built.outputs.found == 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.KERNEL_CACHE }}
+          key: ${{ steps.kernel.outputs.cache-primary-key }}
 
       - name: pmbootstrap log (on failure)
         if: failure()

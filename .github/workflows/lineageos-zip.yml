@@ -2,10 +2,18 @@
 # server (self-hosted runner, label axon7-build; a LineageOS tree does not fit
 # on GitHub's runners).
 #
-# Runs on every push to main that touches lineageos-22.2/ (patch exports, release
-# notes, build script) or this workflow, and by hand (Run workflow). A newer
-# push cancels a running build. There is no pull_request trigger, so only
-# people who can push to this repository start builds on the server.
+# Runs on every push to main that touches lineageos-22.2/ (patch exports, build
+# script) or this workflow, and by hand (Run workflow). A newer push cancels a
+# running build. There is no pull_request trigger, so only people who can push
+# to this repository start builds on the server.
+#
+# A push that only changes Markdown files (release notes, plans, READMEs) does
+# not start a build: it takes hours on the server and the zip would be the
+# same. ci/release-notes.md is only read when the draft release is created, so
+# new notes are in the next build's draft. To put them into an existing draft
+# without a build:
+#   gh release edit lineageos-22.2-YYYYMMDD -R devilAPI/zte-axon7 \
+#     --notes-file lineageos-22.2/ci/release-notes.md
 #
 # The zip goes into a DRAFT release (lineageos-22.2-YYYYMMDD[-N], see
 # .github/scripts/draft-release.sh); publish it on GitHub after testing.
@@ -17,6 +25,8 @@ on:
     branches: [main]
     paths:
       - 'lineageos-22.2/**'
+      # docs only; a push that also changes other files still builds
+      - '!lineageos-22.2/**/*.md'
       - '.github/workflows/lineageos-zip.yml'
       - '.github/scripts/draft-release.sh'
   workflow_dispatch:
