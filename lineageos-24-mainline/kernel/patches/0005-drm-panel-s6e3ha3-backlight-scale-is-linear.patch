@@ -1,0 +1,22 @@
+From: axon7m bring-up
+Subject: [PATCH] drm/panel: s6e3ha3: the backlight scale is linear
+
+The panel's DCS brightness (0x51) sets the AMOLED luminance directly; the
+perceptual curve is the user interface's job. With the scale "unknown",
+drm_hwcomposer applies the HLG OETF on top of Android's own curve: 10 %
+brightness gave 138 of 255 (LineageOS 24 run 29) and the slider's low end
+stayed bright. Report BACKLIGHT_SCALE_LINEAR so drm_hwc writes the value
+as it is.
+---
+diff --git a/drivers/gpu/drm/panel/panel-samsung-s6e3ha3.c b/drivers/gpu/drm/panel/panel-samsung-s6e3ha3.c
+index 2353ac130..bac0cdc75 100644
+--- a/drivers/gpu/drm/panel/panel-samsung-s6e3ha3.c
++++ b/drivers/gpu/drm/panel/panel-samsung-s6e3ha3.c
+@@ -206,6 +206,7 @@ static int s6e3ha3_probe(struct mipi_dsi_device *dsi)
+ 	};
+ 	const struct backlight_properties bl_props = {
+ 		.type = BACKLIGHT_RAW,
++		.scale = BACKLIGHT_SCALE_LINEAR,
+ 		.brightness = 160,
+ 		.max_brightness = 255,
+ 	};
