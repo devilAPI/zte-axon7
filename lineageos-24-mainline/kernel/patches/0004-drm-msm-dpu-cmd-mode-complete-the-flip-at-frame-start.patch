@@ -1,0 +1,89 @@
+From: axon7m bring-up
+Subject: [PATCH] drm/msm/dpu: command mode: complete the flip at frame start
+
+On command-mode panels the flip event (and with it the CRTC out-fence) was
+sent in complete_commit(), after wait_flush() has waited for pp_done, the
+end of the frame transfer. drm_hwcomposer hands that fence to Android as
+the present fence and as the release fence of the previous buffers, so an
+app could only start its next GPU job a whole transfer after the frame
+started. On the ZTE Axon 7 (S6E3HA3, 1440x2560, bonded DSI) the transfer
+takes 13.4 ms of the 16.7 ms frame: apps waited ~20 ms in dequeueBuffer,
+missed every other vsync and everything ran at 30 fps (LineageOS 24 run
+29, ftrace dpu/drm_msm_atomic + atrace).
+
+Arm the crtc at kickoff when one of its encoders is in command mode and
+complete the flip on the next vblank (read pointer) irq, the start of the
+transfer. The previous frame's buffers are idle by then: the kickoff waited
+for their pp_done in prepare_for_kickoff. complete_commit() still sends the
+event when no vblank came first (unchanged fallback) and disarms.
+---
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+index 42d0a529b..99f5a1204 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -651,6 +651,18 @@ void dpu_crtc_vblank_callback(struct drm_crtc *crtc)
+ 
+ 	drm_crtc_handle_vblank(crtc);
+ 	trace_dpu_crtc_vblank_cb(DRMID(crtc));
++
++	/*
++	 * Command mode: the vblank (read pointer) irq after a kickoff marks the
++	 * start of the frame transfer. The previous frame's buffers are idle by
++	 * then (the kickoff waited for its pp_done), so complete the flip now
++	 * instead of at this frame's pp_done, a whole transfer (~13 ms on a
++	 * 1440x2560 dual-DSI panel) later. Present and release fences then
++	 * signal at frame start, as on video mode, and userspace can render
++	 * into the old buffer while the new frame is being sent.
++	 */
++	if (atomic_xchg(&dpu_crtc->cmd_flip_armed, 0))
++		_dpu_crtc_complete_flip(crtc);
+ }
+ 
+ static void dpu_crtc_frame_event_work(struct kthread_work *work)
+@@ -754,6 +766,7 @@ void dpu_crtc_frame_event_cb(struct drm_crtc *crtc, u32 event)
+ void dpu_crtc_complete_commit(struct drm_crtc *crtc)
+ {
+ 	trace_dpu_crtc_complete_commit(DRMID(crtc));
++	atomic_set(&to_dpu_crtc(crtc)->cmd_flip_armed, 0);
+ 	dpu_core_perf_crtc_update(crtc, 0);
+ 	_dpu_crtc_complete_flip(crtc);
+ }
+@@ -1119,11 +1132,17 @@ void dpu_crtc_commit_kickoff(struct drm_crtc *crtc)
+ 
+ 		dpu_vbif_clear_errors(dpu_kms);
+ 
++		bool cmd_mode = false;
++
+ 		drm_for_each_encoder_mask(encoder, crtc->dev,
+ 				crtc->state->encoder_mask) {
+ 			dpu_encoder_kickoff(encoder);
+ 			dpu_encoder_start_frame_done_timer(encoder);
++			if (dpu_encoder_get_intf_mode(encoder) == INTF_MODE_CMD)
++				cmd_mode = true;
+ 		}
++		if (cmd_mode)
++			atomic_set(&dpu_crtc->cmd_flip_armed, 1);
+ 	}
+ 
+ 	if (atomic_inc_return(&dpu_crtc->frame_pending) == 1) {
+@@ -1248,6 +1267,7 @@ static void dpu_crtc_disable(struct drm_crtc *crtc,
+ 		if (release_bandwidth)
+ 			dpu_core_perf_crtc_release_bw(crtc);
+ 		atomic_set(&dpu_crtc->frame_pending, 0);
++		atomic_set(&dpu_crtc->cmd_flip_armed, 0);
+ 	}
+ 
+ 	dpu_core_perf_crtc_update(crtc, 0);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
+index 6eaba5696..69deafd5a 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
+@@ -172,6 +172,8 @@ struct dpu_crtc {
+ 	struct list_head ad_active;
+ 
+ 	atomic_t frame_pending;
++	/* command mode: send the flip event at the next vblank (frame start) */
++	atomic_t cmd_flip_armed;
+ 	struct dpu_crtc_frame_event frame_events[DPU_CRTC_FRAME_EVENT_SIZE];
+ 	struct list_head frame_event_list;
+ 	spinlock_t spin_lock;
