@@ -235,7 +235,7 @@ ndk::ScopedAStatus Gnss::deleteAidingData(GnssAidingData) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Gnss::getExtensionPsds(std::shared_ptr<IGnssPsds>* ret) {
+ndk::ScopedAStatus Gnss::getExtensionPsds(std::shared_ptr<IGnssPsds>*) {
     return noExtension();
 }
 
@@ -253,16 +253,16 @@ ndk::ScopedAStatus Gnss::getExtensionGnssPowerIndication(
     return noExtension();
 }
 
-ndk::ScopedAStatus Gnss::getExtensionGnssBatching(std::shared_ptr<IGnssBatching>* ret) {
+ndk::ScopedAStatus Gnss::getExtensionGnssBatching(std::shared_ptr<IGnssBatching>*) {
     return noExtension();
 }
 
-ndk::ScopedAStatus Gnss::getExtensionGnssGeofence(std::shared_ptr<IGnssGeofence>* ret) {
+ndk::ScopedAStatus Gnss::getExtensionGnssGeofence(std::shared_ptr<IGnssGeofence>*) {
     return noExtension();
 }
 
 ndk::ScopedAStatus Gnss::getExtensionGnssNavigationMessage(
-        std::shared_ptr<IGnssNavigationMessageInterface>* ret) {
+        std::shared_ptr<IGnssNavigationMessageInterface>*) {
     return noExtension();
 }
 
@@ -288,7 +288,7 @@ ndk::ScopedAStatus Gnss::getExtensionGnssAntennaInfo(std::shared_ptr<IGnssAntenn
 }
 
 ndk::ScopedAStatus Gnss::getExtensionMeasurementCorrections(
-        std::shared_ptr<measurement_corrections::IMeasurementCorrectionsInterface>* ret) {
+        std::shared_ptr<measurement_corrections::IMeasurementCorrectionsInterface>*) {
     return noExtension();
 }
 
