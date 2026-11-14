@@ -115,7 +115,7 @@ std::optional<T> value(const uint8_t* b, size_t n, uint8_t type) {
 
 LocClient::LocClient(Listener* listener) : listener_(listener), buf_(65536) {
     wakeFd_ = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
-    PLOG_IF(ERROR, wakeFd_ < 0) << "eventfd";
+    if (wakeFd_ < 0) { PLOG(ERROR) << "eventfd"; }
     thread_ = std::thread([this] { run(); });
 }
 
@@ -154,7 +154,7 @@ void LocClient::startLookup() {
 
     int fd = socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
     if (fd < 0) {
-        PLOG_IF(ERROR, !waitingLogged_) << "socket(AF_QIPCRTR) for the lookup";
+        if (!waitingLogged_) { PLOG(ERROR) << "socket(AF_QIPCRTR) for the lookup"; }
         waitingLogged_ = true;
         return;
     }
@@ -166,7 +166,7 @@ void LocClient::startLookup() {
     pkt.cmd = QRTR_TYPE_NEW_LOOKUP;
     pkt.server.service = kLocService;
     if (getsockname(fd, reinterpret_cast<sockaddr*>(&self), &len) < 0) {
-        PLOG_IF(ERROR, !waitingLogged_) << "getsockname on the QRTR socket";
+        if (!waitingLogged_) { PLOG(ERROR) << "getsockname on the QRTR socket"; }
         waitingLogged_ = true;
         close(fd);
         return;
@@ -176,7 +176,7 @@ void LocClient::startLookup() {
     ns.sq_node = self.sq_node;
     ns.sq_port = QRTR_PORT_CTRL;
     if (sendto(fd, &pkt, sizeof(pkt), 0, reinterpret_cast<sockaddr*>(&ns), sizeof(ns)) < 0) {
-        PLOG_IF(ERROR, !waitingLogged_) << "QRTR lookup of the LOC service";
+        if (!waitingLogged_) { PLOG(ERROR) << "QRTR lookup of the LOC service"; }
         waitingLogged_ = true;
         close(fd);
         return;
@@ -399,7 +399,7 @@ void LocClient::run() {
     while (!exit_) {
         if (dataFd_ < 0) {
             dataFd_ = socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
-            PLOG_IF(ERROR, dataFd_ < 0 && !waitingLogged_) << "socket(AF_QIPCRTR)";
+            if (dataFd_ < 0 && !waitingLogged_) { PLOG(ERROR) << "socket(AF_QIPCRTR)"; }
         }
         if (!haveService_ && (ctrlFd_ < 0 || Clock::now() >= nextLookup_)) startLookup();
         if (dataFd_ >= 0) reconcile();
