@@ -1,0 +1,44 @@
+From b547144921118fd3d844e29561ed0827fabc6cce Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 18:57:20 +0100
+Subject: [PATCH] power: reset: qcom-pon: clear the reboot reason after boot
+
+The reboot-mode driver writes PON_SOFT_RB_SPARE only for a known mode
+(recovery, bootloader) and nothing for a plain reboot. The ZTE Axon 7's
+bootloader does not clear the register either, so after one "reboot
+recovery" every later plain reboot also went to recovery (seen on
+LineageOS 24: 0x88f stayed 0x04). Downstream kernels write 0 on a normal
+reboot. Clear the reason once the driver is up: the bootloader has used
+it by then.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/power/reset/qcom-pon.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/power/reset/qcom-pon.c b/drivers/power/reset/qcom-pon.c
+index 7e108982a..531390ef6 100644
+--- a/drivers/power/reset/qcom-pon.c
++++ b/drivers/power/reset/qcom-pon.c
+@@ -78,6 +78,17 @@ static int qcom_pon_probe(struct platform_device *pdev)
+ 			dev_err(&pdev->dev, "can't register reboot mode\n");
+ 			return error;
+ 		}
++
++		/*
++		 * The bootloader has acted on the reason by now. A reboot
++		 * without a mode writes nothing, so a stale "recovery" would
++		 * send every later plain reboot to recovery again (seen on the
++		 * ZTE Axon 7, whose bootloader does not clear it; downstream
++		 * kernels write 0 on a normal reboot). Clear it.
++		 */
++		regmap_update_bits(pon->regmap,
++				   pon->baseaddr + PON_SOFT_RB_SPARE,
++				   GENMASK(7, reason_shift), 0);
+ 	}
+ 
+ 	platform_set_drvdata(pdev, pon);
+-- 
+2.43.0
+

@@ -85,6 +85,8 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [SPOILER="2026-11-14"]
 [LIST]
 [*]Touchscreen: quick taps were lost and typing was nearly impossible. The touch driver read far more data from the controller than it needs on every touch, so the screen reported only about 6 times a second. It now reads just the finger data, and the touch bus runs at full speed (400 kHz) as on stock: the screen should follow your finger closely again. Please confirm typing works.
+[*]Temperature protection: the kernel did not read the processor's temperature sensors, so nothing slowed the chip down when it got hot. The sensors and the thermal limits are now active (14 temperature zones: CPU, GPU, memory, modem, camera ...).
+[*]Restarting: after one restart into recovery (TWRP), every later normal restart also ended in TWRP. A normal restart now starts the system again.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-12"]
