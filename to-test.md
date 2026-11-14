@@ -35,6 +35,7 @@ touchscreen fix (0044/0045), temperature sensors (tsens), plain reboot fix
 - [ ] Speaker sound: not possible yet, ringtones/alarms are silent (Vorbis decoder fails in LOS 24, Claude is on it)
 - [ ] Wi-Fi: connect to your network once (Settings), tell Claude it worked or what it said
 - [ ] Headphones: plug in while music plays (after the decoder fix), sound moves to the headphones
+- [ ] **SIM card**: is a SIM in the phone (which slot)? The modem now runs in LineageOS 24 and reports both slots as "card error, no ATR" (QMI UIM, 2026-11-14). With a SIM inserted that would point to the SIM supply; with none it is just "empty". Just tell Claude yes/no and the slot.
 
 ## 1. Headphone audio (Hi-Fi DAC, AK4490)
 
