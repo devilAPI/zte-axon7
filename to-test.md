@@ -12,6 +12,30 @@ To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
 menu (Volume Down, then Power), or make it the default from Nura with
 `sudo axon7-bootmenu default pmos 5` (back: `sudo axon7-bootmenu default los 5`).
 
+## 0. From the unattended session (2026-11-14 evening)
+
+**Boot menu:** while Claude works unattended the boot menu default is
+**LineageOS** (any reset must end in a system Claude can reach over adb;
+Nura needs its password). Your old setting was postmarketOS after 5 s. Back to
+it from Nura: `sudo axon7-bootmenu default pmos 5` (the original block is
+also saved as `ios/research/axon7/manual-boot/misc-before.bin`).
+
+**Nura r25** (draft release, built by GitHub after the push of 97fb832):
+touchscreen fix (0044/0045), temperature sensors (tsens), plain reboot fix
+(0046). Flash it, then:
+
+- [ ] Typing on the on-screen keyboard works, quick taps register
+- [ ] `cat /sys/class/thermal/thermal_zone*/type` lists cpu0-thermal ... gpu-top-thermal (about 14 zones); `cat /sys/class/thermal/thermal_zone*/temp` shows 30000-60000 (30-60 C)
+- [ ] `sudo reboot` comes back into Nura (not TWRP), also after a `sudo systemctl reboot --reboot-argument=recovery` + reboot from TWRP
+- [ ] Then publish the draft release on GitHub and paste the changelog from XDA-POST-NURA.md
+
+**LineageOS 24** (build 31 + kernel from los24-kfast.sh, on the phone now):
+
+- [x] Touch: quick taps and typing work (owner, 2026-11-14; 9.8 ms per report)
+- [ ] Speaker sound: not possible yet, ringtones/alarms are silent (Vorbis decoder fails in LOS 24, Claude is on it)
+- [ ] Wi-Fi: connect to your network once (Settings), tell Claude it worked or what it said
+- [ ] Headphones: plug in while music plays (after the decoder fix), sound moves to the headphones
+
 ## 1. Headphone audio (Hi-Fi DAC, AK4490)
 
 Plug in wired headphones first. Start quietly.
