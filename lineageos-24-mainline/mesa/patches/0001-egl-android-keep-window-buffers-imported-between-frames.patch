@@ -41,7 +41,7 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
  #include "util/libdrm.h"
  #include <sys/system_properties.h>
  #include <drm-uapi/drm_fourcc.h>
-@@ -135,6 +136,52 @@
+@@ -135,6 +136,54 @@
     dri2_surf->in_fence_fd = -1;
  }
  
@@ -50,14 +50,16 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
 + * close and re-import the buffer each frame; on msm (Adreno 530, ZTE Axon 7)
 + * that is an IOMMU map and unmap of the whole 1440x2560 buffer per frame,
 + * about a quarter of the RenderThread's time. */
-+/* A/B switch for measurements: setprop debug.mesa.android.nocache true and
-+ * restart the app to get the old import-every-frame behaviour back. */
++/* Off by default: on build 35 (2026-11-14) the cache made Settings scrolling
++ * bimodal (p50 26-150 ms against a steady 27-38 ms without it), cause not
++ * known yet. setprop debug.mesa.android.nocache false and restart the app to
++ * turn it on for measurements. */
 +static bool
 +droid_buffer_cache_enabled(void)
 +{
 +   static int enabled = -1;
 +   if (enabled < 0)
-+      enabled = !debug_get_bool_option("MESA_ANDROID_NOCACHE", false);
++      enabled = !debug_get_bool_option("MESA_ANDROID_NOCACHE", true);
 +   return enabled;
 +}
 +
