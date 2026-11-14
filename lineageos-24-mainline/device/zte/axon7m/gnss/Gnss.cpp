@@ -55,8 +55,9 @@ int64_t bootTimeNs() {
 // Extensions: none. @nullable ones return null; the others cannot (the NDK
 // backend refuses to write a null binder), so they return an error, which
 // the framework logs and takes as "not there".
-// CHECK: which getExtension*() are @nullable in the interface version built
-// against (here as in V4); only the log output depends on it.
+// Every extension is unsupported with an error status: system_server checks
+// isOk() but not the returned pointer (an OK + null Psds crashed it in
+// GnssPsdsAidl::setCallback on every start, LineageOS 24 run 33).
 ndk::ScopedAStatus noExtension() {
     return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
@@ -235,8 +236,7 @@ ndk::ScopedAStatus Gnss::deleteAidingData(GnssAidingData) {
 }
 
 ndk::ScopedAStatus Gnss::getExtensionPsds(std::shared_ptr<IGnssPsds>* ret) {
-    *ret = nullptr;
-    return ndk::ScopedAStatus::ok();
+    return noExtension();
 }
 
 ndk::ScopedAStatus Gnss::getExtensionGnssConfiguration(std::shared_ptr<IGnssConfiguration>*) {
@@ -254,19 +254,16 @@ ndk::ScopedAStatus Gnss::getExtensionGnssPowerIndication(
 }
 
 ndk::ScopedAStatus Gnss::getExtensionGnssBatching(std::shared_ptr<IGnssBatching>* ret) {
-    *ret = nullptr;
-    return ndk::ScopedAStatus::ok();
+    return noExtension();
 }
 
 ndk::ScopedAStatus Gnss::getExtensionGnssGeofence(std::shared_ptr<IGnssGeofence>* ret) {
-    *ret = nullptr;
-    return ndk::ScopedAStatus::ok();
+    return noExtension();
 }
 
 ndk::ScopedAStatus Gnss::getExtensionGnssNavigationMessage(
         std::shared_ptr<IGnssNavigationMessageInterface>* ret) {
-    *ret = nullptr;
-    return ndk::ScopedAStatus::ok();
+    return noExtension();
 }
 
 ndk::ScopedAStatus Gnss::getExtensionAGnss(std::shared_ptr<IAGnss>*) {
@@ -292,8 +289,7 @@ ndk::ScopedAStatus Gnss::getExtensionGnssAntennaInfo(std::shared_ptr<IGnssAntenn
 
 ndk::ScopedAStatus Gnss::getExtensionMeasurementCorrections(
         std::shared_ptr<measurement_corrections::IMeasurementCorrectionsInterface>* ret) {
-    *ret = nullptr;
-    return ndk::ScopedAStatus::ok();
+    return noExtension();
 }
 
 void Gnss::onPosition(const LocPosition& p) {
