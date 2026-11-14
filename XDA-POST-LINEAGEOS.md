@@ -8,14 +8,24 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-09
+Last update: 2026-11-14
 
 First release published 2026-11-09 (lineageos-22.2-20261109; the download
 link in the post points to lineageos-latest, which follows each published
 release). The install was tested with the devtest variant of the same zip
 (/data on los_data): TWRP 3.3.0-0 (the oldest supported) flashed system,
 vendor and boot, the phone
-booted with SELinux enforcing.
+booted with SELinux enforcing. The release variant itself (/data on userdata)
+has not been booted on our phone, and TWRP 3.7.0_9-0 was never used with it.
+
+2026-11-14: a user report (TWRP 3.7.0_9-0 restarted by itself in its main
+menu; with an unofficial TWRP 3.2.1-8 TREBLE the zip flashed, then a boot loop
+after the logo, coming from crDroid 11 / LineageOS 18.1) made the install
+steps stricter: TWRP 3.3.0-0 (the tested one) instead of "3.7.0 recommended",
+Format Data always (Advanced Wipe > Data keeps internal storage, and
+Android 15's file-based encryption cannot take it over), /data as ext4
+(18.1 also allowed F2FS, Format Data keeps the file system), and a
+"Problems" section with the logs to send.
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
@@ -55,7 +65,9 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 
 [SIZE=5][B]Warning[/B][/SIZE]
 [LIST]
-[*]This ROM only works with the [B]Oreo "universal" bootloader[/B] (TrustZone TZ.BF.4.0.1-00353, the bootstack LineageOS 15.1 to 18.1 needed) and the [B]modem package for your model[/B]. The installer checks the bootloader and stops if it is missing.
+[*]This ROM only works with the [B]Oreo "universal" bootloader[/B] (TrustZone TZ.BF.4.0.1-00353, the bootstack LineageOS 15.1 to 18.1 needed) and the [B]modem package for your model[/B]. The installer checks the bootloader and stops if it is missing. If LineageOS 18.1 or crDroid 7.x installs on your phone, you have it (their installers check the same version).
+[*]Tested with [B]TWRP 3.3.0-0[/B] only. TWRP 3.7.0_9-0 has been reported to restart by itself on this phone; older TWRP builds (3.2.x, e.g. the 3.2.1 "TREBLE" build) are untested.
+[*]Installing [B]erases internal storage[/B] (Format Data, see below). Copy your photos and files to a computer first.
 [*]It needs the [B]community vendor partition[/B] (512 MB after system, the same as LineageOS 16 to 18.1). The original ZTE partition layout without a vendor partition is [B]not supported[/B]. With the vendor partition you cannot flash official ZTE firmware until you remove it again (PARTY tool).
 [*]Tested on the [B]A2017G[/B] only. A2017U / A2017 (China): untested, at your own risk.
 [*]Any failure while flashing or repartitioning can brick the phone. Make a backup and keep EDL in mind.
@@ -66,14 +78,23 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 [LIST=1]
 [*]Install the [B]Oreo universal bootloader[/B] and the [B]modem for your model[/B] (unnecessary if you ran LineageOS 15.1 to 18.1 before). They are linked in the [URL='https://xdaforums.com/t/official-lineageos-15-1-for-zte-axon-7.3800214/']official LineageOS 15.1 thread[/URL].
 [*]Create the [B]vendor partition[/B] with Oki's [URL='https://xdaforums.com/t/tool-treble-party-v0-5-vendor-partition-manager-2018-08-31.3831517/']PARTY tool[/URL] (a TWRP zip; unnecessary if you have it already, e.g. from LineageOS 16 to 18.1). If TWRP restarts on the first run, boot back into recovery and flash it again.
-[*]Update [B]TWRP[/B] to 3.3.0 or newer ([URL='https://dl.twrp.me/ailsa_ii/']dl.twrp.me/ailsa_ii[/URL], 3.7.0_9-0 recommended).
-[*]Back up your current ROM in TWRP (Boot, System, Vendor, Data, EFS) and copy it to a computer.
-[*]Wipe → Advanced Wipe: [B]Dalvik / ART Cache, Cache, System, Vendor, Data[/B]. [B]Coming from LineageOS 18.1 or older or from stock: also Format Data[/B] (type [I]yes[/I]): Android 15 uses file-based encryption and cannot read the old encrypted data partition.
-[*]Install the [B]ROM[/B]: [URL='https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest']newest release[/URL] ([I]lineage-22.2-DATE-UNOFFICIAL-axon7.zip[/I]; check it against the [I].sha256[/I] file).
-[*]Install GApps (optional): a package for [B]Android 15, arm64[/B] (e.g. MindTheGapps 15).
+[*]Install [B]TWRP 3.3.0-0[/B] ([I]twrp-3.3.0-0-ailsa_ii.img[/I] from [URL='https://dl.twrp.me/ailsa_ii/']dl.twrp.me/ailsa_ii[/URL]; the version this zip was tested with): Install → Install Image → the .img → [B]Recovery[/B], then Reboot → Recovery and check the version in the title bar. If TWRP restarts by itself, do not flash anything with it; go back to 3.3.0-0.
+[*]Back up your current ROM in TWRP (Boot, System, Vendor, Data, EFS) and copy it, and your photos and files, to a computer.
+[*]Wipe → Advanced Wipe → tick only [B]Data[/B] → Repair or Change File System. If it says [B]F2FS[/B]: Change File System → [B]EXT4[/B] → swipe (this ROM mounts /data as ext4 only). Back.
+[*]Wipe → [B]Format Data[/B] → type [I]yes[/I]. [B]Always[/B], whichever ROM you come from (stock, LineageOS, crDroid, encrypted or not); only an update from an earlier LineageOS 22.2 build skips this. Android 15 uses file-based encryption and cannot use an old data partition; [I]Advanced Wipe → Data[/I] alone is not enough (it keeps internal storage). Then Reboot → Recovery.
+[*]Wipe → Advanced Wipe: [B]Dalvik / ART Cache, Cache, System, Vendor[/B].
+[*]Copy the ROM zip to the phone (USB in TWRP, or a microSD card) and install it: [URL='https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest']newest release[/URL] ([I]lineage-22.2-DATE-UNOFFICIAL-axon7.zip[/I]; check it against the [I].sha256[/I] file). The install must end without an error.
+[*]GApps (optional): a package for [B]Android 15, arm64[/B] (e.g. MindTheGapps 15), right after the ROM, before the first start. If the first start fails, try once without GApps.
 [*]Reboot → System. The first start takes a few minutes.
 [/LIST]
 Not needed: the multi-boot with iOS and Nura is a developer setup, not part of this ROM ([URL='https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md']DEV-MULTIBOOT.md[/URL]).
+
+[SIZE=5][B]Problems?[/B][/SIZE]
+[LIST]
+[*][B]TWRP restarts by itself[/B]: use TWRP 3.3.0-0 (above). Flash the ROM only with a TWRP that runs stably.
+[*][B]Boot loop or stuck at the logo[/B]: did you Format Data (typed [I]yes[/I]) and is /data EXT4? If not, do it and install again. Otherwise hold [B]Power + Volume Up[/B] about 10 s to get to TWRP, and right away (before starting anything else) save the kernel log of the failed start: with a computer, [I]adb pull /sys/fs/pstore/ los-pstore[/I]; or with a microSD card in the phone, Advanced → Terminal: [I]cat /sys/fs/pstore/console-ramoops* > /external_sd/los-ramoops.txt[/I] (not to internal storage: TWRP cannot read Android 15's encrypted /data). If adb works during the start, [I]adb logcat > logcat.txt[/I] helps too.
+[*]When you report a problem, please post: the ROM you came from and whether it was encrypted, whether you did Format Data, your TWRP version, your model and modem/baseband version, the kernel log above and TWRP's log ([I]adb pull /tmp/recovery.log[/I], or Advanced → Copy Log to the microSD card, right after installing the zip).
+[/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-09"]

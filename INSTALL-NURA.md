@@ -31,7 +31,7 @@ developers. Every step is a button press or a command you can copy.
 ## What you need
 
 **Phone:** ZTE Axon 7 A2017G, **bootloader unlocked**, **TWRP** as recovery
-(3.3.0 or newer; 3.7.0_9-0: [dl.twrp.me/ailsa_ii](https://dl.twrp.me/ailsa_ii/twrp-3.7.0_9-0-ailsa_ii.img.html)),
+(3.3.0-0, the tested one: [dl.twrp.me/ailsa_ii](https://dl.twrp.me/ailsa_ii/); 3.7.0_9-0 has been reported to restart by itself),
 an Android ROM installed (ideally LineageOS 16 to 18.1: Nura takes the GPU
 firmware from its `vendor` partition). A **microSD card**, 8 GB or more.
 Charge to at least 50 %.
