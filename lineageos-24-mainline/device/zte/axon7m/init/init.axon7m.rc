@@ -79,3 +79,13 @@ service axon7m-slpi-kick /vendor/bin/axon7m-slpi-kick.sh
     seclabel u:r:vendor_modprobe:s0
     oneshot
     disabled
+
+# APSS watchdog (qcom_wdt, /dev/watchdog): the kernel driver never arms it by
+# itself, so a hang waited for someone to hold the power key. watchdogd pets
+# every 10 s with a 30 s timeout (interval + margin); if the system hangs the
+# phone resets into the boot menu.
+service watchdogd /system/bin/watchdogd 10 20
+    class core
+    user root
+    group root
+    seclabel u:r:watchdogd:s0

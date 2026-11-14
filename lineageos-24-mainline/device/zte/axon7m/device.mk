@@ -32,6 +32,15 @@ PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := 560dpi
 PRODUCT_VENDOR_PROPERTIES += ro.sf.lcd_density=560
 
+# Codec2: use the AIDL software store. With the HIDL default (no
+# hwservicemanager here) media.swcodec registered an empty store and
+# MediaCodecList had only AAC: Vorbis ringtones/alarms failed ("Failed to
+# create audio/vorbis decoder"), no sound. As cuttlefish.
+PRODUCT_VENDOR_PROPERTIES += media.c2.hal.selection?=aidl
+
+# APSS watchdog daemon (init.axon7m.rc)
+PRODUCT_PACKAGES += watchdogd
+
 # Graphics: drm_hwcomposer on the msm DRM device and minigbm gralloc, then
 #   AXON7_GPU=swiftshader (bring-up fallback): SwiftShader Vulkan + ANGLE GLES
 #     on the CPU, works without the GPU;
