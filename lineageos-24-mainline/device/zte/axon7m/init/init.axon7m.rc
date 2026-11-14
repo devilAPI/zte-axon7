@@ -89,3 +89,22 @@ service watchdogd /system/bin/watchdogd 10 20
     user root
     group root
     seclabel u:r:watchdogd:s0
+
+# Modem (qcom/README.md): rmtfs serves the modem's EFS partitions read-only
+# (-r: the modem's writes are discarded, modemst1/2, fsg and fsc are never
+# written) and starts the modem remoteproc (-s). Once it runs, the modem is
+# switched online over QMI DMS (radios, GPS). Tested by hand on build 31:
+# MBA + MPSS up, DMS/LOC/NAS/WMS/UIM/VOICE/WDS on QRTR, online in 3 s.
+service rmtfs /vendor/bin/rmtfs -o /dev/block/by-name -P -r -s
+    class core
+    user root
+    group system
+
+service axon7m-modem-online /vendor/bin/axon7m-modem-online
+    user root
+    group system
+    oneshot
+    disabled
+
+on property:init.svc.rmtfs=running
+    start axon7m-modem-online

@@ -1,0 +1,7 @@
+// QMI DMS "online" for the modem once rmtfs has started it (axon7m-modem-online.c)
+cc_binary {
+    name: "axon7m-modem-online",
+    vendor: true,
+    srcs: ["axon7m-modem-online.c"],
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+}

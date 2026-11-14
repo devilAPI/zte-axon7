@@ -41,6 +41,9 @@ PRODUCT_VENDOR_PROPERTIES += media.c2.hal.selection?=aidl
 # APSS watchdog daemon (init.axon7m.rc)
 PRODUCT_PACKAGES += watchdogd
 
+# Modem bring-up (qcom/README.md): rmtfs (read-only), QRTR tools, online switch
+PRODUCT_PACKAGES += rmtfs libqrtr qrtr-lookup axon7m-modem-online
+
 # Graphics: drm_hwcomposer on the msm DRM device and minigbm gralloc, then
 #   AXON7_GPU=swiftshader (bring-up fallback): SwiftShader Vulkan + ANGLE GLES
 #     on the CPU, works without the GPU;
