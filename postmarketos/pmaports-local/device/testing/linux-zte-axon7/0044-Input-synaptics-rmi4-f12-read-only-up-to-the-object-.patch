@@ -1,0 +1,44 @@
+From aa3ce428cfbca0d559e97422e20bf0d51154a712 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 16:38:24 +0100
+Subject: [PATCH 44/45] Input: synaptics-rmi4 - f12: read only up to the object
+ data
+
+rmi_f12_attention() read the whole F12 data packet on every interrupt
+but only uses Data1 (the finger objects). On the Synaptics S3718 of the
+ZTE Axon 7 the registers after Data1 bring the packet to 1658 bytes,
+which takes 153 ms at 100 kHz: the touchscreen reported at 6.4 Hz,
+quick taps were lost and typing was impossible. Stop the read at the
+end of Data1 (about 80 bytes).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ drivers/input/rmi4/rmi_f12.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/input/rmi4/rmi_f12.c b/drivers/input/rmi4/rmi_f12.c
+index 841884d96..366c35de2 100644
+--- a/drivers/input/rmi4/rmi_f12.c
++++ b/drivers/input/rmi4/rmi_f12.c
+@@ -269,8 +269,17 @@ static irqreturn_t rmi_f12_attention(int irq, void *ctx)
+ 		drvdata->attn_data.data += valid_bytes;
+ 		drvdata->attn_data.size -= valid_bytes;
+ 	} else {
++		/*
++		 * Only the object data (Data1) is used. Registers after it can
++		 * be large (1658 bytes in all on the S3718 of the ZTE Axon 7:
++		 * 153 ms per report at 100 kHz), so do not read past it.
++		 */
++		if (f12->data1)
++			valid_bytes = min_t(u32, sensor->pkt_size,
++					    f12->data1_offset + f12->data1->reg_size);
++
+ 		retval = rmi_read_block(rmi_dev, f12->data_addr,
+-					sensor->data_pkt, sensor->pkt_size);
++					sensor->data_pkt, valid_bytes);
+ 		if (retval < 0) {
+ 			dev_err(&fn->dev, "Failed to read object data. Code: %d.\n",
+ 				retval);
+-- 
+2.43.0
+
