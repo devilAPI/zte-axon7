@@ -16,3 +16,22 @@
 /vendor/bin/axon7m-bootguard\.sh                            u:object_r:vendor_toolbox_exec:s0
 /vendor/bin/hw/android\.hardware\.vibrator-service\.axon7m  u:object_r:hal_vibrator_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gnss-service\.axon7m      u:object_r:hal_gnss_default_exec:s0
+# GPU and display (as dragonboard): render node for every GL client, card0
+# for the composer
+/dev/dri                                                    u:object_r:gpu_device:s0
+/dev/dri/renderD128                                         u:object_r:gpu_device:s0
+/dev/dri/card0                                              u:object_r:graphics_device:s0
+# minigbm (as cuttlefish): mapper and its libraries load into every app
+/vendor/bin/hw/android\.hardware\.graphics\.allocator-service\.minigbm  u:object_r:hal_graphics_allocator_default_exec:s0
+/vendor/lib(64)?/hw/mapper\.minigbm\.so                     u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libminigbm_gralloc\.so                     u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libminigbm_gralloc4_utils\.so              u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libgallium_dri\.so                         u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/libdrm\.so                                 u:object_r:same_process_hal_file:s0
+/vendor/bin/hw/android\.hardware\.sensors-service\.axon7m   u:object_r:hal_sensors_default_exec:s0
+# modem: rmtfs serves the EFS partitions (read-only, -r), modem-online
+/vendor/bin/rmtfs                                           u:object_r:axon7m_rmtfs_exec:s0
+/vendor/bin/axon7m-modem-online                             u:object_r:axon7m_modem_online_exec:s0
+/dev/qcom_rmtfs_mem1                                        u:object_r:axon7m_rmtfs_device:s0
+/dev/block/platform/soc@0/624000\.ufshc/by-name/(modemst1|modemst2|fsg|fsc)  u:object_r:axon7m_modem_block_device:s0
+/dev/block/by-name/(modemst1|modemst2|fsg|fsc)              u:object_r:axon7m_modem_block_device:s0

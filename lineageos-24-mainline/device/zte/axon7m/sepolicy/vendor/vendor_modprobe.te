@@ -1,0 +1,2 @@
+# axon7m-sns-reg.sh runs sns-reg (QMI over QRTR) in this domain
+allow vendor_modprobe self:qipcrtr_socket create_socket_perms_no_ioctl;

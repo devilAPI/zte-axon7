@@ -1,0 +1,7 @@
+# axon7m-modem-online: QMI DMS over QRTR, logs to /dev/kmsg
+type axon7m_modem_online, domain;
+type axon7m_modem_online_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(axon7m_modem_online)
+
+allow axon7m_modem_online self:qipcrtr_socket create_socket_perms_no_ioctl;
+allow axon7m_modem_online kmsg_device:chr_file w_file_perms;

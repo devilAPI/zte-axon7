@@ -1,0 +1,15 @@
+# rmtfs (as dragonboard's rmtfs.te, own type names)
+type axon7m_rmtfs, domain;
+type axon7m_rmtfs_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(axon7m_rmtfs)
+
+allow axon7m_rmtfs block_device:dir search;
+allow axon7m_rmtfs block_device:lnk_file read;
+allow axon7m_rmtfs axon7m_modem_block_device:blk_file { open read getattr };
+allow axon7m_rmtfs axon7m_rmtfs_device:chr_file { open read write getattr };
+allow axon7m_rmtfs self:capability net_admin;
+allow axon7m_rmtfs self:qipcrtr_socket { bind create getattr read setopt write };
+r_dir_file(axon7m_rmtfs, sysfs)
+r_dir_file(axon7m_rmtfs, sysfs_axon7m_rmtfs)
+r_dir_file(axon7m_rmtfs, sysfs_axon7m_mss)
+allow axon7m_rmtfs sysfs_axon7m_mss:file write;

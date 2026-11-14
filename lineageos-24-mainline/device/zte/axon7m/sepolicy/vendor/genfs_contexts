@@ -1,0 +1,10 @@
+# battery and charger (health HAL)
+genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:fuel-gauge@4000/power_supply u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:charger@1000/power_supply u:object_r:sysfs_batteryinfo:s0
+# DRM device (libdrm drmGetDevice reads its uevent in every GL client)
+genfscon sysfs /devices/platform/soc@0/900000.display-subsystem/901000.display-controller u:object_r:sysfs_gpu:s0
+# panel backlight (drm_hwcomposer writes brightness and bl_power)
+genfscon sysfs /devices/platform/soc@0/900000.display-subsystem/994000.dsi/994000.dsi.0/backlight u:object_r:sysfs_leds:s0
+genfscon sysfs /devices/platform/qcom-smgr u:object_r:sysfs_axon7m_iio:s0
+genfscon sysfs /devices/platform/reserved-memory:rmtfs u:object_r:sysfs_axon7m_rmtfs:s0
+genfscon sysfs /devices/platform/soc@0/2080000.remoteproc u:object_r:sysfs_axon7m_mss:s0

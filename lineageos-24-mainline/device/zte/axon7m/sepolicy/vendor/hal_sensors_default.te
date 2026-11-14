@@ -1,0 +1,8 @@
+# IIO sensors HAL on the qcom_smgr devices (root: writes trigger, buffer and
+# sampling attributes)
+allow hal_sensors_default iio_device:chr_file rw_file_perms;
+allow hal_sensors_default sysfs_axon7m_iio:dir r_dir_perms;
+allow hal_sensors_default sysfs_axon7m_iio:file rw_file_perms;
+allow hal_sensors_default sysfs_axon7m_iio:lnk_file read;
+allow hal_sensors_default self:capability sys_nice;
+wakelock_use(hal_sensors_default)
