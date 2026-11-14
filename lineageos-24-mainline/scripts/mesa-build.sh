@@ -76,6 +76,18 @@ EOF
 }
 
 build() {
+	# our Mesa patches (lineageos-24-mainline/mesa/patches), each applied once:
+	# a patch that applies in reverse is in already
+	local p
+	for p in "${AXON7_REPO:-/srv/los24/axon7/repo}"/lineageos-24-mainline/mesa/patches/*.patch; do
+		[ -e "$p" ] || continue
+		if git -c safe.directory='*' -C "$M/src" apply --reverse --check "$p" 2>/dev/null; then
+			echo "mesa patch already applied: ${p##*/}"
+		else
+			git -c safe.directory='*' -C "$M/src" apply "$p"
+			echo "mesa patch applied: ${p##*/}"
+		fi
+	done
 	export PATH=$TOOLS:/srv/los24/lineage-24.0/prebuilts/build-tools/linux-x86/bin:$PATH
 	export PYTHONPATH=$TOOLS/pylib
 	rm -rf "$M/build-android"

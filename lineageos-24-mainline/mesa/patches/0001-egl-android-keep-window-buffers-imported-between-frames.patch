@@ -1,0 +1,168 @@
+From: axon7m bring-up
+Subject: [PATCH] egl/android: keep window buffers imported between frames
+
+droid_window_enqueue_buffer() destroyed the back buffer's DRI image after
+every frame and get_back_bo() imported the same gralloc buffer again for
+the next one. freedreno then closed and re-imported the BO each frame, and
+the msm kernel driver mapped and unmapped the whole buffer in the GPU's
+IOMMU on every submit (msm_gem_vma_map / msm_gem_close): on the ZTE Axon 7
+(Adreno 530, 1440x2560) about a quarter of HWUI's RenderThread time
+(simpleperf, LineageOS 24 run 32), independent of CPU and GPU clocks.
+
+Keep the image in the surface's color_buffers slot of its buffer (the
+buffer-age cache that already tracks the window's buffers), check the
+buffer's native handle against a recycled pointer, and destroy cached
+images when a slot gets another buffer, when the window's buffers are all
+replaced, and with the surface. The acquire fence is still handled every
+frame.
+---
+diff -ru a/src/egl/drivers/dri2/egl_dri2.h b/src/egl/drivers/dri2/egl_dri2.h
+--- a/src/egl/drivers/dri2/egl_dri2.h
++++ b/src/egl/drivers/dri2/egl_dri2.h
+@@ -381,6 +381,10 @@
+    struct {
+       struct ANativeWindowBuffer *buffer;
+       int age;
++      /* the buffer imported as a DRI image, kept while the buffer stays in
++       * the window's queue (handle: guards against a recycled pointer) */
++      struct dri_image *dri_image;
++      const void *handle;
+    } *color_buffers, *back;
+    uint32_t gralloc_usage;
+ #endif
+diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platform_android.c
+--- a/src/egl/drivers/dri2/platform_android.c
++++ b/src/egl/drivers/dri2/platform_android.c
+@@ -135,6 +135,41 @@
+    dri2_surf->in_fence_fd = -1;
+ }
+ 
++/* Window buffers stay imported as DRI images while they cycle through the
++ * window's queue. Destroying the image after every frame made the GPU driver
++ * close and re-import the buffer each frame; on msm (Adreno 530, ZTE Axon 7)
++ * that is an IOMMU map and unmap of the whole 1440x2560 buffer per frame,
++ * about a quarter of the RenderThread's time. */
++static void
++droid_drop_cached_images(struct dri2_egl_surface *dri2_surf)
++{
++   for (int i = 0; i < dri2_surf->color_buffers_count; i++) {
++      if (dri2_surf->color_buffers[i].dri_image) {
++         if (dri2_surf->dri_image_back == dri2_surf->color_buffers[i].dri_image)
++            dri2_surf->dri_image_back = NULL;
++         dri2_destroy_image(dri2_surf->color_buffers[i].dri_image);
++         dri2_surf->color_buffers[i].dri_image = NULL;
++      }
++      dri2_surf->color_buffers[i].handle = NULL;
++   }
++}
++
++/* dri_image_back is done with for this frame: keep it if the cache owns it */
++static void
++droid_release_back_image(struct dri2_egl_surface *dri2_surf)
++{
++   if (!dri2_surf->dri_image_back)
++      return;
++   for (int i = 0; i < dri2_surf->color_buffers_count; i++) {
++      if (dri2_surf->color_buffers[i].dri_image == dri2_surf->dri_image_back) {
++         dri2_surf->dri_image_back = NULL;
++         return;
++      }
++   }
++   dri2_destroy_image(dri2_surf->dri_image_back);
++   dri2_surf->dri_image_back = NULL;
++}
++
+ static EGLBoolean
+ droid_window_dequeue_buffer(struct dri2_egl_surface *dri2_surf)
+ {
+@@ -157,6 +192,11 @@
+    for (int i = 0; i < dri2_surf->color_buffers_count; i++) {
+       if (!dri2_surf->color_buffers[i].buffer) {
+          dri2_surf->color_buffers[i].buffer = dri2_surf->buffer;
++         if (dri2_surf->color_buffers[i].dri_image) {
++            dri2_destroy_image(dri2_surf->color_buffers[i].dri_image);
++            dri2_surf->color_buffers[i].dri_image = NULL;
++         }
++         dri2_surf->color_buffers[i].handle = NULL;
+       }
+       if (dri2_surf->color_buffers[i].buffer == dri2_surf->buffer) {
+          dri2_surf->back = &dri2_surf->color_buffers[i];
+@@ -169,6 +209,7 @@
+       /* In case of all the buffers were recreated by ANativeWindow, reset
+        * the color_buffers
+        */
++      droid_drop_cached_images(dri2_surf);
+       for (int i = 0; i < dri2_surf->color_buffers_count; i++) {
+          dri2_surf->color_buffers[i].buffer = NULL;
+          dri2_surf->color_buffers[i].age = 0;
+@@ -201,10 +242,7 @@
+    dri2_surf->buffer = NULL;
+    dri2_surf->back = NULL;
+ 
+-   if (dri2_surf->dri_image_back) {
+-      dri2_destroy_image(dri2_surf->dri_image_back);
+-      dri2_surf->dri_image_back = NULL;
+-   }
++   droid_release_back_image(dri2_surf);
+ 
+    return EGL_TRUE;
+ }
+@@ -399,12 +437,8 @@
+       ANativeWindow_release(dri2_surf->window);
+    }
+ 
+-   if (dri2_surf->dri_image_back) {
+-      _eglLog(_EGL_DEBUG, "%s : %d : destroy dri_image_back", __func__,
+-              __LINE__);
+-      dri2_destroy_image(dri2_surf->dri_image_back);
+-      dri2_surf->dri_image_back = NULL;
+-   }
++   droid_release_back_image(dri2_surf);
++   droid_drop_cached_images(dri2_surf);
+ 
+    if (dri2_surf->dri_image_front) {
+       _eglLog(_EGL_DEBUG, "%s : %d : destroy dri_image_front", __func__,
+@@ -507,13 +541,26 @@
+          return -1;
+       }
+ 
+-      dri2_surf->dri_image_back =
+-         droid_create_image_from_native_buffer(disp, dri2_surf->buffer, NULL);
+-      if (!dri2_surf->dri_image_back) {
+-         _eglLog(_EGL_WARNING, "failed to create DRI image from FD");
+-         return -1;
++      if (dri2_surf->back && dri2_surf->back->buffer == dri2_surf->buffer &&
++          dri2_surf->back->dri_image &&
++          dri2_surf->back->handle == dri2_surf->buffer->handle) {
++         dri2_surf->dri_image_back = dri2_surf->back->dri_image;
++      } else {
++         dri2_surf->dri_image_back =
++            droid_create_image_from_native_buffer(disp, dri2_surf->buffer, NULL);
++         if (!dri2_surf->dri_image_back) {
++            _eglLog(_EGL_WARNING, "failed to create DRI image from FD");
++            return -1;
++         }
++         if (dri2_surf->back && dri2_surf->back->buffer == dri2_surf->buffer) {
++            if (dri2_surf->back->dri_image)
++               dri2_destroy_image(dri2_surf->back->dri_image);
++            dri2_surf->back->dri_image = dri2_surf->dri_image_back;
++            dri2_surf->back->handle = dri2_surf->buffer->handle;
++         }
+       }
+ 
++      /* the buffer's acquire fence, every frame (also for a cached image) */
+       handle_in_fence_fd(dri2_surf, dri2_surf->dri_image_back);
+ 
+    } else if (dri2_surf->base.Type == EGL_PBUFFER_BIT) {
+@@ -933,10 +980,7 @@
+       dri2_surf->buffer = NULL;
+       dri2_surf->back = NULL;
+ 
+-      if (dri2_surf->dri_image_back) {
+-         dri2_destroy_image(dri2_surf->dri_image_back);
+-         dri2_surf->dri_image_back = NULL;
+-      }
++      droid_release_back_image(dri2_surf);
+ 
+       dri_invalidate_drawable(dri2_surf->dri_drawable);
+       return;
