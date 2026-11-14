@@ -14,33 +14,37 @@
 #   build   Image, dtbs, modules
 #   stage   copy the results to prebuilt/
 #
-# Environment:
+# Environment (defaults: the build server):
 #   AXON7_REPO  copy of the zte-axon7 repository (default /srv/los24/axon7/repo)
+#   KSRC, KOUT, KPRE  kernel tree, O= dir, staging dir (also on another machine,
+#               e.g. the developer PC: scripts/los24-kfast.sh)
+#   KCLANG      clang directory. Pinned: the kernel and the modules in /vendor
+#               must come from the same compiler (a kernel-only boot image
+#               test reuses the image's modules). Default: 22.2's clang-r536225,
+#               which every build so far used (the old picker took the last
+#               match of its list, not the newest clang).
 #   J           make jobs (default 7)
 # Note: never chown -R the kernel tree: git then re-hashes every file
 # (an hour on the server's busy HDD).
 # Time: a full build from scratch takes about 25-35 min on the 7-thread server,
 # a rebuild after a driver change 1-3 min.
 set -euo pipefail
-KSRC=/srv/los24/kernel/linux
-KOUT=/srv/los24/kernel/out
-KPRE=/srv/los24/kernel/prebuilt
+KSRC=${KSRC:-/srv/los24/kernel/linux}
+KOUT=${KOUT:-/srv/los24/kernel/out}
+KPRE=${KPRE:-/srv/los24/kernel/prebuilt}
 REPO=${AXON7_REPO:-/srv/los24/axon7/repo}
 NURA=$REPO/postmarketos/pmaports-local/device/testing/linux-zte-axon7
 OURS=$REPO/lineageos-24-mainline/kernel
 J=${J:-7}
 
-# Toolchain: LineageOS 24's prebuilt clang once synced, else 22.2's (clang 19).
+# Toolchain: one pinned clang (KCLANG), see above.
 pick_clang() {
-	local d
-	for d in /srv/los24/lineage-24.0/prebuilts/clang/host/linux-x86/clang-r5* \
-		 /srv/aosp/lineage-22.2/prebuilts/clang/host/linux-x86/clang-r536225; do
-		[ -x "$d/bin/clang" ] && CL=$d
-	done
-	[ -n "${CL:-}" ] || { echo "no prebuilt clang found" >&2; exit 1; }
+	CL=${KCLANG:-/srv/aosp/lineage-22.2/prebuilts/clang/host/linux-x86/clang-r536225}
+	[ -x "$CL/bin/clang" ] || { echo "no clang in $CL (set KCLANG)" >&2; exit 1; }
 	T=$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "$CL")")")")")
 	BT=$T/prebuilts/build-tools
-	export PATH=$CL/bin:$BT/linux-x86/bin:$PATH
+	[ -d "$BT/linux-x86/bin" ] && PATH=$BT/linux-x86/bin:$PATH
+	export PATH=$CL/bin:$PATH
 	export LD_LIBRARY_PATH=$CL/lib64:$CL/lib:${LD_LIBRARY_PATH:-}
 }
 

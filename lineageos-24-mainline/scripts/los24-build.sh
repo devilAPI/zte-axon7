@@ -104,7 +104,12 @@ WD=$!
 LOS24_PRIO=${LOS24_PRIO-}
 LOS24_JOBS=${LOS24_JOBS:-8}
 echo "priority: ${LOS24_PRIO:-normal}, jobs: $LOS24_JOBS"
-$LOS24_PRIO bash -c "source build/envsetup.sh >/dev/null; breakfast axon7m >/dev/null 2>&1 || lunch lineage_axon7m-userdebug >/dev/null; m -j$LOS24_JOBS ${*:-recoveryimage bootimage}"
+# no second breakfast/lunch: the variables from the one above are exported,
+# the inner shell only needs envsetup's m function. A second lunch rewrote
+# the release config, so every build re-ran Kati ("release_config-...vars was
+# modified, regenerating"), minutes even for a kernel-only image.
+echo "== m $(date -u +%T)"
+$LOS24_PRIO bash -c "source build/envsetup.sh >/dev/null; m -j$LOS24_JOBS ${*:-recoveryimage bootimage}"
 rc=$?
 kill "$WD" 2>/dev/null
 echo "build-exit $rc $(date -u +%FT%TZ)"
