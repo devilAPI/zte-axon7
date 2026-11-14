@@ -44,6 +44,32 @@ with `ios/tools/axon7-los-test.sh`. Developer builds (`AXON7_ADB_KEYS`)
 have adb for that one host and write each boot's log to `los_metadata`;
 unattended test boots also set `AXON7_TEST=1`.
 
+User reports on the release zip (2026-11-14, one A2017G user, details in
+`../XDA-POST-LINEAGEOS.md`): it installed (so that phone had
+`TZ.BF.4.0.1-00353` and a vendor partition: `verify_trustzone` asserts, and
+`block_image_update` does not create a missing by-name node) and booted to
+the home screen, but **no SIM was detected**, the **camera app showed a black
+screen**, and the **second start boot-looped**. None of the three was seen on
+our phone, which differs in three ways: no SIM was ever inserted
+(`rild_axon7`, 0033/0043/0046, never served a SIM), the release variant
+(/data on `userdata`, microSD voldmanaged) was never booted (devtest keeps
+/data on `los_data`), and the firmware/camera module is a different unit.
+To check on the next build (needs the build server):
+
+- `userdata` label: 0027 found that ueventd labels by-name nodes by the
+  platform path only (`/dev/block/bootdevice/...` patterns never match;
+  fsck/tune2fs on `los_data` were denied). Check that the release image
+  labels userdata: `grep -n 'by-name/userdata\|by-name/cache'` in
+  `$OUT/vendor/etc/selinux/vendor_file_contexts` and
+  `$OUT/system/etc/selinux/plat_file_contexts`. If only the bootdevice path
+  is there, add to `sepolicy/vendor/file_contexts`
+  `/dev/block/platform/soc/624000\.ufshc/by-name/userdata u:object_r:userdata_block_device:s0`
+  (and `cache` with `cache_block_device`).
+- SIM: with a SIM in slot 1, `adb logcat -b radio` for `GET_SIM_STATUS` /
+  `getIccCardStatus` replies from `rild_axon7`, and `dumpsys telephony.registry`.
+- Second start: with a SIM inserted, a `com.android.phone` crash loop would
+  make RescueParty reboot (looks like a boot loop); `adb logcat -b crash`.
+
 | File | Contents |
 | --- | --- |
 | [FLASHING-PLAN.md](FLASHING-PLAN.md) | installing LineageOS 18.1 (or crDroid 7.39) on an A2017G: files, checksums, what the installer checks, backups, EDL rescue |

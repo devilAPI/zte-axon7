@@ -27,6 +27,18 @@ Android 15's file-based encryption cannot take it over), /data as ext4
 (18.1 also allowed F2FS, Format Data keeps the file system), and a
 "Problems" section with the logs to send.
 
+2026-11-14, second report from the same user (A2017G, daily driver a
+modified stock ZTE Oreo 8.0): after several attempts the ROM booted to the
+home screen, but no SIM card was detected and the camera app showed a black
+screen; after a reboot, a boot loop. Telephony with a SIM in the phone was
+never tested by us (rild_axon7 is our own shim, 0033/0043/0046), and the
+release variant (/data on userdata) was never booted by us, so all three are
+listed as known issues. The zip only installs with the TrustZone check
+passed and a vendor partition present (block_image_update does not create
+the device node), so that phone had TZ.BF.4.0.1-00353 and a vendor partition
+at the time. Added: a "Coming from stock ZTE firmware" section with read-only
+checks for both, and how to collect logs while it still boots.
+
 <!-- XDA-POST-BEGIN -->
 ```bbcode
 [CENTER][SIZE=6][B][ROM][15][UNOFFICIAL] LineageOS 22.2 for the ZTE Axon 7 (A2017G)[/B][/SIZE]
@@ -60,7 +72,9 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 [B]Does not work / not tested:[/B]
 [LIST]
 [*]The phone sometimes wakes up or locks by itself
-[*]Calls and mobile data with a SIM: untested
+[*][B]SIM card not detected[/B] (one user report, A2017G). Our phone was only tested without a SIM: the modem and the radio services start, but SIM detection, calls and mobile data are untested. Do not use this ROM as your daily phone yet if you need the SIM.
+[*][B]Camera app shows a black screen[/B] (one user report; both cameras work on our phone)
+[*][B]Boot loop on the second start[/B] after a working first start (one user report, under investigation; logs wanted, see Problems)
 [/LIST]
 
 [SIZE=5][B]Warning[/B][/SIZE]
@@ -72,6 +86,17 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 [*]Tested on the [B]A2017G[/B] only. A2017U / A2017 (China): untested, at your own risk.
 [*]Any failure while flashing or repartitioning can brick the phone. Make a backup and keep EDL in mind.
 [/LIST]
+
+[SIZE=5][B]Coming from stock ZTE firmware (Nougat or Oreo)?[/B][/SIZE]
+The stock ZTE partition layout has [B]no vendor partition[/B], and this ROM needs one. Check first, in TWRP → Advanced → Terminal (read-only, changes nothing):
+[CODE]cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING
+ls -l /dev/block/bootdevice/by-name/vendor[/CODE]
+[LIST]
+[*]The first line must contain [B]TZ.BF.4.0.1-00353[/B]. If not (Nougat or older bootloader), install the Oreo universal bootloader and the modem for your model first (step 1 below).
+[*]The second line must show a link to a block device. [I]No such file or directory[/I] means no vendor partition: create it with PARTY (step 2 below). Without it the ROM install stops with an error (after it has already overwritten system).
+[*]Note the baseband version of your current ROM (Settings → About phone) for a problem report.
+[/LIST]
+A good first test of firmware and partitions: install [B]LineageOS 18.1[/B] (rcky844's unofficial build, see his XDA thread) and check that calls, mobile data and the camera work there. If they do, your firmware is fine for this ROM too. Going back to stock ZTE firmware later needs the vendor partition removed again (PARTY) or a full stock package for your model; keep your TWRP backup and EFS backup.
 
 [SIZE=5][B]Installation[/B][/SIZE]
 [B]Attention:[/B] the bootloader must be unlocked, and you need the vendor partition.
@@ -93,6 +118,7 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [LIST]
 [*][B]TWRP restarts by itself[/B]: use TWRP 3.3.0-0 (above). Flash the ROM only with a TWRP that runs stably.
 [*][B]Boot loop or stuck at the logo[/B]: did you Format Data (typed [I]yes[/I]) and is /data EXT4? If not, do it and install again. Otherwise hold [B]Power + Volume Up[/B] about 10 s to get to TWRP, and right away (before starting anything else) save the kernel log of the failed start: with a computer, [I]adb pull /sys/fs/pstore/ los-pstore[/I]; or with a microSD card in the phone, Advanced → Terminal: [I]cat /sys/fs/pstore/console-ramoops* > /external_sd/los-ramoops.txt[/I] (not to internal storage: TWRP cannot read Android 15's encrypted /data). If adb works during the start, [I]adb logcat > logcat.txt[/I] helps too.
+[*][B]It starts, but something does not work[/B] (SIM, camera, ...): before rebooting, switch on Settings → About phone → tap Build number 7 times, then System → Developer options → USB debugging, connect a computer and run [I]adb logcat -b all -d > logcat.txt[/I], [I]adb shell dmesg > dmesg.txt[/I] and [I]adb shell getprop > props.txt[/I]. For a SIM problem, also say which slot the SIM is in and your carrier/country.
 [*]When you report a problem, please post: the ROM you came from and whether it was encrypted, whether you did Format Data, your TWRP version, your model and modem/baseband version, the kernel log above and TWRP's log ([I]adb pull /tmp/recovery.log[/I], or Advanced → Copy Log to the microSD card, right after installing the zip).
 [/LIST]
 
