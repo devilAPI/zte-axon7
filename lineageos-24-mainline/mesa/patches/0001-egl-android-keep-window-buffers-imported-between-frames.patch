@@ -33,7 +33,15 @@ diff -ru a/src/egl/drivers/dri2/egl_dri2.h b/src/egl/drivers/dri2/egl_dri2.h
 diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platform_android.c
 --- a/src/egl/drivers/dri2/platform_android.c
 +++ b/src/egl/drivers/dri2/platform_android.c
-@@ -135,6 +135,41 @@
+@@ -33,6 +33,7 @@
+ #include <fcntl.h>
+ #include <stdbool.h>
+ #include <stdio.h>
++#include "util/u_debug.h"
+ #include "util/libdrm.h"
+ #include <sys/system_properties.h>
+ #include <drm-uapi/drm_fourcc.h>
+@@ -135,6 +136,52 @@
     dri2_surf->in_fence_fd = -1;
  }
  
@@ -42,6 +50,17 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
 + * close and re-import the buffer each frame; on msm (Adreno 530, ZTE Axon 7)
 + * that is an IOMMU map and unmap of the whole 1440x2560 buffer per frame,
 + * about a quarter of the RenderThread's time. */
++/* A/B switch for measurements: setprop debug.mesa.android.nocache true and
++ * restart the app to get the old import-every-frame behaviour back. */
++static bool
++droid_buffer_cache_enabled(void)
++{
++   static int enabled = -1;
++   if (enabled < 0)
++      enabled = !debug_get_bool_option("MESA_ANDROID_NOCACHE", false);
++   return enabled;
++}
++
 +static void
 +droid_drop_cached_images(struct dri2_egl_surface *dri2_surf)
 +{
@@ -75,7 +94,7 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
  static EGLBoolean
  droid_window_dequeue_buffer(struct dri2_egl_surface *dri2_surf)
  {
-@@ -157,6 +192,11 @@
+@@ -157,6 +204,11 @@
     for (int i = 0; i < dri2_surf->color_buffers_count; i++) {
        if (!dri2_surf->color_buffers[i].buffer) {
           dri2_surf->color_buffers[i].buffer = dri2_surf->buffer;
@@ -87,7 +106,7 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
        }
        if (dri2_surf->color_buffers[i].buffer == dri2_surf->buffer) {
           dri2_surf->back = &dri2_surf->color_buffers[i];
-@@ -169,6 +209,7 @@
+@@ -169,6 +221,7 @@
        /* In case of all the buffers were recreated by ANativeWindow, reset
         * the color_buffers
         */
@@ -95,7 +114,7 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
        for (int i = 0; i < dri2_surf->color_buffers_count; i++) {
           dri2_surf->color_buffers[i].buffer = NULL;
           dri2_surf->color_buffers[i].age = 0;
-@@ -201,10 +242,7 @@
+@@ -201,10 +254,7 @@
     dri2_surf->buffer = NULL;
     dri2_surf->back = NULL;
  
@@ -107,7 +126,7 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
  
     return EGL_TRUE;
  }
-@@ -399,12 +437,8 @@
+@@ -399,12 +449,8 @@
        ANativeWindow_release(dri2_surf->window);
     }
  
@@ -122,7 +141,7 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
  
     if (dri2_surf->dri_image_front) {
        _eglLog(_EGL_DEBUG, "%s : %d : destroy dri_image_front", __func__,
-@@ -507,13 +541,26 @@
+@@ -507,13 +553,28 @@
           return -1;
        }
  
@@ -131,7 +150,8 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
 -      if (!dri2_surf->dri_image_back) {
 -         _eglLog(_EGL_WARNING, "failed to create DRI image from FD");
 -         return -1;
-+      if (dri2_surf->back && dri2_surf->back->buffer == dri2_surf->buffer &&
++      if (droid_buffer_cache_enabled() && dri2_surf->back &&
++          dri2_surf->back->buffer == dri2_surf->buffer &&
 +          dri2_surf->back->dri_image &&
 +          dri2_surf->back->handle == dri2_surf->buffer->handle) {
 +         dri2_surf->dri_image_back = dri2_surf->back->dri_image;
@@ -142,7 +162,8 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
 +            _eglLog(_EGL_WARNING, "failed to create DRI image from FD");
 +            return -1;
 +         }
-+         if (dri2_surf->back && dri2_surf->back->buffer == dri2_surf->buffer) {
++         if (droid_buffer_cache_enabled() && dri2_surf->back &&
++             dri2_surf->back->buffer == dri2_surf->buffer) {
 +            if (dri2_surf->back->dri_image)
 +               dri2_destroy_image(dri2_surf->back->dri_image);
 +            dri2_surf->back->dri_image = dri2_surf->dri_image_back;
@@ -154,7 +175,7 @@ diff -ru a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platfo
        handle_in_fence_fd(dri2_surf, dri2_surf->dri_image_back);
  
     } else if (dri2_surf->base.Type == EGL_PBUFFER_BIT) {
-@@ -933,10 +980,7 @@
+@@ -933,10 +994,7 @@
        dri2_surf->buffer = NULL;
        dri2_surf->back = NULL;
  
