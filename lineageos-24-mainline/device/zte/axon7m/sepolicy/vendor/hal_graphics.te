@@ -1,9 +1,13 @@
 # minigbm allocator and drm_hwcomposer (dragonboard and cuttlefish rules)
-gpu_access(hal_graphics_allocator_default)
+allow hal_graphics_allocator_default gpu_device:dir r_dir_perms;
+allow hal_graphics_allocator_default gpu_device:chr_file rw_file_perms;
+allow hal_graphics_allocator_default sysfs_gpu:file r_file_perms;
 allow hal_graphics_allocator_default graphics_device:chr_file rw_file_perms;
 allow hal_graphics_allocator_default dmabuf_system_heap_device:chr_file r_file_perms;
 
-gpu_access(hal_graphics_composer_default)
+allow hal_graphics_composer_default gpu_device:dir r_dir_perms;
+allow hal_graphics_composer_default gpu_device:chr_file rw_file_perms;
+allow hal_graphics_composer_default sysfs_gpu:file r_file_perms;
 allow hal_graphics_composer_default graphics_device:dir r_dir_perms;
 allow hal_graphics_composer_default graphics_device:chr_file rw_file_perms;
 allow hal_graphics_composer_default self:netlink_kobject_uevent_socket { bind create read setopt getopt };
