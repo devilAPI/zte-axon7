@@ -153,6 +153,12 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml
 
+# GNSS: the modem's QMI LOC service over QRTR sockets (gnss/). Works once
+# the modem is online (rmtfs etc., init.axon7m.rc); until then the HAL waits.
+PRODUCT_PACKAGES += android.hardware.gnss-service.axon7m
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml
+
 # Telephony is milestone M7: Wi-Fi-only until then
 PRODUCT_VENDOR_PROPERTIES += ro.radio.noril=yes
 

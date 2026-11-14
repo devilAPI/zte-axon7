@@ -1,0 +1,6 @@
+# GNSS HAL: QMI LOC on the modem over QRTR. AF_QIPCRTR client sockets need no
+# capability on mainline (only binding the control port needs NET_ADMIN).
+service vendor.gnss-axon7m /vendor/bin/hw/android.hardware.gnss-service.axon7m
+    class hal
+    user gps
+    group system gps inet

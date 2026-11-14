@@ -1,0 +1,4 @@
+# GNSS HAL (gnss/): QMI LOC on the modem over QRTR sockets. The domain itself
+# (hal_gnss_default: init_daemon_domain, hal_server_domain) is in
+# system/sepolicy/vendor.
+allow hal_gnss_default self:qipcrtr_socket create_socket_perms_no_ioctl;

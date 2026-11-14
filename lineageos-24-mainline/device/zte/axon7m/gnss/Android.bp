@@ -1,0 +1,30 @@
+// GNSS AIDL HAL for the ZTE Axon 7 on mainline Linux: the modem's QMI
+// location service (LOC, service 16) over QRTR sockets, no libqmi and no
+// Qualcomm blobs. Protocol as in postmarketOS' axon7-gps.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "android.hardware.gnss-service.axon7m",
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["android.hardware.gnss-service.axon7m.rc"],
+    vintf_fragments: ["android.hardware.gnss-service.axon7m.xml"],
+    srcs: [
+        "Gnss.cpp",
+        "LocClient.cpp",
+    ],
+    cflags: ["-Wall", "-Werror"],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        // CHECK: interface version. V4 is the highest that the device's
+        // target FCM level (manifest.xml: 202404) allows, as far as known
+        // (android.hardware.gnss 2-4 in compatibility_matrix.202404.xml). If
+        // the target level is raised, use the version that level's matrix
+        // names here and in the .xml; newer versions add methods to IGnss
+        // (see Gnss.h).
+        "android.hardware.gnss-V4-ndk",
+    ],
+}
