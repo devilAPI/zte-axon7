@@ -82,6 +82,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-14"]
+[LIST]
+[*]Touchscreen: quick taps were lost and typing was nearly impossible. The touch driver read far more data from the controller than it needs on every touch, so the screen reported only about 6 times a second. It now reads just the finger data, and the touch bus runs at full speed (400 kHz) as on stock: the screen should follow your finger closely again. Please confirm typing works.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-12"]
 [LIST]
 [*]Sound: on some starts the sound card did not appear at all (no speaker, no microphone until a reboot). Nura now notices that within a minute after start and restarts the audio processor, which brings the card back.
