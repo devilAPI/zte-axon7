@@ -85,7 +85,7 @@ device) adb root >/dev/null; sleep 3; adb wait-for-device ;;
 recovery) ;;
 *) echo "phone not in LineageOS or TWRP on adb (state: ${st:-none})" >&2; exit 1 ;;
 esac
-dev() { adb shell "for b in /sys/class/block/*; do grep -q '^PARTNAME=$1\$' \$b/uevent 2>/dev/null && echo /dev/block/\${b##*/}; done" | tr -d '\r' | head -1; }
+dev() { adb shell "for b in /sys/class/block/*; do grep -q '^PARTNAME=$1\$' \$b/uevent 2>/dev/null && echo /dev/block/\${b##*/}; done; true" | tr -d '\r' | head -1; }	# true: the loop's last grep fails
 lb=$(dev los_boot) md=$(dev misc)
 [ -n "$lb" ] && [ -n "$md" ] || { echo "no los_boot/misc on the phone" >&2; exit 1; }
 mb=$(( $(adb shell cat /sys/class/block/${md##*/}/size | tr -d '\r') / 8 ))
@@ -103,10 +103,24 @@ echo "   los_boot ($lb) written and verified, boot menu: LineageOS once"
 adb reboot
 say "waiting for LineageOS"
 sleep 20
-timeout 600 adb wait-for-device || { echo "no adb after 10 min (boot menu still LineageOS: $t/misc-before.bin restores it)" >&2; exit 3; }
+# a plain reboot can end in TWRP (stale PON reason "recovery" before kernel
+# patch 0046): reboot from there once more (TWRP's reboot reaches the menu)
+ok=0 retw=0
+for i in $(seq 1 200); do
+	case $(adb get-state 2>/dev/null) in
+	device) ok=1; break ;;
+	recovery) [ $retw -lt 2 ] && { echo "   in TWRP: rebooting to LineageOS"; adb reboot; retw=$((retw + 1)); sleep 20; } ;;
+	esac
+	sleep 3
+done
+[ $ok = 1 ] || { echo "no adb from LineageOS after 10 min (boot menu still LineageOS: $t/misc-before.bin restores it)" >&2; exit 3; }
 adb root >/dev/null 2>&1; sleep 3; timeout 60 adb wait-for-device
 adb push "$t/misc-before.bin" /data/local/tmp/misc-before.bin >/dev/null
 adb shell "dd if=/data/local/tmp/misc-before.bin of=$(dev misc) bs=4096 seek=$((mb - 1)) conv=notrunc 2>/dev/null; sync"
 echo "   boot menu restored"
 for i in $(seq 1 60); do [ "$(timeout 20 adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && break; sleep 5; done
 say "LineageOS up: $(adb shell uname -v | tr -d '\r')"
+# unattended safety: arm the APSS watchdog (30 s) with a petting loop until
+# the image has a watchdogd service; a hang then resets into the boot menu
+timeout 15 adb shell 'printf "#!/system/bin/sh\nexec 3>/dev/watchdog\nwhile true; do echo 1 >&3; sleep 10; done\n" > /data/local/tmp/wdpet.sh; chmod 755 /data/local/tmp/wdpet.sh; pgrep -f "^/system/bin/sh /data/local/tmp/wdpet.sh\$" >/dev/null || setsid nohup /data/local/tmp/wdpet.sh >/dev/null 2>&1 < /dev/null &' || true	# the background loop keeps adb open: timeout
+sleep 2; echo "   watchdog: $(adb shell cat /sys/class/watchdog/watchdog0/state | tr -d '\r')"
