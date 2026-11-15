@@ -5,7 +5,9 @@
 #   modem  (vfat, read-only): image/{adsp,modem,slpi,venus}.mdt + .bNN, mba.mbn,
 #                             bdwlan30.bin (Wi-Fi board data)
 #   vendor (ext4, read-only): firmware/a530_zap.mdt + .bNN (GPU)
-#                             (no vendor partition: system/vendor/firmware)
+#                             (no vendor partition: the system partition's
+#                             vendor/firmware, or etc/firmware on the stock
+#                             Nougat/Oreo layout)
 #
 # Split .mdt images are joined into the .mbn files the device tree names
 # (axon7-pil-squasher). Nothing is written to the phone's partitions. When
@@ -13,7 +15,10 @@
 # modem, DSPs, GPU and Wi-Fi load them.
 #
 # Does nothing when the firmware is already there (firmware-zte-axon7 package
-# or an earlier run). Log: journalctl -u axon7-firmware
+# or an earlier run). Runs at every start while a file is missing (e.g. the
+# GPU firmware after a ROM with it was installed), and restarts only when it
+# installed something new, so a phone without a530_zap anywhere does not
+# restart in a loop. Log: journalctl -u axon7-firmware
 set -u
 root=${AXON7_FW_ROOT:-}	# test: write below another directory
 fw=$root/usr/lib/firmware/qcom/msm8996/zte/axon7
@@ -43,7 +48,7 @@ vfw=
 for p in vendor system; do
 	d=$(part $p) || continue
 	mount -o ro,noload "$d" "$tmp/v" 2>/dev/null || mount -o ro "$d" "$tmp/v" 2>/dev/null || continue
-	for s in firmware vendor/firmware system/vendor/firmware; do
+	for s in firmware vendor/firmware system/vendor/firmware etc/firmware system/etc/firmware; do
 		[ -f "$tmp/v/$s/a530_zap.mdt" ] && { vfw=$tmp/v/$s; break; }
 	done
 	[ -n "$vfw" ] && break
@@ -63,16 +68,23 @@ else
 fi
 
 mkdir -p "$fw" "${board%/*}"
+new=0
 for f in "$out"/*.mbn; do
-	[ -s "$f" ] && install -m644 "$f" "$fw/"
+	[ -s "$f" ] || continue
+	[ -s "$fw/${f##*/}" ] && cmp -s "$f" "$fw/${f##*/}" && continue
+	install -m644 "$f" "$fw/" && new=$((new + 1))
 done
-[ -s "$out/board.bin" ] && install -m644 "$out/board.bin" "$board"
+if [ -s "$out/board.bin" ] && ! cmp -s "$out/board.bin" "$board" 2>/dev/null; then
+	install -m644 "$out/board.bin" "$board" && new=$((new + 1))
+fi
 sync
 log "firmware from the phone's partitions: $(ls "$fw" | tr '\n' ' ')$([ -s "$board" ] && echo board.bin)"
 [ "$ok" = 1 ] || log "some files are missing, see above"
 
-# the remoteprocs and Wi-Fi asked for their firmware before this ran
-if [ "${1:-}" != --no-reboot ]; then
+# the remoteprocs, GPU and Wi-Fi asked for their firmware before this ran
+if [ "$new" = 0 ]; then
+	log "nothing new installed, no restart"
+elif [ "${1:-}" != --no-reboot ]; then
 	log "restarting once to load it"
 	systemctl --no-block reboot 2>/dev/null || reboot
 fi

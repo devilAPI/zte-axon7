@@ -82,6 +82,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-15"]
+[LIST]
+[*]Graphics on phones with the stock partition layout (no vendor partition, e.g. still on stock Android): Nura did not find the graphics chip's firmware there, so the GPU stayed off. It now also looks in the system partition's firmware folder where stock Android keeps it, and tries again at the next start if a file was missing before, instead of only at the very first start.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-14"]
 [LIST]
 [*]Touchscreen: quick taps were lost and typing was nearly impossible. The touch driver read far more data from the controller than it needs on every touch, so the screen reported only about 6 times a second. It now reads just the finger data, and the touch bus runs at full speed (400 kHz) as on stock: the screen should follow your finger closely again. Please confirm typing works.
