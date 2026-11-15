@@ -23,6 +23,7 @@
 #include <android/binder_process.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>

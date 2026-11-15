@@ -1,4 +1,4 @@
-# axon7m-sns-reg.sh runs sns-reg (QMI over QRTR) in this domain
+# QRTR sockets (axon7m-slpi-kick.sh, scripts that ask QMI services)
 allow vendor_modprobe self:qipcrtr_socket create_socket_perms_no_ioctl;
 # axon7m-modules.sh, -audio-routes.sh, -sns-reg.sh, -slpi-kick.sh: scripts
 # run toolbox commands, audio routes use tinymix on the sound card

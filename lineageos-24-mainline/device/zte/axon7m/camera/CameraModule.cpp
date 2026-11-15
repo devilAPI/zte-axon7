@@ -38,7 +38,6 @@ const char kTorch[] = "/sys/class/leds/white:torch/";
 std::mutex gLock;
 const camera_module_callbacks_t* gCallbacks = nullptr;
 camera_metadata_t* gStatic = nullptr;
-bool gTorchOn = false;
 
 template <typename T>
 void add(camera_metadata_t* m, uint32_t tag, const std::vector<T>& v) {
@@ -200,7 +199,6 @@ int setTorchMode(const char* cameraId, bool enabled) {
             ALOGE("torch %s: %s", enabled ? "on" : "off", strerror(errno));
             return -EIO;
         }
-        gTorchOn = enabled;
         cb = gCallbacks;
     }
     ALOGI("torch %s", enabled ? "on" : "off");

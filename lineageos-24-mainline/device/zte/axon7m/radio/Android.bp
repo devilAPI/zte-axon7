@@ -1,0 +1,59 @@
+// Radio AIDL HAL for the ZTE Axon 7 on mainline Linux (RIL-PLAN.md): AOSP's
+// libminradio (hardware/interfaces/radio/aidl/minradio/libminradio, copied
+// to minradio/ unchanged, Apache-2.0) plus QMI over QRTR in impl/.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "android.hardware.radio-service.axon7m",
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["radio-axon7m.rc"],
+    vintf_fragments: ["radio-axon7m.xml"],
+    // the legacy rild (HIDL 1.x, AT reference RIL) from telephony_vendor.mk
+    overrides: ["rild"],
+    local_include_dirs: ["minradio/include"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+        "-DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION",
+        // binder_to_string.h uses deprecated codecvt_utf8_utf16
+        "-D_LIBCPP_DISABLE_DEPRECATION_WARNINGS",
+    ],
+    srcs: [
+        "minradio/RadioSlotBase.cpp",
+        "minradio/ResponseTracker.cpp",
+        "minradio/SlotContext.cpp",
+        "minradio/config/RadioConfig.cpp",
+        "minradio/data/RadioData.cpp",
+        "minradio/modem/RadioModem.cpp",
+        "minradio/network/RadioNetwork.cpp",
+        "minradio/network/RadioNetworkResponseTracker.cpp",
+        "minradio/network/structs.cpp",
+        "minradio/response.cpp",
+        "minradio/sim/apps/AraM.cpp",
+        "minradio/sim/apps/FilesystemApp.cpp",
+        "minradio/sim/apps/tlv.cpp",
+        "minradio/sim/App.cpp",
+        "minradio/sim/AppManager.cpp",
+        "minradio/sim/Filesystem.cpp",
+        "minradio/sim/IccUtils.cpp",
+        "minradio/sim/RadioSim.cpp",
+        "impl/ModemState.cpp",
+        "impl/Qmi.cpp",
+        "impl/Radio.cpp",
+        "impl/service.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.radio.config-V4-ndk",
+        "android.hardware.radio.data-V4-ndk",
+        "android.hardware.radio.modem-V4-ndk",
+        "android.hardware.radio.network-V4-ndk",
+        "android.hardware.radio.sim-V4-ndk",
+        "libbase",
+        "libbinder_ndk",
+        "libutils",
+    ],
+}

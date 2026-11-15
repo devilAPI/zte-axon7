@@ -8,6 +8,7 @@
  */
 #include "LocClient.h"
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <mutex>

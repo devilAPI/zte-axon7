@@ -1,0 +1,5 @@
+# Radio HAL over QMI (QRTR sockets need no capability)
+service vendor.radio-axon7m /vendor/bin/hw/android.hardware.radio-service.axon7m
+    class hal
+    user radio
+    group radio inet misc log readproc wakelock system

@@ -1,0 +1,19 @@
+# Sensor registry server for the SLPI (axon7m-sns-reg.sh -> sns-reg): reads
+# persist's sns.reg, writes the registry to /data/vendor/sensors, serves it
+# over QMI on QRTR. Was in vendor_modprobe until build 43.
+type axon7m_sns_reg, domain;
+type axon7m_sns_reg_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(axon7m_sns_reg)
+
+allow axon7m_sns_reg vendor_shell_exec:file rx_file_perms;
+allow axon7m_sns_reg vendor_toolbox_exec:file rx_file_perms;
+allow axon7m_sns_reg vendor_file:file rx_file_perms;
+allow axon7m_sns_reg self:qipcrtr_socket { bind create getattr read setopt write };
+allow axon7m_sns_reg kmsg_device:chr_file w_file_perms;
+allow axon7m_sns_reg mnt_vendor_file:dir search;
+allow axon7m_sns_reg axon7m_persist_file:dir r_dir_perms;
+allow axon7m_sns_reg axon7m_persist_file:file r_file_perms;
+allow axon7m_sns_reg vendor_data_file:dir create_dir_perms;
+allow axon7m_sns_reg axon7m_sensors_data_file:dir create_dir_perms;
+allow axon7m_sns_reg axon7m_sensors_data_file:file create_file_perms;
+type_transition axon7m_sns_reg vendor_data_file:dir axon7m_sensors_data_file "sensors";

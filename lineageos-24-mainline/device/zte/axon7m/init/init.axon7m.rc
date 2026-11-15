@@ -78,7 +78,6 @@ service axon7m-audio-routes /vendor/bin/axon7m-audio-routes.sh
 service axon7m-sns-reg /vendor/bin/axon7m-sns-reg.sh
     user root
     group root system
-    seclabel u:r:vendor_modprobe:s0
     disabled
 
 service axon7m-slpi-kick /vendor/bin/axon7m-slpi-kick.sh

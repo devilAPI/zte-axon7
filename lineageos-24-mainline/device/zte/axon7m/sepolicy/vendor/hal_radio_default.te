@@ -1,0 +1,2 @@
+# radio HAL: QMI over QRTR sockets (DMS, NAS, UIM on the modem)
+allow hal_radio_default self:qipcrtr_socket create_socket_perms_no_ioctl;
