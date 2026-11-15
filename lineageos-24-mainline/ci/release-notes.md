@@ -7,7 +7,7 @@
 - **A2017G** only (tested on 4 GB / 64 GB).
 - Unlocked bootloader, **TWRP 3.3.0-0** (`twrp-3.3.0-0-ailsa_ii.img` from https://dl.twrp.me/ailsa_ii/; the tested version).
 - The project's **multi-boot setup** (boot menu with iOS / Nura / LineageOS), including the partition step `axon7-tripleboot-gpt`, which creates the LineageOS partitions: [DEV-MULTIBOOT.md](https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md). This build does not install on its own.
-- A ROM **with a vendor partition** must have been installed once (LineageOS 16–18.1, or this project's LineageOS 22.2): the GPU firmware is copied from it.
+- The **vendor partition** of a ROM installed before (LineageOS 16–18.1, or this project's LineageOS 22.2) must still be in place: the GPU firmware is read from it. Do not wipe Vendor in TWRP.
 
 ### What the zip changes
 
@@ -15,7 +15,7 @@
 - Erases `los_metadata` and `los_data`: **all LineageOS data in the multi-boot slot is lost**, and a LineageOS 22.2 installed in that slot is replaced.
 - Does not touch `boot`, `misc`, iOS, Nura, `persist`, the modem/EFS partitions or the bootloader.
 
-No proprietary firmware is in the zip. At the first start LineageOS 24 copies the modem, DSP, GPU and Wi-Fi board firmware from the phone's own partitions (`modem`, and `a530_zap` from `vendor`). **This is new in this release and still being tested.**
+No proprietary firmware is in the zip. LineageOS 24 loads the modem, DSP, GPU and Wi-Fi board firmware straight from the phone's own partitions, read-only, at every start (`modem`, and `a530_zap` from `vendor`). **This is new in this release and still being tested.**
 
 ### Install
 
