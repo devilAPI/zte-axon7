@@ -37,6 +37,13 @@ on boot
     write /sys/power/wake_lock axon7m-nosuspend
     start axon7m-audio-routes
 
+# GPU at its top clock while it works: with simple_ondemand (msm: up at 50 %
+# load, 50 ms polling) a scrolling app's GPU sat at 133-315 MHz and needed
+# ~15 ms per 1440x2560 frame (bench: p50 16 ms, 9.4 % janky); at 624 MHz
+# p50 10 ms, 2 % janky. The GPU still runtime-suspends when idle.
+on property:sys.boot_completed=1
+    write /sys/class/devfreq/b00000.gpu/governor performance
+
 # Qualcomm remote filesystem for the modem's EFS (modemst1/2, fsg), QRTR name
 # service, TFTP for the modem: from linux-msm userspace, added in M4/M7.
 

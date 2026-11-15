@@ -1,0 +1,1 @@
+allow hal_bluetooth_default axon7m_rfkill_device:chr_file rw_file_perms;

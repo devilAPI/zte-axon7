@@ -1,0 +1,4 @@
+# fstab: modem and vendor partitions with context=firmware_file, persist
+# with context=axon7m_persist_file, mounted on /mnt/vendor/*
+allow init mnt_vendor_file:dir mounton;
+allow init { firmware_file axon7m_persist_file }:filesystem { mount unmount relabelfrom relabelto associate };

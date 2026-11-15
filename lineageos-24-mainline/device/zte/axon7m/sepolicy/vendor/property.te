@@ -1,0 +1,4 @@
+# Mesa looks up every option as debug.mesa.X, vendor.mesa.X and mesa.X in
+# each GL process (os_get_option). Without a type the vendor.mesa. lookup
+# hits vendor_default_prop, which apps and SurfaceFlinger may not read.
+vendor_public_prop(vendor_mesa_prop)

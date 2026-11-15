@@ -1,0 +1,33 @@
+libcutils: ashmem: recognise a memfd by its seals when /proc/self/fd is not readable
+
+Chromium renderers (seccomp: file system calls fail with EPERM) cannot
+readlink /proc/self/fd/N, so is_memfd_fd() failed, the ashmem fallback
+found no /dev/ashmem (mainline kernel) and every shared memory region
+was invalid there: web pages rendered blank in Cromite and the
+LineageOS browser (LineageOS 24 on the ZTE Axon 7, sys.use_memfd=true).
+
+--- a/libcutils/ashmem-dev.cpp	2026-11-15 17:43:50.689203388 +0100
++++ b/libcutils/ashmem-dev.cpp	2026-11-15 17:43:50.703203411 +0100
+@@ -198,11 +198,17 @@
+     std::string fd_path = android::base::StringPrintf("/proc/self/fd/%d", fd);
+     std::string result;
+     if (!android::base::Readlink(fd_path, &result)) {
+-        ALOGE("readlink(%s) failed: %m", fd_path.c_str());
+-        return false;
+-    }
+-
+-    if (!result.starts_with("/memfd:")) {
++        // Sandboxed processes cannot always read /proc/self/fd: Chromium's
++        // renderer seccomp policy answers file system calls with EPERM.
++        // Without /dev/ashmem (mainline kernels) every region there would
++        // then be invalid and web content stays blank. Fall back to the
++        // seals below: only a memfd can carry F_SEAL_GROW|F_SEAL_SHRINK
++        // (other shmem files start with F_SEAL_SEAL and cannot get seals).
++        if (errno != EPERM && errno != EACCES) {
++            ALOGE("readlink(%s) failed: %m", fd_path.c_str());
++            return false;
++        }
++    } else if (!result.starts_with("/memfd:")) {
+         return false;
+     }
+ 

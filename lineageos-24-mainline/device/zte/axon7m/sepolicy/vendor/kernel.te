@@ -1,0 +1,11 @@
+# Firmware from the phone's partitions (/vendor/firmware links into
+# /mnt/vendor/firmware_mnt and /mnt/vendor/fw_vendor), and linux-firmware
+# files in the image's /vendor/firmware
+# the kernel (coredomain) walks /mnt/vendor for the firmware links: platform
+# policy forbids mnt_vendor_file to coredomain except for this attribute
+typeattribute kernel system_writes_mnt_vendor_violators;
+allow kernel mnt_vendor_file:dir search;
+allow kernel firmware_file:dir search;
+allow kernel firmware_file:file r_file_perms;
+allow kernel firmware_file:system firmware_load;
+allow kernel vendor_file:system firmware_load;

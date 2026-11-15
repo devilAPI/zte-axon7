@@ -17,6 +17,6 @@ vendor                                          /vendor      erofs  ro          
 /dev/block/by-name/vendor                       /mnt/vendor/fw_vendor ext4 ro,nosuid,nodev,noatime,noload,context=u:object_r:firmware_file:s0 wait,nofail
 # ZTE calibration data (Bluetooth address, sensors): read only, no journal
 # replay, so persist is never written
-/dev/block/by-name/persist                      /mnt/vendor/persist ext4 ro,nosuid,nodev,noatime,noload,context=u:object_r:mnt_vendor_file:s0 wait
+/dev/block/by-name/persist                      /mnt/vendor/persist ext4 ro,nosuid,nodev,noatime,noload,context=u:object_r:axon7m_persist_file:s0 wait
 /dev/block/by-name/misc                         /misc        emmc   defaults                                      defaults
 /dev/block/zram0                                none         swap   defaults                                      zramsize=50%

@@ -13,3 +13,10 @@ type axon7m_rmtfs_device, dev_type;
 type sysfs_axon7m_iio, fs_type, sysfs_type;
 type sysfs_axon7m_rmtfs, fs_type, sysfs_type;
 type sysfs_axon7m_mss, fs_type, sysfs_type;
+
+# persist (read-only, sns.reg for the sensor registry) and the registry the
+# SLPI reads from /data/vendor/sensors
+type axon7m_persist_file, file_type, contextmount_type, vendor_file_type;
+type axon7m_sensors_data_file, file_type, data_file_type;
+# /dev/rfkill (Bluetooth HAL net_bluetooth_mgmt)
+type axon7m_rfkill_device, dev_type;

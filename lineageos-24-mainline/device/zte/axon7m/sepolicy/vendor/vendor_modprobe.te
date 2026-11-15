@@ -1,2 +1,14 @@
 # axon7m-sns-reg.sh runs sns-reg (QMI over QRTR) in this domain
 allow vendor_modprobe self:qipcrtr_socket create_socket_perms_no_ioctl;
+# axon7m-modules.sh, -audio-routes.sh, -sns-reg.sh, -slpi-kick.sh: scripts
+# run toolbox commands, audio routes use tinymix on the sound card
+allow vendor_modprobe vendor_toolbox_exec:file rx_file_perms;
+allow vendor_modprobe audio_device:dir r_dir_perms;
+allow vendor_modprobe audio_device:chr_file rw_file_perms;
+# sns-reg: reads persist's sns.reg, writes the registry
+allow vendor_modprobe axon7m_persist_file:dir r_dir_perms;
+allow vendor_modprobe axon7m_persist_file:file r_file_perms;
+allow vendor_modprobe vendor_data_file:dir create_dir_perms;
+allow vendor_modprobe axon7m_sensors_data_file:dir create_dir_perms;
+allow vendor_modprobe axon7m_sensors_data_file:file create_file_perms;
+type_transition vendor_modprobe vendor_data_file:dir axon7m_sensors_data_file "sensors";
