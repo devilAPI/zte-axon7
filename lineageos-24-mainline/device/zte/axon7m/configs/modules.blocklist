@@ -1,0 +1,8 @@
+# Not loaded by ueventd's modalias handling at coldboot: these drivers ask for
+# firmware at probe (remoteproc auto-boot, ath10k, venus), and /vendor/firmware
+# links into the modem and vendor partitions, which are mounted only at "on fs"
+# (AXON7_FIRMWARE=phone). /vendor/bin/axon7m-modules.sh loads them after the
+# mounts (toybox modprobe ignores the blocklist without -b).
+blocklist qcom_q6v5_pas.ko
+blocklist ath10k_pci.ko
+blocklist venus-core.ko

@@ -60,6 +60,7 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 # drivers that need firmware from /vendor find it.
 BOARD_VENDOR_KERNEL_MODULES := $(wildcard $(TARGET_KERNEL_DIR)/modules/*.ko)
 BOARD_VENDOR_KERNEL_MODULES_LOAD := $(strip $(shell cat $(DEVICE_PATH)/configs/modules.load.axon7m 2>/dev/null | grep -v '^\#'))
+BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(DEVICE_PATH)/configs/modules.blocklist
 
 # Partitions: LineageOS 22.2's multi-boot slot, taken over for testing (user,
 # 2026-11-10; PLAN.md section 5): boot image in los_boot (the shim's
