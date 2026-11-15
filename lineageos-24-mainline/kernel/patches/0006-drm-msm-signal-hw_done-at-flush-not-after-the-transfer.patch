@@ -1,0 +1,101 @@
+From: axon7m bring-up
+Subject: [PATCH] drm/msm: signal hw_done at flush, not after the frame transfer
+
+msm_atomic_commit_tail() signalled hw_done only after waiting for the
+flush to complete. drm_atomic_helper_swap_state() of the next commit
+waits for that hw_done, also for DRM_MODE_ATOMIC_NONBLOCK, so the next
+atomic ioctl blocked until the previous frame was done. On a command-mode
+panel that is the whole frame transfer (pp_done, ~15 ms for the ZTE Axon
+7's 1440x2560 dual-DSI panel): drm_hwcomposer's commit slept ~8 ms in
+SurfaceFlinger's present every frame, and about 17 % of frames missed
+their vsync.
+
+Signal hw_done right after the flush is kicked off, as the default
+drm_atomic_helper_commit_tail() does before waiting for vblanks. The
+next commit_tail still waits for this flush (wait_flush) before it
+programs the hardware, and planes are cleaned up after the wait.
+
+The next commit can now kick off before this commit's complete_commit
+runs (that waits for the crtc lock the next commit_tail holds). dpu
+counts kickoffs, and a complete_commit that finds a newer kickoff
+pending leaves the flip event alone: it belongs to the newer commit and
+is sent at its frame start (command mode, patch 0004) or at its own
+complete_commit.
+
+---
+--- a/drivers/gpu/drm/msm/msm_atomic.c
++++ b/drivers/gpu/drm/msm/msm_atomic.c
+@@ -304,6 +304,17 @@
+ 	kms->funcs->flush_commit(kms, crtc_mask);
+ 	unlock_crtcs(kms, crtc_mask);
+ 	/*
++	 * The update is in the hardware now: let the next commit swap in its
++	 * state (as the default drm_atomic_helper_commit_tail() does before
++	 * waiting for vblanks). Its commit_tail still waits for this flush
++	 * (wait_flush above) before it programs anything. Waiting for the
++	 * flush first blocked the next atomic ioctl, even a nonblocking one,
++	 * in drm_atomic_helper_swap_state(); on a command-mode panel that is
++	 * the whole frame transfer (~15 ms on the ZTE Axon 7), every frame,
++	 * in the compositor's thread.
++	 */
++	drm_atomic_helper_commit_hw_done(state);
++	/*
+ 	 * Wait for flush to complete:
+ 	 */
+ 	trace_msm_atomic_wait_flush_start(crtc_mask);
+@@ -317,7 +328,6 @@
+ 	unlock_crtcs(kms, crtc_mask);
+ 	kms->funcs->disable_commit(kms);
+ 
+-	drm_atomic_helper_commit_hw_done(state);
+ 	drm_atomic_helper_cleanup_planes(dev, state);
+ 
+ 	trace_msm_atomic_commit_tail_finish(async, crtc_mask);
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.h
+@@ -174,6 +174,11 @@
+ 	atomic_t frame_pending;
+ 	/* command mode: send the flip event at the next vblank (frame start) */
+ 	atomic_t cmd_flip_armed;
++	/*
++	 * kickoffs not completed yet: with hw_done signalled at flush, the
++	 * next commit can kick off before this one's complete_commit runs
++	 */
++	atomic_t kickoffs_pending;
+ 	struct dpu_crtc_frame_event frame_events[DPU_CRTC_FRAME_EVENT_SIZE];
+ 	struct list_head frame_event_list;
+ 	spinlock_t spin_lock;
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.c
+@@ -765,9 +765,14 @@
+  */
+ void dpu_crtc_complete_commit(struct drm_crtc *crtc)
+ {
++	struct dpu_crtc *dpu_crtc = to_dpu_crtc(crtc);
++
+ 	trace_dpu_crtc_complete_commit(DRMID(crtc));
+-	atomic_set(&to_dpu_crtc(crtc)->cmd_flip_armed, 0);
+ 	dpu_core_perf_crtc_update(crtc, 0);
++	/* a newer commit kicked off already: its flip event is its own */
++	if (atomic_dec_if_positive(&dpu_crtc->kickoffs_pending) > 0)
++		return;
++	atomic_set(&dpu_crtc->cmd_flip_armed, 0);
+ 	_dpu_crtc_complete_flip(crtc);
+ }
+ 
+@@ -1108,6 +1113,7 @@
+ 	if (unlikely(!cstate->num_mixers))
+ 		return;
+ 
++	atomic_inc(&dpu_crtc->kickoffs_pending);
+ 	DPU_ATRACE_BEGIN("crtc_commit");
+ 
+ 	drm_for_each_encoder_mask(encoder, crtc->dev,
+@@ -1269,6 +1275,7 @@
+ 		atomic_set(&dpu_crtc->frame_pending, 0);
+ 		atomic_set(&dpu_crtc->cmd_flip_armed, 0);
+ 	}
++	atomic_set(&dpu_crtc->kickoffs_pending, 0);
+ 
+ 	dpu_core_perf_crtc_update(crtc, 0);
+ 

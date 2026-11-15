@@ -25,6 +25,10 @@
 # server, super fetch and write, TWRP round trip).
 set -euo pipefail
 base=$(realpath "$1"); shift
+# the LineageOS boot.img of an image build (ios/research/los24-build-N/),
+# not a saved boot partition (shim + postmarketOS bundle, 64 MiB)
+case "$base" in */los24-build-*/boot.img) ;; *)
+	echo "BASE_BOOT_IMG should be ios/research/los24-build-N/boot.img (got $base)" >&2; exit 1 ;; esac
 server=0 flash=1
 for a in "$@"; do case $a in --server) server=1 ;; --no-flash) flash=0 ;; *) echo "unknown $a" >&2; exit 2 ;; esac; done
 R=$(git rev-parse --show-toplevel)
