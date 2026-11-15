@@ -28,6 +28,10 @@ touch keys (F1A) present; GPU without firmware (this phone has no vendor
 partition, a530_zap missing). Only you can do the touch part: on that phone,
 swipe and type at the login, press the three touch keys, then tell Claude.
 If typing works, Claude publishes the r25 draft (nura-latest).
+Checked there without hands: 15 thermal zones at 30-40 C, a plain restart
+comes back into Nura, Wi-Fi/modem/ADSP/SLPI firmware load; the GPU works
+after the firmware fix of 11518fe (not in r25: on phones without a vendor
+partition r25 leaves the GPU off).
 
 **Nura r25** (draft release, built by GitHub after the push of 97fb832):
 touchscreen fix (0044/0045), temperature sensors (tsens), plain reboot fix
