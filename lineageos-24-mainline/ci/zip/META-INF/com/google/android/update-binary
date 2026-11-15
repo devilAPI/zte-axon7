@@ -1,0 +1,59 @@
+#!/sbin/sh
+# LineageOS 24 (mainline Linux) for the ZTE Axon 7, TWRP installer.
+# Installs into the LineageOS slot of the project's multi-boot layout
+# (DEV-MULTIBOOT.md, axon7-tripleboot-gpt):
+#   system   (GPT)  <- super.img (system, system_ext, product, vendor)
+#   los_boot        <- the kernel image for the boot menu's LineageOS entry
+#   los_metadata, los_data: start zeroed (all LineageOS data in this slot is erased)
+# Not touched: boot (the boot menu), misc, iOS and Nura partitions, persist,
+# modem, EFS (modemst1/2, fsg, fsc), the bootloader, the GPT vendor partition.
+# Arguments from TWRP: API version, output pipe, zip path.
+OUTFD=/proc/self/fd/$2
+ZIP=$3
+ui() { echo "ui_print $*" > "$OUTFD"; echo "ui_print" > "$OUTFD"; }
+die() { ui "ERROR: $*"; ui "Nothing after this step was written."; exit 1; }
+part() {	# partition name -> /dev/block/sdXN (TWRP sometimes lacks by-name links)
+	for b in /sys/class/block/*; do
+		grep -q "^PARTNAME=$1\$" "$b/uevent" 2>/dev/null && { echo "/dev/block/${b##*/}"; return; }
+	done
+}
+bytes() { echo $(( $(cat "/sys/class/block/${1##*/}/size") * 512 )); }
+
+ui "LineageOS 24 (mainline Linux) for the ZTE Axon 7 - ALPHA"
+dev=$(getprop ro.product.device)
+case "$dev" in ailsa_ii|axon7|A2017G|A2017U|A2017) ;; *) die "this zip is for the ZTE Axon 7 (TWRP says device '$dev')";; esac
+
+sys=$(part system); lb=$(part los_boot); lm=$(part los_metadata); ld=$(part los_data); boot=$(part boot)
+for v in "system:$sys" "los_boot:$lb" "los_metadata:$lm" "los_data:$ld" "boot:$boot"; do
+	[ -n "${v#*:}" ] || die "no partition ${v%%:*}: this needs the multi-boot layout (DEV-MULTIBOOT.md)"
+done
+# the boot menu (shim) with a LineageOS entry must be in boot
+dd if="$boot" bs=1048576 count=16 2>/dev/null | tr -c 'A-Za-z' '\n' | grep -q '^LineageOS$' ||
+	die "the boot partition has no boot menu with a LineageOS entry (install the multi-boot setup first)"
+
+cd /tmp || die "no /tmp"
+rm -rf /tmp/los24 && mkdir /tmp/los24 && cd /tmp/los24 || die "/tmp"
+unzip -o "$ZIP" sizes los-boot.img los-boot.img.sha1 super.raw.sha1 >/dev/null || die "zip incomplete"
+read -r super_size boot_size < sizes
+[ "$(bytes "$sys")" -ge "$super_size" ] || die "partition system is smaller ($(bytes "$sys")) than super ($super_size)"
+[ "$(bytes "$lb")" -ge "$boot_size" ] || die "partition los_boot is too small"
+[ "$(sha1sum < los-boot.img | cut -d' ' -f1)" = "$(cat los-boot.img.sha1)" ] || die "los-boot.img damaged (download again)"
+
+ui "Writing system (super, $((super_size / 1048576)) MiB), takes a few minutes..."
+unzip -p "$ZIP" super.raw.gz | gunzip -c | dd of="$sys" bs=1048576 2>/dev/null || die "writing super failed"
+sync
+ui "Checking system..."
+got=$(dd if="$sys" bs=1048576 count=$((super_size / 1048576)) 2>/dev/null | sha1sum | cut -d' ' -f1)
+[ "$got" = "$(cat super.raw.sha1)" ] || die "system does not read back correctly (do not boot LineageOS 24; flash again)"
+
+ui "Writing los_boot..."
+dd if=los-boot.img of="$lb" bs=1048576 2>/dev/null || die "writing los_boot failed"
+sync
+[ "$(dd if="$lb" bs=$boot_size count=1 2>/dev/null | sha1sum | cut -d' ' -f1)" = "$(cat los-boot.img.sha1)" ] || die "los_boot does not read back correctly"
+
+ui "Erasing LineageOS data (los_metadata, los_data)..."
+dd if=/dev/zero of="$lm" bs=1048576 count=16 2>/dev/null; dd if=/dev/zero of="$ld" bs=1048576 count=64 2>/dev/null; sync
+rm -rf /tmp/los24
+ui "Done. Reboot, then choose LineageOS in the boot menu."
+ui "The first start takes a few minutes."
+exit 0
