@@ -1,0 +1,36 @@
+From: axon7m bring-up
+Subject: [PATCH] drm/msm/dpu: keep the vblank irq after a pp_done timeout
+
+_dpu_encoder_phys_cmd_handle_ppdone_timeout() unregistered the rd_ptr
+irq callback on the first kickoff timeout without touching
+vblank_refcount. dpu_encoder_phys_cmd_control_vblank_irq() registers the
+callback only when the refcount goes 0 -> 1, and the encoder's own
+irq_enable reference keeps it above 0, so after one timeout no vblank
+interrupt was ever delivered again, not even across a display off/on.
+
+On the ZTE Axon 7 a single timeout ~200 s after boot left
+drm_hwcomposer's VSyncWorker blocked in drmWaitVBlank (3 s timeouts),
+SurfaceFlinger without hardware vsync ("No Last HW vsync"), apps blocked
+in dequeueBuffer for ~17 ms per frame and scrolling at ~15 fps until the
+next reboot.
+
+Keep the callback. A dead panel simply raises no rd_ptr interrupt.
+
+---
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_encoder_phys_cmd.c
+@@ -200,8 +200,12 @@
+ 			  cmd_enc->pp_timeout_report_cnt,
+ 			  atomic_read(&phys_enc->pending_kickoff_cnt));
+ 		msm_disp_snapshot_state(drm_enc->dev);
+-		dpu_core_irq_unregister_callback(phys_enc->dpu_kms,
+-				phys_enc->irq[INTR_IDX_RDPTR]);
++		/*
++		 * Keep the rd_ptr (vblank) callback: unregistering it here
++		 * bypasses vblank_refcount, so control_vblank_irq() never
++		 * registers it again and vblank is gone for good after a
++		 * single timeout.
++		 */
+ 	}
+ 
+ 	atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
