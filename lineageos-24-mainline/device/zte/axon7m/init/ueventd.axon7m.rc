@@ -2,7 +2,7 @@
 # ath10k, Adreno zap shader, QCA Bluetooth). No firmware is in this repository:
 # /vendor/firmware is filled from the phone at build time, the modem
 # partition's image/ directory is mounted read-only.
-firmware_directories /vendor/firmware/ /vendor/firmware_mnt/image/
+firmware_directories /vendor/firmware/ /mnt/vendor/firmware_mnt/image/
 modalias_handling enabled
 
 /dev/dri/*                0666   system     graphics

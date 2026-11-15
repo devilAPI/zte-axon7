@@ -187,13 +187,27 @@ PRODUCT_PACKAGES += \
 # Android tree on the build server (scripts/firmware-from-nura.sh: the
 # phone's ZTE/Qualcomm images + linux-firmware files; proprietary, never in
 # git). The kernel looks there (firmware_class.path in BoardConfig.mk).
-# AXON7_FIRMWARE=1 (los24-build.sh default since build 15: LineageOS reached the
+# AXON7_FIRMWARE=1 (los24-build.sh default from build 15 to 37: LineageOS reached the
 # setup wizard without firmware first; AXON7_FIRMWARE=0 builds without).
 AXON7_FIRMWARE ?= 0
 AXON7M_FW_DIR := vendor/zte/axon7m-firmware
 ifeq ($(AXON7_FIRMWARE),1)
 PRODUCT_COPY_FILES += $(foreach f,$(shell cd $(AXON7M_FW_DIR) 2>/dev/null && find . -type f | sed 's|^\./||' | sort),\
     $(AXON7M_FW_DIR)/$(f):$(TARGET_COPY_OUT_VENDOR)/firmware/$(f))
+endif
+# AXON7_FIRMWARE=phone (releases): no ZTE/Qualcomm image in the build. Only
+# the redistributable linux-firmware files are copied; the phone's own images
+# are reached through symlinks (firmware/Android.bp, from
+# scripts/gen-firmware-links.py) into the modem partition and the GPT vendor
+# partition, which fstab mounts under /mnt/vendor read-only.
+AXON7M_FW_PUBLIC := \
+    ath10k/QCA6174/hw3.0/firmware-6.bin \
+    qca/nvm_00440302.bin qca/rampatch_00440302.bin \
+    qcom/a530_pfp.fw qcom/a530_pm4.fw qcom/a530v3_gpmu.fw2 \
+    regulatory.db regulatory.db.p7s
+ifeq ($(AXON7_FIRMWARE),phone)
+PRODUCT_COPY_FILES += $(foreach f,$(AXON7M_FW_PUBLIC),$(AXON7M_FW_DIR)/$(f):$(TARGET_COPY_OUT_VENDOR)/firmware/$(f))
+PRODUCT_PACKAGES += axon7m-firmware-links
 endif
 
 # Audio: audioserver crashes without any audio HAL, and system_server then

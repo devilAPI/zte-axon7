@@ -70,8 +70,11 @@ export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
 export AXON7_GPU=${AXON7_GPU:-mesa}
 export AXON7_SPEAKER_MUTE=${AXON7_SPEAKER_MUTE:-0}
 # /vendor/firmware from vendor/zte/axon7m-firmware (scripts/firmware-from-nura.sh)
-export AXON7_FIRMWARE=${AXON7_FIRMWARE:-1}
-[ "$AXON7_FIRMWARE" != 1 ] || [ -f "$T/vendor/zte/axon7m-firmware/qcom/a530_pm4.fw" ] || { echo "AXON7_FIRMWARE=1 but no $T/vendor/zte/axon7m-firmware: run scripts/firmware-from-nura.sh"; exit 1; }
+# phone (default since build 38): linux-firmware files + links into the
+# phone's own firmware partitions, nothing proprietary in the image; 1: all
+# files from vendor/zte/axon7m-firmware (old developer builds)
+export AXON7_FIRMWARE=${AXON7_FIRMWARE:-phone}
+[ "$AXON7_FIRMWARE" = 0 ] || [ -f "$T/vendor/zte/axon7m-firmware/qcom/a530_pm4.fw" ] || { echo "AXON7_FIRMWARE=1 but no $T/vendor/zte/axon7m-firmware: run scripts/firmware-from-nura.sh"; exit 1; }
 echo "AXON7_GPU=$AXON7_GPU AXON7_FIRMWARE=$AXON7_FIRMWARE AXON7_SPEAKER_MUTE=$AXON7_SPEAKER_MUTE AXON7_ADB_KEYS=$AXON7_ADB_KEYS"
 [ -z "$AXON7_ADB_KEYS" ] || [ -r "$T/$AXON7_ADB_KEYS" ] || { echo "missing $T/$AXON7_ADB_KEYS"; exit 1; }
 export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=$(readlink -f /srv/los24/ccache)  # real path: nsjail cannot bind-mount a symlink
