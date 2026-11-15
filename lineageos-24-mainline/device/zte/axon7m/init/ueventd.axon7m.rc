@@ -16,3 +16,7 @@ modalias_handling enabled
 # (it failed with EACCES, LOS 24 run 27p)
 /sys/class/backlight/*  brightness  0664  system  system
 /sys/class/backlight/*  bl_power    0664  system  system
+# notification LED (multicolour LPG LED) and torch for the lights HAL (system)
+/sys/class/leds/rgb:status  brightness       0664  system  system
+/sys/class/leds/rgb:status  multi_intensity  0664  system  system
+/sys/class/leds/white:torch brightness       0664  system  cameraserver

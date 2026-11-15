@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- one tri-colour LED for notifications and battery, colour and blinking
+         from the lights HAL: RGB notification (1) + RGB battery (2) +
+         pulsating (8) + battery LED (64) -->
+    <integer name="config_deviceLightCapabilities">75</integer>
+</resources>

@@ -1,0 +1,22 @@
+// Camera HAL module for LineageOS' AIDL camera provider
+// (android.hardware.camera.provider-service.lineage loads camera.<ro.hardware>).
+// For now it only drives the torch (white:torch, PMI8994 flash LED): the
+// sensors work on mainline (CAMSS, OV8856, S5K2T8) but there is no ISP path
+// to YUV yet (PLAN.md, camera).
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_library_shared {
+    name: "camera.axon7m",
+    relative_install_path: "hw",
+    vendor: true,
+    srcs: ["CameraModule.cpp"],
+    cflags: ["-Wall", "-Werror"],
+    header_libs: ["libhardware_headers"],
+    shared_libs: [
+        "libbase",
+        "libcamera_metadata",
+        "liblog",
+    ],
+}

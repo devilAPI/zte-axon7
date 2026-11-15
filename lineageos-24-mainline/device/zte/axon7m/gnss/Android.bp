@@ -28,3 +28,15 @@ cc_binary {
         "android.hardware.gnss-V4-ndk",
     ],
 }
+
+// test tool: a second LOC client that prints what the modem reports
+cc_binary {
+    name: "axon7m-gnss-test",
+    vendor: true,
+    srcs: [
+        "gnss-test.cpp",
+        "LocClient.cpp",
+    ],
+    cflags: ["-Wall", "-Werror"],
+    shared_libs: ["libbase"],
+}

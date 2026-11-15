@@ -1,0 +1,5 @@
+// lineage-sdk resource overrides for the Axon 7: notification/battery LED
+runtime_resource_overlay {
+    name: "LineageSdkResAxon7m",
+    vendor: true,
+}

@@ -2,4 +2,15 @@
 <resources>
     <!-- "ZTE Axon 7 Headset Jack" (ASoC jack on the AK4961): input switch events -->
     <bool name="config_useDevInputEventForAudioJack">true</bool>
+
+    <!-- USB device mode (MTP, PTP, tethering): connection state from
+         /sys/class/udc/6a00000.usb/state; mainline has no android_usb uevents
+         (kernel patch 0009 adds the empty class UsbService looks for) -->
+    <bool name="config_enableUdcSysfsUsbStateUpdate">true</bool>
+
+    <!-- Hall sensor (gpio-keys SW_LID): closing a flip cover turns the screen off -->
+    <bool name="config_lidControlsSleep">true</bool>
+
+    <!-- notification LED (PMI8994 tri-colour LED, lights HAL) -->
+    <bool name="config_intrusiveNotificationLed">true</bool>
 </resources>

@@ -116,7 +116,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.audio.tinyalsa.routes=/vendor/etc/audio_routes.conf \
     ro.vendor.audio.tinyalsa.default_out_address=CARD_0_DEV_1 \
     ro.vendor.audio.tinyalsa.default_in_address=CARD_0_DEV_0
-PRODUCT_PACKAGES += FrameworksResAxon7m
+PRODUCT_PACKAGES += FrameworksResAxon7m LineageSdkResAxon7m
 # tinymix for the mixer routes (vendor variant of external/tinyalsa)
 PRODUCT_PACKAGES += tinymix.vendor tinycap.vendor
 # AXON7_SPEAKER_MUTE=1: speaker switches stay off (unattended test boots in
@@ -140,6 +140,9 @@ PRODUCT_PACKAGES += \
     android.hardware.bluetooth-service.default \
     bdaddr.axon7m \
     android.hardware.vibrator-service.axon7m \
+    android.hardware.light-service.axon7m \
+    android.hardware.camera.provider-service.lineage \
+    camera.axon7m \
     android.hardware.wifi-service \
     hostapd \
     wpa_supplicant
@@ -155,7 +158,7 @@ PRODUCT_COPY_FILES += \
 
 # GNSS: the modem's QMI LOC service over QRTR sockets (gnss/). Works once
 # the modem is online (rmtfs etc., init.axon7m.rc); until then the HAL waits.
-PRODUCT_PACKAGES += android.hardware.gnss-service.axon7m
+PRODUCT_PACKAGES += android.hardware.gnss-service.axon7m axon7m-gnss-test
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml
 

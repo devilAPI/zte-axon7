@@ -8,3 +8,6 @@ genfscon sysfs /devices/platform/soc@0/900000.display-subsystem/994000.dsi/99400
 genfscon sysfs /devices/platform/qcom-smgr u:object_r:sysfs_axon7m_iio:s0
 genfscon sysfs /devices/platform/reserved-memory:rmtfs u:object_r:sysfs_axon7m_rmtfs:s0
 genfscon sysfs /devices/platform/soc@0/2080000.remoteproc u:object_r:sysfs_axon7m_mss:s0
+# notification LED (PMI8994 LPG) and torch (PMI8994 flash): lights HAL
+genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-03/400f000.spmi:pmic@3:pwm/leds u:object_r:sysfs_leds:s0
+genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-03/400f000.spmi:pmic@3:led-controller@d300/leds u:object_r:sysfs_leds:s0

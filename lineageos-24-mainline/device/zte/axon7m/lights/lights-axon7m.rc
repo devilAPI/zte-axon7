@@ -1,0 +1,5 @@
+service vendor.light-axon7m /vendor/bin/hw/android.hardware.light-service.axon7m
+    class hal
+    user system
+    group system
+    shutdown critical

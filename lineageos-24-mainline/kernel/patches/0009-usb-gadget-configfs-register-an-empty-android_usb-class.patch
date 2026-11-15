@@ -1,0 +1,53 @@
+From: axon7m bring-up
+Subject: [PATCH] usb: gadget: configfs: register an empty android_usb class
+
+Android's UsbService creates UsbDeviceManager (MTP, PTP, USB tethering,
+the USB preferences UI) only when /sys/class/android_usb exists. That
+class comes from the Android common kernel's configfs uevent patch, which
+mainline does not have. Since Android 15, UsbDeviceManager can follow the
+connection state through the UDC's sysfs "state" file
+(config_enableUdcSysfsUsbStateUpdate), so an empty class is enough to get
+the device-mode USB functions on an upstream kernel.
+---
+diff --git a/drivers/usb/gadget/configfs.c b/drivers/usb/gadget/configfs.c
+index 51df6d1d1..06e1e2724 100644
+--- a/drivers/usb/gadget/configfs.c
++++ b/drivers/usb/gadget/configfs.c
+@@ -2090,6 +2090,18 @@ void unregister_gadget_item(struct config_item *item)
+ }
+ EXPORT_SYMBOL_GPL(unregister_gadget_item);
+ 
++/*
++ * Android's UsbService only creates its device-mode manager (MTP, PTP,
++ * tethering, the "USB preferences" UI) when /sys/class/android_usb exists,
++ * a class the Android common kernel's configfs uevent patch adds. With
++ * config_enableUdcSysfsUsbStateUpdate Android follows the connection state
++ * through /sys/class/udc/<udc>/state instead of that class's uevents, so an
++ * empty class is all it needs.
++ */
++static const struct class android_usb_class = {
++	.name = "android_usb",
++};
++
+ static int __init gadget_cfs_init(void)
+ {
+ 	int ret;
+@@ -2097,12 +2109,17 @@ static int __init gadget_cfs_init(void)
+ 	config_group_init(&gadget_subsys.su_group);
+ 
+ 	ret = configfs_register_subsystem(&gadget_subsys);
+-	return ret;
++	if (ret)
++		return ret;
++	if (class_register(&android_usb_class))
++		pr_warn("usb configfs: no android_usb class\n");
++	return 0;
+ }
+ module_init(gadget_cfs_init);
+ 
+ static void __exit gadget_cfs_exit(void)
+ {
++	class_unregister(&android_usb_class);
+ 	configfs_unregister_subsystem(&gadget_subsys);
+ }
+ module_exit(gadget_cfs_exit);
