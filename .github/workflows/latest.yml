@@ -28,7 +28,7 @@ concurrency:
 jobs:
   latest:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'lineageos-22.2-') || startsWith(github.event.release.tag_name, 'nura-2')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'lineageos-22.2-') || startsWith(github.event.release.tag_name, 'lineageos-24-') || startsWith(github.event.release.tag_name, 'nura-2')
     steps:
       - name: Refresh the fixed release
         env:
@@ -37,6 +37,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           case $TAG in
+            lineageos-24-*) latest=lineageos-24-latest ;;
             lineageos-*) latest=lineageos-latest ;;
             nura-*) latest=nura-latest ;;
             *) echo "::error::$TAG is not a LineageOS or Nura release"; exit 1 ;;
