@@ -19,4 +19,5 @@ modalias_handling enabled
 # notification LED (multicolour LPG LED) and torch for the lights HAL (system)
 /sys/class/leds/rgb:status  brightness       0664  system  system
 /sys/class/leds/rgb:status  multi_intensity  0664  system  system
-/sys/class/leds/white:torch brightness       0664  system  cameraserver
+# the camera provider (camera.axon7m torch) runs as user cameraserver
+/sys/class/leds/white:torch brightness       0664  cameraserver  system

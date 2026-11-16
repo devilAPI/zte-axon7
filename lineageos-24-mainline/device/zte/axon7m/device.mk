@@ -156,6 +156,11 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml
 
+# Torch: SystemUI's flashlight tile needs the camera flash feature (camera.axon7m
+# is a torch-only camera for now, camera/)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.flash-autofocus.xml
+
 # GNSS: the modem's QMI LOC service over QRTR sockets (gnss/). Works once
 # the modem is online (rmtfs etc., init.axon7m.rc); until then the HAL waits.
 PRODUCT_PACKAGES += android.hardware.gnss-service.axon7m axon7m-gnss-test

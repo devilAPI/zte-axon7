@@ -1,19 +1,39 @@
 From: axon7m bring-up
-Subject: [PATCH] usb: gadget: configfs: register an empty android_usb class
+Subject: [PATCH] usb: gadget: configfs: android_usb class, "none" unbinds the UDC
 
 Android's UsbService creates UsbDeviceManager (MTP, PTP, USB tethering,
 the USB preferences UI) only when /sys/class/android_usb exists. That
 class comes from the Android common kernel's configfs uevent patch, which
 mainline does not have. Since Android 15, UsbDeviceManager can follow the
 connection state through the UDC's sysfs "state" file
-(config_enableUdcSysfsUsbStateUpdate), so an empty class is enough to get
-the device-mode USB functions on an upstream kernel.
+(config_enableUdcSysfsUsbStateUpdate), so an empty class is enough.
+
+Android's init.usb.configfs.rc unbinds the gadget by writing "none" to
+UDC before it changes the functions; mainline only takes an empty string
+and answered "none" with EBUSY (a UDC of that name while one is bound), so
+the functions never changed (LineageOS 24 build 42: MTP stayed adb). Treat
+"none" like the empty string, as the Android common kernel does, and let
+an unbind of an unbound gadget succeed.
 ---
 diff --git a/drivers/usb/gadget/configfs.c b/drivers/usb/gadget/configfs.c
-index 51df6d1d1..06e1e2724 100644
+index 51df6d1d1..88b1740d2 100644
 --- a/drivers/usb/gadget/configfs.c
 +++ b/drivers/usb/gadget/configfs.c
-@@ -2090,6 +2090,18 @@ void unregister_gadget_item(struct config_item *item)
+@@ -286,8 +286,12 @@ static ssize_t gadget_dev_desc_UDC_store(struct config_item *item,
+ 
+ 	mutex_lock(&gi->lock);
+ 
+-	if (!strlen(name)) {
++	/* "none" unbinds as well: Android's init.usb.configfs.rc writes it */
++	if (!strlen(name) || !strcmp(name, "none")) {
+ 		ret = unregister_gadget(gi);
++		/* nothing bound: already in the wanted state */
++		if (ret == -ENODEV)
++			ret = 0;
+ 		if (ret)
+ 			goto err;
+ 		kfree(name);
+@@ -2090,6 +2094,18 @@ void unregister_gadget_item(struct config_item *item)
  }
  EXPORT_SYMBOL_GPL(unregister_gadget_item);
  
@@ -32,7 +52,7 @@ index 51df6d1d1..06e1e2724 100644
  static int __init gadget_cfs_init(void)
  {
  	int ret;
-@@ -2097,12 +2109,17 @@ static int __init gadget_cfs_init(void)
+@@ -2097,12 +2113,17 @@ static int __init gadget_cfs_init(void)
  	config_group_init(&gadget_subsys.su_group);
  
  	ret = configfs_register_subsystem(&gadget_subsys);
