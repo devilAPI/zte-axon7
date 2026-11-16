@@ -1,0 +1,17 @@
+From: axon7m bring-up
+Subject: [PATCH] libcamera: base: thread: set the affinity by thread id
+
+Bionic has no pthread_setaffinity_np(); sched_setaffinity() on the thread
+id does the same on Linux.
+---
+--- a/src/libcamera/base/thread.cpp
++++ b/src/libcamera/base/thread.cpp
+@@ -462,7 +462,7 @@
+ 		return;
+ 
+ 	const cpu_set_t &cpuset = data_->cpuset_.value();
+-	pthread_setaffinity_np(thread_.native_handle(), sizeof(cpuset), &cpuset);
++	sched_setaffinity(data_->tid_, sizeof(cpuset), &cpuset);
+ }
+ 
+ /**

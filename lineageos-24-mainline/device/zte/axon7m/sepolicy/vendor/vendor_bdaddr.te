@@ -12,3 +12,6 @@ allow vendor_bdaddr mnt_vendor_file:dir search;
 allow vendor_bdaddr axon7m_persist_file:dir search;
 allow vendor_bdaddr axon7m_persist_file:file r_file_perms;
 allow vendor_bdaddr vendor_bdaddr_exec:file execute_no_trans;
+# rebind the QCA serdev driver when the controller's setup failed (bdaddr.c)
+allow vendor_bdaddr sysfs_axon7m_btuart:dir r_dir_perms;
+allow vendor_bdaddr sysfs_axon7m_btuart:file w_file_perms;

@@ -1,0 +1,64 @@
+From: axon7m bring-up
+Subject: [PATCH] slimbus: qcom-ngd-ctrl: forget the completion of a timed-out TX
+
+qcom_slim_ngd_xfer_msg() hands an on-stack completion to the TX
+descriptor and returns -ETIMEDOUT when the DMA does not finish within a
+second. The DMA callback can still run afterwards and complete() the
+stale stack address. On the ZTE Axon 7 (APQ8096 NGD, ADSP slimbus) this
+happened under a screen off/on stress after "QMI TXN wait fail: -110" and
+crashed in queued_spin_lock_slowpath() called from
+qcom_slim_ngd_tx_msg_dma_cb() ("Fatal exception in interrupt").
+
+On a TX timeout clear the descriptor's completion under tx_buf_lock, and
+free the transaction id of a user message so a late reply cannot complete
+the stack's "done" either.
+---
+diff --git a/drivers/slimbus/qcom-ngd-ctrl.c b/drivers/slimbus/qcom-ngd-ctrl.c
+index 6e8941571..2297cd8a7 100644
+--- a/drivers/slimbus/qcom-ngd-ctrl.c
++++ b/drivers/slimbus/qcom-ngd-ctrl.c
+@@ -563,6 +563,25 @@ static void qcom_slim_ngd_tx_msg_dma_cb(void *args)
+ 	spin_unlock_irqrestore(&ctrl->tx_buf_lock, flags);
+ }
+ 
++/*
++ * A timed-out sender returns and its on-stack completion goes away, but the
++ * DMA callback still fires later and would complete() freed stack memory
++ * (on the ZTE Axon 7 this corrupted another task's stack and ended in an
++ * Oops in queued_spin_lock_slowpath from qcom_slim_ngd_tx_msg_dma_cb).
++ * Forget the completion of a message the sender gave up on.
++ */
++static void qcom_slim_ngd_tx_msg_forget(struct qcom_slim_ngd_ctrl *ctrl,
++					void *buf, struct completion *comp)
++{
++	unsigned long flags;
++	int index = (buf - ctrl->tx_base) / SLIM_MSGQ_BUF_LEN;
++
++	spin_lock_irqsave(&ctrl->tx_buf_lock, flags);
++	if (ctrl->txdesc[index].comp == comp)
++		ctrl->txdesc[index].comp = NULL;
++	spin_unlock_irqrestore(&ctrl->tx_buf_lock, flags);
++}
++
+ static int qcom_slim_ngd_tx_msg_post(struct qcom_slim_ngd_ctrl *ctrl,
+ 				     void *buf, int len)
+ {
+@@ -895,6 +914,9 @@ static int qcom_slim_ngd_xfer_msg(struct slim_controller *sctrl,
+ 	if (!time_left) {
+ 		dev_err(sctrl->dev, "TX timed out:MC:0x%x,mt:0x%x", txn->mc,
+ 					txn->mt);
++		qcom_slim_ngd_tx_msg_forget(ctrl, pbuf, &tx_sent);
++		if (usr_msg)
++			slim_free_txn_tid(sctrl, txn);
+ 		mutex_unlock(&ctrl->tx_lock);
+ 		return -ETIMEDOUT;
+ 	}
+@@ -904,6 +926,8 @@ static int qcom_slim_ngd_xfer_msg(struct slim_controller *sctrl,
+ 		if (!time_left) {
+ 			dev_err(sctrl->dev, "TX timed out:MC:0x%x,mt:0x%x",
+ 				txn->mc, txn->mt);
++			/* a late reply must not complete the stack's "done" */
++			slim_free_txn_tid(sctrl, txn);
+ 			mutex_unlock(&ctrl->tx_lock);
+ 			return -ETIMEDOUT;
+ 		}

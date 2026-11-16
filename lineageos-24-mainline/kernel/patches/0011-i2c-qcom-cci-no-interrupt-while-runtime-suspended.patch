@@ -1,0 +1,36 @@
+From: axon7m bring-up
+Subject: [PATCH] i2c: qcom-cci: no interrupt while runtime suspended
+
+cci_isr() reads CCI_IRQ_STATUS_0 first thing. An interrupt that arrives
+after the runtime suspend turned the CCI clocks off (a late halt/reset
+acknowledgement after a transfer timed out or a client went away) makes
+that read fault: on MSM8996 an asynchronous SError and a kernel panic
+(LineageOS 24 on the ZTE Axon 7: panic right after an a0c000.cci
+interrupt, ftrace dump in pstore, while a libcamera client was killed
+mid-stream). Disable the interrupt before the clocks go off and enable it
+again after they are back.
+---
+diff --git a/drivers/i2c/busses/i2c-qcom-cci.c b/drivers/i2c/busses/i2c-qcom-cci.c
+index bd70c6bae..2c8af510d 100644
+--- a/drivers/i2c/busses/i2c-qcom-cci.c
++++ b/drivers/i2c/busses/i2c-qcom-cci.c
+@@ -475,6 +475,11 @@ static int __maybe_unused cci_suspend_runtime(struct device *dev)
+ {
+ 	struct cci *cci = dev_get_drvdata(dev);
+ 
++	/*
++	 * No interrupt while the clocks are off: cci_isr() reads the status
++	 * register, and that read raises an SError on an unclocked CCI.
++	 */
++	disable_irq(cci->irq);
+ 	cci_disable_clocks(cci);
+ 	return 0;
+ }
+@@ -489,6 +494,7 @@ static int __maybe_unused cci_resume_runtime(struct device *dev)
+ 		return ret;
+ 
+ 	cci_init(cci);
++	enable_irq(cci->irq);
+ 	return 0;
+ }
+ 

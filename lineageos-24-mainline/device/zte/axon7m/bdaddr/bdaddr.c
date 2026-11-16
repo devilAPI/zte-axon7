@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <poll.h>
+#include <fcntl.h>
+#include <time.h>
 #include <log/log.h>
 
 #define HCI_DEV_NONE  0xffff
@@ -45,6 +48,7 @@ struct sockaddr_hci {
 #define BTMGMT_EV_CMD_COMPLETE  0x0001
 #define BTMGMT_EV_CMD_STATUS  0x0002
 #define BTMGMT_EV_UNCONF_INDEX_ADDED  0x001d
+#define BTMGMT_EV_INDEX_ADDED  0x0004
 #define BTMGMT_OPT_PUBLIC_ADDRESS  (1 << 1)
 #define BTMGMT_ERR_INVALID_INDEX  0x11
 
@@ -197,6 +201,44 @@ static bool parse_addr(const char* s, uint8_t bdaddr[MAC_ADDRESS_SIZE]) {
             &bdaddr[2], &bdaddr[1], &bdaddr[0]) == MAC_ADDRESS_SIZE;
 }
 
+/*
+ * axon7m: the QCA6174's setup after the address is set sometimes fails
+ * (rampatch "Frame reassembly failed", then HCI_Reset times out, -110);
+ * hci0 then never leaves setup, never shows up in the management index list,
+ * and the Bluetooth HAL waits for it forever. If no Index Added event comes
+ * within SETUP_TIMEOUT_S after the address was set, rebind the serdev
+ * driver: the controller registers again (unconfigured), we set the address
+ * again and the setup runs again. At most MAX_REBINDS times per boot.
+ */
+#define SETUP_TIMEOUT_S 25
+#define MAX_REBINDS 3
+#define SERDEV_DRIVER "/sys/bus/serial/drivers/hci_uart_qca"
+#define SERDEV_NAME "serial0-0"
+
+static bool write_sysfs(const char* path, const char* val) {
+    int fd = open(path, O_WRONLY | O_CLOEXEC);
+    if (fd < 0)
+        return false;
+    bool ok = write(fd, val, strlen(val)) == (ssize_t) strlen(val);
+    close(fd);
+    return ok;
+}
+
+static void rebind_controller(void) {
+    ALOGW("hci0 did not finish its setup within %d s: rebinding %s", SETUP_TIMEOUT_S, SERDEV_NAME);
+    if (!write_sysfs(SERDEV_DRIVER "/unbind", SERDEV_NAME))
+        ALOGE("unbind %s: %s", SERDEV_NAME, strerror(errno));
+    sleep(2);
+    if (!write_sysfs(SERDEV_DRIVER "/bind", SERDEV_NAME))
+        ALOGE("bind %s: %s", SERDEV_NAME, strerror(errno));
+}
+
+static time_t now_s(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec;
+}
+
 int main(int argc, char* argv[]) {
     uint8_t bdaddr[MAC_ADDRESS_SIZE];
     if (argc >= 3 && !strcmp(argv[1], "--nv")) {
@@ -231,7 +273,23 @@ int main(int argc, char* argv[]) {
     struct btmgmt_hdr* hdr = (struct btmgmt_hdr*) buf;
     struct btmgmt_ev_cmd_status* ev = (struct btmgmt_ev_cmd_status*) hdr;
 
+    time_t setup_deadline = 0;  /* 0: not waiting for a setup */
+    int rebinds = 0;
+
     while (true) {
+        struct pollfd pfd = { .fd = s, .events = POLLIN };
+        int pr = poll(&pfd, 1, 1000);
+        if (setup_deadline && now_s() >= setup_deadline) {
+            setup_deadline = 0;
+            if (rebinds < MAX_REBINDS) {
+                rebinds++;
+                rebind_controller();
+            } else {
+                ALOGE("hci0 setup failed %d times, giving up", rebinds + 1);
+            }
+        }
+        if (pr <= 0)
+            continue;
         ssize_t len = read(s, buf, sizeof(buf));
         if (len < (ssize_t) sizeof(struct btmgmt_hdr))
             continue;
@@ -253,12 +311,20 @@ int main(int argc, char* argv[]) {
                 break;
             case BTMGMT_CMD_SET_PUBLIC_ADDR:
                 btmgmt_complete_set_public_addr(ev, bdaddr);
+                if (ev->status == 0)
+                    setup_deadline = now_s() + SETUP_TIMEOUT_S;
                 break;
             }
 
             break;
         case BTMGMT_EV_UNCONF_INDEX_ADDED:
             btmgmt_request_config_info(s);
+            break;
+        case BTMGMT_EV_INDEX_ADDED:
+            /* configured and set up: hci0 is usable */
+            if (setup_deadline)
+                ALOGI("hci0 ready");
+            setup_deadline = 0;
             break;
         }
     }

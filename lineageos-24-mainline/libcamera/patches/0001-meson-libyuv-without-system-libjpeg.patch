@@ -1,0 +1,18 @@
+From: axon7m bring-up
+Subject: [PATCH] meson: libyuv subproject without -ljpeg
+
+The Android NDK build takes libjpeg from meson's libjpeg-turbo wrap, so there
+is no system libjpeg for libyuv's CMake build to link against: its shared
+library failed with "unable to find library -ljpeg". libcamera only uses the
+static libyuv, without MJPEG decoding.
+---
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -55,7 +55,6 @@
+          '-Wno-sign-compare',
+          '-Wno-unused-variable',
+          '-Wno-unused-parameter')
+-    libyuv_vars.append_link_args('-ljpeg')
+     libyuv = cmake.subproject('libyuv', options : libyuv_vars)
+ 
+     # Meson fails to apply the -fPIC flag to static libraries produced by CMake

@@ -1,0 +1,276 @@
+From: axon7m bring-up
+Subject: [PATCH] android: mm: generic: minigbm buffer layout, internal buffers from the dma-buf heap
+
+- CameraBuffer: read strides, plane offsets and sizes from minigbm's
+  cros_gralloc_handle (magic 0xabcddcba at data[25]). minigbm pads NV12
+  (stride and scanlines for the video codecs), so the packed layout the
+  generic backend assumed put the chroma plane at the wrong offset.
+- PlatformFrameBufferAllocator: Android 17 with minigbm has no gralloc0
+  module, gralloc_open() asserted. The HAL's internal buffers (the NV12
+  stream a JPEG is encoded from) only live inside the HAL, so allocate them
+  from /dev/dma_heap/system and describe them with the same handle layout.
+---
+--- a/src/android/mm/generic_camera_buffer.cpp
++++ b/src/android/mm/generic_camera_buffer.cpp
+@@ -7,6 +7,7 @@
+ 
+ #include "../camera_buffer.h"
+ 
++#include <algorithm>
+ #include <sys/mman.h>
+ #include <unistd.h>
+ 
+@@ -104,6 +105,27 @@
+ 	const unsigned int numPlanes = info.numPlanes();
+ 	planeInfo_.resize(numPlanes);
+ 
++	/*
++	 * minigbm (cros_gralloc_handle) and the HAL's own dma-heap buffers
++	 * (generic_frame_buffer_allocator.cpp) carry their real layout: the
++	 * strides, plane offsets and sizes follow DRV_MAX_FDS (4) fd slots,
++	 * the magic is at index 25 of data[]. minigbm pads NV12 for the video
++	 * codecs (stride, scanlines), so the packed layout below is wrong
++	 * for its buffers.
++	 */
++	const int nData = camera3Buffer->numFds + camera3Buffer->numInts;
++	if (nData > 25 && static_cast<uint32_t>(camera3Buffer->data[25]) == 0xabcddcba &&
++	    numPlanes <= 4) {
++		for (unsigned int i = 0; i < numPlanes; ++i) {
++			planeInfo_[i].stride = camera3Buffer->data[4 + i];
++			planeInfo_[i].offset = camera3Buffer->data[8 + i];
++			planeInfo_[i].size = std::min<unsigned int>(
++				camera3Buffer->data[12 + i],
++				bufferLength_ - planeInfo_[i].offset);
++		}
++		return;
++	}
++
+ 	unsigned int offset = 0;
+ 	for (unsigned int i = 0; i < numPlanes; ++i) {
+ 		const unsigned int planeSize = info.planeSize(size, i);
+--- a/src/android/mm/generic_frame_buffer_allocator.cpp
++++ b/src/android/mm/generic_frame_buffer_allocator.cpp
+@@ -2,13 +2,24 @@
+ /*
+  * Copyright (C) 2021, Google Inc.
+  *
+- * Allocate FrameBuffer using gralloc API
++ * Allocate FrameBuffer for the HAL's internal streams from the dma-buf
++ * system heap. (axon7m: Android 17 with minigbm has no gralloc0 module
++ * for gralloc_open(); the buffers only live inside the HAL, so they need
++ * no gralloc handle, just one that generic_camera_buffer.cpp understands:
++ * the minigbm cros_gralloc_handle layout.)
+  */
+ 
+-#include <dlfcn.h>
++#include <fcntl.h>
++#include <stdlib.h>
++#include <string.h>
++#include <linux/dma-heap.h>
+ #include <memory>
++#include <sys/ioctl.h>
++#include <unistd.h>
+ #include <vector>
+ 
++#include <cutils/native_handle.h>
++
+ #include <libcamera/base/log.h>
+ #include <libcamera/base/shared_fd.h>
+ 
+@@ -16,8 +27,6 @@
+ #include "libcamera/internal/framebuffer.h"
+ 
+ #include <hardware/camera3.h>
+-#include <hardware/gralloc.h>
+-#include <hardware/hardware.h>
+ 
+ #include "../camera_device.h"
+ #include "../frame_buffer_allocator.h"
+@@ -28,41 +37,40 @@
+ LOG_DECLARE_CATEGORY(HAL)
+ 
+ namespace {
++constexpr int kHandleInts = 26 - 1;	/* data[1..25] after one fd */
++
++/* native_handle_create() is in libcutils, which the NDK does not have */
++native_handle_t *createHandle(int numFds, int numInts)
++{
++	size_t size = sizeof(native_handle_t) + sizeof(int) * (numFds + numInts);
++	native_handle_t *h = static_cast<native_handle_t *>(calloc(1, size));
++	if (!h)
++		return nullptr;
++	h->version = sizeof(native_handle_t);
++	h->numFds = numFds;
++	h->numInts = numInts;
++	return h;
++}
++
+ class GenericFrameBufferData : public FrameBuffer::Private
+ {
+ 	LIBCAMERA_DECLARE_PUBLIC(FrameBuffer)
+ 
+ public:
+-	GenericFrameBufferData(struct alloc_device_t *allocDevice,
+-			       buffer_handle_t handle,
++	GenericFrameBufferData(native_handle_t *handle,
+ 			       std::span<const FrameBuffer::Plane> planes)
+-		: FrameBuffer::Private(planes), allocDevice_(allocDevice),
+-		  handle_(handle)
++		: FrameBuffer::Private(planes), handle_(handle)
+ 	{
+-		ASSERT(allocDevice_);
+-		ASSERT(handle_);
+ 	}
+ 
+ 	~GenericFrameBufferData() override
+ 	{
+-		/*
+-		 * allocDevice_ is used to destroy handle_. allocDevice_ is
+-		 * owned by PlatformFrameBufferAllocator::Private.
+-		 * GenericFrameBufferData must be destroyed before it is
+-		 * destroyed.
+-		 *
+-		 * \todo Consider managing alloc_device_t with std::shared_ptr
+-		 * if this is difficult to maintain.
+-		 *
+-		 * \todo Thread safety against alloc_device_t is not documented.
+-		 * Is it no problem to call alloc/free in parallel?
+-		 */
+-		allocDevice_->free(allocDevice_, handle_);
++		close(handle_->data[0]);
++		free(handle_);
+ 	}
+ 
+ private:
+-	struct alloc_device_t *allocDevice_;
+-	const buffer_handle_t handle_;
++	native_handle_t *handle_;
+ };
+ } /* namespace */
+ 
+@@ -72,78 +80,81 @@
+ 
+ public:
+ 	Private(CameraDevice *const cameraDevice)
+-		: cameraDevice_(cameraDevice),
+-		  hardwareModule_(nullptr),
+-		  allocDevice_(nullptr)
++		: cameraDevice_(cameraDevice)
+ 	{
+-		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &hardwareModule_);
+-		ASSERT(hardwareModule_);
+ 	}
+ 
+-	~Private() override;
++	~Private() override = default;
+ 
+ 	std::unique_ptr<HALFrameBuffer>
+ 	allocate(int halPixelFormat, const libcamera::Size &size, uint32_t usage);
+ 
+ private:
+ 	const CameraDevice *const cameraDevice_;
+-	const struct hw_module_t *hardwareModule_;
+-	struct alloc_device_t *allocDevice_;
+ };
+ 
+-PlatformFrameBufferAllocator::Private::~Private()
+-{
+-	if (allocDevice_)
+-		gralloc_close(allocDevice_);
+-	dlclose(hardwareModule_->dso);
+-}
+-
+ std::unique_ptr<HALFrameBuffer>
+ PlatformFrameBufferAllocator::Private::allocate(int halPixelFormat,
+ 						const libcamera::Size &size,
+-						uint32_t usage)
++						[[maybe_unused]] uint32_t usage)
+ {
+-	if (!allocDevice_) {
+-		int ret = gralloc_open(hardwareModule_, &allocDevice_);
+-		if (ret) {
+-			LOG(HAL, Fatal) << "gralloc_open() failed: " << ret;
+-			return nullptr;
+-		}
++	const libcamera::PixelFormat pixelFormat =
++		cameraDevice_->capabilities()->toPixelFormat(halPixelFormat);
++	const auto &info = PixelFormatInfo::info(pixelFormat);
++	if (!info.isValid() || info.numPlanes() > 4) {
++		LOG(HAL, Error) << "Cannot allocate format " << pixelFormat;
++		return nullptr;
+ 	}
+ 
+-	int stride = 0;
+-	buffer_handle_t handle = nullptr;
+-	int ret = allocDevice_->alloc(allocDevice_, size.width, size.height,
+-				      halPixelFormat, usage, &handle, &stride);
+-	if (ret) {
+-		LOG(HAL, Error) << "failed buffer allocation: " << ret;
++	std::vector<FrameBuffer::Plane> planes(info.numPlanes());
++	uint32_t strides[4] = {}, offsets[4] = {}, sizes[4] = {};
++	size_t total = 0;
++	for (unsigned int i = 0; i < info.numPlanes(); i++) {
++		strides[i] = info.stride(size.width, i, 1);
++		sizes[i] = info.planeSize(size, i);
++		offsets[i] = total;
++		total += sizes[i];
++	}
++
++	int heap = open("/dev/dma_heap/system", O_RDWR | O_CLOEXEC);
++	if (heap < 0) {
++		LOG(HAL, Error) << "No dma-buf system heap: " << strerror(errno);
+ 		return nullptr;
+ 	}
+-	if (!handle) {
+-		LOG(HAL, Fatal) << "invalid buffer_handle_t";
++	struct dma_heap_allocation_data alloc = {};
++	alloc.len = total;
++	alloc.fd_flags = O_RDWR | O_CLOEXEC;
++	int ret = ioctl(heap, DMA_HEAP_IOCTL_ALLOC, &alloc);
++	close(heap);
++	if (ret < 0) {
++		LOG(HAL, Error) << "dma-heap allocation of " << total << " bytes failed";
+ 		return nullptr;
+ 	}
+ 
+-	/* This code assumes the planes are mapped consecutively. */
+-	const libcamera::PixelFormat pixelFormat =
+-		cameraDevice_->capabilities()->toPixelFormat(halPixelFormat);
+-	const auto &info = PixelFormatInfo::info(pixelFormat);
+-	std::vector<FrameBuffer::Plane> planes(info.numPlanes());
++	native_handle_t *handle = createHandle(1, kHandleInts);
++	if (!handle) {
++		close(alloc.fd);
++		return nullptr;
++	}
++	handle->data[0] = alloc.fd;
++	for (int i = 1; i < 26; i++)
++		handle->data[i] = 0;
++	for (unsigned int i = 0; i < 4; i++) {
++		handle->data[4 + i] = strides[i];
++		handle->data[8 + i] = offsets[i];
++		handle->data[12 + i] = sizes[i];
++	}
++	handle->data[25] = static_cast<int>(0xabcddcba);
+ 
+-	SharedFD fd{ handle->data[0] };
+-	size_t offset = 0;
++	SharedFD fd{ alloc.fd };
+ 	for (auto [i, plane] : utils::enumerate(planes)) {
+-		const size_t planeSize = info.planeSize(size.height, i, stride);
+-
+ 		plane.fd = fd;
+-		plane.offset = offset;
+-		plane.length = planeSize;
+-		offset += planeSize;
++		plane.offset = offsets[i];
++		plane.length = sizes[i];
+ 	}
+ 
+ 	return std::make_unique<HALFrameBuffer>(
+-		std::make_unique<GenericFrameBufferData>(
+-			allocDevice_, handle, planes),
++		std::make_unique<GenericFrameBufferData>(handle, planes),
+ 		handle);
+ }
+ 

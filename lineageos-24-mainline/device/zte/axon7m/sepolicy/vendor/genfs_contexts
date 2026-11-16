@@ -11,3 +11,4 @@ genfscon sysfs /devices/platform/soc@0/2080000.remoteproc u:object_r:sysfs_axon7
 # notification LED (PMI8994 LPG) and torch (PMI8994 flash): lights HAL
 genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-03/400f000.spmi:pmic@3:pwm/leds u:object_r:sysfs_leds:s0
 genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-03/400f000.spmi:pmic@3:led-controller@d300/leds u:object_r:sysfs_leds:s0
+genfscon sysfs /bus/serial/drivers/hci_uart_qca u:object_r:sysfs_axon7m_btuart:s0

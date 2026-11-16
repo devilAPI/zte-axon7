@@ -20,3 +20,4 @@ type axon7m_persist_file, file_type, contextmount_type, vendor_file_type;
 type axon7m_sensors_data_file, file_type, data_file_type;
 # /dev/rfkill (Bluetooth HAL net_bluetooth_mgmt)
 type axon7m_rfkill_device, dev_type;
+type sysfs_axon7m_btuart, fs_type, sysfs_type;
