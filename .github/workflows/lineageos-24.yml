@@ -1,0 +1,66 @@
+# LineageOS 24 (mainline Linux) TWRP zip for the ZTE Axon 7, built on the
+# project's own build server (self-hosted runner, label axon7-build; an
+# Android tree does not fit on GitHub's runners).
+#
+# Runs on every push to the lineageos-24-mainline branch that changes the port
+# (not for Markdown-only pushes), and by hand (Run workflow; choose the branch
+# lineageos-24-mainline). A newer push cancels a running build. No
+# pull_request trigger: only people who can push start builds on the server.
+#
+# The zip goes into a DRAFT pre-release (lineageos-24-YYYYMMDD[-N],
+# .github/scripts/draft-release.sh); publish it on GitHub after testing.
+# Publishing refreshes the fixed "lineageos-24-latest" release (latest.yml).
+# The image contains no ZTE/Qualcomm firmware (AXON7_FIRMWARE=phone).
+# This file exists on main (for Run workflow) and on lineageos-24-mainline
+# (for pushes); keep both copies the same.
+name: LineageOS 24 zip
+
+on:
+  push:
+    branches: [lineageos-24-mainline]
+    paths:
+      - 'lineageos-24-mainline/**'
+      - '!lineageos-24-mainline/**/*.md'
+      - 'postmarketos/pmaports-local/device/testing/linux-zte-axon7/**'
+      - '.github/workflows/lineageos-24.yml'
+      - '.github/scripts/draft-release.sh'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Put the zip into a draft release
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lineageos-24-zip
+  cancel-in-progress: true
+
+jobs:
+  zip:
+    runs-on: [self-hosted, axon7-build]
+    timeout-minutes: 720
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lineageos-24-mainline
+          sparse-checkout: |
+            lineageos-24-mainline
+            postmarketos/pmaports-local/device/testing/linux-zte-axon7
+            .github/scripts
+
+      - name: Build (kernel, image, TWRP zip)
+        id: build
+        run: bash lineageos-24-mainline/ci/build-release.sh
+
+      - name: Draft release
+        if: github.event_name == 'push' || inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZIP: ${{ steps.build.outputs.zip }}
+        run: |
+          date=$(basename "$ZIP" | cut -d- -f3)   # lineage-24-DATE-UNOFFICIAL-axon7m.zip
+          bash .github/scripts/draft-release.sh lineageos24 "$date" lineageos-24-mainline/ci/release-notes.md \
+            "$ZIP" "$ZIP.sha256"
