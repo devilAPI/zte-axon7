@@ -33,6 +33,18 @@ comes back into Nura, Wi-Fi/modem/ADSP/SLPI firmware load; the GPU works
 after the firmware fix of 11518fe (not in r25: on phones without a vendor
 partition r25 leaves the GPU off).
 
+**Second phone, kernel 0047/0048 (2026-11-16 night):** the GPU fixes from
+LineageOS 24 (vblank after a display timeout, shared GPU buffers) are in the
+Nura kernel series (linux-zte-axon7 r26) and run on the second phone (test
+kernel 7.3.1-t1+ in its boot partition). Checked without hands: no GPU faults
+in 10 minutes of kmscube, no buffer leak, vblank interrupts keep coming, all
+other drivers as before (ios/research/phone2/kernel-0047-0048/RESULTS.md).
+That phone showed the "Your device is corrupt" screen at every start and
+waited for a key; fixed with `adb reboot "dm-verity enforcing"` from TWRP.
+
+- [ ] On the second phone: the screen shows Nura's console and buffyboard, touch and the three touch keys react
+- [ ] After the r26 release: in Phosh, scroll and open/close apps for a few minutes; `sudo dmesg | grep -i "gpu fault"` prints nothing
+
 **Nura r25** (draft release, built by GitHub after the push of 97fb832):
 touchscreen fix (0044/0045), temperature sensors (tsens), plain reboot fix
 (0046). Flash it, then:

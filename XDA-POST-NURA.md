@@ -82,6 +82,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-16"]
+[LIST]
+[*]Graphics: two fixes from the LineageOS 24 work. Programs that share picture buffers (the desktop and its apps) could make the graphics chip read memory that was already given back when one of them closed, which showed up as GPU faults and garbled areas on the screen. Shared buffers now stay valid until the last program lets go of them. And after a single display timeout the screen's refresh signal (vsync) stopped for good, so everything became slow and choppy until a restart; it now keeps running.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-15"]
 [LIST]
 [*]Graphics on phones with the stock partition layout (no vendor partition, e.g. still on stock Android): Nura did not find the graphics chip's firmware there, so the GPU stayed off. It now also looks in the system partition's firmware folder where stock Android keeps it, and tries again at the next start if a file was missing before, instead of only at the very first start.
