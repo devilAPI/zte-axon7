@@ -1,0 +1,78 @@
+From: axon7m bring-up
+Subject: [PATCH] u_gralloc/fallback: read minigbm's handle for YUV and IMPLEMENTATION_DEFINED buffers
+
+Android 17 with minigbm's AIDL allocator has no gralloc0 module, so the
+fallback gralloc cannot call lock_ycbcr(): every YUV or
+IMPLEMENTATION_DEFINED buffer failed to import. SurfaceFlinger's
+RenderEngine aborted ("Failed to create a valid texture ... format:34")
+as soon as the camera app's NV12 preview had to be composed on the GPU.
+minigbm's cros_gralloc_handle carries the DRM format, planes, strides,
+offsets and modifier: use them for these buffers.
+---
+--- a/src/util/u_gralloc/u_gralloc_fallback.c
++++ b/src/util/u_gralloc/u_gralloc_fallback.c
+@@ -97,6 +97,51 @@
+    return 0;
+ }
+ 
++/*
++ * minigbm (cros_gralloc_handle) describes every buffer in its handle: DRM
++ * format, planes, strides, offsets, modifier. Without a gralloc0 module
++ * (Android 14+ with minigbm's AIDL allocator) lock_ycbcr() is not
++ * available, so YUV and IMPLEMENTATION_DEFINED buffers (camera preview,
++ * video) could not be imported at all. The struct is packed, after the
++ * native_handle_t header (DRV_MAX_FDS = 5 fd slots):
++ *   fds 0-4, strides 5-8, offsets 9-12, sizes 13-16, id 17, width 18,
++ *   height 19, format 20, tiling 21, format_modifier 22-23,
++ *   use_flags 24-25, magic 26, pixel_stride 27, droid_format 28,
++ *   usage 29-30, num_planes 31
++ */
++#define CROS_GRALLOC_MAGIC 0xABCDDCBA
++#define CROS_DRM_FORMAT_YVU420_ANDROID fourcc_code('9', '9', '9', '7')
++
++static int
++cros_handle_get_buffer_info(struct u_gralloc_buffer_handle *hnd,
++                            struct u_gralloc_buffer_basic_info *out)
++{
++   const native_handle_t *h = hnd->handle;
++   int num_planes;
++
++   if (h->numFds < 1 || h->numFds + h->numInts < 32 ||
++       (uint32_t)h->data[26] != CROS_GRALLOC_MAGIC)
++      return -ENOTSUP;
++
++   num_planes = h->data[31];
++   if (num_planes < 1 || num_planes > 4)
++      return -EINVAL;
++
++   out->drm_fourcc = (uint32_t)h->data[20];
++   if (out->drm_fourcc == CROS_DRM_FORMAT_YVU420_ANDROID)
++      out->drm_fourcc = DRM_FORMAT_YVU420;
++   out->modifier = (uint64_t)(uint32_t)h->data[22] |
++                   ((uint64_t)(uint32_t)h->data[23] << 32);
++   out->num_planes = num_planes;
++   for (int i = 0; i < num_planes; i++) {
++      out->fds[i] = i < h->numFds ? h->data[i] : h->data[0];
++      out->strides[i] = h->data[5 + i];
++      out->offsets[i] = h->data[9 + i];
++   }
++
++   return 0;
++}
++
+ static int
+ fallback_gralloc_get_buffer_info(struct u_gralloc *gralloc,
+                                  struct u_gralloc_buffer_handle *hnd,
+@@ -109,6 +154,12 @@
+    if (hnd->handle->numFds == 0)
+       return -EINVAL;
+ 
++   if (is_hal_format_yuv(hnd->hal_format) ||
++       hnd->hal_format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
++      if (cros_handle_get_buffer_info(hnd, out) == 0)
++         return 0;
++   }
++
+    if (is_hal_format_yuv(hnd->hal_format)) {
+       int ret = fallback_gralloc_get_yuv_info(gralloc, hnd, out);
+       /*
