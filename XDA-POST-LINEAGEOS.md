@@ -8,7 +8,9 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-14
+Last update: 2026-11-16 (the owner's posted version: "Does not work" lists
+only the SIM report; the wake/lock, black camera and second-start boot loop
+items were removed from the thread)
 
 First release published 2026-11-09 (lineageos-22.2-20261109; the download
 link in the post points to lineageos-latest, which follows each published
@@ -71,10 +73,7 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 [/SPOILER]
 [B]Does not work / not tested:[/B]
 [LIST]
-[*]The phone sometimes wakes up or locks by itself
 [*][B]SIM card not detected[/B] (one user report, A2017G). Our phone was only tested without a SIM: the modem and the radio services start, but SIM detection, calls and mobile data are untested. Do not use this ROM as your daily phone yet if you need the SIM.
-[*][B]Camera app shows a black screen[/B] (one user report; both cameras work on our phone)
-[*][B]Boot loop on the second start[/B] after a working first start (one user report, under investigation; logs wanted, see Problems)
 [/LIST]
 
 [SIZE=5][B]Warning[/B][/SIZE]
