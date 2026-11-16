@@ -178,6 +178,34 @@ ScopedAStatus RadioSim::getImsiForApp(int32_t serial, const std::string& aid) {
     return ok();
 }
 
+ScopedAStatus RadioSim::iccIoForApp(int32_t serial, const aidlSim::IccIo& iccIo) {
+    LOG_CALL << iccIo.command << " " << iccIo.fileId;
+    // SW 6A82: file not found
+    respond()->iccIoForAppResponse(noError(serial), {.sw1 = 0x6A, .sw2 = 0x82, .simResponse = ""});
+    return ok();
+}
+
+ScopedAStatus RadioSim::iccOpenLogicalChannel(int32_t serial, const std::string& aid, int32_t) {
+    LOG_CALL << aid;
+    respond()->iccOpenLogicalChannelResponse(errorResponse(serial, RadioError::MISSING_RESOURCE), 0,
+                                             {});
+    return ok();
+}
+
+ScopedAStatus RadioSim::iccTransmitApduBasicChannel(int32_t serial, const aidlSim::SimApdu&) {
+    LOG_CALL;
+    respond()->iccTransmitApduBasicChannelResponse(
+            errorResponse(serial, RadioError::REQUEST_NOT_SUPPORTED), {});
+    return ok();
+}
+
+ScopedAStatus RadioSim::iccTransmitApduLogicalChannel(int32_t serial, const aidlSim::SimApdu&) {
+    LOG_CALL;
+    respond()->iccTransmitApduLogicalChannelResponse(
+            errorResponse(serial, RadioError::REQUEST_NOT_SUPPORTED), {});
+    return ok();
+}
+
 void RadioSim::poll() {
     if (!indicate) return;
     std::lock_guard l(mPollLock);

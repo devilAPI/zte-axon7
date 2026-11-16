@@ -81,6 +81,17 @@ class RadioSim : public minimal::RadioSim {
   protected:
     ::ndk::ScopedAStatus getIccCardStatus(int32_t serial) override;
     ::ndk::ScopedAStatus getImsiForApp(int32_t serial, const std::string& aid) override;
+    // no access to the real SIM's files and channels yet: answer with errors
+    // instead of libminradio's virtual SIM (its file system CHECKs requests
+    // a real SIM gets, which would abort the HAL)
+    ::ndk::ScopedAStatus iccIoForApp(
+            int32_t serial, const ::aidl::android::hardware::radio::sim::IccIo& iccIo) override;
+    ::ndk::ScopedAStatus iccOpenLogicalChannel(int32_t serial, const std::string& aid,
+                                               int32_t p2) override;
+    ::ndk::ScopedAStatus iccTransmitApduBasicChannel(
+            int32_t serial, const ::aidl::android::hardware::radio::sim::SimApdu& message) override;
+    ::ndk::ScopedAStatus iccTransmitApduLogicalChannel(
+            int32_t serial, const ::aidl::android::hardware::radio::sim::SimApdu& message) override;
 
   private:
     std::mutex mPollLock;

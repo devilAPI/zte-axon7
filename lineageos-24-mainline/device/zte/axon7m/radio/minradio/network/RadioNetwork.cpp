@@ -44,6 +44,8 @@ std::vector<aidl::CellInfo> RadioNetwork::getCellInfoListBase() {
     auto dataRegistrationState = mResponseTracker()->getDataRegistrationState();
     auto signalStrength = mResponseTracker()->getSignalStrength();
     if (!dataRegistrationState.expectOk() || !signalStrength.expectOk()) return {};
+    // axon7m: not registered means no serving cell (makeCellInfo CHECKs one)
+    if (dataRegistrationState->cellIdentity.getTag() == aidl::CellIdentity::noinit) return {};
 
     return {structs::makeCellInfo(*dataRegistrationState, *signalStrength)};
 }
