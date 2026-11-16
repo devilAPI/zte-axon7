@@ -7,6 +7,19 @@ allow hal_camera_default sysfs_leds:lnk_file read;
 allow hal_camera_default video_device:chr_file rw_file_perms;
 allow hal_camera_default video_device:dir r_dir_perms;
 allow hal_camera_default dmabuf_system_heap_device:chr_file r_file_perms;
-allow hal_camera_default vendor_file:file { execute execute_no_trans };
 allow hal_camera_default sysfs:dir r_dir_perms;
 allow hal_camera_default sysfs:file r_file_perms;
+
+# libcamera runs its unsigned soft ISP IPA isolated in a child process
+type axon7m_libcamera_ipa, domain;
+type axon7m_libcamera_ipa_exec, exec_type, vendor_file_type, file_type;
+domain_auto_trans(hal_camera_default, axon7m_libcamera_ipa_exec, axon7m_libcamera_ipa)
+allow axon7m_libcamera_ipa hal_camera_default:fd use;
+allow axon7m_libcamera_ipa hal_camera_default:unix_stream_socket { read write getattr };
+allow axon7m_libcamera_ipa hal_camera_default:unix_dgram_socket { read write getattr };
+allow axon7m_libcamera_ipa self:unix_dgram_socket create_socket_perms_no_ioctl;
+allow axon7m_libcamera_ipa vendor_file:dir r_dir_perms;
+allow axon7m_libcamera_ipa vendor_file:file r_file_perms;
+allow axon7m_libcamera_ipa vendor_configs_file:dir r_dir_perms;
+allow axon7m_libcamera_ipa vendor_configs_file:file r_file_perms;
+allow axon7m_libcamera_ipa dmabuf_system_heap_device:chr_file r_file_perms;
