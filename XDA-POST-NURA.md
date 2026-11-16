@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-16 (r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
+Last update: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -41,6 +41,8 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Microphones (bottom and top, stereo recording)
 [*]Earpiece (top speaker through the earpiece opening)
 [*]Vibration (heard by the microphone)
+[*]Both cameras: raw pictures, front 8 MP (OV8856) and rear 20 MP (S5K2T8, focus by hand) through the mainline camera subsystem (media-ctl + v4l2-ctl)
+[*]Motion sensors (accelerometer, gyroscope, compass), light and proximity; the standard sensor service (iio-sensor-proxy) sees them, so a desktop can rotate the screen
 [/LIST]
 [/SPOILER]
 [B]New, still to be confirmed by eye or ear:[/B]
@@ -56,8 +58,6 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Calls
 [*]SMS
 [*]Mobile data
-[*]Camera apps (both cameras deliver raw pictures, see changelog)
-[*]Automatic screen rotation (the sensors work, see changelog; no graphical desktop yet)
 [*]Fast charging above 2 A (second charger chip SMB1351)
 [*]Suspend
 [*]No graphical desktop yet (text console with an on-screen keyboard)
