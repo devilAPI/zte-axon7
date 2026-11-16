@@ -60,7 +60,6 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Mobile data
 [*]Fast charging above 2 A (second charger chip SMB1351)
 [*]Suspend
-[*]No graphical desktop yet (text console with an on-screen keyboard)
 [/LIST]
 
 [SIZE=5][B]Installation[/B][/SIZE]
