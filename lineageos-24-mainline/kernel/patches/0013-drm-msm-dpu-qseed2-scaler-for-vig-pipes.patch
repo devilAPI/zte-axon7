@@ -1,0 +1,162 @@
+From: axon7m bring-up
+Subject: [PATCH] drm/msm/dpu: QSEED2 scaler for VIG pipes
+
+msm8996 (and msm8937/8917/8953) VIG pipes have the QSEED2 scaler, which
+DPU never programmed: the SSPPs have no setup_scaler, dpu_rm_try_sspp()
+refuses every SSPP for a plane that needs scaling and the atomic check
+fails with -ENODEV. Android's drm_hwcomposer then composes everything on
+the GPU whenever one layer is scaled (the wallpaper, a window during app
+transitions): about 5 ms of GPU composition per frame and 30-40 % janky
+frames in animations on the ZTE Axon 7.
+
+Program QSEED2 as the MDP5 driver did on the same hardware: phase steps
+for luma/alpha and chroma (21 fractional bits, already computed by
+_dpu_plane_setup_scaler3()), initial phase 0, bilinear filter for
+upscaling and PCMN for downscaling, YUV always through the scaler for
+chroma, and a one pixel edge repeat (SW pixel extension) on the right and
+bottom in each scaled direction. A plane is still fetched by one pipe
+unless it is wider than max_linewidth, so the dual-mixer split of a
+1440 px panel needs no phase handling here (source split feeds both
+mixers from the same pipe). RGB pipes' scalers stay unsupported.
+---
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_sspp.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_sspp.c
+index b5e50fc19..bdbeee4b5 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_sspp.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_hw_sspp.c
+@@ -370,6 +370,78 @@ void dpu_hw_setup_format_impl(struct dpu_sw_pipe *pipe, const struct msm_format
+ 	DPU_REG_WRITE(c, ubwc_error_off, BIT(31));
+ }
+ 
++/* QSEED2 SCALE_CONFIG fields (as MDP5_PIPE_SCALE_CONFIG) */
++#define QSEED2_SCALEX_EN			BIT(0)
++#define QSEED2_SCALEY_EN			BIT(1)
++#define QSEED2_SCALEX_FILTER_COMP_0(f)		((f) << 8)
++#define QSEED2_SCALEY_FILTER_COMP_0(f)		((f) << 10)
++#define QSEED2_SCALEX_FILTER_COMP_1_2(f)	((f) << 12)
++#define QSEED2_SCALEY_FILTER_COMP_1_2(f)	((f) << 14)
++#define QSEED2_SCALEX_FILTER_COMP_3(f)		((f) << 16)
++#define QSEED2_SCALEY_FILTER_COMP_3(f)		((f) << 18)
++#define QSEED2_FILTER_BIL			1
++#define QSEED2_FILTER_PCMN			2
++
++/*
++ * QSEED2 (VIG pipes of msm8996 and the msm89x7/8953 family), programmed as
++ * the MDP5 driver did: one phase step per direction for luma/alpha and one
++ * for chroma (21 fractional bits, as computed by _dpu_plane_setup_scaler3()),
++ * initial phase 0, bilinear filter for upscaling and PCMN for downscaling.
++ * YUV always goes through the scaler for chroma upsampling. The edge pixel
++ * repeat this needs is set up by the pixel extension (dpu_plane.c).
++ */
++static void dpu_hw_sspp_setup_scaler_qseed2(struct dpu_hw_sspp *ctx,
++		struct dpu_hw_scaler3_cfg *cfg, const struct msm_format *fmt)
++{
++	u32 base = ctx->cap->sblk->scaler_blk.base;
++	u32 config = 0;
++
++	if (cfg->enable && fmt) {
++		bool yuv = MSM_FORMAT_IS_YUV(fmt);
++		u32 sw = cfg->src_width[DPU_SSPP_COMP_0];
++		u32 sh = cfg->src_height[DPU_SSPP_COMP_0];
++		u32 cw = cfg->src_width[DPU_SSPP_COMP_1_2];
++		u32 ch = cfg->src_height[DPU_SSPP_COMP_1_2];
++		u32 dw = cfg->dst_width, dh = cfg->dst_height;
++		u32 ya, uv;
++
++		if (yuv || sw != dw) {
++			ya = sw <= dw ? QSEED2_FILTER_BIL : QSEED2_FILTER_PCMN;
++			uv = cw <= dw ? QSEED2_FILTER_BIL : QSEED2_FILTER_PCMN;
++			config |= QSEED2_SCALEX_EN |
++				  QSEED2_SCALEX_FILTER_COMP_0(ya) |
++				  QSEED2_SCALEX_FILTER_COMP_3(ya);
++			if (yuv)
++				config |= QSEED2_SCALEX_FILTER_COMP_1_2(uv);
++		}
++		if (yuv || sh != dh) {
++			ya = sh <= dh ? QSEED2_FILTER_BIL : QSEED2_FILTER_PCMN;
++			uv = ch <= dh ? QSEED2_FILTER_BIL : QSEED2_FILTER_PCMN;
++			config |= QSEED2_SCALEY_EN |
++				  QSEED2_SCALEY_FILTER_COMP_0(ya) |
++				  QSEED2_SCALEY_FILTER_COMP_3(ya);
++			if (yuv)
++				config |= QSEED2_SCALEY_FILTER_COMP_1_2(uv);
++		}
++
++		DPU_REG_WRITE(&ctx->hw, base + COMP0_3_PHASE_STEP_X,
++			      cfg->phase_step_x[DPU_SSPP_COMP_0]);
++		DPU_REG_WRITE(&ctx->hw, base + COMP0_3_PHASE_STEP_Y,
++			      cfg->phase_step_y[DPU_SSPP_COMP_0]);
++		DPU_REG_WRITE(&ctx->hw, base + COMP1_2_PHASE_STEP_X,
++			      cfg->phase_step_x[DPU_SSPP_COMP_1_2]);
++		DPU_REG_WRITE(&ctx->hw, base + COMP1_2_PHASE_STEP_Y,
++			      cfg->phase_step_y[DPU_SSPP_COMP_1_2]);
++		DPU_REG_WRITE(&ctx->hw, base + COMP0_3_INIT_PHASE_X, 0);
++		DPU_REG_WRITE(&ctx->hw, base + COMP0_3_INIT_PHASE_Y, 0);
++		DPU_REG_WRITE(&ctx->hw, base + COMP1_2_INIT_PHASE_X, 0);
++		DPU_REG_WRITE(&ctx->hw, base + COMP1_2_INIT_PHASE_Y, 0);
++		DPU_REG_WRITE(&ctx->hw, SSPP_DECIMATION_CONFIG, 0);
++	}
++
++	DPU_REG_WRITE(&ctx->hw, base + SCALE_CONFIG, config);
++}
++
+ static void dpu_hw_sspp_setup_pe_config(struct dpu_hw_sspp *ctx,
+ 		struct dpu_hw_pixel_ext *pe_ext)
+ {
+@@ -652,6 +724,9 @@ static void _setup_layer_ops(struct dpu_hw_sspp *c,
+ 
+ 	if (test_bit(DPU_SSPP_SCALER_QSEED3_COMPATIBLE, &features))
+ 		c->ops.setup_scaler = dpu_hw_sspp_setup_scaler3;
++	else if (test_bit(DPU_SSPP_SCALER_QSEED2, &features) &&
++		 c->cap->sblk->scaler_blk.len)
++		c->ops.setup_scaler = dpu_hw_sspp_setup_scaler_qseed2;
+ 
+ 	if (test_bit(DPU_SSPP_CDP, &features))
+ 		c->ops.setup_cdp = dpu_hw_sspp_setup_cdp;
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
+index 7b92082d3..591abf2af 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_plane.c
+@@ -556,6 +556,30 @@ static void _dpu_plane_setup_scaler(struct dpu_sw_pipe *pipe,
+ 	_dpu_plane_setup_pixel_ext(&scaler3_cfg, &pixel_ext,
+ 			src_width, src_height, info->hsub, info->vsub);
+ 
++	/*
++	 * QSEED2's bilinear and PCMN filters read one pixel past the right
++	 * and bottom edge of the source: repeat the edge pixel there (as the
++	 * MDP5 driver did) in each direction that goes through the scaler.
++	 */
++	if (test_bit(DPU_SSPP_SCALER_QSEED2, &pipe_hw->cap->features) &&
++	    scaler3_cfg.enable) {
++		bool yuv = MSM_FORMAT_IS_YUV(fmt);
++		bool scale_x = yuv || src_width != dst_width;
++		bool scale_y = yuv || src_height != dst_height;
++		int i;
++
++		for (i = 0; i < DPU_MAX_PLANES; i++) {
++			if (scale_x) {
++				pixel_ext.right_rpt[i] = 1;
++				pixel_ext.num_ext_pxls_right[i] = 1;
++			}
++			if (scale_y) {
++				pixel_ext.btm_rpt[i] = 1;
++				pixel_ext.num_ext_pxls_btm[i] = 1;
++			}
++		}
++	}
++
+ 	if (pipe_hw->ops.setup_pe)
+ 		pipe_hw->ops.setup_pe(pipe_hw,
+ 				&pixel_ext);
+diff --git a/drivers/gpu/drm/msm/disp/dpu1/dpu_rm.c b/drivers/gpu/drm/msm/disp/dpu1/dpu_rm.c
+index 7e77d88f8..9b1cbbb81 100644
+--- a/drivers/gpu/drm/msm/disp/dpu1/dpu_rm.c
++++ b/drivers/gpu/drm/msm/disp/dpu1/dpu_rm.c
+@@ -810,7 +810,7 @@ static struct dpu_hw_sspp *dpu_rm_try_sspp(struct dpu_rm *rm,
+ 		if (reqs->scale && !hw_sspp->cap->sblk->scaler_blk.len)
+ 			continue;
+ 
+-		// TODO: QSEED2 and RGB scalers are not yet supported
++		// TODO: RGB scalers are not yet supported (QSEED2 is)
+ 		if (reqs->scale && !hw_sspp->ops.setup_scaler)
+ 			continue;
+ 

@@ -13,4 +13,12 @@
 
     <!-- notification LED (PMI8994 tri-colour LED, lights HAL) -->
     <bool name="config_intrusiveNotificationLed">true</bool>
+
+    <!-- Wallpaper zoom (rest, shade, app transitions) off: AOSP's 1.10 crops the
+         wallpaper and scales it back up, which needs a scaling (VIG/QSEED2)
+         plane in every frame that shows it (kernel 0013 makes that possible;
+         before it, drm_hwcomposer fell back to GPU composition). Without the
+         zoom the wallpaper is a plain 1:1 layer on any pipe. Read by
+         WallpaperController in WindowManager, used by SystemUI and Launcher3. -->
+    <item name="config_wallpaperMaxScale" format="float" type="dimen">1.0</item>
 </resources>
