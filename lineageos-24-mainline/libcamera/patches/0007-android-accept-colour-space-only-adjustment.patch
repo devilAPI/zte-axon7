@@ -1,0 +1,46 @@
+From: axon7m bring-up
+Subject: [PATCH] android: accept a configuration whose only adjustment is the colour space
+
+The simple pipeline fills in the colour space the HAL leaves unset and
+validate() reports that as Adjusted; the HAL then refused every stream set
+("Camera configuration adjusted", configureStreams failed). Accept the
+configuration when a second validate() says Valid and every direct stream
+kept the size and format Android requested.
+---
+--- a/src/android/camera_device.cpp
++++ b/src/android/camera_device.cpp
+@@ -731,13 +731,33 @@
+ 	switch (config->validate()) {
+ 	case CameraConfiguration::Valid:
+ 		break;
+-	case CameraConfiguration::Adjusted:
++	case CameraConfiguration::Adjusted: {
++		/*
++		 * axon7m: the simple pipeline fills in the colour space the HAL
++		 * leaves unset and reports that as an adjustment. Accept the
++		 * configuration if it is valid now and every stream still has
++		 * the size and format Android asked for.
++		 */
++		bool same = config->validate() == CameraConfiguration::Valid;
++		for (const CameraStream &cs : streams_) {
++			if (!same || cs.type() != CameraStream::Type::Direct)
++				continue;
++			const StreamConfiguration &cfg = cs.configuration();
++			const camera3_stream_t *s = cs.camera3Stream();
++			if (cfg.size.width != s->width || cfg.size.height != s->height ||
++			    cfg.pixelFormat != capabilities_.toPixelFormat(s->format))
++				same = false;
++		}
++		if (same)
++			break;
++
+ 		LOG(HAL, Info) << "Camera configuration adjusted";
+ 
+ 		for (const StreamConfiguration &cfg : *config)
+ 			LOG(HAL, Info) << " - " << cfg.toString();
+ 
+ 		return -EINVAL;
++	}
+ 	case CameraConfiguration::Invalid:
+ 		LOG(HAL, Info) << "Camera configuration invalid";
+ 		return -EINVAL;

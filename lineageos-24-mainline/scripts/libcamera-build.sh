@@ -75,6 +75,7 @@ EOF
 build() {
 	local p
 	git -c safe.directory='*' -C "$L/src" checkout -q -- .
+	git -c safe.directory='*' -C "$L/src" clean -fdq -- src include
 	for p in "${AXON7_REPO:-/srv/los24/axon7/repo}"/lineageos-24-mainline/libcamera/patches/*.patch; do
 		[ -e "$p" ] || continue
 		git -c safe.directory='*' -C "$L/src" apply "$p"

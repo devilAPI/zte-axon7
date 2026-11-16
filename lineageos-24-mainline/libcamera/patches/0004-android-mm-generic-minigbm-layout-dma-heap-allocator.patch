@@ -2,13 +2,15 @@ From: axon7m bring-up
 Subject: [PATCH] android: mm: generic: minigbm buffer layout, internal buffers from the dma-buf heap
 
 - CameraBuffer: read strides, plane offsets and sizes from minigbm's
-  cros_gralloc_handle (magic 0xabcddcba at data[25]). minigbm pads NV12
+  cros_gralloc_handle (magic 0xabcddcba at data[26], after DRV_MAX_FDS = 5 fd slots; one fd per plane). minigbm pads NV12
   (stride and scanlines for the video codecs), so the packed layout the
   generic backend assumed put the chroma plane at the wrong offset.
 - PlatformFrameBufferAllocator: Android 17 with minigbm has no gralloc0
   module, gralloc_open() asserted. The HAL's internal buffers (the NV12
   stream a JPEG is encoded from) only live inside the HAL, so allocate them
   from /dev/dma_heap/system and describe them with the same handle layout.
+- CameraBuffer: one plane over the whole buffer for compressed formats
+  (BLOB/MJPEG has no plane layout; PostProcessorJpeg asserted on 0 planes).
 ---
 --- a/src/android/mm/generic_camera_buffer.cpp
 +++ b/src/android/mm/generic_camera_buffer.cpp
@@ -20,26 +22,57 @@ Subject: [PATCH] android: mm: generic: minigbm buffer layout, internal buffers f
  #include <sys/mman.h>
  #include <unistd.h>
  
-@@ -104,6 +105,27 @@
+@@ -75,7 +76,16 @@
+ 	 * now that the buffer is backed by a single dmabuf, with planes being
+ 	 * stored contiguously.
+ 	 */
+-	for (int i = 0; i < camera3Buffer->numFds; i++) {
++	/*
++	 * minigbm hands out one fd per plane, all of the same buffer (dup()ed):
++	 * with its handle layout (magic below) the first fd is the buffer.
++	 */
++	const bool crosHandle = camera3Buffer->numFds + camera3Buffer->numInts > 26 &&
++				static_cast<uint32_t>(camera3Buffer->data[26]) == 0xabcddcba;
++	if (crosHandle)
++		fd_ = camera3Buffer->data[0];
++
++	for (int i = 0; !crosHandle && i < camera3Buffer->numFds; i++) {
+ 		if (camera3Buffer->data[i] == -1 || camera3Buffer->data[i] == fd_)
+ 			continue;
+ 
+@@ -102,8 +112,40 @@
+ 	}
+ 
  	const unsigned int numPlanes = info.numPlanes();
++
++	/*
++	 * Compressed formats (MJPEG for BLOB streams) have no plane layout:
++	 * one plane that spans the whole buffer, as PostProcessorJpeg expects.
++	 */
++	if (numPlanes == 0) {
++		planeInfo_.resize(1);
++		planeInfo_[0].stride = 0;
++		planeInfo_[0].offset = 0;
++		planeInfo_[0].size = bufferLength_;
++		return;
++	}
++
  	planeInfo_.resize(numPlanes);
  
 +	/*
 +	 * minigbm (cros_gralloc_handle) and the HAL's own dma-heap buffers
 +	 * (generic_frame_buffer_allocator.cpp) carry their real layout: the
-+	 * strides, plane offsets and sizes follow DRV_MAX_FDS (4) fd slots,
-+	 * the magic is at index 25 of data[]. minigbm pads NV12 for the video
++	 * strides, plane offsets and sizes follow DRV_MAX_FDS (5) fd slots,
++	 * the magic is at index 26 of data[]. minigbm pads NV12 for the video
 +	 * codecs (stride, scanlines), so the packed layout below is wrong
 +	 * for its buffers.
 +	 */
-+	const int nData = camera3Buffer->numFds + camera3Buffer->numInts;
-+	if (nData > 25 && static_cast<uint32_t>(camera3Buffer->data[25]) == 0xabcddcba &&
-+	    numPlanes <= 4) {
++	if (crosHandle && numPlanes <= 4) {
 +		for (unsigned int i = 0; i < numPlanes; ++i) {
-+			planeInfo_[i].stride = camera3Buffer->data[4 + i];
-+			planeInfo_[i].offset = camera3Buffer->data[8 + i];
++			planeInfo_[i].stride = camera3Buffer->data[5 + i];
++			planeInfo_[i].offset = camera3Buffer->data[9 + i];
 +			planeInfo_[i].size = std::min<unsigned int>(
-+				camera3Buffer->data[12 + i],
++				camera3Buffer->data[13 + i],
 +				bufferLength_ - planeInfo_[i].offset);
 +		}
 +		return;
@@ -90,7 +123,7 @@ Subject: [PATCH] android: mm: generic: minigbm buffer layout, internal buffers f
  LOG_DECLARE_CATEGORY(HAL)
  
  namespace {
-+constexpr int kHandleInts = 26 - 1;	/* data[1..25] after one fd */
++constexpr int kHandleInts = 27 - 1;	/* data[1..26] after one fd */
 +
 +/* native_handle_create() is in libcutils, which the NDK does not have */
 +native_handle_t *createHandle(int numFds, int numInts)
@@ -244,14 +277,14 @@ Subject: [PATCH] android: mm: generic: minigbm buffer layout, internal buffers f
 +		return nullptr;
 +	}
 +	handle->data[0] = alloc.fd;
-+	for (int i = 1; i < 26; i++)
++	for (int i = 1; i < 27; i++)
 +		handle->data[i] = 0;
 +	for (unsigned int i = 0; i < 4; i++) {
-+		handle->data[4 + i] = strides[i];
-+		handle->data[8 + i] = offsets[i];
-+		handle->data[12 + i] = sizes[i];
++		handle->data[5 + i] = strides[i];
++		handle->data[9 + i] = offsets[i];
++		handle->data[13 + i] = sizes[i];
 +	}
-+	handle->data[25] = static_cast<int>(0xabcddcba);
++	handle->data[26] = static_cast<int>(0xabcddcba);
  
 -	SharedFD fd{ handle->data[0] };
 -	size_t offset = 0;
