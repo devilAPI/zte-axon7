@@ -161,6 +161,8 @@ PRODUCT_COPY_FILES += \
 # camera/ is disabled).
 PRODUCT_SOONG_NAMESPACES += device/zte/axon7m-libcamera
 PRODUCT_PACKAGES += camera.axon7m.libcamera
+# camera app (common_mini_phone.mk leaves it out; the libcamera HAL gives frames)
+PRODUCT_PACKAGES += Aperture
 PRODUCT_COPY_FILES += \
     device/zte/axon7m-libcamera/lib64/libcamera/ipa/ipa_softisp.so.sign:$(TARGET_COPY_OUT_VENDOR)/lib64/libcamera/ipa/ipa_softisp.so.sign \
     device/zte/axon7m-libcamera/etc/uncalibrated.yaml:$(TARGET_COPY_OUT_VENDOR)/etc/libcamera/ipa/softisp/uncalibrated.yaml \
