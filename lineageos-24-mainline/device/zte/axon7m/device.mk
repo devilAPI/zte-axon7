@@ -157,23 +157,14 @@ PRODUCT_COPY_FILES += \
 
 # Camera: upstream libcamera (simple pipeline on CAMSS + software ISP) with its
 # Android HAL as camera.axon7m (scripts/libcamera-build.sh, prebuilts in
-# device/zte/axon7m-libcamera, torch included). Without them the torch-only
-# module in camera/ (AXON7_CAMERA=torch).
-ifneq ($(wildcard device/zte/axon7m-libcamera/Android.bp),)
-AXON7_CAMERA ?= libcamera
-else
-AXON7_CAMERA ?= torch
-endif
-ifeq ($(AXON7_CAMERA),libcamera)
+# device/zte/axon7m-libcamera, torch included; the torch-only module in
+# camera/ is disabled).
 PRODUCT_SOONG_NAMESPACES += device/zte/axon7m-libcamera
 PRODUCT_PACKAGES += camera.axon7m.libcamera
 PRODUCT_COPY_FILES += \
     device/zte/axon7m-libcamera/lib64/libcamera/ipa/ipa_softisp.so.sign:$(TARGET_COPY_OUT_VENDOR)/lib64/libcamera/ipa/ipa_softisp.so.sign \
     device/zte/axon7m-libcamera/etc/uncalibrated.yaml:$(TARGET_COPY_OUT_VENDOR)/etc/libcamera/ipa/softisp/uncalibrated.yaml \
     $(DEVICE_PATH)/camera/camera_hal.yaml:$(TARGET_COPY_OUT_VENDOR)/etc/libcamera/camera_hal.yaml
-else
-PRODUCT_PACKAGES += camera.axon7m
-endif
 
 # Torch: SystemUI's flashlight tile needs the camera flash feature (camera.axon7m
 # is a torch-only camera for now, camera/)

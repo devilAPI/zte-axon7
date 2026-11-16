@@ -7,8 +7,12 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+// Replaced by libcamera's HAL (device/zte/axon7m-libcamera, torch included)
+// from build 46; kept for reference. Both install vendor/lib64/hw/camera.axon7m.so,
+// so this one stays disabled.
 cc_library_shared {
     name: "camera.axon7m",
+    enabled: false,
     relative_install_path: "hw",
     vendor: true,
     srcs: ["CameraModule.cpp"],
