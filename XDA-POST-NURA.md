@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-12 (sound card after a cold start)
+Last update: 2026-11-16 (r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the

@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-15
+Last update: 2026-11-16 (builds 40-47: GPU fault fix, web pages, lights, MTP, camera through cameraserver, radio status)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -18,6 +18,10 @@ the firmware read from the phone's partitions (new in this release). Encryption 
 this alpha.
 
 Changelog notes:
+- 2026-11-16: builds 40-47 (PLAN.md runs 40-47). Vibration counted by the
+  driver, not felt; camera frames come through, picture not looked at (phone
+  in the dark); hall sensor closed state needs a magnet. Animations still
+  janky (no hardware scaling on msm8996: QSEED2 TODO in dpu), being fixed.
 - 2026-11-15: first alpha. Multi-boot slot only (system + los_boot,
   los_metadata/los_data wiped). No SIM detected so far (UIM: no ATR in both
   slots, SIM presence asked in to-test.md).
@@ -29,10 +33,10 @@ Changelog notes:
 
 [SIZE=5][B]What is this?[/B][/SIZE]
 A port of LineageOS 24 (Android 17) to the ZTE Axon 7 that does not use the old Android kernel or the old vendor blobs. It runs on [B]mainline Linux 7.3.1[/B] (the same kernel series as Nura, our postmarketOS-based Linux for the phone) plus the patches Android needs. Graphics are open source: Mesa freedreno for the Adreno 530 (OpenGL ES 3.1), drm_hwcomposer and minigbm.
-Phase: [B]alpha / developer preview[/B]. It boots and a good part of the hardware works, but there are no calls, no mobile data, no camera and no suspend. Not for your daily phone. If you want a usable Android today, use our [B]LineageOS 22.2[/B] (4.4 kernel, own thread).
+Phase: [B]alpha / developer preview[/B]. It boots and a good part of the hardware works, but there are no calls, no mobile data and no suspend, and the camera is new and unchecked. Not for your daily phone. If you want a usable Android today, use our [B]LineageOS 22.2[/B] (4.4 kernel, own thread).
 Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 
-[SIZE=5][B]Status (2026-11-15)[/B][/SIZE]
+[SIZE=5][B]Status (2026-11-16)[/B][/SIZE]
 [SPOILER="Works (tested on our phone)"]
 [LIST]
 [*]Boots to the setup wizard and the home screen
@@ -42,7 +46,11 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [*]Bluetooth turns on
 [*]Speaker playback (heard by the phone's own microphone), microphone recording
 [*]Sensors: accelerometer, gyroscope, compass, light, proximity
-[*]Battery level and charging
+[*]Battery level, charging status, voltage and temperature in Settings
+[*]Notification LED, flashlight tile in Quick Settings
+[*]USB file transfer (MTP)
+[*]Web pages in the browser and in Chromium-based browsers (Cromite)
+[*]Flip cover sensor reads "open" (closing not tried yet)
 [*]Temperature sensors and thermal limits
 [*]Hardware watchdog (restarts the phone if the kernel hangs)
 [*]A normal restart returns to LineageOS
@@ -53,20 +61,21 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [B]Built, not tested yet:[/B]
 [LIST]
 [*]Headphone playback (plugging in is detected, nobody has listened yet)
-[*]Vibration
-[*]GPS position fix
+[*]Vibration (the driver plays it; nobody has felt it yet)
+[*]GPS position fix (the GPS runs and reports; no fix indoors so far)
+[*]Camera, front and rear: preview and photos come through the camera service (Aperture app included), but nobody has looked at a picture with light yet
+[*]USB tethering
 [/LIST]
 [B]Does not work / not done:[/B]
 [LIST]
-[*]Calls, SMS, mobile data (no radio service yet; the SIM card is not detected so far)
-[*]Camera (no driver for the rear camera sensor yet)
+[*]Calls, SMS, mobile data: a first radio service shows the modem version and the network signal, but the SIM card is not detected so far, and mobile data needs a kernel driver that is not ported yet
 [*]Fingerprint (controlled by TrustZone; not possible on mainline)
 [*]NFC
 [*]Suspend / deep sleep: the phone never sleeps, so battery life is short
 [*]SELinux enforcing, storage encryption
 [/LIST]
-[B]Performance:[/B] scrolling got much better this week (frame pacing fixes in the kernel display driver and in Mesa), but about 13 % of frames are still late in our scroll benchmark. Usable, not perfectly smooth.
-[B]Stability:[/B] a 20-minute stress test ran without crashes, restarts or kernel warnings.
+[B]Performance:[/B] scrolling is smooth now: about 2 % late frames in our scroll benchmark (was 13 %), after fixes in the kernel's GPU and display drivers and running the GPU at full clock while drawing. [B]Animations still stutter[/B] (notification shade, app drawer, opening apps: 30-40 % late frames): the display hardware cannot scale images on mainline yet, so the screen is put together on the GPU instead. Being fixed.
+[B]Stability:[/B] 30-minute stress tests ran clean on several builds. A rare crash in the kernel's display driver (twice in one build) is being investigated; the phone restarts by itself when it happens.
 
 [SIZE=5][B]Warning[/B][/SIZE]
 [LIST]
@@ -95,6 +104,21 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-16"]
+[LIST]
+[*]No more GPU faults and garbled areas (seen on the wallpaper): a buffer shared between apps was taken away from the GPU when one app closed it, while the others still used it.
+[*]Web pages load and show in the browser and in Chromium-based browsers (their sandbox could not use shared memory before).
+[*]Scrolling: about 2 % late frames (was 13 %); the GPU runs at full clock while drawing and still powers down when idle.
+[*]Notification LED and flashlight tile, brightness slider fixed.
+[*]Battery level, charging status, voltage and temperature in Settings.
+[*]USB file transfer (MTP).
+[*]Camera: both cameras deliver preview and photos to Android's camera service, with the Aperture camera app (picture quality not checked yet).
+[*]Vibration, flip cover sensor and GPS services added (not confirmed by hand or outdoors yet).
+[*]First radio service: modem version and network signal (SIM, calls and data still missing).
+[*]Kernel fixes for crashes in the camera control bus and the audio data bus; the display no longer loses its refresh signal after a timeout.
+[*]Bluetooth tries again if the chip does not answer at start.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-15"]
 [LIST]
 [*]First alpha: TWRP zip for the LineageOS slot of the multi-boot setup.
