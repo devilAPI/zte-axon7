@@ -16,6 +16,7 @@
 #include <libminradio/network/structs.h>
 
 #include <algorithm>
+#include <mutex>
 #include <cstdio>
 
 namespace axon7m::radio {
@@ -238,6 +239,38 @@ net::SignalStrength readSignalStrength() {
         s.lte.rssnr = (snr >= -200 && snr <= 300) ? snr : RadioConst::VALUE_UNAVAILABLE;
     }
     return s;
+}
+
+namespace {
+std::mutex gCacheLock;
+std::optional<sim::CardStatus> gCard;
+std::optional<net::RegStateResult> gReg;
+std::optional<net::SignalStrength> gSignal;
+}  // namespace
+
+void refreshModemState() {
+    auto card = readCardStatus();
+    auto reg = readRegState();
+    auto signal = reg ? std::optional<net::SignalStrength>(readSignalStrength()) : std::nullopt;
+    std::lock_guard l(gCacheLock);
+    gCard = card;
+    gReg = reg;
+    gSignal = signal;
+}
+
+std::optional<sim::CardStatus> cachedCardStatus() {
+    std::lock_guard l(gCacheLock);
+    return gCard;
+}
+
+std::optional<net::RegStateResult> cachedRegState() {
+    std::lock_guard l(gCacheLock);
+    return gReg;
+}
+
+net::SignalStrength cachedSignalStrength() {
+    std::lock_guard l(gCacheLock);
+    return gSignal ? *gSignal : ::android::hardware::radio::minimal::structs::makeSignalStrength();
 }
 
 std::optional<std::string> readImei() {

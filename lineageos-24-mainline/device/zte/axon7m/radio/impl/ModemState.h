@@ -24,6 +24,15 @@ std::optional<::aidl::android::hardware::radio::network::RegStateResult> readReg
 // NAS Get Signal Info (0x4F); defaults (unavailable) when NAS did not answer
 ::aidl::android::hardware::radio::network::SignalStrength readSignalStrength();
 
+// The binder threads never wait for the modem (build 44: com.android.phone
+// ANRs while the modem restarted and every request waited for its timeout):
+// a poll thread calls refreshModemState() every few seconds, the HAL methods
+// answer from these cached copies (nullopt: the modem has not answered).
+void refreshModemState();
+std::optional<::aidl::android::hardware::radio::sim::CardStatus> cachedCardStatus();
+std::optional<::aidl::android::hardware::radio::network::RegStateResult> cachedRegState();
+::aidl::android::hardware::radio::network::SignalStrength cachedSignalStrength();
+
 // DMS Get IDs (0x25) TLV 0x11
 std::optional<std::string> readImei();
 // DMS Get Revision (0x23) TLV 0x01

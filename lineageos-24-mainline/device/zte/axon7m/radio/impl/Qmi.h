@@ -38,7 +38,7 @@ struct QmiResponse {
 // within timeoutMs.
 std::optional<QmiResponse> qmiRequest(uint32_t service, uint16_t msg,
                                       const std::vector<uint8_t>& tlvs = {},
-                                      int timeoutMs = 2000);
+                                      int timeoutMs = 1000);
 
 // TLV builders and readers (little-endian)
 void putTlvU8(std::vector<uint8_t>* b, uint8_t type, uint8_t v);

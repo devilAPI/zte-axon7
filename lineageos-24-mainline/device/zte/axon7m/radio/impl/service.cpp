@@ -4,6 +4,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#include "ModemState.h"
 #include "Radio.h"
 
 #include <android-base/logging.h>
@@ -43,7 +44,7 @@ static void main() {
     android::base::InitLogging(nullptr, android::base::LogdLogger(android::base::RADIO));
     android::base::SetDefaultTag("radio-axon7m");
     android::base::SetMinimumLogSeverity(android::base::INFO);
-    ABinderProcess_setThreadPoolMaxThreadCount(2);
+    ABinderProcess_setThreadPoolMaxThreadCount(4);
     ABinderProcess_startThreadPool();
 
     auto slot1 = std::make_shared<minimal::SlotContext>(1);
@@ -59,9 +60,10 @@ static void main() {
 
     std::thread([network, sim] {
         for (;;) {
-            std::this_thread::sleep_for(std::chrono::seconds(10));
+            refreshModemState();
             if (sim) sim->poll();
             if (network) network->poll();
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     }).detach();
     ABinderProcess_joinThreadPool();

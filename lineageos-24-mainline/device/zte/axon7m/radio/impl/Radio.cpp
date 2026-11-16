@@ -32,7 +32,7 @@ constexpr auto ok = &ScopedAStatus::ok;
 
 ScopedAStatus RadioConfig::getSimSlotsStatus(int32_t serial) {
     LOG_CALL;
-    auto cs = readCardStatus();
+    auto cs = cachedCardStatus();
     aidlConfig::SimSlotStatus slot{};
     slot.cardState = cs ? cs->cardState : aidlSim::CardStatus::STATE_ABSENT;
     slot.atr = "";
@@ -91,7 +91,7 @@ ScopedAStatus RadioModem::getBasebandVersion(int32_t serial) {
 
 ScopedAStatus RadioNetwork::getDataRegistrationState(int32_t serial) {
     LOG_CALL;
-    auto reg = readRegState();
+    auto reg = cachedRegState();
     if (!reg) {
         respond()->getDataRegistrationStateResponse(errorResponse(serial, RadioError::MODEM_ERR),
                                                     {});
@@ -103,7 +103,7 @@ ScopedAStatus RadioNetwork::getDataRegistrationState(int32_t serial) {
 
 ScopedAStatus RadioNetwork::getVoiceRegistrationState(int32_t serial) {
     LOG_CALL;
-    auto reg = readRegState();
+    auto reg = cachedRegState();
     if (!reg) {
         respond()->getVoiceRegistrationStateResponse(errorResponse(serial, RadioError::MODEM_ERR),
                                                      {});
@@ -116,14 +116,14 @@ ScopedAStatus RadioNetwork::getVoiceRegistrationState(int32_t serial) {
 
 ScopedAStatus RadioNetwork::getSignalStrength(int32_t serial) {
     LOG_CALL;
-    respond()->getSignalStrengthResponse(noError(serial), readSignalStrength());
+    respond()->getSignalStrengthResponse(noError(serial), cachedSignalStrength());
     return ok();
 }
 
 void RadioNetwork::poll() {
     if (!indicate) return;  // the framework has not connected yet
     std::lock_guard l(mPollLock);
-    auto reg = readRegState();
+    auto reg = cachedRegState();
     if (reg) {
         int st = static_cast<int>(reg->regState) * 100 + static_cast<int>(reg->rat);
         if (mLastReg != st || mLastPlmn != reg->registeredPlmn) {
@@ -134,7 +134,7 @@ void RadioNetwork::poll() {
             indicate()->networkStateChanged(RadioIndicationType::UNSOLICITED);
         }
     }
-    auto s = readSignalStrength();
+    auto s = cachedSignalStrength();
     int level = std::max({s.lte.signalStrength == RadioConst::VALUE_UNAVAILABLE ? -1
                                                                                  : s.lte.signalStrength,
                           s.wcdma.signalStrength == RadioConst::VALUE_UNAVAILABLE
@@ -153,7 +153,7 @@ void RadioNetwork::poll() {
 
 ScopedAStatus RadioSim::getIccCardStatus(int32_t serial) {
     LOG_CALL;
-    auto cs = readCardStatus();
+    auto cs = cachedCardStatus();
     if (!cs) {
         aidlSim::CardStatus none{};
         none.cardState = aidlSim::CardStatus::STATE_ABSENT;
@@ -209,7 +209,7 @@ ScopedAStatus RadioSim::iccTransmitApduLogicalChannel(int32_t serial, const aidl
 void RadioSim::poll() {
     if (!indicate) return;
     std::lock_guard l(mPollLock);
-    auto cs = readCardStatus();
+    auto cs = cachedCardStatus();
     if (!cs) return;
     std::pair<int, int> now{cs->cardState,
                             cs->applications.empty() ? -1 : cs->applications[0].appState};

@@ -4,7 +4,7 @@
  * every request; these subclasses fill in what the modem tells over QMI.
  *
  * What works: modem identity (IMEI, baseband version), SIM card state,
- * network registration, operator and signal strength (polled every 10 s,
+ * network registration, operator and signal strength (polled every 5 s and cached,
  * changes are indicated). Not yet: SIM file access (a present SIM never
  * finishes loading), SMS, calls (no q6voice), data (no IPA v2.5 driver).
  * The radio power switch is only reported: the modem stays online for GNSS.
