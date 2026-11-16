@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-16 (builds 40-47: GPU fault fix, web pages, lights, MTP, camera through cameraserver, radio status)
+Last update: 2026-11-16 (builds 40-47: GPU fault fix, web pages, lights, MTP, camera through cameraserver, radio status; kernel 0013/0014 on build 47: hardware scaling in the display, GPU memory bandwidth, animations)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -22,6 +22,10 @@ Changelog notes:
   driver, not felt; camera frames come through, picture not looked at (phone
   in the dark); hall sensor closed state needs a magnet. Animations still
   janky (no hardware scaling on msm8996: QSEED2 TODO in dpu), being fixed.
+- 2026-11-16 (later): kernel 0013 (QSEED2 scaler in dpu) and 0014 (GPU DDR
+  votes) measured on build 47 with los24-anim.sh and los24-bench.sh (kfast
+  kernel #23). Wallpaper zoom off (RRO) is in build 48, not confirmed yet,
+  so not in the post. Shade and open/back still above 10 %.
 - 2026-11-15: first alpha. Multi-boot slot only (system + los_boot,
   los_metadata/los_data wiped). No SIM detected so far (UIM: no ATR in both
   slots, SIM presence asked in to-test.md).
@@ -74,7 +78,7 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [*]Suspend / deep sleep: the phone never sleeps, so battery life is short
 [*]SELinux enforcing, storage encryption
 [/LIST]
-[B]Performance:[/B] scrolling is smooth now: about 2 % late frames in our scroll benchmark (was 13 %), after fixes in the kernel's GPU and display drivers and running the GPU at full clock while drawing. [B]Animations still stutter[/B] (notification shade, app drawer, opening apps: 30-40 % late frames): the display hardware cannot scale images on mainline yet, so the screen is put together on the GPU instead. Being fixed.
+[B]Performance:[/B] scrolling is smooth: under 1 % late frames in our scroll benchmark (was 13 % in the first builds). Animations got much better after two kernel fixes: the display hardware now scales images itself (before, any scaled layer such as the wallpaper made the whole screen go through the GPU), and the GPU now asks for enough memory bandwidth. Late frames: app drawer 3 %, ripple on press 5-7 %, opening an app and going home 11 %, notification shade about 17 %, opening a settings page and going back about 19 % (were 30-40 %). The shade and opening pages still stutter a little: those apps need about 18 ms of drawing per frame on this GPU driver, more than one screen refresh.
 [B]Stability:[/B] 30-minute stress tests ran clean on several builds. A rare crash in the kernel's display driver (twice in one build) is being investigated; the phone restarts by itself when it happens.
 
 [SIZE=5][B]Warning[/B][/SIZE]
@@ -104,6 +108,13 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-16, kernel update"]
+[LIST]
+[*]Animations: the display hardware scales layers itself now (the wallpaper and windows while apps open), so the screen no longer falls back to drawing everything on the GPU. App drawer, opening apps and the notification shade stutter much less (late frames 30-40 % before, now 3-19 %).
+[*]The GPU asks for memory bandwidth while it draws; before, the memory ran at the speed the display alone needed.
+[*]Scrolling: under 1 % late frames in our scroll benchmark.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-16"]
 [LIST]
 [*]No more GPU faults and garbled areas (seen on the wallpaper): a buffer shared between apps was taken away from the GPU when one app closed it, while the others still used it.
