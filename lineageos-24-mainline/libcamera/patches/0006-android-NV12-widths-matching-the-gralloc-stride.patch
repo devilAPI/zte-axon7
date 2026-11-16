@@ -1,0 +1,25 @@
+From: axon7m bring-up
+Subject: [PATCH] android: NV12 only in widths where minigbm and the soft ISP agree on the stride
+
+minigbm's msm backend aligns NV12 lines to 128 bytes (Venus); libcamera's
+software ISP writes NV12 with the width aligned to 8 and has no way to take
+the gralloc buffer's stride. Offer only widths that are multiples of 128
+(640, 1280, 1920, 2048, ...), so preview and video buffers are not skewed.
+---
+--- a/src/android/camera_capabilities.cpp
++++ b/src/android/camera_capabilities.cpp
+@@ -444,6 +444,14 @@
+ 	StreamConfiguration &cfg = cameraConfig->at(0);
+ 
+ 	for (const Size &res : resolutions) {
++		/*
++		 * axon7m: minigbm aligns NV12 lines to 128 bytes (Venus), and the
++		 * software ISP writes with its own stride (width aligned to 8):
++		 * offer only widths for which both agree.
++		 */
++		if (pixelFormat == formats::NV12 && res.width % 128)
++			continue;
++
+ 		cfg.pixelFormat = pixelFormat;
+ 		cfg.size = res;
+ 
