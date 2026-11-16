@@ -2,3 +2,11 @@
 allow hal_camera_default sysfs_leds:dir r_dir_perms;
 allow hal_camera_default sysfs_leds:file rw_file_perms;
 allow hal_camera_default sysfs_leds:lnk_file read;
+# libcamera: media controller, CAMSS video nodes and sensor sub-devices,
+# dma-buf heap for the HAL's internal buffers, its IPA proxy (isolated IPA)
+allow hal_camera_default video_device:chr_file rw_file_perms;
+allow hal_camera_default video_device:dir r_dir_perms;
+allow hal_camera_default dmabuf_system_heap_device:chr_file r_file_perms;
+allow hal_camera_default vendor_file:file { execute execute_no_trans };
+allow hal_camera_default sysfs:dir r_dir_perms;
+allow hal_camera_default sysfs:file r_file_perms;

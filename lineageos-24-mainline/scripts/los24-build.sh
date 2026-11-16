@@ -48,6 +48,13 @@ if [ -f /srv/los24/mesa/out/Android.bp ]; then
 	echo "$(cat "$T/device/zte/axon7m-mesa/version")"
 fi
 
+# libcamera + camera HAL prebuilts (scripts/libcamera-build.sh), used with
+# AXON7_CAMERA=libcamera
+if [ -f /srv/los24/libcamera/out/Android.bp ]; then
+	rsync -rlpgoD --checksum --delete /srv/los24/libcamera/out/ "$T/device/zte/axon7m-libcamera/"
+	echo "$(cat "$T/device/zte/axon7m-libcamera/version")"
+fi
+
 # 3. local patches to the Android tree: lineageos-24-mainline/aosp/<project
 #    path>/*.patch (-p1 inside that project), each applied once
 A=$REPO/lineageos-24-mainline/aosp

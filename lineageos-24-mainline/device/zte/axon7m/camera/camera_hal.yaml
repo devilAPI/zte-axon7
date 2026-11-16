@@ -1,0 +1,10 @@
+# libcamera Android HAL (/vendor/etc/libcamera/camera_hal.yaml): where the
+# Axon 7's sensors sit and how they are mounted (the device tree has no
+# location/rotation properties for them)
+cameras:
+  "/base/soc@0/cci@a0c000/i2c-bus@0/camera@2d":
+    location: back
+    rotation: 90
+  "/base/soc@0/cci@a0c000/i2c-bus@1/camera@36":
+    location: front
+    rotation: 270

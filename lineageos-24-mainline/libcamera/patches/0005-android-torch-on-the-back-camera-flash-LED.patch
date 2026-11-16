@@ -1,0 +1,111 @@
+From: axon7m bring-up
+Subject: [PATCH] android: torch on the back camera's flash LED (axon7m)
+
+The Quick Settings flashlight goes through CameraManager.setTorchMode(),
+which needs a camera with ANDROID_FLASH_INFO_AVAILABLE and the module's
+set_torch_mode(). Report a flash unit for the back camera when the
+PMI8994 torch LED (/sys/class/leds/white:torch) is writable and switch it
+in set_torch_mode().
+---
+--- a/src/android/camera_capabilities.cpp
++++ b/src/android/camera_capabilities.cpp
+@@ -14,6 +14,7 @@
+ #include <span>
+ #include <stdint.h>
+ #include <type_traits>
++#include <unistd.h>
+ 
+ #include <hardware/camera3.h>
+ 
+@@ -1242,8 +1243,14 @@
+ 		    ControlRange::Def,
+ 		    ANDROID_SYNC_MAX_LATENCY_UNKNOWN);
+ 
+-	/* Flash static metadata. */
++	/*
++	 * Flash static metadata. axon7m: the back camera has the PMI8994 flash
++	 * LED; the HAL drives it as a torch only (set_torch_mode()).
++	 */
+ 	char flashAvailable = ANDROID_FLASH_INFO_AVAILABLE_FALSE;
++	if (facing_ == CAMERA_FACING_BACK &&
++	    access("/sys/class/leds/white:torch/brightness", W_OK) == 0)
++		flashAvailable = ANDROID_FLASH_INFO_AVAILABLE_TRUE;
+ 	staticMetadata_->addEntry(ANDROID_FLASH_INFO_AVAILABLE,
+ 				  flashAvailable);
+ 
+--- a/src/android/camera3_hal.cpp
++++ b/src/android/camera3_hal.cpp
+@@ -5,6 +5,10 @@
+  * Android Camera HALv3 module
+  */
+ 
++#include <fcntl.h>
++#include <string>
++#include <unistd.h>
++
+ #include <hardware/camera_common.h>
+ 
+ #include <libcamera/base/log.h>
+@@ -30,8 +34,11 @@
+ 	return CameraHalManager::instance()->getCameraInfo(id, info);
+ }
+ 
++static const camera_module_callbacks_t *halCallbacks;
++
+ static int hal_set_callbacks(const camera_module_callbacks_t *callbacks)
+ {
++	halCallbacks = callbacks;
+ 	CameraHalManager::instance()->setCallbacks(callbacks);
+ 
+ 	return 0;
+@@ -45,10 +52,47 @@
+ 	return -ENOSYS;
+ }
+ 
+-static int hal_set_torch_mode([[maybe_unused]] const char *camera_id,
+-			      [[maybe_unused]] bool enabled)
++/*
++ * axon7m: torch on the PMI8994 flash LED for the camera that reports a flash
++ * unit (the back camera, camera_capabilities.cpp). The LED driver's
++ * max_brightness is the torch current limit from the device tree.
++ */
++static int hal_set_torch_mode(const char *camera_id, bool enabled)
+ {
+-	return -ENOSYS;
++	static const char kTorch[] = "/sys/class/leds/white:torch/";
++	if (!camera_id)
++		return -EINVAL;
++
++	struct camera_info info = {};
++	if (CameraHalManager::instance()->getCameraInfo(atoi(camera_id), &info) ||
++	    info.facing != CAMERA_FACING_BACK)
++		return -ENOSYS;
++
++	char buf[16] = {};
++	int max = 0;
++	int fd = open((std::string(kTorch) + "max_brightness").c_str(), O_RDONLY | O_CLOEXEC);
++	if (fd >= 0) {
++		if (read(fd, buf, sizeof(buf) - 1) > 0)
++			max = atoi(buf);
++		close(fd);
++	}
++	if (max <= 0)
++		return -ENOSYS;
++
++	fd = open((std::string(kTorch) + "brightness").c_str(), O_WRONLY | O_CLOEXEC);
++	if (fd < 0)
++		return -errno;
++	std::string val = std::to_string(enabled ? max : 0);
++	int ret = write(fd, val.data(), val.size()) == static_cast<ssize_t>(val.size()) ? 0 : -EIO;
++	close(fd);
++	if (ret)
++		return ret;
++
++	if (halCallbacks && halCallbacks->torch_mode_status_change)
++		halCallbacks->torch_mode_status_change(halCallbacks, camera_id,
++						       enabled ? TORCH_MODE_STATUS_AVAILABLE_ON
++							       : TORCH_MODE_STATUS_AVAILABLE_OFF);
++	return 0;
+ }
+ 
+ /*

@@ -21,3 +21,7 @@ modalias_handling enabled
 /sys/class/leds/rgb:status  multi_intensity  0664  system  system
 # the camera provider (camera.axon7m torch) runs as user cameraserver
 /sys/class/leds/white:torch brightness       0664  cameraserver  system
+# camera (libcamera: media controller, CAMSS video and sub-devices)
+/dev/media*               0660   system     camera
+/dev/v4l-subdev*          0660   system     camera
+/dev/video*               0660   system     camera

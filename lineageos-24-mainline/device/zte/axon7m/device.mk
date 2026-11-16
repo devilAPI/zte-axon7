@@ -142,7 +142,6 @@ PRODUCT_PACKAGES += \
     android.hardware.vibrator-service.axon7m \
     android.hardware.light-service.axon7m \
     android.hardware.camera.provider-service.lineage \
-    camera.axon7m \
     android.hardware.wifi-service \
     hostapd \
     wpa_supplicant
@@ -155,6 +154,26 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml
+
+# Camera: upstream libcamera (simple pipeline on CAMSS + software ISP) with its
+# Android HAL as camera.axon7m (scripts/libcamera-build.sh, prebuilts in
+# device/zte/axon7m-libcamera, torch included). Without them the torch-only
+# module in camera/ (AXON7_CAMERA=torch).
+ifneq ($(wildcard device/zte/axon7m-libcamera/Android.bp),)
+AXON7_CAMERA ?= libcamera
+else
+AXON7_CAMERA ?= torch
+endif
+ifeq ($(AXON7_CAMERA),libcamera)
+PRODUCT_SOONG_NAMESPACES += device/zte/axon7m-libcamera
+PRODUCT_PACKAGES += camera.axon7m.libcamera
+PRODUCT_COPY_FILES += \
+    device/zte/axon7m-libcamera/lib64/libcamera/ipa/ipa_softisp.so.sign:$(TARGET_COPY_OUT_VENDOR)/lib64/libcamera/ipa/ipa_softisp.so.sign \
+    device/zte/axon7m-libcamera/etc/uncalibrated.yaml:$(TARGET_COPY_OUT_VENDOR)/etc/libcamera/ipa/softisp/uncalibrated.yaml \
+    $(DEVICE_PATH)/camera/camera_hal.yaml:$(TARGET_COPY_OUT_VENDOR)/etc/libcamera/camera_hal.yaml
+else
+PRODUCT_PACKAGES += camera.axon7m
+endif
 
 # Torch: SystemUI's flashlight tile needs the camera flash feature (camera.axon7m
 # is a torch-only camera for now, camera/)
