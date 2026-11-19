@@ -35,6 +35,8 @@ Changelog notes:
 [CENTER][SIZE=6][B][ROM][17][ALPHA][UNOFFICIAL] LineageOS 24 on mainline Linux for the ZTE Axon 7 (A2017G)[/B][/SIZE]
 [I]Android 17 on the mainline Linux 7.3.1 kernel, with open graphics drivers. A developer preview.[/I][/CENTER]
 
+[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7-lineageos24']github.com/devilAPI/linux/tree/zte-axon7-lineageos24[/URL] (Linux 7.3.1 + the Nura patch series + the Android patches)
+
 [SIZE=5][B]What is this?[/B][/SIZE]
 A port of LineageOS 24 (Android 17) to the ZTE Axon 7 that does not use the old Android kernel or the old vendor blobs. It runs on [B]mainline Linux 7.3.1[/B] (the same kernel series as Nura, our postmarketOS-based Linux for the phone) plus the patches Android needs. Graphics are open source: Mesa freedreno for the Adreno 530 (OpenGL ES 3.1), drm_hwcomposer and minigbm.
 Phase: [B]alpha / developer preview[/B]. It boots and a good part of the hardware works, but there are no calls, no mobile data and no suspend, and the camera is new and unchecked. Not for your daily phone yet.
@@ -141,7 +143,7 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [/SPOILER]
 
 [SIZE=5][B]Source[/B][/SIZE]
-[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux, branch zte-axon7[/URL] (Linux 7.3.1 with the Axon 7 patches), plus the Android patches in the branch below
+[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7-lineageos24']github.com/devilAPI/linux, branch zte-axon7-lineageos24[/URL] (Linux 7.3.1 + the Nura patch series + the Android patches, one commit per patch; the patch files themselves are in the branch below, folder lineageos-24-mainline/kernel/patches)
 Device tree, Android, kernel and Mesa patches, build scripts: [URL='https://github.com/devilAPI/zte-axon7/tree/lineageos-24-mainline']github.com/devilAPI/zte-axon7, branch lineageos-24-mainline[/URL] (folder lineageos-24-mainline)
 The same project also brings LineageOS 22.2 (unofficial release), Nura (Linux, beta) and iOS 16 (alpha) to the Axon 7, each with its own thread.
 

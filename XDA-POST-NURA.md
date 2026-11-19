@@ -21,6 +21,8 @@ publish it after testing and the `nura-latest` link in this post follows.
 [CENTER][SIZE=6][B][BETA] Nura: Linux for the ZTE Axon 7 (A2017G)[/B][/SIZE]
 [I]Mainline Linux 7.3, based on postmarketOS. Runs from the microSD card.[/I][/CENTER]
 
+[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux/tree/zte-axon7[/URL] (Linux 7.3.1 + the Nura patch series; one tag per release, e.g. nura-20261116)
+
 [SIZE=5][B]What is Nura?[/B][/SIZE]
 Nura is a Linux system for the ZTE Axon 7, built on [URL='https://postmarketos.org']postmarketOS[/URL] with a current mainline kernel (Linux 7.3.1) instead of the old Android kernel. It lives on the microSD card; your internal storage is not touched.
 Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (see below).
@@ -155,7 +157,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [/SPOILER]
 
 [SIZE=5][B]Source[/B][/SIZE]
-[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux, branch zte-axon7[/URL] (Linux 7.3.1 with the Axon 7 patches); kernel configuration: [URL='https://github.com/devilAPI/zte-axon7/blob/main/postmarketos/pmaports-local/device/testing/linux-zte-axon7/config-zte-axon7.aarch64']config-zte-axon7.aarch64[/URL]
+[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux, branch zte-axon7[/URL] (Linux 7.3.1 + the Nura patch series, one commit per patch; tag per release, e.g. [URL='https://github.com/devilAPI/linux/tree/nura-20261116']nura-20261116[/URL]; the same patches as files: [URL='https://github.com/devilAPI/zte-axon7/tree/main/postmarketos/pmaports-local/device/testing/linux-zte-axon7']linux-zte-axon7 package[/URL]); kernel configuration: [URL='https://github.com/devilAPI/zte-axon7/blob/main/postmarketos/pmaports-local/device/testing/linux-zte-axon7/config-zte-axon7.aarch64']config-zte-axon7.aarch64[/URL]
 Packages, build scripts and docs: [URL='https://github.com/devilAPI/zte-axon7']github.com/devilAPI/zte-axon7[/URL] (folder postmarketos)
 The same project also brings LineageOS 22.2 (unofficial release) and iOS 16 (alpha) to the Axon 7, each with its own thread.
 

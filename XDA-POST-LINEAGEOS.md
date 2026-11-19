@@ -46,6 +46,8 @@ checks for both, and how to collect logs while it still boots.
 [CENTER][SIZE=6][B][ROM][15][UNOFFICIAL] LineageOS 22.2 for the ZTE Axon 7 (A2017G)[/B][/SIZE]
 [I]Android 15 on the 4.4 kernel, with ZTE's drivers ported from their 3.18 kernel.[/I][/CENTER]
 
+[B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7']github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7[/URL] (Linux 4.4, exactly the kernel in the release zip)
+
 [SIZE=5][B]What is this?[/B][/SIZE]
 A port of LineageOS 22.2 (Android 15) to the ZTE Axon 7. The newest official LineageOS for the phone is 18.1; this one runs on the msm8996 4.4 kernel with ZTE's own drivers (audio codec, fingerprint, NFC, camera parts) ported from ZTE's 3.18 kernel, and Android 15 shims for the old vendor blobs.
 An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the status below), as a TWRP-flashable zip.
