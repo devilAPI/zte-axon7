@@ -25,6 +25,14 @@ if [ "$(pmb config ssh_keys)" != False ]; then
 	exit 1
 fi
 aports=$(pmb config aports)
+# 2026-11-19: upstream postmarketos-base enacted the bin-merge (pmaports
+# 7e5c0c3d2), but pmaports.cfg does not announce supported_bin_merge yet, so
+# pmbootstrap still created a separate /usr/sbin and systemd 262 failed to
+# install ("failed to commit usr/bin/udevadm"). Announce it until upstream does.
+if grep -q '^supported_usr_merge=True' "$aports/pmaports.cfg" && ! grep -q '^supported_bin_merge' "$aports/pmaports.cfg"; then
+	sed -i '/^supported_usr_merge=True/a supported_bin_merge=True' "$aports/pmaports.cfg"
+	echo "pmaports.cfg: supported_bin_merge=True added (upstream base is bin-merged)"
+fi
 cp -r pmaports-local/device/testing/device-zte-axon7 pmaports-local/device/testing/linux-zte-axon7 "$aports/device/testing/"
 mkdir -p "$aports/temp"
 cp -r pmaports-local/temp/sns-reg "$aports/temp/"
