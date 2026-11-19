@@ -11,6 +11,18 @@ dump() {
 	sleep 30
 	echo b > /proc/sysrq-trigger
 }
+# Off-mode charging (the phone was empty and came up on USB power): no adbd
+# runs there by design. Not a hang: charge to 25 %, then start normally (a
+# warm reboot boots Android, not the charger). 2026-11-19: an empty battery
+# came back in charger mode, the guard sent it to TWRP.
+if [ "$(getprop ro.bootmode)" = charger ]; then
+	echo "axon7m-bootguard: charger mode, waiting for 25 %" > /dev/kmsg
+	while [ "$(cat /sys/class/power_supply/battery/capacity 2>/dev/null || echo 0)" -lt 25 ]; do sleep 60; done
+	echo "axon7m-bootguard: charger mode, battery $(cat /sys/class/power_supply/battery/capacity) %: rebooting to Android" > /dev/kmsg
+	setprop sys.powerctl reboot
+	sleep 30
+	echo b > /proc/sysrq-trigger
+fi
 sleep 240
 [ "$(getprop init.svc.adbd)" = running ] || dump "no adbd after 240 s"
 sleep 960
