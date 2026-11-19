@@ -122,3 +122,9 @@ on property:persist.vendor.axon7m.nosuspend=1
 
 on property:persist.vendor.axon7m.nosuspend=0
     write /sys/power/wake_unlock axon7m-nosuspend
+
+# libperfmgr power HAL: its hint looper only starts once vendor.powerhal.init
+# is set (Pixel trees do the same); before that every INTERACTION/LAUNCH boost
+# was dropped ("NodeLooperThread is not running")
+on property:sys.boot_completed=1
+    setprop vendor.powerhal.init 1
