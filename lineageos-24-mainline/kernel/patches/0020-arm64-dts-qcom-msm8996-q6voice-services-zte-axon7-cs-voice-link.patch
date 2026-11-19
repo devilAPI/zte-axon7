@@ -1,0 +1,62 @@
+From: axon7m bring-up
+Subject: [PATCH] arm64: dts: qcom: msm8996: q6voice services; zte-axon7: CS-Voice link
+
+The ADSP's CVD services (MVM 0x09 with the q6voice DAIs, CVS 0x0a, CVP
+0x0b) under the APR node, and a CS-Voice frontend in the ZTE Axon 7's
+sound card for call audio.
+---
+--- a/arch/arm64/boot/dts/qcom/msm8996.dtsi
++++ b/arch/arm64/boot/dts/qcom/msm8996.dtsi
+@@ -3674,6 +3674,26 @@
+ 							#sound-dai-cells = <0>;
+ 						};
+ 					};
++
++					/* voice (CVD) services on the ADSP: q6voice */
++					q6mvm: service@9 {
++						compatible = "qcom,q6mvm";
++						reg = <APR_SVC_ADSP_MVM>;
++						q6voicedai: dais {
++							compatible = "qcom,q6voice-dais";
++							#sound-dai-cells = <0>;
++						};
++					};
++
++					q6cvs: service@a {
++						compatible = "qcom,q6cvs";
++						reg = <APR_SVC_ADSP_CVS>;
++					};
++
++					q6cvp: service@b {
++						compatible = "qcom,q6cvp";
++						reg = <APR_SVC_ADSP_CVP>;
++					};
+ 				};
+ 
+ 				fastrpc {
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -16,6 +16,7 @@
+ #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+ #include <dt-bindings/sound/qcom,q6asm.h>
+ #include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
++#include <dt-bindings/sound/qcom,q6voice.h>
+ #include <dt-bindings/clock/qcom,mmcc-msm8996.h>
+ #include "msm8996.dtsi"
+ #include "pm8994.dtsi"
+@@ -1096,6 +1097,15 @@
+ 
+ 		cpu {
+ 			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
++		};
++	};
++
++	/* circuit-switched voice (q6voice; the modem's call audio on the ADSP) */
++	voice-dai-link {
++		link-name = "CS-Voice";
++
++		cpu {
++			sound-dai = <&q6voicedai CS_VOICE>;
+ 		};
+ 	};
+ 
