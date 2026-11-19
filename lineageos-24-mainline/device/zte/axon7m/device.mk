@@ -134,7 +134,6 @@ endif
 # HALs that need no hardware work
 PRODUCT_PACKAGES += \
     android.hardware.health-service.example \
-    android.hardware.power-service.example \
     com.android.hardware.thermal \
     android.hardware.bluetooth-service.default \
     bdaddr.axon7m \
@@ -267,3 +266,14 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
     frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml
+
+# Power HAL: LineageOS' libperfmgr service, CPU boosts on touch (INTERACTION)
+# and app launch (power/powerhint.json); the AOSP example HAL did nothing,
+# so a drag started on a cluster idling at 307 MHz
+PRODUCT_SOONG_NAMESPACES += \
+    hardware/google/interfaces \
+    hardware/google/pixel \
+    hardware/lineage/interfaces/power-libperfmgr
+PRODUCT_PACKAGES += android.hardware.power-service.lineage-libperfmgr
+PRODUCT_COPY_FILES += $(DEVICE_PATH)/power/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
+PRODUCT_VENDOR_PROPERTIES += vendor.powerhal.disp.idle_support=false

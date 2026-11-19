@@ -123,6 +123,8 @@ BOARD_HAVE_BLUETOOTH := true
 
 # SELinux
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
+# libperfmgr power HAL (vendor.powerhal.* props, cpufreq nodes)
+include device/lineage/sepolicy/libperfmgr/sepolicy.mk
 
 # Development builds: faster, smaller out/
 WITH_DEXPREOPT ?= false
