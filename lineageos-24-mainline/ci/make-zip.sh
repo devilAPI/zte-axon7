@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pack a LineageOS 24 build into the TWRP zip (ci/zip/META-INF: installer).
 #   ci/make-zip.sh OUT_DIR DEST_DIR      (OUT_DIR: out/target/product/axon7m)
-# Output: DEST_DIR/lineage-24-DATE-UNOFFICIAL-axon7m.zip + .sha256; the zip
+# Output: DEST_DIR/lineage-24-DATE-UNOFFICIAL-axon7m[-$AXON7_ZIP_TAG].zip + .sha256; the zip
 # path also goes to $GITHUB_OUTPUT (zip=...). super.img is stored as a raw
 # image, gzip-compressed (TWRP has gunzip, not simg2img), inside an
 # uncompressed zip entry.
@@ -26,7 +26,7 @@ sha1sum < "$w/los-boot.img" | cut -d' ' -f1 > "$w/los-boot.img.sha1"
 echo "$super_size $boot_size" > "$w/sizes"
 gzip -1 -c "$w/super.raw" > "$w/super.raw.gz"; rm "$w/super.raw"
 date=$(date -u +%Y%m%d)
-name=lineage-24-$date-UNOFFICIAL-axon7m.zip
+name=lineage-24-$date-UNOFFICIAL-axon7m${AXON7_ZIP_TAG:+-$AXON7_ZIP_TAG}.zip
 mkdir -p "$dest"; rm -f "$dest/$name"
 (cd "$w" && zip -0 -q -r "$dest/$name" META-INF sizes los-boot.img los-boot.img.sha1 super.raw.sha1 super.raw.gz)
 (cd "$dest" && sha256sum "$name" > "$name.sha256")

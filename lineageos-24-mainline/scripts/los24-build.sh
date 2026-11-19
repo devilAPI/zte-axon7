@@ -27,10 +27,11 @@ echo "== $(date -u +%FT%TZ) los24-build.sh ${*:-recoveryimage bootimage}"
 # 1. sync and kernel build finished?
 while pgrep -u build -f "repo/main.py.*sync" >/dev/null || tmux has-session -t los24kernel 2>/dev/null; do sleep 60; done
 # Soong analysis needs nearly all of the container's 31 GB: never next to a
-# LineageOS 22.2 build (/srv/aosp) or another Android build
-while pgrep -f "/srv/aosp/lineage-22.2/out/(soong_ui|host/linux-x86/bin/soong_build)" >/dev/null; do
-	echo "waiting: a LineageOS 22.2 build is running ($(date -u +%T))"; sleep 120
-done
+# LineageOS 22.2 build (/srv/aosp: ci/build-zip.sh and the manual scripts take
+# /srv/aosp/build.lock) or another LineageOS 24 build (developer or CI release
+# flavour, both run this script). The lock is held until this script exits.
+exec 9>/srv/aosp/build.lock
+echo "waiting for /srv/aosp/build.lock ($(date -u +%T))"; flock 9; echo "got the build lock ($(date -u +%T))"
 grep -q "sync-exit 0" "$LOGDIR/repo-sync.log" || { echo "repo sync did not finish cleanly, see $LOGDIR/repo-sync.log"; exit 1; }
 df -h /srv | tail -1
 

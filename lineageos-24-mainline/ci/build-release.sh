@@ -7,6 +7,10 @@
 #   3. image: los24-build.sh droid as a release flavour: no developer adb key,
 #      speaker on, AXON7_FIRMWARE=phone (nothing proprietary in the image)
 #   4. TWRP zip (ci/make-zip.sh) -> /srv/los24/releases, zip=... in $GITHUB_OUTPUT
+# Test variant (never for release): AXON7_RELEASE_ADB_KEYS=test-keys/adbkey.pub
+# builds the same release flavour with that adb key, so an unattended test
+# phone stays reachable after the zip wiped its data; the zip is named
+# ...-axon7m-TESTKEYS-NOT-FOR-RELEASE.zip and goes to /srv/los24/releases-testkeys.
 # Waits for a running developer build (tmux los24build / los24kernel) first.
 # Note: the release flavour changes product files; the next developer build
 # rebuilds those (minutes).
@@ -25,10 +29,13 @@ echo "== kernel $(date -u +%T)"
 	{ tail -40 "$logs/kernel-latest.log"; exit 1; }
 cat /srv/los24/kernel/prebuilt/version 2>/dev/null || true
 echo "== image $(date -u +%T)"
+keys=${AXON7_RELEASE_ADB_KEYS:-}
+dest=/srv/los24/releases tag=
+[ -n "$keys" ] && { dest=/srv/los24/releases-testkeys; tag=TESTKEYS-NOT-FOR-RELEASE; echo "== TEST variant: adb key $keys"; }
 rc=0
-AXON7_ADB_KEYS= AXON7_SPEAKER_MUTE=0 AXON7_FIRMWARE=phone \
+AXON7_ADB_KEYS=$keys AXON7_SPEAKER_MUTE=0 AXON7_FIRMWARE=phone \
 	"$repo/lineageos-24-mainline/scripts/los24-build.sh" droid || rc=$?
 tr '\r' '\n' < "$logs/build-latest.log" | grep -E '####|build-exit|FAILED|error:' | tail -20
 [ $rc = 0 ] || exit $rc
 echo "== zip $(date -u +%T)"
-"$repo/lineageos-24-mainline/ci/make-zip.sh" /srv/los24/lineage-24.0/out/target/product/axon7m /srv/los24/releases
+AXON7_ZIP_TAG=$tag "$repo/lineageos-24-mainline/ci/make-zip.sh" /srv/los24/lineage-24.0/out/target/product/axon7m "$dest"
