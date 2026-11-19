@@ -30,8 +30,12 @@ while pgrep -u build -f "repo/main.py.*sync" >/dev/null || tmux has-session -t l
 # LineageOS 22.2 build (/srv/aosp: ci/build-zip.sh and the manual scripts take
 # /srv/aosp/build.lock) or another LineageOS 24 build (developer or CI release
 # flavour, both run this script). The lock is held until this script exits.
-exec 9>/srv/aosp/build.lock
-echo "waiting for /srv/aosp/build.lock ($(date -u +%T))"; flock 9; echo "got the build lock ($(date -u +%T))"
+# ci/build-release.sh takes the lock itself for kernel + image + zip and sets
+# AXON7_HAVE_BUILD_LOCK=1 (its fd stays open in this child)
+if [ -z "${AXON7_HAVE_BUILD_LOCK:-}" ]; then
+	exec 9>/srv/aosp/build.lock
+	echo "waiting for /srv/aosp/build.lock ($(date -u +%T))"; flock 9; echo "got the build lock ($(date -u +%T))"
+fi
 grep -q "sync-exit 0" "$LOGDIR/repo-sync.log" || { echo "repo sync did not finish cleanly, see $LOGDIR/repo-sync.log"; exit 1; }
 df -h /srv | tail -1
 

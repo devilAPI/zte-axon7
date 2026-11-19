@@ -21,6 +21,13 @@ logs=/srv/los24/logs
 while tmux has-session -t los24build 2>/dev/null || tmux has-session -t los24kernel 2>/dev/null; do
 	echo "waiting for a running developer build ($(date -u +%T))"; sleep 60
 done
+# One lock for kernel, image and zip: a developer build that starts in
+# between would overwrite out/ and the kernel prebuilt before the zip is made
+# (2026-11-19: the release build's images were taken over that way, and
+# build-latest.log already pointed at the developer build).
+exec 8>/srv/aosp/build.lock
+echo "== waiting for /srv/aosp/build.lock ($(date -u +%T))"; flock 8; echo "== got the build lock ($(date -u +%T))"
+export AXON7_HAVE_BUILD_LOCK=1
 echo "== sync $(git -C "$src" log --oneline -1 2>/dev/null || echo '?')"
 rsync -a --delete -R -C --exclude=.git \
 	"$src/./lineageos-24-mainline" "$src/./postmarketos/pmaports-local/device/testing/linux-zte-axon7" "$repo/"
@@ -35,7 +42,7 @@ dest=/srv/los24/releases tag=
 rc=0
 AXON7_ADB_KEYS=$keys AXON7_SPEAKER_MUTE=0 AXON7_FIRMWARE=phone \
 	"$repo/lineageos-24-mainline/scripts/los24-build.sh" droid || rc=$?
-tr '\r' '\n' < "$logs/build-latest.log" | grep -E '####|build-exit|FAILED|error:' | tail -20
+tr '\r' '\n' < "$logs/build-latest.log" | grep -E '####|build-exit|FAILED|error:' | tail -20 || true
 [ $rc = 0 ] || exit $rc
 echo "== zip $(date -u +%T)"
 AXON7_ZIP_TAG=$tag "$repo/lineageos-24-mainline/ci/make-zip.sh" /srv/los24/lineage-24.0/out/target/product/axon7m "$dest"
