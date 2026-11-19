@@ -38,7 +38,7 @@ Changelog notes:
 [B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7-lineageos24']github.com/devilAPI/linux/tree/zte-axon7-lineageos24[/URL] (Linux 7.3.1 + the Nura patch series + the Android patches)
 
 [SIZE=5][B]What is this?[/B][/SIZE]
-A port of LineageOS 24 (Android 17) to the ZTE Axon 7 that does not use the old Android kernel or the old vendor blobs. It runs on [B]mainline Linux 7.3.1[/B] (the same kernel series as Nura, our postmarketOS-based Linux for the phone) plus the patches Android needs. Graphics are open source: Mesa freedreno for the Adreno 530 (OpenGL ES 3.1), drm_hwcomposer and minigbm.
+A port of LineageOS 24 (Android 17) to the ZTE Axon 7 that does not use the old Android kernel or the old vendor blobs. It runs on [B]mainline Linux 7.3.1[/B] (the same kernel series as Nura, our Linux for the phone, built on Nura, formerly postmarketOS) plus the patches Android needs. Graphics are open source: Mesa freedreno for the Adreno 530 (OpenGL ES 3.1), drm_hwcomposer and minigbm.
 Phase: [B]alpha / developer preview[/B]. It boots and a good part of the hardware works, but there are no calls, no mobile data and no suspend, and the camera is new and unchecked. Not for your daily phone yet.
 [B]Recommendation for now:[/B] use our [B]LineageOS 22.2[/B] (Android 15 on the 4.4 kernel, own thread). It is the more reliable build today: it uses ZTE's own drivers, so the cameras, fingerprint, NFC and sleep work there (SIM and calls are still untested on that one too). LineageOS 24 is not too unstable (30-minute stress tests usually run clean, scrolling is smooth), but it still lacks calls, mobile data and sleep, and a rare display driver crash restarts the phone. Try it if you are curious or want to help testing.
 Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
@@ -148,7 +148,7 @@ Device tree, Android, kernel and Mesa patches, build scripts: [URL='https://gith
 The same project also brings LineageOS 22.2 (unofficial release), Nura (Linux, beta) and iOS 16 (alpha) to the Axon 7, each with its own thread.
 
 [SIZE=5][B]Credits[/B][/SIZE]
-LineageOS, AOSP, the Mesa/freedreno developers, drm_hwcomposer and minigbm, Linaro (dragonboard device and tools), AOSPM, the mainline Linux and msm8996 mainline developers, postmarketOS, TWRP.
+LineageOS, AOSP, the Mesa/freedreno developers, drm_hwcomposer and minigbm, Linaro (dragonboard device and tools), AOSPM, the mainline Linux and msm8996 mainline developers, Nura (formerly postmarketOS), TWRP.
 
 [I]Not affiliated with ZTE or LineageOS. You flash this at your own risk.[/I]
 ```

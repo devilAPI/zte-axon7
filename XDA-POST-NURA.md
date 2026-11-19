@@ -19,12 +19,12 @@ publish it after testing and the `nura-latest` link in this post follows.
 <!-- XDA-POST-BEGIN -->
 ```bbcode
 [CENTER][SIZE=6][B][BETA] Nura: Linux for the ZTE Axon 7 (A2017G)[/B][/SIZE]
-[I]Mainline Linux 7.3, based on postmarketOS. Runs from the microSD card.[/I][/CENTER]
+[I]Mainline Linux 7.3, built on Nura (formerly postmarketOS). Runs from the microSD card.[/I][/CENTER]
 
 [B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/linux/tree/zte-axon7']github.com/devilAPI/linux/tree/zte-axon7[/URL] (Linux 7.3.1 + the Nura patch series; one tag per release, e.g. nura-20261116)
 
 [SIZE=5][B]What is Nura?[/B][/SIZE]
-Nura is a Linux system for the ZTE Axon 7, built on [URL='https://postmarketos.org']postmarketOS[/URL] with a current mainline kernel (Linux 7.3.1) instead of the old Android kernel. It lives on the microSD card; your internal storage is not touched.
+Nura is a Linux system for the ZTE Axon 7, built on [URL='https://nura.eco']Nura[/URL] (the distribution formerly called postmarketOS) with a current mainline kernel (Linux 7.3.1) instead of the old Android kernel. It lives on the microSD card; your internal storage is not touched.
 Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (see below).
 
 [SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
@@ -162,8 +162,8 @@ Packages, build scripts and docs: [URL='https://github.com/devilAPI/zte-axon7']g
 The same project also brings LineageOS 22.2 (unofficial release) and iOS 16 (alpha) to the Axon 7, each with its own thread.
 
 [SIZE=5][B]Credits[/B][/SIZE]
-postmarketOS, the mainline Linux and msm8996 mainline developers, Richard Acayan (ath10k key-deletion fix), TWRP.
+Nura (formerly postmarketOS), the mainline Linux and msm8996 mainline developers, Richard Acayan (ath10k key-deletion fix), TWRP.
 
-[I]Not affiliated with ZTE or postmarketOS. You flash this at your own risk.[/I]
+[I]Not affiliated with ZTE or the Nura (formerly postmarketOS) project. You flash this at your own risk.[/I]
 ```
 <!-- XDA-POST-END -->
