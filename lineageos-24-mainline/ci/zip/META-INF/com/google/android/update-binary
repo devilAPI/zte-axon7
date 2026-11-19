@@ -27,9 +27,19 @@ sys=$(part system); lb=$(part los_boot); lm=$(part los_metadata); ld=$(part los_
 for v in "system:$sys" "los_boot:$lb" "los_metadata:$lm" "los_data:$ld" "boot:$boot"; do
 	[ -n "${v#*:}" ] || die "no partition ${v%%:*}: this needs the multi-boot layout (DEV-MULTIBOOT.md)"
 done
-# the boot menu (shim) with a LineageOS entry must be in boot
-dd if="$boot" bs=1048576 count=16 2>/dev/null | tr -c 'A-Za-z' '\n' | grep -q '^LineageOS$' ||
-	die "the boot partition has no boot menu with a LineageOS entry (install the multi-boot setup first)"
+# the boot menu (shim) with a LineageOS entry must be in boot. The shim's
+# kernel is stored gzip-compressed (shim/build-axon7.sh), so look for the
+# label in the plain image and in the kernel after the header page (2 or
+# 4 KiB). TWRP 3.3's busybox (2019) has gunzip but an od without -A/-t.
+has_menu() {
+	dd if="$boot" bs=1048576 count=16 2>/dev/null | tr -c 'A-Za-z' '\n' | grep -q '^LineageOS$' && return 0
+	for pg in 4096 2048; do
+		dd if="$boot" bs=$pg skip=1 count=$((16777216 / pg)) 2>/dev/null | gunzip -c 2>/dev/null |
+			tr -c 'A-Za-z' '\n' | grep -q '^LineageOS$' && return 0
+	done
+	return 1
+}
+has_menu || die "the boot partition has no boot menu with a LineageOS entry (install the multi-boot setup first)"
 
 cd /tmp || die "no /tmp"
 rm -rf /tmp/los24 && mkdir /tmp/los24 && cd /tmp/los24 || die "/tmp"
