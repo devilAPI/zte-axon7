@@ -69,22 +69,30 @@ jobs:
           sudo apt-get install -y -q android-sdk-libsparse-utils xz-utils
           git clone -q https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git postmarketos/pmbootstrap
           git -C postmarketos/pmbootstrap checkout -q "$PMBOOTSTRAP_COMMIT"
+          # 2026-11-19: apk-tools 3.0.10 (Alpine edge) cannot install systemd
+          # 262.2 ("failed to commit usr/bin/udevadm", reproduced on the PC;
+          # 3.0.8 and 3.0.9 install it). While edge ships 3.0.10-r0, pmbootstrap
+          # takes apk-tools-static 3.0.9-r0 from Alpine v3.24 (same signing keys,
+          # signature still verified).
+          python3 - <<'EOF'
+          p = "postmarketos/pmbootstrap/pmb/helpers/apk_static.py"
+          s = open(p).read()
+          old = '    version = index_data.version\n'
+          new = old + ('    if version == "3.0.10-r0":\n'
+                       '        version = "3.0.9-r0"\n'
+                       '        apk_name = f"apk-tools-static-{version}.apk"\n'
+                       '        url = f"{get_context().config.mirrors[\'alpine\']}v3.24/main/{Arch.native()}/{apk_name}"\n'
+                       '        extract(version, pmb.helpers.http.download(url, apk_name))\n'
+                       '        return\n')
+          assert s.count(old) == 1
+          open(p, "w").write(s.replace(old, new, 1))
+          print("pmbootstrap: apk-tools-static pinned to 3.0.9-r0 while edge has 3.0.10-r0")
+          EOF
 
       - name: pmbootstrap configuration (no prompts)
         run: |
           mkdir -p ~/.config "$PMB_WORK/cache_git"
           git clone -q --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$PMB_WORK/cache_git/pmaports"
-          # 2026-11-19: with supported_bin_merge=True pmbootstrap makes /usr/sbin a
-          # symlink to bin, but systemd-edge's systemd 262.2 (built 2026-11-06,
-          # before the bin-merge) ships bin/udevadm + usr/bin/udevadm and
-          # sbin/init + usr/sbin/init, which then land on the same path:
-          # "failed to commit usr/bin/udevadm". Keep the usr-merge-only layout
-          # (what r26 was built with) until systemd is rebuilt bin-merged.
-          if tar -xzOf <(curl -sfL http://mirror.postmarketos.org/postmarketos/extra-repos/systemd/master/aarch64/APKINDEX.tar.gz) APKINDEX 2>/dev/null |
-             awk -v RS= '/\nP:systemd-udevd\n/' | grep -q '^V:262\.2-r0$'; then
-            sed -i 's/^supported_bin_merge=True$/supported_bin_merge=False/' "$PMB_WORK/cache_git/pmaports/pmaports.cfg"
-            echo "pmaports.cfg: bin-merge off (systemd-udevd 262.2-r0 is not bin-merged)"
-          fi
           echo 8 > "$PMB_WORK/version"
           cat > ~/.config/pmbootstrap_v3.cfg <<EOF
           [pmbootstrap]
