@@ -16,9 +16,10 @@ dump() {
 # warm reboot boots Android, not the charger). 2026-11-19: an empty battery
 # came back in charger mode, the guard sent it to TWRP.
 if [ "$(getprop ro.bootmode)" = charger ]; then
+	cap() { for c in /sys/class/power_supply/*/capacity; do [ "$(cat ${c%/capacity}/type 2>/dev/null)" = Battery ] && cat $c && return; done; echo 0; }
 	echo "axon7m-bootguard: charger mode, waiting for 25 %" > /dev/kmsg
-	while [ "$(cat /sys/class/power_supply/battery/capacity 2>/dev/null || echo 0)" -lt 25 ]; do sleep 60; done
-	echo "axon7m-bootguard: charger mode, battery $(cat /sys/class/power_supply/battery/capacity) %: rebooting to Android" > /dev/kmsg
+	while [ "$(cap)" -lt 25 ]; do sleep 60; done
+	echo "axon7m-bootguard: charger mode, battery $(cap) %: rebooting to Android" > /dev/kmsg
 	setprop sys.powerctl reboot
 	sleep 30
 	echo b > /proc/sysrq-trigger
