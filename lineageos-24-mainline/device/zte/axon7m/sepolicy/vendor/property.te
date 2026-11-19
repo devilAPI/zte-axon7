@@ -2,3 +2,6 @@
 # each GL process (os_get_option). Without a type the vendor.mesa. lookup
 # hits vendor_default_prop, which apps and SurfaceFlinger may not read.
 vendor_public_prop(vendor_mesa_prop)
+
+# persist.vendor.axon7m.nosuspend: init acts on it; set by root (adb root) only
+vendor_internal_prop(vendor_axon7m_power_prop)

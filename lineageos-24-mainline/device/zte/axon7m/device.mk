@@ -129,8 +129,7 @@ else
 PRODUCT_COPY_FILES += $(DEVICE_PATH)/audio/audio_routes.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_routes.conf
 endif
 
-# Keep the system awake: suspend is broken on msm8996 mainline (PLAN.md)
-PRODUCT_VENDOR_PROPERTIES += sys.autosuspend.disabled=true
+# System suspend (s2idle) is on; init.axon7m.rc has the keep-awake switch
 
 # HALs that need no hardware work
 PRODUCT_PACKAGES += \

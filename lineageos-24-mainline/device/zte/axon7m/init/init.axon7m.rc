@@ -33,8 +33,9 @@ on post-fs-data
     # no axon7m-slpi-kick: restarting the SLPI froze the phone (run 24)
 
 on boot
-    # suspend is broken on msm8996 mainline: keep one wakelock (PLAN.md, M4)
-    write /sys/power/wake_lock axon7m-nosuspend
+    # s2idle works since kernel #25 (PSCI cpuidle, PMIC RTC wakeup); the
+    # charger driver keeps the system awake while USB is plugged in (0016).
+    # persist.vendor.axon7m.nosuspend=1 brings back the old keep-awake.
     start axon7m-audio-routes
 
 # GPU at its top clock while it works: with simple_ondemand (msm: up at 50 %
@@ -115,3 +116,9 @@ service axon7m-modem-online /vendor/bin/axon7m-modem-online
 
 on property:init.svc.rmtfs=running
     start axon7m-modem-online
+
+on property:persist.vendor.axon7m.nosuspend=1
+    write /sys/power/wake_lock axon7m-nosuspend
+
+on property:persist.vendor.axon7m.nosuspend=0
+    write /sys/power/wake_unlock axon7m-nosuspend
