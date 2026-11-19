@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-16 (builds 40-47: GPU fault fix, web pages, lights, MTP, camera through cameraserver, radio status; kernel 0013/0014 on build 47: hardware scaling in the display, GPU memory bandwidth, animations)
+Last update: 2026-11-19 (recommendation: LineageOS 22.2 for now, LOS 24 not too unstable; before: builds 40-47: GPU fault fix, web pages, lights, MTP, camera through cameraserver, radio status; kernel 0013/0014 on build 47: hardware scaling in the display, GPU memory bandwidth, animations)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -37,7 +37,8 @@ Changelog notes:
 
 [SIZE=5][B]What is this?[/B][/SIZE]
 A port of LineageOS 24 (Android 17) to the ZTE Axon 7 that does not use the old Android kernel or the old vendor blobs. It runs on [B]mainline Linux 7.3.1[/B] (the same kernel series as Nura, our postmarketOS-based Linux for the phone) plus the patches Android needs. Graphics are open source: Mesa freedreno for the Adreno 530 (OpenGL ES 3.1), drm_hwcomposer and minigbm.
-Phase: [B]alpha / developer preview[/B]. It boots and a good part of the hardware works, but there are no calls, no mobile data and no suspend, and the camera is new and unchecked. Not for your daily phone. If you want a usable Android today, use our [B]LineageOS 22.2[/B] (4.4 kernel, own thread).
+Phase: [B]alpha / developer preview[/B]. It boots and a good part of the hardware works, but there are no calls, no mobile data and no suspend, and the camera is new and unchecked. Not for your daily phone yet.
+[B]Recommendation for now:[/B] use our [B]LineageOS 22.2[/B] (Android 15 on the 4.4 kernel, own thread). It is the more reliable build today: calls and mobile data are wired up there, the camera is proven, and the phone sleeps. LineageOS 24 is not too unstable (30-minute stress tests usually run clean, scrolling is smooth), but it still lacks calls, mobile data and sleep, and a rare display driver crash restarts the phone. Try it if you are curious or want to help testing.
 Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 
 [SIZE=5][B]Status (2026-11-16)[/B][/SIZE]
