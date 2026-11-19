@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-19 (recommendation: LineageOS 22.2 for now, LOS 24 not too unstable; before: builds 40-47: GPU fault fix, web pages, lights, MTP, camera through cameraserver, radio status; kernel 0013/0014 on build 47: hardware scaling in the display, GPU memory bandwidth, animations)
+Last update: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -26,6 +26,12 @@ Changelog notes:
   votes) measured on build 47 with los24-anim.sh and los24-bench.sh (kfast
   kernel #23). Wallpaper zoom off (RRO) is in build 48, not confirmed yet,
   so not in the post. Shade and open/back still above 10 %.
+- 2026-11-20: the release flavour (built by CI's ci/build-release.sh, here
+  with only the test adb key added) installed on the main phone exactly as
+  written below: TWRP 3.3.0-0, adb sideload, reboot through the boot menu;
+  first start 231-325 s to the setup wizard. The installer's boot-menu check
+  was fixed first (it refused to install). Power HAL boosts, suspend while
+  unplugged (not measured on battery yet).
 - 2026-11-15: first alpha. Multi-boot slot only (system + los_boot,
   los_metadata/los_data wiped). No SIM detected so far (UIM: no ATR in both
   slots, SIM presence asked in to-test.md).
@@ -78,7 +84,7 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [*]Calls, SMS, mobile data: a first radio service shows the modem version and the network signal, but the SIM card is not detected so far, and mobile data needs a kernel driver that is not ported yet
 [*]Fingerprint (controlled by TrustZone; not possible on mainline)
 [*]NFC
-[*]Suspend / deep sleep: the phone never sleeps, so battery life is short
+[*]Deep sleep: the phone suspends with the screen off on battery, but the chip does not reach its lowest power state yet, so standby battery life is still short (not measured)
 [*]SELinux enforcing, storage encryption
 [/LIST]
 [B]Performance:[/B] scrolling is smooth: under 1 % late frames in our scroll benchmark (was 13 % in the first builds). Animations got much better after two kernel fixes: the display hardware now scales images itself (before, any scaled layer such as the wallpaper made the whole screen go through the GPU), and the GPU now asks for enough memory bandwidth. Late frames: app drawer 3 %, ripple on press 5-7 %, opening an app and going home 11 %, notification shade about 17 %, opening a settings page and going back about 19 % (were 30-40 %). The shade and opening pages still stutter a little: those apps need about 18 ms of drawing per frame on this GPU driver, more than one screen refresh.
@@ -98,8 +104,8 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [LIST=1]
 [*]TWRP: make a backup (above).
 [*]Download the zip from the [URL='https://github.com/devilAPI/zte-axon7/releases']releases page[/URL] (tag [I]lineageos-24-DATE[/I], file [I]lineage-24-DATE-UNOFFICIAL-axon7m.zip[/I]) and check it against the [I].sha256[/I] file.
-[*]Copy it to the phone and install it in TWRP; it must end without an error.
-[*]Reboot, choose [B]LineageOS[/B] in the boot menu. The first start takes a few minutes.
+[*]Install it in TWRP: either [I]Advanced > ADB Sideload[/I] and on the computer [I]adb sideload lineage-24-DATE-UNOFFICIAL-axon7m.zip[/I] (tested; nothing is stored on the phone), or copy it to the phone and use [I]Install[/I]. It takes about 7 minutes (writing and checking 5.6 GB) and must end with "Done. Reboot, then choose LineageOS in the boot menu." and no ERROR line.
+[*]Reboot, choose [B]LineageOS[/B] in the boot menu. The first start takes about 4-6 minutes, then the setup wizard appears.
 [/LIST]
 [B]No proprietary firmware in the download:[/B] LineageOS 24 loads the modem, DSP, GPU and Wi-Fi firmware straight from your phone's own partitions, read-only, at every start (the modem partition, and the GPU's a530_zap from the vendor partition). This is new in this release and still being tested; if the screen stays black or Wi-Fi/sound are missing, please send the logs below.
 
@@ -111,6 +117,14 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-20"]
+[LIST]
+[*]Install tested end to end the way you do it: TWRP 3.3.0-0, ADB sideload, reboot through the boot menu, setup wizard after about 4-5 minutes. The installer no longer refuses a valid boot menu.
+[*]Smoother touch scrolling: the CPU now speeds up the moment you touch the screen and when an app starts (it stayed at its lowest clock before). Setup wizard language list: about 5 % late frames.
+[*]Battery: the CPU cores power down when idle, and the phone can sleep (suspend) when the screen is off and no cable is plugged in; with a cable it stays awake. Battery life on standby not measured yet.
+[*]Kernel: fixes for bus clocks that could drop to zero (a likely cause of rare freezes), and the camera app no longer crashes the screen compositor.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-16, kernel update"]
 [LIST]
 [*]Animations: the display hardware scales layers itself now (the wallpaper and windows while apps open), so the screen no longer falls back to drawing everything on the GPU. App drawer, opening apps and the notification shade stutter much less (late frames 30-40 % before, now 3-19 %).
