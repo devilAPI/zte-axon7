@@ -74,6 +74,17 @@ jobs:
         run: |
           mkdir -p ~/.config "$PMB_WORK/cache_git"
           git clone -q --depth 1 https://gitlab.postmarketos.org/postmarketOS/pmaports.git "$PMB_WORK/cache_git/pmaports"
+          # 2026-11-19: with supported_bin_merge=True pmbootstrap makes /usr/sbin a
+          # symlink to bin, but systemd-edge's systemd 262.2 (built 2026-11-06,
+          # before the bin-merge) ships bin/udevadm + usr/bin/udevadm and
+          # sbin/init + usr/sbin/init, which then land on the same path:
+          # "failed to commit usr/bin/udevadm". Keep the usr-merge-only layout
+          # (what r26 was built with) until systemd is rebuilt bin-merged.
+          if tar -xzOf <(curl -sfL http://mirror.postmarketos.org/postmarketos/extra-repos/systemd/master/aarch64/APKINDEX.tar.gz) APKINDEX 2>/dev/null |
+             awk -v RS= '/\nP:systemd-udevd\n/' | grep -q '^V:262\.2-r0$'; then
+            sed -i 's/^supported_bin_merge=True$/supported_bin_merge=False/' "$PMB_WORK/cache_git/pmaports/pmaports.cfg"
+            echo "pmaports.cfg: bin-merge off (systemd-udevd 262.2-r0 is not bin-merged)"
+          fi
           echo 8 > "$PMB_WORK/version"
           cat > ~/.config/pmbootstrap_v3.cfg <<EOF
           [pmbootstrap]
