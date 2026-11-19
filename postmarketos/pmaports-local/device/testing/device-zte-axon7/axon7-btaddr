@@ -56,14 +56,69 @@ case "$addr" in
 	log "factory address $addr" ;;
 esac
 
-# the controller needs a moment after hci0 appears; btmgmt waits for input
-# when stdin is a terminal, so feed it nothing
-for i in 1 2 3 4 5 6 7 8 9 10; do
-	if btmgmt -i "$hci" public-addr "$addr" </dev/null | grep -q "Set Public Address complete"; then
-		log "$hci: address set"
+# Setting the address makes the kernel run the controller setup again
+# (rampatch + NVM download, HCI reset). On some boots that second setup
+# fails ("Opcode 0x0c03 failed: -110"): hci0 then stays in setup and never
+# shows up in the management index list. Check that it comes up with the
+# address; if not, rebind the serdev driver (the controller registers again,
+# unconfigured) and set the address again, at most 3 times.
+serdev_drv=/sys/bus/serial/drivers/hci_uart_qca
+serdev=serial0-0
+
+wait_hci() {
+	for i in $(seq 20); do
+		[ -e "/sys/class/bluetooth/$hci" ] && return 0
+		sleep 1
+	done
+	return 1
+}
+
+# btmgmt waits for input when stdin is a terminal, so feed it nothing
+set_addr() {
+	for i in 1 2 3 4 5 6 7 8 9 10; do
+		if btmgmt -i "$hci" public-addr "$addr" </dev/null |
+				grep -q "Set Public Address complete"; then
+			return 0
+		fi
+		sleep 1
+	done
+	return 1
+}
+
+# the controller is usable once it is a configured index with the address
+usable() {
+	for i in $(seq "${1:-25}"); do
+		btmgmt -i "$hci" info </dev/null 2>/dev/null | grep -qi "addr $addr" && return 0
+		sleep 1
+	done
+	return 1
+}
+
+rebind() {
+	echo "$serdev" > "$serdev_drv/unbind" 2>/dev/null || true
+	sleep 2
+	echo "$serdev" > "$serdev_drv/bind" 2>/dev/null || true
+}
+
+try=0
+while :; do
+	if wait_hci && usable 1; then
+		log "$hci: controller already up with $addr"
 		exit 0
 	fi
-	sleep 1
+	if wait_hci && set_addr && usable; then
+		if [ "$try" -gt 0 ]; then
+			log "$hci: address set, controller up after $try rebind(s)"
+		else
+			log "$hci: address set, controller up"
+		fi
+		exit 0
+	fi
+	if [ "$try" -ge 3 ]; then
+		log "$hci: no working controller after $try rebinds"
+		exit 1
+	fi
+	try=$((try + 1))
+	log "$hci: setup after the address change failed, rebinding $serdev ($try/3)"
+	rebind
 done
-log "$hci: setting the address failed"
-exit 1

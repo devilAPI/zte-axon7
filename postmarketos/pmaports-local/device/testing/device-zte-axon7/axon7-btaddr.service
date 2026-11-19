@@ -1,6 +1,6 @@
 [Unit]
 Description=Set the Axon 7 Bluetooth address (factory address from persist)
-BindsTo=sys-subsystem-bluetooth-devices-hci0.device
+# no BindsTo: the script rebinds the controller itself (hci0 goes away)
 After=sys-subsystem-bluetooth-devices-hci0.device
 Before=bluetooth.service
 

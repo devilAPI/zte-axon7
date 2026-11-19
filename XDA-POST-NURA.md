@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
+Last update: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -85,6 +85,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-19, r29"]
+[LIST]
+[*]Bluetooth: on some starts (about one in three) Bluetooth stayed off until a restart. Setting the phone's Bluetooth address makes the chip start a second time, and that sometimes failed. Nura now checks that Bluetooth really came up and restarts the chip if not (at most three times).
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-19, r28"]
 [LIST]
 [*]Suspend works: [I]systemctl suspend[/I] puts the phone to sleep and an alarm wakes it again (waking with the power key or by plugging in a charger is still to be confirmed). Wi-Fi, the modem, touch and USB keep working after waking up. Fixes from the LineageOS 24 work for this: the chip's internal buses keep their clocks, and the charger can wake the phone.
