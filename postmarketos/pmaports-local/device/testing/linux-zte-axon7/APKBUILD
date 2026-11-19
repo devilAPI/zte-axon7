@@ -7,7 +7,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=26
+pkgrel=27
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -86,6 +86,11 @@ source="
 	0046-power-reset-qcom-pon-clear-the-reboot-reason-after-b.patch
 	0047-drm-msm-dpu-keep-the-vblank-irq-after-a-pp_done-time.patch
 	0048-drm-msm-keep-shared-buffers-mapped-in-the-global-GPU.patch
+	0049-drm-msm-no-display-snapshot-on-errors-unless-msm.dis.patch
+	0050-i2c-qcom-cci-no-interrupt-while-runtime-suspended.patch
+	0051-slimbus-qcom-ngd-ctrl-forget-the-completion-of-a-tim.patch
+	0052-drm-msm-dpu-QSEED2-scaler-for-VIG-pipes.patch
+	0053-arm64-dts-qcom-msm8996-DDR-bandwidth-for-the-GPU-OPP.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -166,5 +171,10 @@ a969d356dd17e9a14d7eaa858d43a21aa02e167d31851b482266d50f5dd9cfaa431a04c8c6206789
 7f3dcff41c89553b7349d386373c173b7ddc763ff3cbc04495609652105a998b8049b9b6ab07c75c39b375f11c10a3adbd1ac499deddc0b565d128753fea9d9b  0046-power-reset-qcom-pon-clear-the-reboot-reason-after-b.patch
 99291e6d0c08641187acb9b1da39c0b55fd7774e282ddae155c82ba517e9e56f7c1e4dd00cb8ef4f724924162c01e2dfd9cafda1b063cb11aa18e01d1044e5ab  0047-drm-msm-dpu-keep-the-vblank-irq-after-a-pp_done-time.patch
 99163593b420040cd67526188cb87f6b4f52297c8b07f731249e41e5a0b1d0b37260991c78b37ad582a9fe1c033e6f77bb608fc31be72dd2cd26469389492413  0048-drm-msm-keep-shared-buffers-mapped-in-the-global-GPU.patch
+e24938866b46f98dfa2c7fa973c684e4ff93dd5a75971d547f993fa8e667da9e3aa6bffcd4b7d5a8c6f1544d426a53d6009b5a12d1c245206de952b80e5be29c  0049-drm-msm-no-display-snapshot-on-errors-unless-msm.dis.patch
+131681bc725fc4d94bc074d517d6602b64b248a37dcc07d4d7334f59a0a4c8be3e6a29d948483737a4fa4c96e4f57929b163c3aeecae02013ee0d270087a6d47  0050-i2c-qcom-cci-no-interrupt-while-runtime-suspended.patch
+e2beab74990941fca9fd07ec51e51c9b55b0306cad8d7fd1c2774fd7e58841a56a044988349aa054e2a04f7268ca4e6166594eccb0e78b8e55617b3716e437a8  0051-slimbus-qcom-ngd-ctrl-forget-the-completion-of-a-tim.patch
+4f9822dc158456ccc45c5c8b05ea9875ee54c337ca011dcac19b134fb6509dadfafba7bf4c429ca082e6fa112197bd0ea3bdfa98199cd878add57592f13053e0  0052-drm-msm-dpu-QSEED2-scaler-for-VIG-pipes.patch
+3fedaef54855b025622d5a39ad5bbb02785009aa07fae0e0fe0108ba6b87020fd00a4d91f6ae2bbd03a738a85885673ad15671147a9383f8ccb7a9e2b234a2f2  0053-arm64-dts-qcom-msm8996-DDR-bandwidth-for-the-GPU-OPP.patch
 4bd4e886fae4feaf325075fdae6f049d2c7524fe8b9001c84fa78312ba1de4a6d2b27c3185b9838fac760eb9d23024f2b5b86880e888f133ea5203ef59033b99  config-zte-axon7.aarch64
 "

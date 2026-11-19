@@ -33,6 +33,17 @@ comes back into Nura, Wi-Fi/modem/ADSP/SLPI firmware load; the GPU works
 after the firmware fix of 11518fe (not in r25: on phones without a vendor
 partition r25 leaves the GPU off).
 
+**Second phone, r27 kernel (2026-11-19):** kernel 0049-0053 (display
+scaler, GPU memory bandwidth, three crash fixes from LineageOS 24) run on the
+second phone (7.3.1-t3+ in its boot partition), checked without hands
+(ios/research/phone2/kernel-r27/RESULTS.md). One audio finding that r26
+has too: in a test, a second short playback (1 s, tinyplay) about 20 s after
+the first, or one started about 70 s after boot while Nura restarts the audio
+processor, failed and the sound stayed off until a restart.
+
+- [ ] After r27: play two songs one after the other (and pause/resume); does the second one play? If not, `sudo dmesg | grep -i q6` and tell Claude
+- [ ] In a desktop that uses hardware planes (Phosh/phoc), a scaled video or window looks right (no seam or edge in the middle of the screen)
+
 **Second phone, kernel 0047/0048 (2026-11-16 night):** the GPU fixes from
 LineageOS 24 (vblank after a display timeout, shared GPU buffers) are in the
 Nura kernel series (linux-zte-axon7 r26) and run on the second phone (test

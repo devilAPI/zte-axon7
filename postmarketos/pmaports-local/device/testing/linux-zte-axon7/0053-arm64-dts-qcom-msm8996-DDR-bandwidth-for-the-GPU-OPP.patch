@@ -1,0 +1,74 @@
+From 078fe72747bf70bd1b6f1da3cb9f3d12a6f93986 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Thu, 19 Nov 2026 19:08:06 +0100
+Subject: [PATCH 53/53] arm64: dts: qcom: msm8996: DDR bandwidth for the GPU
+ OPPs
+
+The GPU node has a gfx-mem interconnect path, but its OPPs carry no
+bandwidth, so the GPU never votes for DDR (mas_oxili 0/0 in
+interconnect_summary). DDR then runs at what the display alone asks for
+(about 3.4 GB/s average, a quarter of msm8996's LPDDR4), and the a530
+renders and Android composes on the GPU with a starved memory bus.
+
+Give each OPP a peak vote, the top one the full DDR bandwidth (14.4 GB/s,
+1804.8 MHz x 8 bytes) as the downstream bus table did at the top GPU
+level. msm_gpu drops to the lowest OPP when idle, so the vote falls to
+1.6 GB/s between frames.
+
+ZTE Axon 7, LineageOS 24 animations (gfxinfo janky frames, with the
+QSEED2 scaler patch): ripple + open/back 34 -> 19 %, notification shade
+22 -> 17 %, launcher drawer 7 -> 3 %, app open to home 13 -> 11 %.
+
+Ported from the LineageOS 24 kernel series (same mainline 7.3.1 base).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ arch/arm64/boot/dts/qcom/msm8996.dtsi | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996.dtsi b/arch/arm64/boot/dts/qcom/msm8996.dtsi
+index d8412567d..c82482b48 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996.dtsi
++++ b/arch/arm64/boot/dts/qcom/msm8996.dtsi
+@@ -1305,30 +1305,37 @@ gpu_opp_table: opp-table {
+ 				 */
+ 				opp-624000000 {
+ 					opp-hz = /bits/ 64 <624000000>;
++					opp-peak-kBps = <14400000>;
+ 					opp-supported-hw = <0x09>;
+ 				};
+ 				opp-560000000 {
+ 					opp-hz = /bits/ 64 <560000000>;
++					opp-peak-kBps = <11200000>;
+ 					opp-supported-hw = <0x0d>;
+ 				};
+ 				opp-510000000 {
+ 					opp-hz = /bits/ 64 <510000000>;
++					opp-peak-kBps = <9600000>;
+ 					opp-supported-hw = <0xff>;
+ 				};
+ 				opp-401800000 {
+ 					opp-hz = /bits/ 64 <401800000>;
++					opp-peak-kBps = <7200000>;
+ 					opp-supported-hw = <0xff>;
+ 				};
+ 				opp-315000000 {
+ 					opp-hz = /bits/ 64 <315000000>;
++					opp-peak-kBps = <5600000>;
+ 					opp-supported-hw = <0xff>;
+ 				};
+ 				opp-214000000 {
+ 					opp-hz = /bits/ 64 <214000000>;
++					opp-peak-kBps = <3200000>;
+ 					opp-supported-hw = <0xff>;
+ 				};
+ 				opp-133000000 {
+ 					opp-hz = /bits/ 64 <133000000>;
++					opp-peak-kBps = <1600000>;
+ 					opp-supported-hw = <0xff>;
+ 				};
+ 			};
+-- 
+2.43.0
+
