@@ -38,7 +38,7 @@ Changelog notes:
 [SIZE=5][B]What is this?[/B][/SIZE]
 A port of LineageOS 24 (Android 17) to the ZTE Axon 7 that does not use the old Android kernel or the old vendor blobs. It runs on [B]mainline Linux 7.3.1[/B] (the same kernel series as Nura, our postmarketOS-based Linux for the phone) plus the patches Android needs. Graphics are open source: Mesa freedreno for the Adreno 530 (OpenGL ES 3.1), drm_hwcomposer and minigbm.
 Phase: [B]alpha / developer preview[/B]. It boots and a good part of the hardware works, but there are no calls, no mobile data and no suspend, and the camera is new and unchecked. Not for your daily phone yet.
-[B]Recommendation for now:[/B] use our [B]LineageOS 22.2[/B] (Android 15 on the 4.4 kernel, own thread). It is the more reliable build today: calls and mobile data are wired up there, the camera is proven, and the phone sleeps. LineageOS 24 is not too unstable (30-minute stress tests usually run clean, scrolling is smooth), but it still lacks calls, mobile data and sleep, and a rare display driver crash restarts the phone. Try it if you are curious or want to help testing.
+[B]Recommendation for now:[/B] use our [B]LineageOS 22.2[/B] (Android 15 on the 4.4 kernel, own thread). It is the more reliable build today: it uses ZTE's own drivers, so the cameras, fingerprint, NFC and sleep work there (SIM and calls are still untested on that one too). LineageOS 24 is not too unstable (30-minute stress tests usually run clean, scrolling is smooth), but it still lacks calls, mobile data and sleep, and a rare display driver crash restarts the phone. Try it if you are curious or want to help testing.
 Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 
 [SIZE=5][B]Status (2026-11-16)[/B][/SIZE]
