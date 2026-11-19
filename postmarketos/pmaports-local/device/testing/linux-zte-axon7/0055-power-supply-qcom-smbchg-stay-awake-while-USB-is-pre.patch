@@ -1,0 +1,84 @@
+From b3f0fe633592092ee83b31415b1ef843138ea1c9 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Thu, 19 Nov 2026 20:43:29 +0100
+Subject: [PATCH 55/57] power: supply: qcom-smbchg: stay awake while USB is
+ present, wake on plug-in
+
+With system suspend enabled, Android suspends as soon as no wakelock is
+held, also with a cable plugged in. On the ZTE Axon 7 (s2idle) the
+gadget then drops off the bus and USB device mode needs minutes to come
+back ("HS-PHY not in L2", host: "not responding to setup address"), and
+charging runs without the driver. Hold a wakeup source while USB is
+present, as the downstream charger driver did, and make the USB source
+detect interrupt a wakeup interrupt so plugging in a charger resumes the
+system.
+
+Ported from the LineageOS 24 kernel series (same mainline 7.3.1 base).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/power/supply/qcom-smbchg.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/drivers/power/supply/qcom-smbchg.c b/drivers/power/supply/qcom-smbchg.c
+index 767a03137..e6c996b70 100644
+--- a/drivers/power/supply/qcom-smbchg.c
++++ b/drivers/power/supply/qcom-smbchg.c
+@@ -10,6 +10,7 @@
+ #include <linux/extcon-provider.h>
+ #include <linux/fwnode.h>
+ #include <linux/interrupt.h>
++#include <linux/pm_wakeup.h>
+ #include <linux/kernel.h>
+ #include <linux/module.h>
+ #include <linux/of.h>
+@@ -895,6 +896,17 @@ static void smbchg_extcon_update(struct smbchg_chip *chip)
+ 				    (union extcon_property_value) false);
+ 	}
+ 
++	/*
++	 * Stay out of system suspend while a cable is plugged in, as the
++	 * downstream charger driver did: charging needs AICL and the
++	 * charge state machine, and USB device mode does not survive a
++	 * suspend with the gadget connected.
++	 */
++	if (usb_present)
++		pm_stay_awake(chip->dev);
++	else
++		pm_relax(chip->dev);
++
+ 	/* Sync all extcon cables */
+ 	extcon_sync(chip->edev, EXTCON_USB);
+ 	extcon_sync(chip->edev, EXTCON_USB_HOST);
+@@ -1652,6 +1664,9 @@ static int smbchg_probe(struct platform_device *pdev)
+ 		return ret;
+ 
+ 	/* Request IRQs */
++	/* plugging in a charger wakes the system (usbin-src-det below) */
++	device_init_wakeup(chip->dev, true);
++
+ 	for (i = 0; i < ARRAY_SIZE(smbchg_irqs); ++i) {
+ 		/* IRQ unused */
+ 		if (!smbchg_irqs[i].handler)
+@@ -1673,10 +1688,17 @@ static int smbchg_probe(struct platform_device *pdev)
+ 				smbchg_irqs[i].name, ERR_PTR(irq));
+ 			return ret;
+ 		}
++
++		if (!strcmp(smbchg_irqs[i].name, "usbin-src-det"))
++			enable_irq_wake(irq);
+ 	}
+ 
+ 	platform_set_drvdata(pdev, chip);
+ 
++	/* a cable plugged in before probe: no source detect interrupt yet */
++	if (smbchg_usb_is_present(chip))
++		pm_stay_awake(chip->dev);
++
+ 	return 0;
+ }
+ 
+-- 
+2.43.0
+

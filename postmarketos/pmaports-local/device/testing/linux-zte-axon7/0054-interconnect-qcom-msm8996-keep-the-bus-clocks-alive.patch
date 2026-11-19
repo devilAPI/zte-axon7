@@ -1,0 +1,92 @@
+From f965c2bb4d4b637d858c73715cadffe66f8ea9cf Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Thu, 19 Nov 2026 20:43:29 +0100
+Subject: [PATCH 54/57] interconnect: qcom: msm8996: keep the bus clocks alive
+
+None of the msm8996 NoC providers sets keep_alive, so once the last path
+through a NoC drops its vote (UFS clock scaling or runtime suspend, the
+display going off), icc-rpm asks the RPM for an active rate of 0 on the
+config, peripheral and system NoCs. Register accesses from the CPU still
+go through them. On the ZTE Axon 7 this showed up as several unrelated
+register paths timing out together: "arm-smmu d00000.iommu: TLB sync
+timed out -- SMMU may be deadlocked" (display SMMU, hundreds of times),
+"ufshcd-qcom: uic cmd ... completion timeout" in ufshc devfreq, "SPI
+transfer failed: -110" on BLSP, camera VFE halt timeouts, then hung I/O,
+RCU stalls and the system_server watchdog. The downstream kernel kept
+cnoc and pnoc up with dedicated keepalive clock votes.
+
+Set keep_alive on every msm8996 NoC with an RPM bus clock, as msm8974,
+qcm2290 and qcs404 do: icc-rpm then never votes below 19.2 MHz in the
+active set.
+
+Ported from the LineageOS 24 kernel series (same mainline 7.3.1 base).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/interconnect/qcom/msm8996.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/interconnect/qcom/msm8996.c b/drivers/interconnect/qcom/msm8996.c
+index 882f9d2b6..9ba2b22ae 100644
+--- a/drivers/interconnect/qcom/msm8996.c
++++ b/drivers/interconnect/qcom/msm8996.c
+@@ -1839,6 +1839,7 @@ static const struct qcom_icc_desc msm8996_a1noc = {
+ 	.type = QCOM_ICC_NOC,
+ 	.nodes = a1noc_nodes,
+ 	.num_nodes = ARRAY_SIZE(a1noc_nodes),
++	.keep_alive = true,
+ 	.bus_clk_desc = &aggre1_branch_clk,
+ 	.regmap_cfg = &msm8996_a1noc_regmap_config
+ };
+@@ -1861,6 +1862,7 @@ static const struct qcom_icc_desc msm8996_a2noc = {
+ 	.type = QCOM_ICC_NOC,
+ 	.nodes = a2noc_nodes,
+ 	.num_nodes = ARRAY_SIZE(a2noc_nodes),
++	.keep_alive = true,
+ 	.bus_clk_desc = &aggre2_branch_clk,
+ 	.intf_clocks = a2noc_intf_clocks,
+ 	.num_intf_clocks = ARRAY_SIZE(a2noc_intf_clocks),
+@@ -1890,6 +1892,7 @@ static const struct qcom_icc_desc msm8996_bimc = {
+ 	.type = QCOM_ICC_BIMC,
+ 	.nodes = bimc_nodes,
+ 	.num_nodes = ARRAY_SIZE(bimc_nodes),
++	.keep_alive = true,
+ 	.bus_clk_desc = &bimc_clk,
+ 	.regmap_cfg = &msm8996_bimc_regmap_config,
+ 	.ab_coeff = 154,
+@@ -1950,6 +1953,7 @@ static const struct qcom_icc_desc msm8996_cnoc = {
+ 	.type = QCOM_ICC_NOC,
+ 	.nodes = cnoc_nodes,
+ 	.num_nodes = ARRAY_SIZE(cnoc_nodes),
++	.keep_alive = true,
+ 	.bus_clk_desc = &bus_2_clk,
+ 	.regmap_cfg = &msm8996_cnoc_regmap_config
+ };
+@@ -2004,6 +2008,7 @@ static const struct qcom_icc_desc msm8996_mnoc = {
+ 	.type = QCOM_ICC_NOC,
+ 	.nodes = mnoc_nodes,
+ 	.num_nodes = ARRAY_SIZE(mnoc_nodes),
++	.keep_alive = true,
+ 	.bus_clk_desc = &mmaxi_0_clk,
+ 	.intf_clocks = mm_intf_clocks,
+ 	.num_intf_clocks = ARRAY_SIZE(mm_intf_clocks),
+@@ -2044,6 +2049,7 @@ static const struct qcom_icc_desc msm8996_pnoc = {
+ 	.type = QCOM_ICC_NOC,
+ 	.nodes = pnoc_nodes,
+ 	.num_nodes = ARRAY_SIZE(pnoc_nodes),
++	.keep_alive = true,
+ 	.bus_clk_desc = &bus_0_clk,
+ 	.regmap_cfg = &msm8996_pnoc_regmap_config
+ };
+@@ -2089,6 +2095,7 @@ static const struct qcom_icc_desc msm8996_snoc = {
+ 	.type = QCOM_ICC_NOC,
+ 	.nodes = snoc_nodes,
+ 	.num_nodes = ARRAY_SIZE(snoc_nodes),
++	.keep_alive = true,
+ 	.bus_clk_desc = &bus_1_clk,
+ 	.regmap_cfg = &msm8996_snoc_regmap_config
+ };
+-- 
+2.43.0
+

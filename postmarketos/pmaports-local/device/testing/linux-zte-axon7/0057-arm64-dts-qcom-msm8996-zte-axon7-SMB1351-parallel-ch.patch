@@ -1,0 +1,65 @@
+From 041aa37cdc11e705091ab277a4ca67c9a1a573df Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Thu, 19 Nov 2026 21:22:47 +0100
+Subject: [PATCH 57/57] arm64: dts: qcom: msm8996-zte-axon7: SMB1351 parallel
+ charger
+
+The SMB1351 at 0x1d on blsp2_i2c1 (downstream: qcom,parallel-charger,
+float 4.4 V), as a parallel charger of the PMI8996 SMBCHG with the PMI8996
+fuel gauge for battery voltage and temperature, at most 1 A charge current.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 21 ++++++++++++++++---
+ 1 file changed, 18 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index 2a45b9e2d..b2da0dda3 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -170,8 +170,8 @@ hifi_ldo: hifi-ldo-regulator {
+ 	/*
+ 	 * ZTE P996A01, 3250 mAh, float voltage 4.4 V (zte_p996a01_3250mah.dtsi);
+ 	 * termination 150 mA as ZTE's smbcharger. ZTE charges with up to
+-	 * 3 A together with the SMB1351 parallel charger, which has no
+-	 * driver here: 2 A from the PMI8996 alone.
++	 * 3 A together with the SMB1351 parallel charger: 2 A from the
++	 * PMI8996, up to 1 A more from the SMB1351 on a DCP (charger@1d).
+ 	 */
+ 	battery: battery {
+ 		compatible = "simple-battery";
+@@ -316,7 +316,7 @@ &blsp2_uart2 {
+ 
+ /*
+  * i2c@75b5000: TI HD3SS3220 USB-C controller @47 and SMB1351 parallel
+- * charger @1d (no driver). Downstream zte-usb-type-c.dtsi: INT = PM8994
++ * charger @1d. Downstream zte-usb-type-c.dtsi: INT = PM8994
+  * GPIO 14, EN_CC/mux = PM8994 MPP 5, SS re-driver = MPP 7, chip supplies
+  * from PMI8994 GPIO 8 (VCONN 5 V) and GPIO 9 (3.3 V), all driven high.
+  * Some units carry a Pericom PI5USB302 @0d instead: then this probe fails
+@@ -326,6 +326,21 @@ &blsp2_uart2 {
+ &blsp2_i2c1 {
+ 	status = "okay";
+ 
++	/*
++	 * SMB1351 parallel charger (downstream "qcom,smb1351-charger" with
++	 * qcom,parallel-charger, float 4.4 V). Charges next to the PMI8996
++	 * SMBCHG on a DCP only, at most 1 A here (stock gave it half of 3 A).
++	 */
++	charger@1d {
++		compatible = "qcom,smb1351-parallel";
++		reg = <0x1d>;
++		power-supplies = <&pmi8994_smbchg>;
++		qcom,fuel-gauge = <&pmi8994_fg>;
++		qcom,float-voltage-microvolt = <4400000>;
++		qcom,max-charge-current-microamp = <1000000>;
++		qcom,min-input-current-microamp = <1000000>;
++	};
++
+ 	usb-typec@47 {
+ 		compatible = "ti,hd3ss3220";
+ 		reg = <0x47>;
+-- 
+2.43.0
+

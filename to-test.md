@@ -33,6 +33,18 @@ comes back into Nura, Wi-Fi/modem/ADSP/SLPI firmware load; the GPU works
 after the firmware fix of 11518fe (not in r25: on phones without a vendor
 partition r25 leaves the GPU off).
 
+**Second phone, r28 kernel (2026-11-19 evening):** suspend, the SMB1351
+second charger chip and CPU idle states, checked without hands on the second
+phone (ios/research/phone2/kernel-r27/RESULTS-r28.md): 7 suspend cycles with
+an alarm wake (30 s to 5 min), USB, Wi-Fi, modem, touch and Bluetooth back
+each time; the SMB1351 driver loads and, off by default, only holds the chip's
+input suspended. Only you can do these:
+
+- [ ] Wall charger (not a PC port), battery below about 80 %. The SMB1351 is off by default; switch it on for this test with one line, `echo 1 | sudo tee /sys/module/smb1351_charger/parameters/enable` (lasts until the next restart; permanently: `echo "options smb1351_charger enable=1" | sudo tee /etc/modprobe.d/smb1351.conf`, or `smb1351_charger.enable=1` on the kernel command line). Then `cat /sys/class/power_supply/smb1351-parallel/online` shows 1 within a minute and `sudo dmesg | grep smb1351` says "parallel charging on"; `cat /sys/class/power_supply/qcom-battery/current_now` is more negative than about -2000000 (more than 2 A into the battery). The phone must not get hot; unplug if it does
+- [ ] Unplugged, `sudo systemctl suspend`: the screen goes dark; a short press of the power key wakes it
+- [ ] Unplugged and suspended: plugging in a charger wakes it
+- [ ] SIM: put a SIM card into the phone and run `sudo qmicli -d qrtr://0 --uim-get-card-status`: does slot 1 say "present" instead of "no-atr-received"?
+
 **Second phone, r27 kernel (2026-11-19):** kernel 0049-0053 (display
 scaler, GPU memory bandwidth, three crash fixes from LineageOS 24) run on the
 second phone (7.3.1-t3+ in its boot partition), checked without hands

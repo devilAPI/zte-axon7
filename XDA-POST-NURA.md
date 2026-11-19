@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
+Last update: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -46,10 +46,12 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [*]Both cameras: raw pictures, front 8 MP (OV8856) and rear 20 MP (S5K2T8, focus by hand) through the mainline camera subsystem (media-ctl + v4l2-ctl)
 [*]Motion sensors (accelerometer, gyroscope, compass), light and proximity; the standard sensor service (iio-sensor-proxy) sees them, so a desktop can rotate the screen
 [*]Graphics acceleration: Adreno 530 GPU with OpenGL ES 3.1 (Mesa freedreno)
+[*]Suspend ([I]systemctl suspend[/I]): the phone sleeps and wakes up again on an alarm; Wi-Fi, modem, touch and USB work after waking up
 [/LIST]
 [/SPOILER]
 [B]New, still to be confirmed by eye or ear:[/B]
 [LIST]
+[*]Waking up from suspend with the power key or by plugging in a charger
 [*]Headphone audio through the Hi-Fi DAC (AK4490)
 [*]Flashlight (torch)
 [*]Flip cover sensor (open is confirmed, closed not yet)
@@ -58,11 +60,10 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [/LIST]
 [B]Not yet:[/B]
 [LIST]
+[*]Fast charging (SMB1351): included, off by default until tested
 [*]Calls
 [*]SMS
 [*]Mobile data
-[*]Fast charging above 2 A (second charger chip SMB1351)
-[*]Suspend
 [/LIST]
 
 [SIZE=5][B]Installation[/B][/SIZE]
@@ -84,6 +85,13 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-19, r28"]
+[LIST]
+[*]Suspend works: [I]systemctl suspend[/I] puts the phone to sleep and an alarm wakes it again (waking with the power key or by plugging in a charger is still to be confirmed). Wi-Fi, the modem, touch and USB keep working after waking up. Fixes from the LineageOS 24 work for this: the chip's internal buses keep their clocks, and the charger can wake the phone.
+[*]Fast charging (SMB1351): included, off by default until tested. A driver for the second charger chip: once switched on ([I]smb1351_charger.enable=1[/I]) it adds up to 1 A on a wall charger, 3 A in total as on stock, only while the battery is cool enough and below 4.15 V, with limits below the stock values (4.4 V). Off, it only keeps the chip switched off.
+[*]Power saving: the processor cores now use their deep idle state when there is nothing to do (about 6 % less power with the screen off).
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-19"]
 [LIST]
 [*]Display: the display engine can now scale a picture layer itself (the QSEED2 scaler of the Snapdragon 820). Before, any scaled window or video layer had to be drawn by the GPU first; desktops that use hardware planes save that work.

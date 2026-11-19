@@ -3,11 +3,12 @@
 # no firmware user-helper fallback (each missing file cost 60 s), S6E3HA3
 # panel and SMBCHG OTG boost as modules; fuel gauge, haptics, torch and
 # the Hi-Fi audio drivers (AK4490, AK8157, ISL98608), the AK4961 and the
-# OV8856 front camera and the SMBCHG charger as modules.
+# OV8856 front camera and the SMBCHG charger as modules; PSCI cpuidle and
+# PM debug (suspend); the SMB1351 parallel charger as a module.
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=27
+pkgrel=28
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -91,6 +92,10 @@ source="
 	0051-slimbus-qcom-ngd-ctrl-forget-the-completion-of-a-tim.patch
 	0052-drm-msm-dpu-QSEED2-scaler-for-VIG-pipes.patch
 	0053-arm64-dts-qcom-msm8996-DDR-bandwidth-for-the-GPU-OPP.patch
+	0054-interconnect-qcom-msm8996-keep-the-bus-clocks-alive.patch
+	0055-power-supply-qcom-smbchg-stay-awake-while-USB-is-pre.patch
+	0056-power-supply-add-the-SMB1351-parallel-charger.patch
+	0057-arm64-dts-qcom-msm8996-zte-axon7-SMB1351-parallel-ch.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -176,5 +181,9 @@ e24938866b46f98dfa2c7fa973c684e4ff93dd5a75971d547f993fa8e667da9e3aa6bffcd4b7d5a8
 e2beab74990941fca9fd07ec51e51c9b55b0306cad8d7fd1c2774fd7e58841a56a044988349aa054e2a04f7268ca4e6166594eccb0e78b8e55617b3716e437a8  0051-slimbus-qcom-ngd-ctrl-forget-the-completion-of-a-tim.patch
 4f9822dc158456ccc45c5c8b05ea9875ee54c337ca011dcac19b134fb6509dadfafba7bf4c429ca082e6fa112197bd0ea3bdfa98199cd878add57592f13053e0  0052-drm-msm-dpu-QSEED2-scaler-for-VIG-pipes.patch
 3fedaef54855b025622d5a39ad5bbb02785009aa07fae0e0fe0108ba6b87020fd00a4d91f6ae2bbd03a738a85885673ad15671147a9383f8ccb7a9e2b234a2f2  0053-arm64-dts-qcom-msm8996-DDR-bandwidth-for-the-GPU-OPP.patch
-4bd4e886fae4feaf325075fdae6f049d2c7524fe8b9001c84fa78312ba1de4a6d2b27c3185b9838fac760eb9d23024f2b5b86880e888f133ea5203ef59033b99  config-zte-axon7.aarch64
+d3e44a06288b3a26b46cdd37c912d27a9f6a44a2d7e0481c12ba4042c87b1f90d29b175d310fc0b6e58cb5423183ab8b3cef580e339fc19955230e3452687da0  0054-interconnect-qcom-msm8996-keep-the-bus-clocks-alive.patch
+06cb1ec60626fe905b0eb76548ea97e03309de0916795ea42b0a596f25d2d537330e6890d4fd9ce7e55637d24a6d0c94fa9635d9a6b8b2a6fb41f995a518504d  0055-power-supply-qcom-smbchg-stay-awake-while-USB-is-pre.patch
+48db0e2ab3fc87a8663d74a9970503f84d35f66935ee2733500bfd8f85d5fc24709ef7e064868733bb5ec663a081672178614a582052f0c48b771a404d1e7de2  0056-power-supply-add-the-SMB1351-parallel-charger.patch
+ff429cf5203eb465f0e975d9481708b8ae38c81bc0c3932762c0f2a1183e2c6f63c1bb5616a9a8aa17f4104952fa87d43157d70e8a977198f2b7a8dc8ce90a9e  0057-arm64-dts-qcom-msm8996-zte-axon7-SMB1351-parallel-ch.patch
+9517782adf95e606ac9049a4e553d45e808178036aa538ceec307e092bd3ee1a4967738d3629577aa4d631408b7ef8a4b9ff14772a1238c535d950cac6f3d259  config-zte-axon7.aarch64
 "
