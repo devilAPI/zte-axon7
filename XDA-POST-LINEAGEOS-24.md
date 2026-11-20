@@ -103,7 +103,7 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [B]What the zip does:[/B] it writes the system image into the partition [I]system[/I] and the kernel into [I]los_boot[/I], and erases [I]los_metadata[/I] and [I]los_data[/I]. [B]All LineageOS data in the multi-boot slot is erased[/B]; a LineageOS 22.2 installed in the multi-boot slot is replaced. It does not touch boot, misc, iOS, Nura, persist, the modem/EFS partitions or the bootloader.
 [LIST=1]
 [*]TWRP: make a backup (above).
-[*]Download the zip from the [URL='https://github.com/devilAPI/zte-axon7/releases']releases page[/URL] (tag [I]lineageos-24-DATE[/I], file [I]lineage-24-DATE-UNOFFICIAL-axon7m.zip[/I]) and check it against the [I].sha256[/I] file.
+[*]Download the zip: [URL='https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-24-latest']newest release[/URL] (first release: lineageos-24-20261120; file [I]lineage-24-DATE-UNOFFICIAL-axon7m.zip[/I]) and check it against the [I].sha256[/I] file.
 [*]Install it in TWRP: either [I]Advanced > ADB Sideload[/I] and on the computer [I]adb sideload lineage-24-DATE-UNOFFICIAL-axon7m.zip[/I] (tested; nothing is stored on the phone), or copy it to the phone and use [I]Install[/I]. It takes about 7 minutes (writing and checking 5.6 GB) and must end with "Done. Reboot, then choose LineageOS in the boot menu." and no ERROR line.
 [*]Reboot, choose [B]LineageOS[/B] in the boot menu. The first start takes about 4-6 minutes, then the setup wizard appears.
 [/LIST]
