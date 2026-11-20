@@ -104,13 +104,13 @@
     </devicePorts>
     <routes>
         <route type="mix" sink="Speaker"
-               sources="primary output,compressed_offload,mmap_no_irq_out"/>
+               sources="primary output,compressed_offload,mmap_no_irq_out,Telephony Rx"/>
         <route type="mix" sink="Earpiece"
-               sources="primary output"/>
+               sources="primary output,Telephony Rx"/>
         <route type="mix" sink="Wired Headset"
-               sources="primary output"/>
+               sources="primary output,Telephony Rx"/>
         <route type="mix" sink="Wired Headphones"
-               sources="primary output"/>
+               sources="primary output,Telephony Rx"/>
         <route type="mix" sink="primary input"
                sources="Built-In Mic,Wired Headset Mic"/>
         <route type="mix" sink="mmap_no_irq_in"
@@ -118,8 +118,10 @@
 
         <route type="mix" sink="telephony_rx"
                sources="Telephony Rx"/>
+        <!-- hardware call audio (q6voice in the ADSP): device-to-device patches,
+             the HAL starts the DSP voice path while they exist (patch 0003) -->
         <route type="mix" sink="Telephony Tx"
-               sources="telephony_tx"/>
+               sources="telephony_tx,Built-In Mic,Wired Headset Mic"/>
 
         <route type="mix" sink="fm_tuner"
                sources="FM Tuner"/>

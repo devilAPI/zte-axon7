@@ -1,0 +1,188 @@
+From: axon7m bring-up
+Subject: [PATCH] audio: default HAL: circuit-switched call audio in the DSP (q6voice)
+
+During a call the audio policy connects Telephony Rx -> earpiece/speaker
+and the microphone -> Telephony Tx with device-to-device patches.
+ModulePrimary watches setAudioPatch/resetAudioPatch: while such a patch
+exists it applies the routes of the patch's devices plus [voice] and holds
+the CS-Voice PCM (ro.vendor.audio.voice.card/device) open, which starts
+the voice session in the DSP (Linux q6voice); afterwards it closes the
+PCMs and applies [voice-off]. No audio data flows through the HAL.
+---
+diff -ruN a/audio/aidl/default/include/core-impl/ModulePrimary.h b/audio/aidl/default/include/core-impl/ModulePrimary.h
+--- a/audio/aidl/default/include/core-impl/ModulePrimary.h
++++ b/audio/aidl/default/include/core-impl/ModulePrimary.h
+@@ -56,7 +56,13 @@
+             ::aidl::android::media::audio::common::AudioPort* audioPort,
+             int32_t nextPortId) override;
+ 
++    ndk::ScopedAStatus setAudioPatch(const AudioPatch& in_requested,
++                                     AudioPatch* _aidl_return) override;
++    ndk::ScopedAStatus resetAudioPatch(int32_t in_patchId) override;
++
+   private:
++    void updateVoiceCallAudio();
++
+     ChildInterface<ITelephony> mTelephony;
+ };
+ 
+diff -ruN a/audio/aidl/default/include/core-impl/StreamPrimary.h b/audio/aidl/default/include/core-impl/StreamPrimary.h
+--- a/audio/aidl/default/include/core-impl/StreamPrimary.h
++++ b/audio/aidl/default/include/core-impl/StreamPrimary.h
+@@ -111,4 +111,8 @@
+     ndk::ScopedAStatus setHwVolume(const std::vector<float>& in_channelVolumes) override;
+ };
+ 
++// call audio inside the DSP while a telephony device patch exists (StreamPrimary.cpp)
++void setVoiceCallAudio(bool on, const ::aidl::android::media::audio::common::AudioDevice* rxDevice,
++                       const ::aidl::android::media::audio::common::AudioDevice* txDevice);
++
+ }  // namespace aidl::android::hardware::audio::core
+diff -ruN a/audio/aidl/default/ModulePrimary.cpp b/audio/aidl/default/ModulePrimary.cpp
+--- a/audio/aidl/default/ModulePrimary.cpp
++++ b/audio/aidl/default/ModulePrimary.cpp
+@@ -47,6 +47,56 @@
+ 
+ namespace aidl::android::hardware::audio::core {
+ 
++// Hardware call audio: the audio policy connects Telephony Rx -> earpiece/
++// speaker and mic -> Telephony Tx with device-to-device patches during a call.
++// While such a patch exists, the DSP's voice path runs (setVoiceCallAudio).
++ndk::ScopedAStatus ModulePrimary::setAudioPatch(const AudioPatch& in_requested,
++                                                AudioPatch* _aidl_return) {
++    auto status = Module::setAudioPatch(in_requested, _aidl_return);
++    if (status.isOk()) updateVoiceCallAudio();
++    return status;
++}
++
++ndk::ScopedAStatus ModulePrimary::resetAudioPatch(int32_t in_patchId) {
++    auto status = Module::resetAudioPatch(in_patchId);
++    if (status.isOk()) updateVoiceCallAudio();
++    return status;
++}
++
++void ModulePrimary::updateVoiceCallAudio() {
++    using ::aidl::android::media::audio::common::AudioDevice;
++    using ::aidl::android::media::audio::common::AudioDeviceType;
++    std::vector<AudioPatch> patches;
++    std::vector<AudioPortConfig> configs;
++    if (!getAudioPatches(&patches).isOk() || !getAudioPortConfigs(&configs).isOk()) return;
++    auto device = [&](int32_t id) -> const AudioDevice* {
++        for (const auto& c : configs) {
++            if (c.id == id && c.ext.getTag() == AudioPortExt::Tag::device) {
++                return &c.ext.get<AudioPortExt::Tag::device>().device;
++            }
++        }
++        return nullptr;
++    };
++    const AudioDevice* rxSink = nullptr;    // Telephony Rx -> this device
++    const AudioDevice* txSource = nullptr;  // this device -> Telephony Tx
++    bool telephony = false;
++    for (const auto& p : patches) {
++        bool fromRx = false, toTx = false;
++        for (int32_t id : p.sourcePortConfigIds) {
++            const AudioDevice* d = device(id);
++            if (d && d->type.type == AudioDeviceType::IN_TELEPHONY_RX) fromRx = true;
++        }
++        for (int32_t id : p.sinkPortConfigIds) {
++            const AudioDevice* d = device(id);
++            if (d && d->type.type == AudioDeviceType::OUT_TELEPHONY_TX) toTx = true;
++        }
++        if (fromRx && !p.sinkPortConfigIds.empty()) rxSink = device(p.sinkPortConfigIds[0]);
++        if (toTx && !p.sourcePortConfigIds.empty()) txSource = device(p.sourcePortConfigIds[0]);
++        telephony |= fromRx || toTx;
++    }
++    setVoiceCallAudio(telephony, rxSink, txSource);
++}
++
+ ndk::ScopedAStatus ModulePrimary::getTelephony(std::shared_ptr<ITelephony>* _aidl_return) {
+     if (!mTelephony) {
+         mTelephony = ndk::SharedRefBase::make<Telephony>();
+diff -ruN a/audio/aidl/default/primary/StreamPrimary.cpp b/audio/aidl/default/primary/StreamPrimary.cpp
+--- a/audio/aidl/default/primary/StreamPrimary.cpp
++++ b/audio/aidl/default/primary/StreamPrimary.cpp
+@@ -33,6 +33,9 @@
+ 
+ #include "core-impl/StreamPrimary.h"
+ 
++#include <mutex>
++
++#include <tinyalsa/asoundlib.h>
+ #include <tinyalsa/mixer.h>
+ 
+ using aidl::android::hardware::audio::common::SinkMetadata;
+@@ -106,9 +109,15 @@
+     }
+ }
+ 
++void applyMixerRouteByName(int card, const char* name);
++
+ void applyMixerRoute(int card, const AudioDevice& device) {
+     const char* name = routeName(device);
+     if (name == nullptr) return;
++    applyMixerRouteByName(card, name);
++}
++
++void applyMixerRouteByName(int card, const char* name) {
+     const auto it = mixerRoutes().find(name);
+     if (it == mixerRoutes().end()) return;
+     struct mixer* mixer = mixer_open(card);
+@@ -145,6 +154,58 @@
+ 
+ }  // namespace
+ 
++// Circuit-switched call audio runs inside the DSP (q6voice): the HAL only sets
++// the card's voice mixer routes and holds the CS-Voice PCM open, which starts
++// the voice session (ro.vendor.audio.voice.device: PCM device of the CS-Voice
++// link on the primary card; unset = no voice). ModulePrimary calls this while
++// a hardware audio patch uses the Telephony Rx/Tx device ports.
++void setVoiceCallAudio(bool on, const AudioDevice* rxDevice, const AudioDevice* txDevice) {
++    static std::mutex lock;
++    static struct pcm* rx = nullptr;
++    static struct pcm* tx = nullptr;
++    std::lock_guard l(lock);
++    const int card = ::android::base::GetIntProperty("ro.vendor.audio.voice.card", 0);
++    const int device = ::android::base::GetIntProperty("ro.vendor.audio.voice.device", -1);
++    if (device < 0) return;
++    if (on) {
++        if (rxDevice != nullptr) applyMixerRoute(card, *rxDevice);
++        if (txDevice != nullptr) applyMixerRoute(card, *txDevice);
++        applyMixerRouteByName(card, "voice");
++        if (rx != nullptr) return;
++        // the CS-Voice DAI takes 8 kHz mono, 2-4 periods of 2-4 KiB; no data
++        // flows through these PCMs, opening them starts the voice session
++        struct pcm_config config = {};
++        config.channels = 1;
++        config.rate = 8000;
++        config.period_size = 1024;
++        config.period_count = 2;
++        config.format = PCM_FORMAT_S16_LE;
++        rx = pcm_open(card, device, PCM_OUT, &config);
++        if (rx == nullptr || !pcm_is_ready(rx)) {
++            LOG(ERROR) << __func__ << ": CS-Voice playback " << card << "," << device << ": "
++                       << (rx ? pcm_get_error(rx) : "no memory");
++            if (rx) pcm_close(rx);
++            rx = nullptr;
++            return;
++        }
++        tx = pcm_open(card, device, PCM_IN, &config);
++        if (tx == nullptr || !pcm_is_ready(tx)) {
++            LOG(ERROR) << __func__ << ": CS-Voice capture " << card << "," << device << ": "
++                       << (tx ? pcm_get_error(tx) : "no memory");
++            if (tx) pcm_close(tx);
++            tx = nullptr;
++        }
++        LOG(INFO) << __func__ << ": voice call audio on (card " << card << " device " << device
++                  << (tx ? "" : ", no capture") << ")";
++    } else if (rx != nullptr) {
++        if (tx) pcm_close(tx);
++        pcm_close(rx);
++        rx = tx = nullptr;
++        applyMixerRouteByName(card, "voice-off");
++        LOG(INFO) << __func__ << ": voice call audio off";
++    }
++}
++
+ StreamPrimary::StreamPrimary(StreamContext* context, const Metadata& metadata)
+     : StreamAlsaMonoPipe(context, metadata, 3 /*readWriteRetries*/),
+       mIsAsynchronous(!!getContext().getAsyncCallback()),

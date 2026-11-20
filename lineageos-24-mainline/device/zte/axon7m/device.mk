@@ -116,6 +116,8 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.audio.tinyalsa.routes=/vendor/etc/audio_routes.conf \
     ro.vendor.audio.tinyalsa.default_out_address=CARD_0_DEV_1 \
     ro.vendor.audio.tinyalsa.default_in_address=CARD_0_DEV_0
+# call audio in the ADSP: the CS-Voice PCM (kernel 0019/0020, HAL patch 0003)
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.audio.voice.card=0 ro.vendor.audio.voice.device=2
 PRODUCT_PACKAGES += FrameworksResAxon7m LineageSdkResAxon7m
 # tinymix for the mixer routes (vendor variant of external/tinyalsa)
 PRODUCT_PACKAGES += tinymix.vendor tinycap.vendor
