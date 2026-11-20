@@ -1,0 +1,65 @@
+From 01ed4e6363350323b13d99c47e18b4cb8e1d8fc7 Mon Sep 17 00:00:00 2001
+From: Felix <52862870+devilAPI@users.noreply.github.com>
+Date: Fri, 20 Nov 2026 01:19:31 +0100
+Subject: [PATCH] Bluetooth: btqca: ROME: reset after changing the address
+
+A QCA6174 (ROME) without a valid address comes up unconfigured. When
+userspace sets the public address, the controller runs its setup again
+(non-persistent setup: rampatch, NVM, HCI reset) and qca_set_bdaddr_rome()
+writes the address tag. On the ZTE Axon 7 the HCI reset of the init that
+follows timed out on about one boot in five ("Opcode 0x0c03 failed:
+-110") and hci0 stayed in setup until the driver was rebound.
+
+Send an HCI reset right after the address tag was written and wait for
+its answer (1 s, up to 5 tries) before init goes on. With it, 16 of 16
+boots came up without a timeout (before: 6 failures in 28 boots); the
+first reset always answered.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/bluetooth/btqca.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btqca.c b/drivers/bluetooth/btqca.c
+index 22b08ab05..d82f8070f 100644
+--- a/drivers/bluetooth/btqca.c
++++ b/drivers/bluetooth/btqca.c
+@@ -660,7 +660,7 @@ int qca_set_bdaddr_rome(struct hci_dev *hdev, const bdaddr_t *bdaddr)
+ {
+ 	struct sk_buff *skb;
+ 	u8 cmd[9];
+-	int err;
++	int err, i;
+ 
+ 	cmd[0] = EDL_NVM_ACCESS_SET_REQ_CMD;
+ 	cmd[1] = 0x02; 			/* TAG ID */
+@@ -676,6 +676,25 @@ int qca_set_bdaddr_rome(struct hci_dev *hdev, const bdaddr_t *bdaddr)
+ 
+ 	kfree_skb(skb);
+ 
++	/*
++	 * ROME restarts after the address tag changed. The HCI reset of the
++	 * following init sometimes arrived while it did and timed out ("Opcode
++	 * 0x0c03 failed: -110"), leaving the controller in setup for good.
++	 * Wait until it answers a reset again.
++	 */
++	for (i = 0; i < 5; i++) {
++		skb = __hci_cmd_sync(hdev, HCI_OP_RESET, 0, NULL,
++				     msecs_to_jiffies(1000));
++		if (!IS_ERR(skb)) {
++			kfree_skb(skb);
++			if (i)
++				bt_dev_info(hdev, "QCA reset after the address change: %d tries",
++					    i + 1);
++			return 0;
++		}
++	}
++	bt_dev_warn(hdev, "QCA no reset answer after the address change");
++
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(qca_set_bdaddr_rome);
+-- 
+2.43.0
+
