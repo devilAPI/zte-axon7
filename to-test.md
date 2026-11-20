@@ -33,6 +33,14 @@ comes back into Nura, Wi-Fi/modem/ADSP/SLPI firmware load; the GPU works
 after the firmware fix of 11518fe (not in r25: on phones without a vendor
 partition r25 leaves the GPU off).
 
+**Second phone stuck at start (2026-11-20 ~02:00):** after about 70 test
+restarts it stopped in the startup stage (initramfs) and has stayed there
+since: USB networking answers ping, but no SSH and no telnet, which matches
+the "Filesystem needs manual repair (fsck)" screen, where the startup waits
+for a key. Please:
+
+- [ ] Look at the second phone's screen. If it shows the fsck message, press Volume Up (the start continues); otherwise hold the power key ~10 s to restart. Then tell Claude, it repairs the file system over SSH.
+
 **Second phone, r28 kernel (2026-11-19 evening):** suspend, the SMB1351
 second charger chip and CPU idle states, checked without hands on the second
 phone (ios/research/phone2/kernel-r27/RESULTS-r28.md): 7 suspend cycles with
