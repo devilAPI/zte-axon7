@@ -16,7 +16,7 @@ menu (Volume Down, then Power), or make it the default from Nura with
 
 **Blockers for the unattended work (2026-11-21 afternoon):**
 
-- [ ] **Second phone (864463f) is in Nura without root for Claude:** its SSH key login works, but sudo asks for a password Claude does not have, so it cannot reboot it into TWRP or run root tests (NFC poll, IPA, deep sleep, standalone LineageOS 24 zip install all wait on it). Please either hold Power + Volume Up ~10 s until TWRP appears (or reboot it into TWRP from Nura with `sudo reboot recovery`), or tell Claude the sudo password of that Nura install. Battery there: ~20 %, charging slowly from the PC port.
+- [x] **Second phone (864463f)** back in TWRP (owner, 2026-11-21 ~16:30). Open question: may Claude set its own sudo password (stored only on this PC, ~/.config/axon7, never in the repo) in that phone's Nura install, so root tests over SSH work without asking? Until then tests boot test kernels with the debug initramfs from TWRP.
 - [ ] **Build server root@compiler stopped answering SSH** (ping works, "Connection timed out during banner exchange" since ~16:10): probably out of memory during a build. If it doesn't recover, please restart it; LineageOS 24 builds (SELinux, radio HAL, standalone zip) wait on it.
 
 **SIM card (2026-11-21):**
