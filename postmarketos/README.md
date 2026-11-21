@@ -24,6 +24,7 @@ kernel in the `boot` partition, so internal storage (and any other OS on
 | `scripts/pil-squasher.py` | joins split `.mdt` + `.bNN` firmware into `.mbn` |
 | `scripts/make-test-bootimg.sh` | builds a standalone test boot image (USB networking + telnet, no storage access) |
 | `test-initramfs/root/init`, `list.txt` | that test initramfs (busybox not included) |
+| `tools/axon7-nfc-test.py`, `tools/axon7-nfc-netlink.c` | minimal generic-netlink clients for Nura / Android: `info` reads `nfc0`, `up`/`poll` need root (`GENL_ADMIN_PERM`); no neard needed |
 
 ## Device tree
 
@@ -162,6 +163,92 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **USB OTG**: works on PI5USB302 units (automatic host/device); the HD3SS3220 variant is untested on a phone. The PI5USB302 interrupt is unusable (polled).
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Still missing: the SMB1351 parallel charger (charging stops at 2 A), headset buttons, camera autofocus loop and OIS, fingerprint (TrustZone), suspend (broken on msm8996 mainline in general). Charging, audio, sensors and both cameras are in the table below.
+
+## NFC wiring and mainline status (2026-11-21)
+
+The Axon 7 has an NXP PN548 (PN547/PN548 "NPC300" family) NFC controller.
+ZTE's own 3.18 device tree and driver are preserved in this repo as
+`../lineageos-22.2/kernel-4.4-patches/0001-ARM-dts-msm8996-Add-ZTE-Axon-7-ailsa_ii-device-tree.patch`
+(node `pn5xx@28` on `i2c_8`) and `0013-nfc-NXP-PN5xx-I2C-driver-from-the-ZTE-3.18-kernel-ax.patch`.
+They are the source of the wiring; the mainline binding needs only a subset:
+
+| Signal | Downstream (ZTE) | Mainline `msm8996-zte-axon7.dts` |
+| --- | --- | --- |
+| Controller | `nxp,pn5xx`, I2C address 0x28 | `nxp,nxp-nci-i2c` (`nxp-nci_i2c`) at 0x28 |
+| Bus | `i2c_8` = BLSP2 QUP2, 400 kHz | `&blsp2_i2c2`, `clock-frequency = <400000>` |
+| Interrupt | TLMM 9, `nxp,int_active_low = <0>`, `IRQF_TRIGGER_HIGH` in the driver | TLMM 9, `IRQ_TYPE_LEVEL_HIGH` (same polarity and trigger) |
+| VEN (enable) | `nxp,pn5xx-ven` = TLMM 12 | `enable-gpios = <&tlmm 12 GPIO_ACTIVE_HIGH>` |
+| Firmware download | `nxp,pn5xx-fw-dwnld` = TLMM 96 | `firmware-gpios = <&tlmm 96 GPIO_ACTIVE_HIGH>` |
+| eSE power | `nxp,pn5xx-ese-pwr` = PM8994 GPIO 7 | not used: mainline nxp-nci has no eSE/SWP support |
+| Clock request / 19.2 MHz | ZTE defines `NFC_RF_CLK_FREQ 19200000` and `bb_clk2`, but both the `CONFIG_NFC_ENABLE_BB_CLK2` block and its `nxp,pn5xx-clkreq` property are disabled in the shipped driver | no `clocks`/clkreq property; no driver patch needed. The I2C bus clock is handled by the bus driver |
+
+The node, its pinctrl state and `CONFIG_NFC=m`, `CONFIG_NFC_NCI=m`,
+`CONFIG_NFC_NXP_NCI=m`, `CONFIG_NFC_NXP_NCI_I2C=m` have been in the series
+since the first port (patch 0001 and `config-zte-axon7.aarch64`). This
+investigation therefore produced **no new kernel patch** (no 0070 numbering,
+no APKBUILD/pkgrel change): a second DT node for the same I2C address or a
+clock driver would duplicate working support. A full clang build of that
+unmodified series on 2026-11-21 (`make O=... Image.gz dtbs modules`) finished
+cleanly; the only warning was the pre-existing `sns_smgr.ko` missing
+`MODULE_DESCRIPTION()` (build log kept as `nfc-test/build-20261121.log`).
+
+Evidence for the kernel/NCI side:
+
+- Nura: commit `1a07559` (2026-11-10) recorded the controller answering NCI
+  (reset/init interrupts on `up`, RF polling started) with
+  `tools/axon7-nfc-test.py`. `to-test.md` §8 still asks the owner for a real
+  tag/card to hold at the back of the phone; reading a tag is untested.
+- 2026-11-21, second phone in Nura (battery 18-19 %, short check over USB
+  SSH): `/sys/class/nfc/nfc0` exists and the (now fixed)
+  `tools/axon7-nfc-test.py info` returns
+  `idx 0 name nfc0 protocols 0xfe powered 0`
+  (`ios/logs/nfc-20261121-nura.txt`, not committed). `up`/`poll`/`stop`/
+  `down` need `CAP_NET_ADMIN` (`GENL_ADMIN_PERM` in `net/nfc/netlink.c`) and
+  returned EPERM for the unprivileged SSH user; the early "ok" lines in that
+  log were a stale-ACK bug in the first version of the tool and are corrected
+  at the end of the file. No Nura sudo password was available here, root SSH
+  and unprivileged reboot are denied, so the privileged test could not be
+  repeated. The phone's SDP input limit is 500 mA and its capacity was not
+  rising, so no long LineageOS RAM-boot test was made; the phone was left in
+  Nura with NFC down.
+- LineageOS 24 (`ios/logs/los24-m1a-31-pstore-console-ramoops.txt`): `nfc:
+  nfc_init: NFC Core ver 0.1` and the `nfc`/`nci`/`nxp-nci`/`nxp-nci_i2c`
+  modules load; run 51's `los24-m1a-51-hw.txt` has
+  `rfkill0 -> .../3-0028/nfc/nfc0/rfkill0`. `tools/axon7-nfc-netlink.c` is a
+  generic-netlink client for the same commands on Android.
+
+### What Android still needs (LineageOS 24 plan row)
+
+Android's NFC app talks to an NXP NFC HAL over a `/dev/pn5xx` character
+device (NXP ioctls, vendor firmware download); mainline's `nxp-nci` is a
+kernel NCI driver exposed through generic netlink. Its Kconfig says so
+explicitly: "This is a driver based on the NCI NFC kernel layers and will
+thus not work with NXP libnfc library." This is why `nfc0` existing is not
+the same as NFC working in the Android UI. `virtual_ncidev` is a loopback
+char device for a *userspace* NCI stack, not a compatible replacement for
+the NXP HAL.
+
+Smallest paths, from here:
+
+1. **Port ZTE's char driver (recommended, ~3-5 days).** The code is already
+   in this repo (`lineageos-22.2/kernel-4.4-patches/0013-...`, 773 lines):
+   port `pn5xx_i2c.c` to 7.3.1, switch the existing DT node's compatible to
+   `nxp,pn5xx` in the LineageOS build (and disable `CONFIG_NFC_NXP_NCI*`
+   there; do not add a second node at 0x28), then use the stock `NfcNci` +
+   `libnfc-nxp` blobs/config and the NFC firmware from the phone's own
+   system/vendor; add ueventd and SELinux rules for `/dev/pn5xx`. Risk: the
+   4.4 gpio/I2C API changes are mechanical, but the vendor blob and firmware
+   must be present on the mainline filesystem; eSE/SWP can be dropped.
+2. **Userspace netlink-to-AIDL HAL (~4-8 weeks).** Implement Android's NFC
+   AIDL interface on top of `NFC_CMD_DEV_UP`/`START_POLL`/`*_EVENTS`: no
+   vendor blobs, but NCI state machine, tag protocols and eSE all have to be
+   written. Only worth it if the vendor HAL cannot be used.
+3. **`virtual_ncidev` raw mode (~1 day, not a solution):** gives a char
+   device to a userspace NCI stack; it does not transport NCI to the real
+   PN548, nor speak NXP's ioctls. Useful only to develop option 2.
+
+LineageOS 24 PLAN.md row and detail: 2026-11-21 entry in the LOS worktree.
+No XDA changelog yet: nothing changed for an end user on either OS.
 
 ## Hardware added 2026-11-09/11 (kernel patches 0010-0043)
 
