@@ -80,7 +80,11 @@ A=$REPO/lineageos-24-mainline/aosp
 while IFS= read -r p; do
 	proj=$(dirname "${p#"$A"/}")
 	if patch -d "$T/$proj" -p1 -R -s -f --dry-run < "$p" >/dev/null 2>&1; then
-		echo "patch already in $proj: $(basename "$p")"
+		echo "patch already in $proj: $(basename "$p") (reverse check)"
+	elif python3 "$REPO/lineageos-24-mainline/scripts/patch-applied.py" "$T/$proj" "$p"; then
+		# 0003 (voice routes) changed 0002's hunks: neither a forward nor
+		# a reverse dry-run of 0002 succeeds, but its lines are all there.
+		echo "patch already in $proj: $(basename "$p") (added lines present)"
 	else
 		patch -d "$T/$proj" -p1 -N -s < "$p" || { echo "patch failed: $p"; exit 1; }
 		echo "applied to $proj: $(basename "$p")"
