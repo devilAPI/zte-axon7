@@ -42,6 +42,9 @@ messages; push only when asked.
   pattern (it kills itself, exit 143/144).
 - Every user-visible Nura change gets a line in the changelog
   (XDA-POST-NURA.md "Changelog", newest date first).
+- Push to GitHub once a task is done and its tests pass (owner, 2026-11-21):
+  after the privacy/attribution review and merge, push `main` and
+  `lineageos-24-mainline`. Do not leave finished, tested work local.
 
 ## 2b. How the work is split (coordinator and opencode workers)
 

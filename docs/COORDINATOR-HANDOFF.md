@@ -48,7 +48,11 @@ wrote it (fix with oc-fixmsg); `git commit -a` picks up the ios submodule
 pointer: never commit it by accident. Kernel patches from workers carry
 temporary numbers (0060-0109): renumber to the next free Nura number (0059+)
 when merging, update APKBUILD source/sha512sums/pkgrel. Merge into main /
-lineageos-24-mainline locally; push only when the owner asks.
+lineageos-24-mainline locally. Owner rule (2026-11-21): PUSH TO GITHUB as soon
+as a task is done and its tests succeed — do not leave merged work local. Run
+the privacy/attribution review first, then `git push origin main
+lineageos-24-mainline`. Never commit the ios submodule pointer or untracked
+test artifacts (c2/, c2.tgz).
 
 Hard safety rules (also in every worker prompt): main phone 7e15695a (owner's
 multi-boot phone, never wipe), second phone 864463f (test phone, may be
