@@ -62,13 +62,17 @@ BOARD_VENDOR_KERNEL_MODULES := $(wildcard $(TARGET_KERNEL_DIR)/modules/*.ko)
 BOARD_VENDOR_KERNEL_MODULES_LOAD := $(strip $(shell cat $(DEVICE_PATH)/configs/modules.load.axon7m 2>/dev/null | grep -v '^\#'))
 BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(DEVICE_PATH)/configs/modules.blocklist
 
-# Partitions: LineageOS 22.2's multi-boot slot, taken over for testing (user,
-# 2026-11-10; PLAN.md section 5): boot image in los_boot (the shim's
-# LineageOS entry), dynamic partitions on the GPT partition "system"
+# Partitions. Dynamic partitions always live in the GPT partition "system"
 # (sde13, 5.5 GiB) as the super device (named by androidboot.super_partition,
-# which the build adds), /metadata on los_metadata, /data on los_data.
-# The 512 MiB "vendor" partition (sde28) is not used.
-# Not A/B: one slot (los_boot), no _a/_b partitions in super. AOSP 17 turns
+# which the build adds). Two flavours:
+#  - AXON7_STANDALONE=1 (default, used by CI's ci/build-release.sh): the
+#    normal `boot` partition, /data on userdata. No los_* partitions, no
+#    multi-boot, no vendor partition: the installer stages the GPU firmware
+#    on the stock cache partition (fstab.axon7m.standalone).
+#  - AXON7_MULTIBOOT=1 (developer builds only): kernel in los_boot,
+#    /metadata on los_metadata, /data on los_data, booted through ios/shim.
+#    The 512 MiB "vendor" partition (sde28) is not used.
+# Not A/B: one slot, no _a/_b partitions in super. AOSP 17 turns
 # AB_OTA_UPDATER on when it is left empty (build/make/core/board_config.mk),
 # which named the super partitions system_a/system_b and allowed only half
 # of super per slot.
@@ -92,7 +96,7 @@ BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
-# userdata.img is never flashed (los_data is formatted on the phone)
+# userdata.img is never flashed (the installer wipes/formats userdata on the phone)
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 10737418240
 TARGET_USERIMAGES_USE_F2FS := true
 TARGET_USERIMAGES_USE_EXT4 := true
@@ -104,7 +108,11 @@ TARGET_COPY_OUT_PRODUCT := product
 BOARD_AVB_ENABLE := false
 
 # Recovery (also the M0 test image: kernel + first stage + adbd, no system)
+ifeq ($(AXON7_MULTIBOOT),1)
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/init/fstab.axon7m
+else
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/init/fstab.axon7m.standalone
+endif
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 
 DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/manifest.xml

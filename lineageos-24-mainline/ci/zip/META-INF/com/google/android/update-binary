@@ -1,12 +1,23 @@
 #!/sbin/sh
 # LineageOS 24 (mainline Linux) for the ZTE Axon 7, TWRP installer.
-# Installs into the LineageOS slot of the project's multi-boot layout
-# (DEV-MULTIBOOT.md, axon7-tripleboot-gpt):
-#   system   (GPT)  <- super.img (system, system_ext, product, vendor)
-#   los_boot        <- the kernel image for the boot menu's LineageOS entry
-#   los_metadata, los_data: start zeroed (all LineageOS data in this slot is erased)
-# Not touched: boot (the boot menu), misc, iOS and Nura partitions, persist,
-# modem, EFS (modemst1/2, fsg, fsc), the bootloader, the GPT vendor partition.
+#
+# Two flavours, selected by the "flavour" file in the zip:
+#   standalone (CI release zip, default): stock partition layout, no
+#     multi-boot, no shim:
+#       boot     <- boot.img that ZTE LK boots directly
+#       system   <- super.img (system, system_ext, product, vendor)
+#       userdata <- formatted; /data with file-based encryption (FBE v2)
+#       cache    <- the GPU's a530_zap.* staged from the old system/vendor
+#                   before `system` is overwritten (the stock layout has no
+#                   vendor partition and the zip contains no firmware)
+#     No los_* partitions, no boot menu or shim needed, misc untouched.
+#   multiboot (AXON7_MULTIBOOT=1, developer builds only):
+#       system   <- super.img
+#       los_boot <- kernel image for the boot menu's LineageOS entry
+#       los_metadata, los_data: start zeroed
+#       the boot menu (shim) with a LineageOS entry must already be in boot.
+# Not touched in either flavour: persist, modem/EFS (modemst1/2, fsg, fsc),
+# the bootloader, and the boot menu's misc block.
 # Arguments from TWRP: API version, output pipe, zip path.
 OUTFD=/proc/self/fd/$2
 ZIP=$3
@@ -21,11 +32,106 @@ bytes() { echo $(( $(cat "/sys/class/block/${1##*/}/size") * 512 )); }
 
 ui "LineageOS 24 (mainline Linux) for the ZTE Axon 7 - ALPHA"
 dev=$(getprop ro.product.device)
-case "$dev" in ailsa_ii|axon7|A2017G|A2017U|A2017) ;; *) die "this zip is for the ZTE Axon 7 (TWRP says device '$dev')";; esac
+case "$dev" in ailsa_ii|axon7|A2017*) ;; *) die "this zip is for the ZTE Axon 7 (TWRP says device '$dev')";; esac
 
-sys=$(part system); lb=$(part los_boot); lm=$(part los_metadata); ld=$(part los_data); boot=$(part boot)
-for v in "system:$sys" "los_boot:$lb" "los_metadata:$lm" "los_data:$ld" "boot:$boot"; do
-	[ -n "${v#*:}" ] || die "no partition ${v%%:*}: this needs the multi-boot layout (DEV-MULTIBOOT.md)"
+twrp=$(getprop ro.twrp.version 2>/dev/null)
+case "$twrp" in
+	3.3*|3.[4-9]*|3.[1-9][0-9]*|[4-9].*) ;;
+	'') die "cannot read the TWRP version; install TWRP 3.3.0-0 or newer" ;;
+	*) die "TWRP $twrp is too old (3.2.x is untested); install TWRP 3.3.0-0 first" ;;
+esac
+
+cd /tmp || die "no /tmp"
+rm -rf /tmp/los24 || die "/tmp"
+mkdir /tmp/los24 || die "/tmp"
+cd /tmp/los24 || die "/tmp"
+flavour=multiboot	# compatibility: zips without the marker are developer zips
+[ -f "$ZIP" ] && unzip -p "$ZIP" flavour 2>/dev/null | grep -q '^standalone$' && flavour=standalone
+ui "Installer flavour: $flavour"
+unzip -o "$ZIP" sizes super.raw.sha1 >/dev/null 2>&1 || die "zip incomplete"
+if [ "$flavour" = standalone ]; then
+	unzip -o "$ZIP" boot.img boot.img.sha1 >/dev/null 2>&1 || die "zip has no boot.img"
+else
+	unzip -o "$ZIP" los-boot.img los-boot.img.sha1 >/dev/null 2>&1 || die "zip has no los-boot.img"
+fi
+read -r super_size boot_size < sizes
+
+sys=$(part system)
+[ -n "$sys" ] || die "no system partition"
+[ "$(bytes "$sys")" -ge "$super_size" ] || die "partition system is smaller ($(bytes "$sys")) than super ($super_size)"
+
+if [ "$flavour" = standalone ]; then
+	boot=$(part boot); ud=$(part userdata); ca=$(part cache)
+	for v in "boot:$boot" "userdata:$ud" "cache:$ca"; do
+		[ -n "${v#*:}" ] || die "no partition ${v%%:*}: this zip needs the stock partition layout"
+	done
+	[ "$(bytes "$boot")" -ge "$boot_size" ] || die "partition boot is too small for boot.img ($boot_size)"
+	[ "$(sha1sum < boot.img | cut -d' ' -f1)" = "$(cat boot.img.sha1)" ] || die "boot.img damaged (download again)"
+
+	# The zip has no proprietary firmware. On the stock layout the GPU's
+	# signed a530_zap lives in system/etc/firmware; on ROMs with a vendor
+	# partition it lives in vendor/firmware. Save it on cache BEFORE writing
+	# super over system. The fstab mounts cache at /mnt/vendor/fw_vendor.
+	ui "Saving the GPU firmware from the old ROM to cache..."
+	mkdir -p /tmp/los24/old /tmp/los24/v /cache/firmware || die "cannot make firmware directories"
+	mount -t ext4 -o rw "$ca" /cache 2>/dev/null || true
+	grep -q ' /cache ' /proc/mounts || die "cannot mount the cache partition (needed for GPU firmware)"
+	oldvendor=$(part vendor)
+	[ -z "$oldvendor" ] || mount -o ro,noload "$oldvendor" /tmp/los24/v 2>/dev/null || true
+	mount -o ro "$sys" /tmp/los24/old 2>/dev/null || true
+	fw=
+	for d in /tmp/los24/v/firmware /tmp/los24/old/vendor/firmware \
+		 /tmp/los24/old/etc/firmware /tmp/los24/old/system/vendor/firmware \
+		 /tmp/los24/old/system/etc/firmware; do
+		[ -s "$d/a530_zap.mdt" ] || continue
+		fw=$d; break
+	done
+	[ -n "$fw" ] || die "no a530_zap GPU firmware found in the old system or vendor partition; restore your ROM and copy the firmware before flashing again"
+	for f in a530_zap.mdt a530_zap.b00 a530_zap.b01 a530_zap.b02 a530_zap.b03 \
+		 a530_zap.b04 a530_zap.b05 a530_zap.b06 a530_zap.b07; do
+		[ ! -s "$fw/$f" ] || cp "$fw/$f" "/cache/firmware/$f" 2>/dev/null || die "cannot copy $f to cache"
+	done
+	[ -s /cache/firmware/a530_zap.mdt ] || die "GPU firmware copy failed"
+	sync
+	ui "GPU firmware saved ($(find /cache/firmware -type f | wc -l) files)."
+	umount /tmp/los24/old /tmp/los24/v 2>/dev/null || true
+
+	ui "Writing system (super, $((super_size / 1048576)) MiB), takes a few minutes..."
+	unzip -p "$ZIP" super.raw.gz | gunzip -c | dd of="$sys" bs=1048576 2>/dev/null || die "writing super failed"
+	sync
+	ui "Checking system..."
+	got=$(dd if="$sys" bs=1048576 count=$((super_size / 1048576)) 2>/dev/null | sha1sum | cut -d' ' -f1)
+	[ "$got" = "$(cat super.raw.sha1)" ] || die "system does not read back correctly (do not boot; flash again)"
+
+	ui "Writing boot (the kernel LineageOS boots with, no boot menu)..."
+	dd if=boot.img of="$boot" bs=1048576 2>/dev/null || die "writing boot failed"
+	sync
+	[ "$(dd if="$boot" bs="$boot_size" count=1 2>/dev/null | sha1sum | cut -d' ' -f1)" = "$(cat boot.img.sha1)" ] || die "boot does not read back correctly"
+
+	ui "Erasing userdata (Android sets up file-based encryption at first boot)..."
+	# TWRP mounts /data for MTP; close it before writing the block device.
+	umount /data 2>/dev/null || true
+	if command -v mkfs.f2fs >/dev/null 2>&1; then
+		mkfs.f2fs -f "$ud" >/dev/null 2>&1 || die "formatting userdata as f2fs failed"
+	else
+		# No mkfs.f2fs in this TWRP: fs_mgr's fstab entry has
+		# "check,formattable", so it formats/creates FBE metadata on the
+		# first boot. Clearing the head also removes any old filesystem.
+		dd if=/dev/zero of="$ud" bs=1048576 count=64 2>/dev/null || die "erasing userdata failed"
+	fi
+	md=$(part metadata)
+	[ -z "$md" ] || dd if=/dev/zero of="$md" bs=1048576 count=16 2>/dev/null || true
+	sync
+	rm -rf /tmp/los24
+	ui "Done. Reboot normally (no boot menu needed)."
+	ui "The first start takes a few minutes; do not interrupt it."
+	exit 0
+fi
+
+# Developer multi-boot flavour (AXON7_MULTIBOOT=1).
+lb=$(part los_boot); lm=$(part los_metadata); ld=$(part los_data); boot=$(part boot)
+for v in "los_boot:$lb" "los_metadata:$lm" "los_data:$ld" "boot:$boot"; do
+	[ -n "${v#*:}" ] || die "no partition ${v%%:*}: this zip needs the multi-boot layout (DEV-MULTIBOOT.md)"
 done
 # the boot menu (shim) with a LineageOS entry must be in boot. The shim's
 # kernel is stored gzip-compressed (shim/build-axon7.sh), so look for the
@@ -40,12 +146,6 @@ has_menu() {
 	return 1
 }
 has_menu || die "the boot partition has no boot menu with a LineageOS entry (install the multi-boot setup first)"
-
-cd /tmp || die "no /tmp"
-rm -rf /tmp/los24 && mkdir /tmp/los24 && cd /tmp/los24 || die "/tmp"
-unzip -o "$ZIP" sizes los-boot.img los-boot.img.sha1 super.raw.sha1 >/dev/null || die "zip incomplete"
-read -r super_size boot_size < sizes
-[ "$(bytes "$sys")" -ge "$super_size" ] || die "partition system is smaller ($(bytes "$sys")) than super ($super_size)"
 [ "$(bytes "$lb")" -ge "$boot_size" ] || die "partition los_boot is too small"
 [ "$(sha1sum < los-boot.img | cut -d' ' -f1)" = "$(cat los-boot.img.sha1)" ] || die "los-boot.img damaged (download again)"
 
@@ -59,7 +159,7 @@ got=$(dd if="$sys" bs=1048576 count=$((super_size / 1048576)) 2>/dev/null | sha1
 ui "Writing los_boot..."
 dd if=los-boot.img of="$lb" bs=1048576 2>/dev/null || die "writing los_boot failed"
 sync
-[ "$(dd if="$lb" bs=$boot_size count=1 2>/dev/null | sha1sum | cut -d' ' -f1)" = "$(cat los-boot.img.sha1)" ] || die "los_boot does not read back correctly"
+[ "$(dd if="$lb" bs="$boot_size" count=1 2>/dev/null | sha1sum | cut -d' ' -f1)" = "$(cat los-boot.img.sha1)" ] || die "los_boot does not read back correctly"
 
 ui "Erasing LineageOS data (los_metadata, los_data)..."
 dd if=/dev/zero of="$lm" bs=1048576 count=16 2>/dev/null; dd if=/dev/zero of="$ld" bs=1048576 count=64 2>/dev/null; sync

@@ -10,7 +10,11 @@
 # The zip goes into a DRAFT pre-release (lineageos-24-YYYYMMDD[-N],
 # .github/scripts/draft-release.sh); publish it on GitHub after testing.
 # Publishing refreshes the fixed "lineageos-24-latest" release (latest.yml).
-# The image contains no ZTE/Qualcomm firmware (AXON7_FIRMWARE=phone).
+# ci/build-release.sh builds the STANDALONE zip by default: normal boot,
+# system and userdata, no multi-boot/shim. The developer multi-boot flavour
+# (AXON7_MULTIBOOT=1) is not built or published here.
+# The image contains no ZTE/Qualcomm firmware (AXON7_FIRMWARE=phone); the
+# installer saves the GPU zap from the phone's old ROM to cache.
 # This file exists on main (for Run workflow) and on lineageos-24-mainline
 # (for pushes); keep both copies the same.
 name: LineageOS 24 zip

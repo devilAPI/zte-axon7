@@ -91,10 +91,17 @@ PRODUCT_VENDOR_PROPERTIES += \
 PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
 endif
 
-# Init, fstab, ueventd
+# Init, fstab, ueventd. The fstab names normal partitions by-name in the
+# standalone flavour (the release zip) and los_* partitions in the developer
+# multi-boot flavour (AXON7_MULTIBOOT=1).
+ifeq ($(AXON7_MULTIBOOT),1)
+AXON7_FSTAB := $(DEVICE_PATH)/init/fstab.axon7m
+else
+AXON7_FSTAB := $(DEVICE_PATH)/init/fstab.axon7m.standalone
+endif
 PRODUCT_COPY_FILES += \
-    $(DEVICE_PATH)/init/fstab.axon7m:$(TARGET_COPY_OUT_RAMDISK)/fstab.axon7m \
-    $(DEVICE_PATH)/init/fstab.axon7m:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.axon7m \
+    $(AXON7_FSTAB):$(TARGET_COPY_OUT_RAMDISK)/fstab.axon7m \
+    $(AXON7_FSTAB):$(TARGET_COPY_OUT_VENDOR)/etc/fstab.axon7m \
     $(DEVICE_PATH)/init/init.axon7m.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.axon7m.rc \
     $(DEVICE_PATH)/init/init.axon7m.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.axon7m.usb.rc \
     $(DEVICE_PATH)/init/init.recovery.axon7m.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.axon7m.rc \

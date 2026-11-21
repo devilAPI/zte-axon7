@@ -6,7 +6,12 @@
 #   2. kernel (scripts/kernel-build.sh all)
 #   3. image: los24-build.sh droid as a release flavour: no developer adb key,
 #      speaker on, AXON7_FIRMWARE=phone (nothing proprietary in the image)
-#   4. TWRP zip (ci/make-zip.sh) -> /srv/los24/releases, zip=... in $GITHUB_OUTPUT
+#   4. standalone TWRP zip (ci/make-zip.sh: normal boot/system/userdata, no
+#      multi-boot or shim) -> /srv/los24/releases, zip=... in $GITHUB_OUTPUT
+#
+# Developer builds keep the multi-boot slot (scripts/los24-build.sh sets
+# AXON7_MULTIBOOT=1 by default); the owner can also make a multi-boot zip with
+# AXON7_MULTIBOOT=1 ci/make-zip.sh OUT DEST.
 # Test variant (never for release): AXON7_RELEASE_ADB_KEYS=test-keys/adbkey.pub
 # builds the same release flavour with that adb key, so an unattended test
 # phone stays reachable after the zip wiped its data; the zip is named
@@ -40,7 +45,7 @@ keys=${AXON7_RELEASE_ADB_KEYS:-}
 dest=/srv/los24/releases tag=
 [ -n "$keys" ] && { dest=/srv/los24/releases-testkeys; tag=TESTKEYS-NOT-FOR-RELEASE; echo "== TEST variant: adb key $keys"; }
 rc=0
-AXON7_ADB_KEYS=$keys AXON7_SPEAKER_MUTE=0 AXON7_FIRMWARE=phone \
+AXON7_STANDALONE=1 AXON7_MULTIBOOT=0 AXON7_ADB_KEYS=$keys AXON7_SPEAKER_MUTE=0 AXON7_FIRMWARE=phone \
 	"$repo/lineageos-24-mainline/scripts/los24-build.sh" droid || rc=$?
 tr '\r' '\n' < "$logs/build-latest.log" | grep -E '####|build-exit|FAILED|error:' | tail -20 || true
 [ $rc = 0 ] || exit $rc

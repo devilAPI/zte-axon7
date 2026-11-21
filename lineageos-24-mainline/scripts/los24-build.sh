@@ -50,21 +50,21 @@ echo "kernel $(cat "$T/device/zte/axon7m-kernel/version")"
 # Mesa freedreno prebuilts (scripts/mesa-build.sh), used with AXON7_GPU=mesa
 if [ -f /srv/los24/mesa/out/Android.bp ]; then
 	rsync -rlpgoD --checksum --delete /srv/los24/mesa/out/ "$T/device/zte/axon7m-mesa/"
-	echo "$(cat "$T/device/zte/axon7m-mesa/version")"
+	cat "$T/device/zte/axon7m-mesa/version"
 fi
 
 # libcamera + camera HAL prebuilts (scripts/libcamera-build.sh), used with
 # AXON7_CAMERA=libcamera
 if [ -f /srv/los24/libcamera/out/Android.bp ]; then
 	rsync -rlpgoD --checksum --delete /srv/los24/libcamera/out/ "$T/device/zte/axon7m-libcamera/"
-	echo "$(cat "$T/device/zte/axon7m-libcamera/version")"
+	cat "$T/device/zte/axon7m-libcamera/version"
 fi
 
 # 3. local patches to the Android tree: lineageos-24-mainline/aosp/<project
 #    path>/*.patch (-p1 inside that project), each applied once
 A=$REPO/lineageos-24-mainline/aosp
 while IFS= read -r p; do
-	proj=$(dirname "${p#$A/}")
+	proj=$(dirname "${p#"$A"/}")
 	if patch -d "$T/$proj" -p1 -R -s -f --dry-run < "$p" >/dev/null 2>&1; then
 		echo "patch already in $proj: $(basename "$p")"
 	else
@@ -74,10 +74,15 @@ while IFS= read -r p; do
 done < <(find "$A" -name '*.patch' 2>/dev/null | sort)
 
 # 4. build
+# shellcheck disable=SC1090
 cd "$T" && . ~/.profile && ulimit -n 65536
 # (SOONG_GOMEMLIMIT is gone in Android 17: aosp/build/blueprint patch instead)
-# developer builds (default): adb for the key in test-keys/adbkey.pub (the same
-# PC key as LineageOS 22.2's test-keys); AXON7_ADB_KEYS= for a normal build
+# Developer builds (default) keep the owner's multi-boot slot; CI's
+# ci/build-release.sh sets AXON7_STANDALONE=1 for the release zip (normal
+# boot/system/userdata). AXON7_MULTIBOOT=1 forces the developer flavour.
+if [ "${AXON7_STANDALONE:-0}" != 1 ]; then
+	export AXON7_MULTIBOOT=1
+fi
 export AXON7_ADB_KEYS=${AXON7_ADB_KEYS-test-keys/adbkey.pub}
 export AXON7_GPU=${AXON7_GPU:-mesa}
 export AXON7_SPEAKER_MUTE=${AXON7_SPEAKER_MUTE:-0}
@@ -87,10 +92,13 @@ export AXON7_SPEAKER_MUTE=${AXON7_SPEAKER_MUTE:-0}
 # files from vendor/zte/axon7m-firmware (old developer builds)
 export AXON7_FIRMWARE=${AXON7_FIRMWARE:-phone}
 [ "$AXON7_FIRMWARE" = 0 ] || [ -f "$T/vendor/zte/axon7m-firmware/qcom/a530_pm4.fw" ] || { echo "AXON7_FIRMWARE=1 but no $T/vendor/zte/axon7m-firmware: run scripts/firmware-from-nura.sh"; exit 1; }
-echo "AXON7_GPU=$AXON7_GPU AXON7_FIRMWARE=$AXON7_FIRMWARE AXON7_SPEAKER_MUTE=$AXON7_SPEAKER_MUTE AXON7_ADB_KEYS=$AXON7_ADB_KEYS"
+echo "AXON7_GPU=$AXON7_GPU AXON7_FIRMWARE=$AXON7_FIRMWARE AXON7_SPEAKER_MUTE=$AXON7_SPEAKER_MUTE AXON7_ADB_KEYS=$AXON7_ADB_KEYS AXON7_MULTIBOOT=${AXON7_MULTIBOOT:-0} AXON7_STANDALONE=${AXON7_STANDALONE:-0}"
 [ -z "$AXON7_ADB_KEYS" ] || [ -r "$T/$AXON7_ADB_KEYS" ] || { echo "missing $T/$AXON7_ADB_KEYS"; exit 1; }
-export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=$(readlink -f /srv/los24/ccache)  # real path: nsjail cannot bind-mount a symlink
+export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache
+# real path: nsjail cannot bind-mount a symlink
+CCACHE_DIR=$(readlink -f /srv/los24/ccache); export CCACHE_DIR
 mkdir -p "$CCACHE_DIR"; ccache -M 15G >/dev/null 2>&1 || true
+# shellcheck disable=SC1091
 source build/envsetup.sh >/dev/null
 breakfast axon7m || lunch lineage_axon7m-userdebug || { echo "lunch failed"; exit 1; }
 echo "== build $(date -u +%FT%TZ)"
