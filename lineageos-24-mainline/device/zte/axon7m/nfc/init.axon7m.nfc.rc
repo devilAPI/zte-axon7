@@ -1,0 +1,5 @@
+# libnfc-nci.conf sets NFA_STORAGE="/data/nfc"; the NFC app's HAL writes
+# its NCI state there. The HAL service itself comes from the AOSP NXP HAL's
+# nfc-service-nxp.rc (do not declare a second service with the same name).
+on early-init
+    mkdir /data/nfc 0700 nfc nfc

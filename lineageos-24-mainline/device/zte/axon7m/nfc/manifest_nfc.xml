@@ -1,0 +1,14 @@
+<!-- AIDL NFC HAL for the NXP PN548 (kernel pn5xx-raw character device).
+     Same FQNames as hardware/nxp/nfc/snxxx/aidl/1.0/nfc-service-nxp.xml
+     at android-17.0.0_r1. Only installed with AXON7_NFC=1. -->
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.nfc</name>
+        <version>1</version>
+        <fqname>INfc/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>vendor.nxp.nxpnfc_aidl</name>
+        <fqname>INxpNfc/default</fqname>
+    </hal>
+</manifest>

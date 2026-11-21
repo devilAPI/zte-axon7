@@ -121,6 +121,15 @@ BOARD_HOSTAPD_DRIVER := NL80211
 # Bluetooth: HCI user channel (AOSP default AIDL HAL)
 BOARD_HAVE_BLUETOOTH := true
 
+# NFC (AXON7_NFC=1 only): the kernel's nxp-nci stack and the Android NXP HAL
+# cannot own the same PN548. pn5xx_raw=1 makes the built-in pn5xx-raw driver
+# bind the existing nxp,nxp-nci-i2c node and expose /dev/nq-nci instead.
+# Nura and normal LineageOS builds leave this unset and keep nxp-nci/nfc0.
+AXON7_NFC ?= 0
+ifeq ($(AXON7_NFC),1)
+BOARD_KERNEL_CMDLINE += pn5xx_raw=1
+endif
+
 # SELinux
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 # libperfmgr power HAL (vendor.powerhal.* props, cpufreq nodes)

@@ -25,3 +25,8 @@ modalias_handling enabled
 /dev/media*               0660   system     camera
 /dev/v4l-subdev*          0660   system     camera
 /dev/video*               0660   system     camera
+# PN548 raw NCI character device (kernel pn5xx-raw, AXON7_NFC=1): the NXP
+# NFC HAL runs as user nfc. All three aliases share one driver.
+/dev/nq-nci               0660   nfc        nfc
+/dev/pn5xx                0660   nfc        nfc
+/dev/pn54x                0660   nfc        nfc
