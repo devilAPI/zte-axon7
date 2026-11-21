@@ -65,6 +65,25 @@ RadioModem::RadioModem(std::shared_ptr<minimal::SlotContext> context)
     : minimal::RadioModem(context, {{RadioTechnology::LTE, RadioTechnology::HSPA,
                                      RadioTechnology::UMTS, RadioTechnology::GSM}}) {}
 
+ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool powerOn, bool forEmergencyCall,
+                                        bool preferredForEmergencyCall) {
+    LOG_CALL << powerOn;
+    if (!powerOn) {
+        // The GNSS HAL needs the modem's QMI services even in airplane mode;
+        // do not take it offline here (RIL-PLAN 3.1, deferred until GNSS has
+        // its own power policy).
+        LOG(INFO) << "radio off requested: modem stays online for GNSS";
+        respond()->setRadioPowerResponse(noError(serial));
+        return ok();
+    }
+    if (!setOperatingModeOnline()) {
+        respond()->setRadioPowerResponse(errorResponse(serial, RadioError::MODEM_ERR));
+        return ok();
+    }
+    respond()->setRadioPowerResponse(noError(serial));
+    return ok();
+}
+
 ScopedAStatus RadioModem::getImei(int32_t serial) {
     LOG_CALL;
     auto imei = readImei();

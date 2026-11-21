@@ -14,6 +14,10 @@
     <!-- notification LED (PMI8994 tri-colour LED, lights HAL) -->
     <bool name="config_intrusiveNotificationLed">true</bool>
 
+    <!-- IRadioVoice is only a stub (every request REQUEST_NOT_SUPPORTED);
+         calls must not be offered until q6voice call audio is proven. -->
+    <bool name="config_voice_capable">false</bool>
+
     <!-- Wallpaper zoom (rest, shade, app transitions) off: AOSP's 1.10 crops the
          wallpaper and scales it back up, which needs a scaling (VIG/QSEED2)
          plane in every frame that shows it (kernel 0013 makes that possible;

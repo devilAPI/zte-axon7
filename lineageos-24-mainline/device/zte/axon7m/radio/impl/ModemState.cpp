@@ -16,6 +16,7 @@
 #include <libminradio/network/structs.h>
 
 #include <algorithm>
+#include <atomic>
 #include <mutex>
 #include <cstdio>
 
@@ -252,6 +253,16 @@ void refreshModemState() {
     auto card = readCardStatus();
     auto reg = readRegState();
     auto signal = reg ? std::optional<net::SignalStrength>(readSignalStrength()) : std::nullopt;
+    auto mode = readOperatingMode();
+    if (mode) {
+        static std::atomic<uint8_t> lastMode{0xff};
+        if (*mode != lastMode) {
+            lastMode = *mode;
+            LOG(INFO) << "DMS operating mode " << (*mode == 0 ? "online" :
+                         *mode == 1 ? "low power" : *mode == 2 ? "offline" : "unknown")
+                      << " (" << static_cast<int>(*mode) << ")";
+        }
+    }
     std::lock_guard l(gCacheLock);
     gCard = card;
     gReg = reg;
@@ -271,6 +282,18 @@ std::optional<net::RegStateResult> cachedRegState() {
 net::SignalStrength cachedSignalStrength() {
     std::lock_guard l(gCacheLock);
     return gSignal ? *gSignal : ::android::hardware::radio::minimal::structs::makeSignalStrength();
+}
+
+std::optional<uint8_t> readOperatingMode() {
+    auto r = qmiRequest(kDms, 0x2D);
+    auto* t = r && r->ok() ? r->tlv(0x01) : nullptr;
+    if (!t || t->empty()) return std::nullopt;
+    return (*t)[0];
+}
+
+bool setOperatingModeOnline() {
+    auto r = qmiRequest(kDms, 0x2E, {0x01, 1, 0, 0});  // 0 = online
+    return r && r->ok();
 }
 
 std::optional<std::string> readImei() {

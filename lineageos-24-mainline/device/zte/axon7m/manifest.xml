@@ -1,4 +1,8 @@
 <!-- Vendor manifest of the Axon 7 mainline port. HALs add their own VINTF
      fragments; this file only sets the target FCM level. -->
-<manifest version="1.0" type="device" target-level="202404">
+<!-- Radio V4 (RIL-PLAN 2.2): the 202404 compatibility matrix accepts AIDL
+     radio V3 at the lowest, 202504 accepts V3 and V4. The 202504 matrix also
+     covers this device's other HALs (GNSS V4, health V5, keymint V5,
+     power V7, sensors V3, Wi-Fi V4); checkvintf must stay clean. -->
+<manifest version="1.0" type="device" target-level="202504">
 </manifest>

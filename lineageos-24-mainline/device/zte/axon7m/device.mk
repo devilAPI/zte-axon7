@@ -180,13 +180,16 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml
 
 # Telephony (milestone M7): radio AIDL HAL over QMI (radio/, RIL-PLAN.md):
-# modem identity, SIM state, registration, operator, signal. No SIM file
-# access, SMS, calls or data yet, so only the radio access and subscription
-# features are declared (not calling, messaging, data).
+# modem identity, SIM state, registration, operator, signal and 3GPP SMS over
+# QMI WMS. SIM files, calls and data are not implemented (the voice service is
+# a stub that answers REQUEST_NOT_SUPPORTED), so only radio access,
+# subscription and messaging features are declared. config_voice_capable stays
+# false in the framework overlay.
 PRODUCT_PACKAGES += android.hardware.radio-service.axon7m
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.radio.access.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.radio.access.xml \
-    frameworks/native/data/etc/android.hardware.telephony.subscription.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.subscription.xml
+    frameworks/native/data/etc/android.hardware.telephony.subscription.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.subscription.xml \
+    frameworks/native/data/etc/android.hardware.telephony.messaging.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.messaging.xml
 
 # Developer builds: AXON7_ADB_KEYS=FILE (adb public key of the developer host,
 # as in the LineageOS 22.2 axon7 tree) puts the key into system and recovery
