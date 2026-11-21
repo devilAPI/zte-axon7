@@ -628,10 +628,24 @@ Messages 0x1E answers error 71 and Get SMSC 0x34 answers error 52, so those
 two are not relied on. WDS Get Current Settings 0x2D with a zero mask answers
 error 15; WDS data calls stay out of scope until IPA v2.5 exists.
 
-Remaining: build `android.hardware.radio-service.axon7m` on the server, then
-check `service list`, `dumpsys telephony.registry`, signal strength and
-`logcat -b radio` on the main phone. SIM state propagation and SMS need a
-card (section 4.1); the voice stub is not a call implementation.
+Telephony evidence on the main phone **with the previously built HAL** (the
+new code is not on the phone yet), `logs/radio-telephony-probe*.txt`: the
+service has been running for 1h41 without a restart, `service list` shows the
+five previously declared radio services, `dumpsys telephony.registry` reports
+`mRadioPowerState=1`, `NOT_REG_MT_SEARCHING_OP` over GSM and a live GSM signal
+of `rssi=-73 dBm`, level 4; `logcat -b radio` shows the matching
+`networkStateChanged` indication and no phone-process crash/ANR. A DMS Get
+Revision request on the same boot returns the MPSS build string (the HAL maps
+it to the baseband version; no personal data in the log). This confirms the
+pre-existing HAL path and the framework's health, **not** the new messaging,
+voice, indication or FCM changes.
+
+Remaining: build `android.hardware.radio-service.axon7m` on the server (SSH to
+root@compiler was still not answering during this work; build not attempted),
+then check the seven `service list` entries, `dumpsys telephony.registry`,
+signal strength and `logcat -b radio` with the new binary, plus `checkvintf`.
+SIM state propagation and SMS need a card (section 4.1); the voice stub is not
+a call implementation.
 
 ## Sources
 
