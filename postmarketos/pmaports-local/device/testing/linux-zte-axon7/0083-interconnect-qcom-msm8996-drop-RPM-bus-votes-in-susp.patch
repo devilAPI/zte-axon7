@@ -1,0 +1,83 @@
+From 09b422496d12426b1d8590300c4e9e88b9cdd632 Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sat, 21 Nov 2026 16:53:22 +0100
+Subject: [PATCH 4/4] interconnect: qcom: msm8996: drop RPM bus votes in
+ suspend
+
+The keep_alive votes added for register access keep XO and VDD on in
+suspend.  Release the RPM bus clock rate votes and HLOS bus clock enables
+in suspend_noirq and restore them in resume_noirq.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/interconnect/qcom/msm8996.c | 43 +++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+ mode change 100644 => 100755 drivers/interconnect/qcom/msm8996.c
+
+diff --git a/drivers/interconnect/qcom/msm8996.c b/drivers/interconnect/qcom/msm8996.c
+old mode 100644
+new mode 100755
+index 9ba2b22ae..43d79df4b
+--- a/drivers/interconnect/qcom/msm8996.c
++++ b/drivers/interconnect/qcom/msm8996.c
+@@ -2113,6 +2113,48 @@ static const struct of_device_id qnoc_of_match[] = {
+ };
+ MODULE_DEVICE_TABLE(of, qnoc_of_match);
+ 
++/*
++ * keep_alive in the NoC descriptors is needed while the SoC is running:
++ * dropping the RPM bus clock to zero makes register accesses through the
++ * NoC time out.  In suspend the same vote keeps XO and VDD on, so release
++ * it after all devices have suspended and restore it before they resume.
++ */
++static int msm8996_icc_suspend_noirq(struct device *dev)
++{
++	struct qcom_icc_provider *qp = dev_get_drvdata(dev);
++	int state;
++
++	for (state = 0; state < QCOM_SMD_RPM_STATE_NUM; state++)
++		if (qp->bus_clk_desc)
++			qcom_icc_rpm_set_bus_rate(qp->bus_clk_desc, state, 0);
++
++	clk_disable_unprepare(qp->bus_clk);
++	return 0;
++}
++
++static int msm8996_icc_resume_noirq(struct device *dev)
++{
++	struct qcom_icc_provider *qp = dev_get_drvdata(dev);
++	int state, ret;
++
++	ret = clk_prepare_enable(qp->bus_clk);
++	if (ret)
++		return ret;
++
++	/* bus_clk_rate[] still holds the active votes from before suspend. */
++	for (state = 0; state < QCOM_SMD_RPM_STATE_NUM; state++)
++		if (qp->bus_clk_desc)
++			qcom_icc_rpm_set_bus_rate(qp->bus_clk_desc, state,
++						  qp->bus_clk_rate[state]);
++
++	return 0;
++}
++
++static const struct dev_pm_ops msm8996_icc_pm_ops = {
++	.suspend_noirq = msm8996_icc_suspend_noirq,
++	.resume_noirq = msm8996_icc_resume_noirq,
++};
++
+ static struct platform_driver qnoc_driver = {
+ 	.probe = qnoc_probe,
+ 	.remove = qnoc_remove,
+@@ -2120,6 +2162,7 @@ static struct platform_driver qnoc_driver = {
+ 		.name = "qnoc-msm8996",
+ 		.of_match_table = qnoc_of_match,
+ 		.sync_state = icc_sync_state,
++		.pm = &msm8996_icc_pm_ops,
+ 	}
+ };
+ static int __init qnoc_driver_init(void)
+-- 
+2.43.0
+

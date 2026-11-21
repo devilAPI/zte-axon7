@@ -1,0 +1,45 @@
+From b33253c613df74d8e5489df85cf95545280f62b5 Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sat, 21 Nov 2026 16:29:00 +0100
+Subject: [PATCH 3/4] cpuidle: psci: allow system states during s2idle without
+ OSI
+
+Platform-coordinated firmware accepts the cluster/system fields of the
+vendor PSCI state IDs.  Install an s2idle callback on the deepest CPU idle
+state even when OSI is unavailable, otherwise s2idle never enters PSCI and
+RPM never observes a low-power vote.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/cpuidle/cpuidle-psci.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 drivers/cpuidle/cpuidle-psci.c
+
+diff --git a/drivers/cpuidle/cpuidle-psci.c b/drivers/cpuidle/cpuidle-psci.c
+old mode 100644
+new mode 100755
+index b250d0dde..70b947591
+--- a/drivers/cpuidle/cpuidle-psci.c
++++ b/drivers/cpuidle/cpuidle-psci.c
+@@ -251,8 +251,16 @@ static int psci_dt_cpu_init_topology(struct cpuidle_driver *drv,
+ 				     unsigned int state_count, int cpu)
+ {
+ 	/* Currently limit the hierarchical topology to be used in OSI mode. */
+-	if (!psci_has_osi_support())
++	if (!psci_has_osi_support()) {
++		/*
++		 * Platform-coordinated firmware still accepts a state ID with
++		 * the cluster/system fields from the vendor lpm-levels.  Without
++		 * this callback s2idle never calls PSCI CPU_SUSPEND at all, so
++		 * the SoC stays in WFI and RPM never sees a low-power vote.
++		 */
++		drv->states[state_count - 1].enter_s2idle = psci_enter_idle_state;
+ 		return 0;
++	}
+ 
+ 	data->dev = dt_idle_attach_cpu(cpu, "psci");
+ 	if (IS_ERR_OR_NULL(data->dev))
+-- 
+2.43.0
+

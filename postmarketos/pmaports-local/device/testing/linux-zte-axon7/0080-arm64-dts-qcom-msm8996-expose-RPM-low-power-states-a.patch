@@ -1,0 +1,148 @@
+From f8df4705ec7335c866f191d05ae271e00cab8391 Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sat, 21 Nov 2026 16:12:51 +0100
+Subject: [PATCH 1/4] arm64: dts: qcom: msm8996: expose RPM low-power states
+ and stats
+
+Add the RPM master stats slices from the vendor msm8996-pm.dtsi, a deep
+CPU idle state carrying the vendor system-fpc PSCI parameters for suspend,
+and point the RPM stats node at the legacy SRAM window used by this SoC.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ arch/arm64/boot/dts/qcom/msm8996.dtsi | 64 ++++++++++++++++++++++++---
+ 1 file changed, 59 insertions(+), 5 deletions(-)
+ mode change 100644 => 100755 arch/arm64/boot/dts/qcom/msm8996.dtsi
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996.dtsi b/arch/arm64/boot/dts/qcom/msm8996.dtsi
+old mode 100644
+new mode 100755
+index c82482b48..a6ae5bf08
+--- a/arch/arm64/boot/dts/qcom/msm8996.dtsi
++++ b/arch/arm64/boot/dts/qcom/msm8996.dtsi
+@@ -49,7 +49,7 @@ cpu0: cpu@0 {
+ 			compatible = "qcom,kryo";
+ 			reg = <0x0 0x0>;
+ 			enable-method = "psci";
+-			cpu-idle-states = <&cpu_sleep_0>;
++			cpu-idle-states = <&cpu_sleep_0>, <&system_fpc>;
+ 			capacity-dmips-mhz = <1024>;
+ 			clocks = <&kryocc 0>;
+ 			interconnects = <&cbf MASTER_CBF_M4M &cbf SLAVE_CBF_M4M>;
+@@ -68,7 +68,7 @@ cpu1: cpu@1 {
+ 			compatible = "qcom,kryo";
+ 			reg = <0x0 0x1>;
+ 			enable-method = "psci";
+-			cpu-idle-states = <&cpu_sleep_0>;
++			cpu-idle-states = <&cpu_sleep_0>, <&system_fpc>;
+ 			capacity-dmips-mhz = <1024>;
+ 			clocks = <&kryocc 0>;
+ 			interconnects = <&cbf MASTER_CBF_M4M &cbf SLAVE_CBF_M4M>;
+@@ -82,7 +82,7 @@ cpu2: cpu@100 {
+ 			compatible = "qcom,kryo";
+ 			reg = <0x0 0x100>;
+ 			enable-method = "psci";
+-			cpu-idle-states = <&cpu_sleep_0>;
++			cpu-idle-states = <&cpu_sleep_0>, <&system_fpc>;
+ 			capacity-dmips-mhz = <1024>;
+ 			clocks = <&kryocc 1>;
+ 			interconnects = <&cbf MASTER_CBF_M4M &cbf SLAVE_CBF_M4M>;
+@@ -101,7 +101,7 @@ cpu3: cpu@101 {
+ 			compatible = "qcom,kryo";
+ 			reg = <0x0 0x101>;
+ 			enable-method = "psci";
+-			cpu-idle-states = <&cpu_sleep_0>;
++			cpu-idle-states = <&cpu_sleep_0>, <&system_fpc>;
+ 			capacity-dmips-mhz = <1024>;
+ 			clocks = <&kryocc 1>;
+ 			interconnects = <&cbf MASTER_CBF_M4M &cbf SLAVE_CBF_M4M>;
+@@ -143,6 +143,25 @@ cpu_sleep_0: cpu-sleep-0 {
+ 				exit-latency-us = <80>;
+ 				min-residency-us = <300>;
+ 			};
++
++			/*
++			 * The downstream lpm-levels describe a system-fpc state with
++			 * PSCI mode 0x34 (shift 8), cluster-fpc 4 (shift 4) and
++			 * CPU-fpc 4, plus the affinity level and reset bits that the
++			 * firmware expects.  This is the state used for suspend on
++			 * the vendor kernel.  The long residency keeps the idle
++			 * governor out of it; s2idle always selects the deepest
++			 * state with an enter_s2idle callback.
++			 */
++			system_fpc: system-fpc {
++				compatible = "arm,idle-state";
++				idle-state-name = "system-fpc";
++				arm,psci-suspend-param = <0x42003444>;
++				entry-latency-us = <11000>;
++				exit-latency-us = <1200>;
++				min-residency-us = <10000000>;
++				local-timer-stop;
++			};
+ 		};
+ 	};
+ 
+@@ -466,6 +485,15 @@ psci {
+ 	rpm: remoteproc {
+ 		compatible = "qcom,msm8996-rpm-proc", "qcom,rpm-proc";
+ 
++		master-stats {
++			compatible = "qcom,rpm-master-stats";
++			qcom,rpm-msg-ram = <&apss_master_stats>,
++					   <&mpss_master_stats>,
++					   <&adsp_master_stats>,
++					   <&slpi_master_stats>;
++			qcom,master-names = "APSS", "MPSS", "ADSP", "SLPI";
++		};
++
+ 		glink-edge {
+ 			compatible = "qcom,glink-rpm";
+ 			interrupts = <GIC_SPI 168 IRQ_TYPE_EDGE_RISING>;
+@@ -751,6 +779,25 @@ rpm_msg_ram: sram@68000 {
+ 			reg = <0x00068000 0x6000>;
+ 		};
+ 
++		/* RPM master stats: 4 KiB per master at 0x68150 (vendor
++		 * qcom,rpm-master-stats@60150, qcom,master-offset = <4096>).
++		 */
++		apss_master_stats: sram@68150 {
++			reg = <0x00068150 0x1000>;
++		};
++
++		mpss_master_stats: sram@69150 {
++			reg = <0x00069150 0x1000>;
++		};
++
++		adsp_master_stats: sram@6a150 {
++			reg = <0x0006a150 0x1000>;
++		};
++
++		slpi_master_stats: sram@6b150 {
++			reg = <0x0006b150 0x1000>;
++		};
++
+ 		qfprom@74000 {
+ 			compatible = "qcom,msm8996-qfprom", "qcom,qfprom";
+ 			reg = <0x00074000 0x8ff>;
+@@ -1888,9 +1935,16 @@ data-pins {
+ 			};
+ 		};
+ 
++		/*
++		 * The vendor firmware on msm8996 keeps the sleep stats in the
++		 * RPM SRAM at 0x200000 + the offset stored at 0x290014.  The
++		 * generic qcom,rpm-stats driver would look for both in the same
++		 * SRAM window; give it the legacy base explicitly.
++		 */
+ 		sram@290000 {
+-			compatible = "qcom,rpm-stats";
++			compatible = "qcom,msm8996-rpm-stats";
+ 			reg = <0x00290000 0x10000>;
++			qcom,stats-base = <0x00200000>;
+ 		};
+ 
+ 		spmi_bus: spmi@400f000 {
+-- 
+2.43.0
+

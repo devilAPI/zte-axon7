@@ -1,0 +1,168 @@
+From addc0b112e10f01b2d0c56fbeef85126cdf3d137 Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sat, 21 Nov 2026 16:24:05 +0100
+Subject: [PATCH 2/4] soc: qcom: stats: support the msm8996 legacy RPM stats
+ window
+
+On msm8996 the dynamic offset is in the SRAM at 0x290014, but the sleep
+stat records live at 0x200000 + offset (vendor msm8996-pm.dtsi).  Read the
+offset from the DT reg and the records from the optional qcom,stats-base.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ .../bindings/soc/qcom/qcom-stats.yaml         | 16 +++++++++
+ drivers/soc/qcom/qcom_stats.c                 | 36 ++++++++++++++++---
+ 2 files changed, 48 insertions(+), 4 deletions(-)
+ mode change 100644 => 100755 Documentation/devicetree/bindings/soc/qcom/qcom-stats.yaml
+ mode change 100644 => 100755 drivers/soc/qcom/qcom_stats.c
+
+diff --git a/Documentation/devicetree/bindings/soc/qcom/qcom-stats.yaml b/Documentation/devicetree/bindings/soc/qcom/qcom-stats.yaml
+old mode 100644
+new mode 100755
+index 686a7ef2f..639b8043f
+--- a/Documentation/devicetree/bindings/soc/qcom/qcom-stats.yaml
++++ b/Documentation/devicetree/bindings/soc/qcom/qcom-stats.yaml
+@@ -27,6 +27,7 @@ properties:
+       - qcom,msm8226-rpm-stats
+       - qcom,msm8916-rpm-stats
+       - qcom,msm8974-rpm-stats
++      - qcom,msm8996-rpm-stats
+ 
+   reg:
+     maxItems: 1
+@@ -35,6 +36,13 @@ properties:
+     $ref: /schemas/types.yaml#/definitions/phandle
+     description: Reference to the AOSS side-channel message RAM
+ 
++  qcom,stats-base:
++    $ref: /schemas/types.yaml#/definitions/uint32
++    description:
++      Physical base of the SRAM window holding the sleep statistics, for
++      RPM firmwares that store the dynamic offset and the records in
++      different windows (msm8996).
++
+ required:
+   - compatible
+   - reg
+@@ -48,6 +56,14 @@ allOf:
+     then:
+       properties:
+         qcom,qmp: false
++  - if:
++      not:
++        properties:
++          compatible:
++            const: qcom,msm8996-rpm-stats
++    then:
++      properties:
++        qcom,stats-base: false
+ 
+ additionalProperties: false
+ 
+diff --git a/drivers/soc/qcom/qcom_stats.c b/drivers/soc/qcom/qcom_stats.c
+old mode 100644
+new mode 100755
+index 06923408b..0a48deab1
+--- a/drivers/soc/qcom/qcom_stats.c
++++ b/drivers/soc/qcom/qcom_stats.c
+@@ -63,6 +63,7 @@ struct stats_config {
+ 	size_t num_records;
+ 	bool appended_stats_avail;
+ 	bool dynamic_offset;
++	bool legacy_rpm_base;
+ 	bool subsystem_stats_in_smem;
+ };
+ 
+@@ -237,6 +238,7 @@ static void qcom_create_ddr_stat_files(struct dentry *root, void __iomem *reg,
+ }
+ 
+ static void qcom_create_soc_sleep_stat_files(struct dentry *root, void __iomem *reg,
++					     void __iomem *stats_reg,
+ 					     struct stats_data *d,
+ 					     const struct stats_config *config)
+ {
+@@ -258,7 +260,7 @@ static void qcom_create_soc_sleep_stat_files(struct dentry *root, void __iomem *
+ 	}
+ 
+ 	for (i = 0; i < config->num_records; i++) {
+-		d[i].base = reg + offset + stats_offset;
++		d[i].base = stats_reg + offset + stats_offset;
+ 
+ 		/*
+ 		 * Read the low power mode name and create debugfs file for it.
+@@ -297,20 +299,35 @@ static void qcom_create_subsystem_stat_files(struct dentry *root,
+ 
+ static int qcom_stats_probe(struct platform_device *pdev)
+ {
+-	void __iomem *reg;
++	void __iomem *reg, *stats_reg;
++	struct resource *res;
+ 	struct dentry *root;
+ 	const struct stats_config *config;
+ 	struct stats_data *d;
++	u32 stats_base;
+ 	int i;
+ 
+ 	config = device_get_match_data(&pdev->dev);
+ 	if (!config)
+ 		return -ENODEV;
+ 
+-	reg = devm_platform_get_and_ioremap_resource(pdev, 0, NULL);
++	reg = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
+ 	if (IS_ERR(reg))
+ 		return -ENOMEM;
+ 
++	stats_reg = reg;
++	/*
++	 * On msm8996 the RPM puts the sleep statistics into a different SRAM
++	 * window from the one holding the dynamic offset (see the vendor
++	 * msm8996-pm.dtsi).  The offset is still read from reg + RPM_DYNAMIC_ADDR.
++	 */
++	if (config->legacy_rpm_base &&
++	    !of_property_read_u32(pdev->dev.of_node, "qcom,stats-base", &stats_base)) {
++		stats_reg = devm_ioremap(&pdev->dev, stats_base, resource_size(res));
++		if (!stats_reg)
++			return -ENOMEM;
++	}
++
+ 	d = devm_kcalloc(&pdev->dev, config->num_records,
+ 			 sizeof(*d), GFP_KERNEL);
+ 	if (!d)
+@@ -337,7 +354,7 @@ static int qcom_stats_probe(struct platform_device *pdev)
+ 	root = debugfs_create_dir("qcom_stats", NULL);
+ 
+ 	qcom_create_subsystem_stat_files(root, config);
+-	qcom_create_soc_sleep_stat_files(root, reg, d, config);
++	qcom_create_soc_sleep_stat_files(root, reg, stats_reg, d, config);
+ 	qcom_create_ddr_stat_files(root, reg, config);
+ 
+ 	platform_set_drvdata(pdev, root);
+@@ -362,6 +379,16 @@ static const struct stats_config rpm_data = {
+ 	.subsystem_stats_in_smem = false,
+ };
+ 
++/* msm8996 RPM firmware: dynamic offset at 0x290014, stats at 0x200000 + offset */
++static const struct stats_config rpm_data_msm8996 = {
++	.stats_offset = 0,
++	.num_records = 2,
++	.appended_stats_avail = true,
++	.dynamic_offset = true,
++	.legacy_rpm_base = true,
++	.subsystem_stats_in_smem = false,
++};
++
+ /* Older RPM firmwares have the stats at a fixed offset instead */
+ static const struct stats_config rpm_data_dba0 = {
+ 	.stats_offset = 0xdba0,
+@@ -393,6 +420,7 @@ static const struct of_device_id qcom_stats_table[] = {
+ 	{ .compatible = "qcom,msm8226-rpm-stats", .data = &rpm_data_dba0 },
+ 	{ .compatible = "qcom,msm8916-rpm-stats", .data = &rpm_data_dba0 },
+ 	{ .compatible = "qcom,msm8974-rpm-stats", .data = &rpm_data_dba0 },
++	{ .compatible = "qcom,msm8996-rpm-stats", .data = &rpm_data_msm8996 },
+ 	{ .compatible = "qcom,rpm-stats", .data = &rpm_data },
+ 	{ .compatible = "qcom,rpmh-stats", .data = &rpmh_data },
+ 	{ .compatible = "qcom,sdm845-rpmh-stats", .data = &rpmh_data_sdm845 },
+-- 
+2.43.0
+

@@ -156,6 +156,35 @@ adb reboot
 
 Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware.md`).
 
+## Deep sleep / RPM low-power states (2026-11-21, kernel 0080-0083)
+
+`s2idle` suspend and wake work (r28), but the RPM counters `vlow` (XO
+shutdown) and `vmin` (VDD min) stay at zero and the phone draws about
+222 mA with the screen off.  Four kernel changes address that:
+
+- 0080: RPM master stats (APSS/MPSS/ADSP/SLPI at `0x68150` + 4 KiB each,
+  from the vendor `msm8996-pm.dtsi`) and a deep CPU idle state carrying
+  the vendor suspend state: system-fpc `0x34 << 8`, cluster-fpc `4 << 4`,
+  CPU-fpc `4`, affinity level 2 and reset => `0x42003444`.  Its residency
+  is 10 s so it is only picked by s2idle, not by the idle governor.
+- 0081: the RPM sleep-stat records on this firmware are at
+  `0x200000 + offset`, while the dynamic offset is at `0x290014`; the
+  generic `qcom,rpm-stats` binding expects both in one window.  A
+  `qcom,msm8996-rpm-stats` compatible plus `qcom,stats-base` reads them
+  from the right window (vendor DT layout).
+- 0082: `cpuidle-psci` only attached `enter_s2idle` in hierarchical OSI
+  mode.  Without OSI, s2idle never called PSCI CPU_SUSPEND, so no state
+  including the system-level XO-shutdown mode was ever requested.  The
+  deepest CPU state now has an s2idle callback in platform-coordinated
+  mode too.
+- 0083: the interconnect `keep_alive` fix (0054) is required for register
+  access while running, but its active RPM bus clock votes also keep XO
+  and VDD on during suspend.  The msm8996 NoC driver drops those votes in
+  `suspend_noirq` and restores them in `resume_noirq`.
+
+Test status: see the dated result note below; no XDA changelog until the
+counters have been measured on the phone.
+
 ## Known gaps
 
 - **Display**: works (S6E3HA3 driver and bonded DSI, patches 0002, 0004; DPU drives DSI-1 at 1440x2560, `msmdrmfb` console). It needs `msm.prefer_mdp5=0`, or the MDP5 driver takes MDSS and cannot drive two links.
