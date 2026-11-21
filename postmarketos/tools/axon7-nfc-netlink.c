@@ -7,7 +7,11 @@
  * Built for Android with the NDK for the LineageOS 24 test (the Nura
  * equivalent is postmarketos/tools/axon7-nfc-test.py). No neard needed:
  * the tool only sends NCI commands to the kernel's nfc0 device and checks
- * that the kernel acknowledges them.
+ * that the kernel acknowledges them. An ACK proves the netlink command was
+ * accepted, not that a tag was read; use dmesg/interrupts for that.
+ *
+ * Build: $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang \
+ *          -O2 -Wall -o axon7-nfc-netlink axon7-nfc-netlink.c
  */
 
 #include <errno.h>
@@ -62,13 +66,14 @@ static int request(uint8_t cmd, const char *attrs, size_t attr_len_total)
 	struct nlmsghdr *nh = (struct nlmsghdr *)buf;
 	struct genlmsghdr *gh = (struct genlmsghdr *)(nh + 1);
 	size_t body = sizeof(*gh) + attr_len_total;
+	uint32_t myseq = ++seq;
 	int ret = 0;
 
 	memset(buf, 0, sizeof(buf));
 	nh->nlmsg_len = NLMSG_LENGTH(body);
 	nh->nlmsg_type = family;
 	nh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	nh->nlmsg_seq = ++seq;
+	nh->nlmsg_seq = myseq;
 	gh->cmd = cmd;
 	gh->version = 1;
 	if (attr_len_total && attrs)
@@ -95,6 +100,8 @@ static int request(uint8_t cmd, const char *attrs, size_t attr_len_total)
 			if (nh->nlmsg_len < sizeof(*nh) ||
 			    off + nh->nlmsg_len > (size_t)n)
 				break;
+			if (nh->nlmsg_seq != myseq)
+				continue;
 			if (nh->nlmsg_type == NLMSG_ERROR) {
 				struct nlmsgerr *e = (struct nlmsgerr *)(nh + 1);
 
@@ -106,6 +113,65 @@ static int request(uint8_t cmd, const char *attrs, size_t attr_len_total)
 					ret = -1;
 				}
 				return ret;
+			}
+		}
+	}
+}
+
+/* GET_DEVICE is a dump: ACK may arrive before the device messages, so keep
+ * reading until NLMSG_DONE and report whether any nfc device was returned. */
+static int request_dump(int *found)
+{
+	char buf[4096];
+	struct nlmsghdr *nh = (struct nlmsghdr *)buf;
+	struct genlmsghdr *gh = (struct genlmsghdr *)(nh + 1);
+	uint32_t myseq = ++seq;
+
+	memset(buf, 0, sizeof(buf));
+	nh->nlmsg_len = NLMSG_LENGTH(sizeof(*gh));
+	nh->nlmsg_type = family;
+	nh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP;
+	nh->nlmsg_seq = myseq;
+	gh->cmd = NFC_CMD_GET_DEVICE;
+	gh->version = 1;
+
+	if (send(fd, buf, nh->nlmsg_len, 0) < 0) {
+		perror("send");
+		return -1;
+	}
+
+	for (;;) {
+		ssize_t n = recv(fd, buf, sizeof(buf), 0);
+		size_t off;
+
+		if (n < 0) {
+			if (errno == EINTR)
+				continue;
+			perror("recv");
+			return -1;
+		}
+		for (off = 0; off + sizeof(*nh) <= (size_t)n;
+		     off += NLMSG_ALIGN(nh->nlmsg_len)) {
+			nh = (struct nlmsghdr *)(buf + off);
+			if (nh->nlmsg_len < sizeof(*nh) ||
+			    off + nh->nlmsg_len > (size_t)n)
+				break;
+			if (nh->nlmsg_seq != myseq)
+				continue;
+			if (nh->nlmsg_type == NLMSG_ERROR) {
+				struct nlmsgerr *e = (struct nlmsgerr *)(nh + 1);
+
+				if (nh->nlmsg_len < NLMSG_LENGTH(sizeof(*e)))
+					continue;
+				if (e->error) {
+					fprintf(stderr, "GET_DEVICE: %s\n",
+						strerror(-e->error));
+					return -1;
+				}
+			} else if (nh->nlmsg_type == NLMSG_DONE) {
+				return 0;
+			} else if (nh->nlmsg_type == family) {
+				*found = 1;
 			}
 		}
 	}
@@ -202,10 +268,15 @@ int main(int argc, char **argv)
 	pos = 0;
 	put_attr(attrs, &pos, NFC_ATTR_DEVICE_INDEX, &index, sizeof(index));
 	if (!strcmp(cmd, "info")) {
-		/* GET_DEVICE is a dump: the ACK itself is enough for a probe. */
-		if (request(NFC_CMD_GET_DEVICE, attrs, pos))
+		int found = 0;
+
+		if (request_dump(&found))
 			return 1;
-		printf("nfc%u: GET_DEVICE ok (family %u)\n", index, family);
+		if (!found) {
+			fprintf(stderr, "no NFC device reported\n");
+			return 1;
+		}
+		printf("nfc device present (family %u)\n", family);
 		return 0;
 	}
 	if (!strcmp(cmd, "up")) {
