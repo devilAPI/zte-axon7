@@ -106,11 +106,11 @@ has_token "$boot_cmd" firmware_class.path=/vendor/firmware ||
 # endian) in the first 4 bytes of the second 4096-byte page; the metadata
 # holds the four logical partition names. Decompress only the first 1 MiB.
 magic=$(unzip -p "$ZIP" super.raw.gz 2>/dev/null | gunzip -c 2>/dev/null |
-	dd bs=4096 skip=1 count=1 2>/dev/null | dd bs=1 count=4 2>/dev/null)
+	dd bs=1 skip=4096 count=4 2>/dev/null)
 [ "$magic" = gDla ] ||
 	die "super.raw.gz in the zip has no Android logical-partition metadata (magic '$magic'); wrong or damaged zip"
 lp_names=$(unzip -p "$ZIP" super.raw.gz 2>/dev/null | gunzip -c 2>/dev/null |
-	dd bs=4096 count=256 2>/dev/null | tr -c '[:print:]' '\n')
+	head -c 1048576 | tr -c '[:print:]' '\n')
 for p in system system_ext product vendor; do
 	printf '%s\n' "$lp_names" | grep -q "^$p\$" ||
 		die "super image in the zip has no logical partition '$p' (expected system, system_ext, product, vendor)"
