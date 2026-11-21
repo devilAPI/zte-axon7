@@ -1,0 +1,162 @@
++ adb devices -l
+List of devices attached
+7e15695a               device usb:5-3 product:lineage_axon7m model:A2017G device:axon7m transport_id:3
+
+++ adb get-state
++ state=device
++ echo 'initial state: device'
+initial state: device
++ '[' device = recovery ']'
+++ seq 1 90
++ for i in $(seq 1 90)
+++ adb shell getprop sys.boot_completed
+++ tr -d '\r'
++ b=1
++ '[' 1 = 1 ']'
++ break
++ echo 'boot_completed=1 after 1 polls'
+boot_completed=1 after 1 polls
++ adb root
+adbd is already running as root
++ adb wait-for-device
++ adb shell id
+uid=0(root) gid=0(root) groups=0(root),1004(input),1007(log),1011(adb),1015(sdcard_rw),1028(sdcard_r),1078(ext_data_rw),1079(ext_obb_rw),3001(net_bt_admin),3002(net_bt),3003(inet),3006(net_bw_stats),3009(readproc),3011(uhid),3012(readtracefs) context=u:r:su:s0
++ adb shell getprop ro.build.version.release
+17
++ adb shell getprop gsm.version.baseband
+unknown
++ adb shell getprop gsm.sim.state
+CARD_IO_ERROR
++ echo '== battery =='
+== battery ==
++ adb shell cat /sys/class/power_supply/qcom-battery/capacity
+99
++ echo '== qrtr services =='
+== qrtr services ==
++ adb shell 'qrtr-lookup 2>/dev/null | sort -k1,1n | head -40'
+  Service Version Instance Node  Port
+        1       1        0    0    46 Wireless Data Service
+        2       1        0    0    58 Device Management Service
+        3       1        0    0    42 Network Access Service
+        4       1        0    0    47 Quality Of Service service
+        5       1        0    0    44 Wireless Messaging Service
+        7       1        0    0    49 Authentication service
+        8       1        0    0    50 AT service
+        9       2        0    0    41 Voice service
+       10       2        0    0    53 Card Application Toolkit service (v2)
+       11       1        0    0    52 User Identity Module service
+       12       1        0    0    43 Phonebook Management service
+       14       1        0    1    14 Remote file system service
+       15       1        0    0    16 Test service
+       15       1        0    5     9 Test service
+       15       1        8    5     2 Test service
+       15       1        8    9     1 Test service
+       15       1        9    9     7 Test service
+       16       2        0    0    55 Location service (~ PDS v2)
+       17       1        0    0    27 Specific absorption rate service
+       18       1        0    0    62 IMS settings service
+       21       1        0    0    17 Modem embedded file system service
+       22       1        1    0    21 Time service
+       23       1        0    0    20 Thermal sensors service
+       24       1        0    0    19 Thermal mitigation device service
+       24       1        1    5     8 Thermal mitigation device service
+       26       1        0    0    48 Wireless data administrative service
+       29       1        0    0    51 Circuit switched videotelephony service
+       31       1        0    0    64 IMS presence service
+       33       1        0    0    65 IMS application service
+       34       1        0    0    28 Coexistence service
+       36       1        0    0    23 Persistent device configuration service
+       41       1        1    0    29 RF radiated performance enhancement service
+       42       1        0    0    57 Data system determination service
+       43       1        0    0     3 Subsystem control service
+       43       2       18    0     4 Subsystem control service
+       43       2       20    5     6 Subsystem control service
+       43       2       22    9     6 Subsystem control service
+       47       1        0    0    45 Data Port Mapper service
+       48       1        0    0    59 <unknown>
++ echo '== push qmi-raw =='
+== push qmi-raw ==
+++ dirname lineageos-24-mainline/logs/sim-session1.sh
++ adb push lineageos-24-mainline/logs/qmi-raw /data/local/tmp/qmi-raw
+lineageos-24-mainline/logs/qmi-raw: 1 file pushed, 0 skipped. 248.3 MB/s (9022208 bytes in 0.035s)
++ adb shell chmod 755 /data/local/tmp/qmi-raw
++ echo '== UIM 0x2f GET_CARD_STATUS =='
+== UIM 0x2f GET_CARD_STATUS ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x2f'
+service 11 at 0:52
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x15 len 3: 02 00 00
+TLV 0x11 len 3: 02 02 02
+TLV 0x10 len 21: ff ff ff ff ff ff ff ff 02 02 00 00 00 03 00 02 00 00 00 03 00
+primary GW app: slot 255 app 255 (0xffff: none)
+slot 1: card error (error code 3), 0 app(s)
+slot 2: card error (error code 3), 0 app(s)
++ echo '== UIM 0x47 GET_SLOT_STATUS =='
+== UIM 0x47 GET_SLOT_STATUS ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x47'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 5e 00
+result 1, QMI error 94
++ echo '== DMS 0x25 GET_IDS (IMEI TLV 0x11 deleted) =='
+== DMS 0x25 GET_IDS (IMEI TLV 0x11 deleted) ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 2 0x25'
++ sed -E '/TLV 0x11/d'
+service 2 at 0:58
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x10 len 8: <redacted ESN>
+TLV 0x12 len 14: <redacted MEID>
+TLV 0x13 len 1: 31
++ echo '== DMS 0x2e (possible UIM state) =='
+== DMS 0x2e (possible UIM state) ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 2 0x2e'
+service 2 at 0:58
+TLV 0x02 len 4: 01 00 11 00
+result 1, QMI error 17
++ echo '== NAS 0x24 serving system =='
+== NAS 0x24 serving system ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 3 0x24'
+service 3 at 0:42
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x01 len 6: 02 02 02 02 01 04
+TLV 0x10 len 1: 00
+TLV 0x11 len 1: 00
+TLV 0x12 len 5: 06 01 03 00 00
+TLV 0x15 len 3: 01 04 00
+TLV 0x21 len 5: 01 03 00 00 00
+TLV 0x27 len 5: 06 01 03 00 00
++ echo '== regulator summary (uim/sim) =='
+== regulator summary (uim/sim) ==
++ adb shell 'cat /sys/kernel/debug/regulator/regulator_summary 2>/dev/null | grep -iE "uim|sim" || cat /sys/kernel/debug/regulator_summary 2>/dev/null | grep -iE "uim|sim" || echo none'
+none
++ echo '== pinmux (uim) =='
+== pinmux (uim) ==
++ adb shell 'grep -iR uim /sys/kernel/debug/pinctrl/ 2>/dev/null | head -20 || true'
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 68: blsp_uim1, groups = [ gpio0 gpio1 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 69: blsp_uim10, groups = [ gpio8 gpio9 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 70: blsp_uim11, groups = [ gpio58 gpio59 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 71: blsp_uim12, groups = [ gpio85 gpio86 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 72: blsp_uim2, groups = [ gpio41 gpio42 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 73: blsp_uim3, groups = [ gpio45 gpio46 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 74: blsp_uim4, groups = [ gpio65 gpio66 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 75: blsp_uim5, groups = [ gpio81 gpio82 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 76: blsp_uim6, groups = [ gpio25 gpio26 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 77: blsp_uim7, groups = [ gpio53 gpio54 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 78: blsp_uim8, groups = [ gpio4 gpio5 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 79: blsp_uim9, groups = [ gpio49 gpio50 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 236: uim1, groups = [ gpio109 gpio110 gpio111 gpio112 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 237: uim2, groups = [ gpio105 gpio106 gpio107 gpio108 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 238: uim3, groups = [ gpio49 gpio50 gpio51 gpio52 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 239: uim4, groups = [ gpio58 gpio59 gpio60 gpio61 ]
+/sys/kernel/debug/pinctrl/1010000.pinctrl/pinmux-functions:function 240: uim_batt, groups = [ gpio113 ]
++ echo '== stayoff =='
+== stayoff ==
++ adb shell 'svc power stayon false'
++ adb shell settings get global stay_on_while_plugged_in
+0
++ echo '== final state =='
+== final state ==
++ adb get-state
+device

@@ -30,3 +30,5 @@ __pycache__/
 
 # private phone backups (EFS holds the IMEI)
 backup/
+# locally built NDK binary for the QMI SIM probes
+lineageos-24-mainline/logs/qmi-raw

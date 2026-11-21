@@ -1,0 +1,100 @@
++ adb get-state
+device
++ adb root
++ adb wait-for-device
++ for msg in 0x41 0x39 0x36 0x2e
++ echo '== UIM 0x41 =='
+== UIM 0x41 ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x41'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 11 00
+result 1, QMI error 17
++ for msg in 0x41 0x39 0x36 0x2e
++ echo '== UIM 0x39 =='
+== UIM 0x39 ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x39'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 11 00
+result 1, QMI error 17
++ for msg in 0x41 0x39 0x36 0x2e
++ echo '== UIM 0x36 =='
+== UIM 0x36 ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x36'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 11 00
+result 1, QMI error 17
++ for msg in 0x41 0x39 0x36 0x2e
++ echo '== UIM 0x2e =='
+== UIM 0x2e ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x2e'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 11 00
+result 1, QMI error 17
++ echo '== full regulator_summary (first 60 lines) =='
+== full regulator_summary (first 60 lines) ==
++ adb shell 'cat /sys/kernel/debug/regulator/regulator_summary 2>/dev/null | head -60 || cat /sys/kernel/debug/regulator_summary 2>/dev/null | head -60'
+ regulator                      use open bypass  opmode voltage current     min     max
+---------------------------------------------------------------------------------------
+ regulator-dummy                  2   46      0 unknown     0mV     0mA     0mV     0mV 
+    b00000.gpu-vddcx              0                                 0mA     0mV     0mV
+    b00000.gpu-vdd                0                                 0mA     0mV     0mV
+    s1                            0    0      0  normal   840mV     0mA     0mV     0mV 
+    s2                            0    0      0    fast   855mV     0mA     0mV     0mV 
+    s3                            0    0      0    fast  1300mV     0mA     0mV     0mV 
+    s4                            0    0      0    fast  1800mV     0mA     0mV     0mV 
+    s5                            0    0      0    fast  2100mV     0mA     0mV     0mV 
+    s7                            0    0      0    fast   662mV     0mA     0mV     0mV 
+    vreg_apc_0p8                  1    0      0    fast   905mV     0mA   470mV  1140mV 
+    s12                           0    0      0    fast  1125mV     0mA     0mV     0mV 
+    l1                            0    0      0    idle     0mV     0mA     0mV     0mV 
+    l2                            0    0      0  normal  1250mV     0mA     0mV     0mV 
+    l3                            0    0      0  normal     0mV     0mA     0mV     0mV 
+    l4                            0    0      0    idle  1200mV     0mA     0mV     0mV 
+    l6                            0    0      0  normal  1200mV     0mA     0mV     0mV 
+    l7                            0    0      0 unknown  1740mV     0mA     0mV     0mV 
+    l8                            0    0      0  normal  1800mV     0mA     0mV     0mV 
+    l9                            0    0      0    idle  1700mV     0mA     0mV     0mV 
+    l10                           0    0      0    idle  1700mV     0mA     0mV     0mV 
+    l11                           0    0      0  normal  1200mV     0mA     0mV     0mV 
+    l12                           0    0      0    idle  1800mV     0mA     0mV     0mV 
+    l13                           0    0      0    idle  1800mV     0mA     0mV     0mV 
+    l14                           0    0      0  normal  1800mV     0mA     0mV     0mV 
+    l15                           0    0      0    idle  1800mV     0mA     0mV     0mV 
+    l16                           0    0      0    idle  2700mV     0mA     0mV     0mV 
+    l17                           0    0      0    idle  2900mV     0mA     0mV     0mV 
+    l18                           0    0      0  normal  2700mV     0mA     0mV     0mV 
+    l19                           0    0      0  normal     0mV     0mA     0mV     0mV 
+    l20                           0    0      0  normal  2950mV     0mA     0mV     0mV 
+    l21                           0    0      0  normal  2950mV     0mA     0mV     0mV 
+    l22                           0    0      0    idle  3300mV     0mA     0mV     0mV 
+    l23                           0    0      0    idle  2800mV     0mA     0mV     0mV 
+    l24                           0    0      0    idle  3075mV     0mA     0mV     0mV 
+    l25                           0    0      0  normal  1200mV     0mA     0mV     0mV 
+    l26                           0    0      0    idle     0mV     0mA     0mV     0mV 
+    l27                           0    0      0    idle  1000mV     0mA     0mV     0mV 
+    l28                           0    0      0  normal   925mV     0mA     0mV     0mV 
+    l29                           0    0      0    idle  2800mV     0mA     0mV     0mV 
+    l30                           0    0      0    idle  1800mV     0mA     0mV     0mV 
+    l31                           0    0      0    idle     0mV     0mA     0mV     0mV 
+    l32                           0    0      0    idle  1800mV     0mA     0mV     0mV 
+    lvs1                          0    0      0    fast     0mV     0mA     0mV     0mV 
+    lvs2                          0    0      0    fast     0mV     0mA     0mV     0mV 
+    s1                            0    0      0    fast  1050mV     0mA     0mV     0mV 
+    vdd_gfx                       0    1      0    fast  1000mV     0mA   400mV  1015mV 
+       8c0000.clock-controller-vdd-gfx   0                                 0mA     0mV     0mV
+    l1                            0    0      0  normal  1800mV     0mA     0mV     0mV 
+ hifi_ldo                         0    1      0 unknown     0mV     0mA     0mV     0mV 
+    0-0010-dvdd                   0                                 0mA     0mV     0mV
+ vph_pwr                          6    9      0 unknown  3700mV     0mA  3700mV  3700mV 
+    vreg_s3a_1p3                  3    8      0 unknown  1300mV     0mA  1300mV  1300mV 
+       vreg_l2a_1p25              0    6      0 unknown  1250mV     0mA  1250mV  1250mV 
+          a34000.camss-vdda       0                                80mA*    0mV     0mV
+          a34000.camss-vdda       0                                80mA*    0mV     0mV
+          a34000.camss-vdda       0                                80mA*    0mV     0mV
+          a34000.camss-vdda       0                                80mA*    0mV     0mV
+          996000.dsi-vdda         0                                18mA*    0mV     0mV
++ echo '== stayoff =='
+== stayoff ==
++ adb shell 'svc power stayon false'
++ adb get-state
+device

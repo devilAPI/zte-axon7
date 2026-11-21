@@ -1,0 +1,19 @@
++ adb get-state
+device
++ adb root
++ adb wait-for-device
++ echo '== UIM 0x41 GET_ATR slot 1 =='
+== UIM 0x41 GET_ATR slot 1 ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x41 01 01 01'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 01 00
+result 1, QMI error 1
++ echo '== UIM 0x41 GET_ATR slot 2 =='
+== UIM 0x41 GET_ATR slot 2 ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x41 01 01 02'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 01 00
+result 1, QMI error 1
++ adb shell 'svc power stayon false'
++ adb get-state
+device

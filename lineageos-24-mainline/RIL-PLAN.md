@@ -303,7 +303,7 @@ Get Current Settings 0x002D, Bind Mux Data Port 0x00A2, WDA Set Data Format
 | Unanswered requests | 60 s wakelocks, radio bug detector | `libminradio` defaults; a QMI timeout answers with `MODEM_ERR` |
 | VINTF level | V4 HAL rejected at target level 202404 | section 2.2 |
 | SELinux | `qipcrtr_socket` denied in `hal_radio_default`; `adb shell` tests as root hide this | rule in 3.1; test from init, not only from the shell |
-| SIM not powered or not read | card state "error" (for example no ATR) | step 0 shows it; the SIM supplies are modem-controlled [A] |
+| SIM not powered or not read | card state "error" (for example no ATR) | step 0 shows it; the SIM supplies are modem-controlled [A]. UIM POWER_ON is 0x0031; 0x0030 is POWER_OFF (see 4.1) |
 | SIM loading stalls | framework reads 20-30 elementary files; one wrong status word keeps the SIM in "not ready" | compare `iccIoForApp` answers with ranchu and with qmicli traces on Nura |
 | SMS on LTE without IMS | needs SMS over SGs (combined attach); carriers without 2G/3G fallback may require IMS | check registration in step 0 (`cs attach` in Serving System); IMS is out of scope |
 | Read-only rmtfs | the modem cannot store settings or messages in the EFS | "transfer only" SMS routes; set preferences at every start |
@@ -356,7 +356,9 @@ the modem tool, then:
 adb root
 adb push qmi-raw /data/local/tmp/
 adb shell /data/local/tmp/qmi-raw 11 0x2f     # SIM
-adb shell /data/local/tmp/qmi-raw 2 0x25      # IMEI in TLV 0x11
+adb shell /data/local/tmp/qmi-raw 11 0x47     # physical slot status (see 4.1)
+adb shell /data/local/tmp/qmi-raw 2 0x25      # DMS GET_IDS: IMEI in TLV 0x11 (personal, redact logs)
+adb shell /data/local/tmp/qmi-raw 2 0x44      # DMS UIM GET_STATE (not 0x25)
 adb shell /data/local/tmp/qmi-raw 3 0x24      # serving system (registration, PLMN)
 adb shell /data/local/tmp/qmi-raw 3 0x4f      # signal: TLV 0x14 = LTE rssi, rsrq, rsrp, snr
 ```
@@ -513,6 +515,69 @@ int main(int argc, char **argv)
 	return 0;
 }
 ```
+
+### 4.1 2026-11-21: QMI evidence on the main phone, physical SIM presence still unknown
+
+Main phone (`7e15695a`), LineageOS 24 userdebug as root, already booted when the
+phone lock was taken (battery 99 %). The tool is now kept in the tree as
+`lineageos-24-mainline/tools/qmi-raw.c` (built statically with the server's
+NDK r30 and pushed to `/data/local/tmp/qmi-raw`; its NDK binary is not
+committed). It decodes GET_CARD_STATUS and GET_SLOT_STATUS. Raw session logs:
+`lineageos-24-mainline/logs/sim-session1.txt` to `-session4.txt` (DMS GET_IDS
+personal TLVs redacted; no IMEI/ESN/MEID in the logs). The phone was left in
+LineageOS 24, adb-reachable, `svc power stayon false` (`stay_on_while_plugged_in=0`).
+
+| QMI request | Answer (result, QMI error) |
+|---|---|
+| UIM 0x002f GET_CARD_STATUS | success; 2 slots, both `card_state=2 error`, `error_code=3 no ATR`, 0 apps, no primary GW app (TLV 0x10 = `ff ff ff ff ff ff ff ff 02 02 00 00 00 03 00 02 00 00 00 03 00`). Identical after UIM POWER_ON. |
+| UIM 0x0047 GET_SLOT_STATUS | **1, 94 = NOT_SUPPORTED**. This 2016 MPSS does not expose physical slot/card state over QMI. No TLV 0x10 physical state, no ICCID, no ATR. |
+| DMS 0x0025 | success, but this is **GET_IDS** (ESN/IMEI/MEID), not UIM state; TLVs deleted from the log (personal data). |
+| DMS 0x0044 UIM GET_STATE | **1, 94 = NOT_SUPPORTED**. |
+| UIM 0x003a GET_CONFIGURATION | success; TLV 0x10 automatic selection = 0, TLV 0x11 personalization = 0 (len 1), TLV 0x12 halt subscription = 0 — all defaults. With configuration-mask TLV 0x10: 1, 1 (input unsupported). |
+| UIM 0x0031 POWER_ON slot 1 (and 0x0041 GET_ATR with/without slot TLV) | 1, 1 = unsupported on this firmware. Note 0x0030 is POWER_OFF, 0x0031 is POWER_ON (Gobi API `eQMI_UIM_POWER_DOWN`/`POWER_UP`); an earlier note had these reversed. |
+| UIM 0x0039 GET_LABEL, 0x0036 GET_SERVICE_STATUS, 0x002e | 1, 17 = MISSING_ARGUMENT/unsupported; no extra presence information. |
+| NAS 0x0024 serving system | success, no PLMN registration (expected without a usable SIM). |
+
+The extra TLVs in GET_CARD_STATUS are **not** a physical-card reading: the
+`aospm-qrild/notes/uim_get_card_status.txt` trace from a OnePlus 6 *with a
+ready USIM in slot 1* has the same `TLV 0x11 = 02 02 02` and `TLV 0x15 =
+02 00 00` as our two-error phones (plus a vendor TLV 0x16 which libqmi does not
+define). libqmi's UIM definition only declares TLV 0x10 for this message. So
+"no ATR in both slots" cannot be split into "no card" vs "card not read" with
+this firmware.
+
+**Comparison with stock/Nura (no mainline-side cause found).** The stock
+Android 8 (Oreo) kernel source for this board
+(`Asderdd/android_kernel_zte_axon7`, branch `A2017G-8.0.0`) has no `uim` or
+SIM-supply node in any of its ~900 DTS/DTSI files, including
+`zte-msm8996-v3-pmi8996-ailsa_ii.dtsi`, `msm8996-regulator.dtsi` and
+`msm8996-pinctrl.dtsi`; the DTS files of the older 2016 A2017G release
+(`snowwolf725/ZTE_Axon7`) have no UIM node either. Our mainline DT
+(`msm8996-zte-axon7.dts`) and Nura's patch series likewise configure no UIM
+pins or SIM LDO. `/sys/kernel/debug/regulator/regulator_summary` on mainline
+shows only the generic PM8994 rails (`s3` 1.3 V, `s4` 1.8 V, `l*` and the RPM
+`vreg_*_a` rails) and no UIM/SIM-named supply to keep on. Nura's device
+package depends on `rmtfs`, `qrtr` and `qmi-utils`; its `axon7-modem` script
+only sets DMS operating mode online, with no UIM power/init sequence, and
+LineageOS 24 does the same (rmtfs read-only in init, then `axon7m-modem-online`).
+Both OSes see the same "no ATR" with the same modem. The earlier TLMM hog
+experiment (PLAN.md, 2026-11-19) showed the UIM data/clock/reset pins are
+parked low again by the modem itself after its card power-up attempt, i.e. the
+modem owns the pins on stock and mainline alike.
+
+**Conclusion (evidenced, not a claim of "works"): a card being physically
+present cannot be determined from this firmware** — the only two QMI calls that
+would say "physical card present/absent" (UIM GET_SLOT_STATUS, DMS UIM
+GET_STATE) are both NOT_SUPPORTED, and there is no card-detect sysfs on the
+AP. The observation is consistent with no SIM inserted (this phone has been
+tested without a SIM since the first builds, to-test.md has asked the owner
+and received no answer) and also with a present but unreadable card. No
+supply, clock, pinmux or missing-init defect on our side was found, so no
+device tree, kernel or userspace change is justified yet. Owner action is
+needed: insert/confirm a SIM in the main phone. With a known-good SIM in
+place, re-run `qmi-raw 11 0x2f`; a USIM/PIN result would prove the path, and
+persistent error 3 would then justify investigating the SIM supply/pins or
+modem NV (read-only) instead.
 
 ## Sources
 

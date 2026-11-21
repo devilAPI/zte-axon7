@@ -1,0 +1,55 @@
++ adb get-state
+device
++ adb root
++ adb wait-for-device
++ echo '== DMS 0x44 UIM GET_STATE =='
+== DMS 0x44 UIM GET_STATE ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 2 0x44'
+service 2 at 0:58
+TLV 0x02 len 4: 01 00 5e 00
+result 1, QMI error 94
++ echo '== UIM 0x3a GET_CONFIGURATION =='
+== UIM 0x3a GET_CONFIGURATION ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x3a'
+service 11 at 0:52
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x12 len 1: 00
+TLV 0x11 len 1: 00
+TLV 0x10 len 1: 00
++ echo '== UIM 0x3a with configuration mask 1 =='
+== UIM 0x3a with configuration mask 1 ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x3a 10 04 01 00 00 00'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 01 00
+result 1, QMI error 1
++ echo '== UIM 0x31 POWER_ON slot 1 (only if card status still error) =='
+== UIM 0x31 POWER_ON slot 1 (only if card status still error) ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x31 01 01 01'
+service 11 at 0:52
+TLV 0x02 len 4: 01 00 01 00
+result 1, QMI error 1
++ sleep 3
++ echo '== UIM 0x2f after power-on =='
+== UIM 0x2f after power-on ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 11 0x2f'
+service 11 at 0:52
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x15 len 3: 02 00 00
+TLV 0x11 len 3: 02 02 02
+TLV 0x10 len 21: ff ff ff ff ff ff ff ff 02 02 00 00 00 03 00 02 00 00 00 03 00
+primary GW app: slot 255 app 255 (0xffff: none)
+slot 1: card error (error code 3), 0 app(s)
+slot 2: card error (error code 3), 0 app(s)
++ echo '== DMS 0x44 after power-on =='
+== DMS 0x44 after power-on ==
++ adb shell 'timeout 12 /data/local/tmp/qmi-raw 2 0x44'
+service 2 at 0:58
+TLV 0x02 len 4: 01 00 5e 00
+result 1, QMI error 94
++ echo '== stayoff =='
+== stayoff ==
++ adb shell 'svc power stayon false'
++ adb get-state
+device
