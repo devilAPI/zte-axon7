@@ -53,6 +53,11 @@ as a task is done and its tests succeed — do not leave merged work local. Run
 the privacy/attribution review first, then `git push origin main
 lineageos-24-mainline`. Never commit the ios submodule pointer or untracked
 test artifacts (c2/, c2.tgz).
+- Use `oc-axon7-push [BRANCH ...]` for EVERY push (default: main +
+  lineageos-24-mainline). It appends a timestamped line to the coordinator
+  activity feed at coordinator-briefs/feed/coordinator-feed.log, which is shown
+  live in tmux window `opencode-axon7:coordinator-feed`. Use `oc-axon7-log "msg"`
+  to add arbitrary events to that feed.
 
 Hard safety rules (also in every worker prompt): main phone 7e15695a (owner's
 multi-boot phone, never wipe), second phone 864463f (test phone, may be
