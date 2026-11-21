@@ -24,7 +24,7 @@ assumption, still to verify, **[D]** decision.
 | Wi-Fi / BT | wpa_supplicant nl80211 on ath10k; AOSP default Bluetooth AIDL HAL (HCI user channel) + a BD-address tool [D] | exactly what db845c does [V] |
 | Modem | last: open QRTR/QMI radio AIDL HAL (after AOSPM's qrild), IPA v2.5 kernel port for data, q6voice for call audio [D] | no working open RIL exists for Android 17; proprietary RIL needs the downstream kernel ABI |
 | Sensors | port the out-of-tree **qcom_smgr** IIO driver (MSM8996 SLPI Sensor Manager) + a small IIO sensors HAL [D] | the only mainline path to the SLPI sensors [V: patch series exists, not merged] |
-| Out of scope | fingerprint (Goodix owned by TrustZone/QSEE), probably NFC (mainline NCI driver vs. NXP Android HAL) | |
+| Out of scope | fingerprint (Goodix owned by TrustZone/QSEE); NFC in the Android UI still needs an NXP-style HAL (kernel `nfc0` works, see §8) | |
 
 ---
 
@@ -196,7 +196,7 @@ unattended test loop).
 | Modem control | online (rmtfs, qrtr, DMS); restarts itself every 40 s for the first ~5 min after boot (since build 38) | radio AIDL HAL over QRTR/QMI (`radio/`: libminradio + DMS/UIM/NAS) | AOSP libminradio | first step done (identity, SIM state, registration, signal); SIM files, SMS, voice, data open | very high |
 | Mobile data | no IPA v2.5 driver | rmnet + IPA v2.5 port | Sireesh's RFC | 3-4 wk | very high |
 | Call audio | no q6voice upstream | q6voice/CVD port + HAL voice path | out-of-tree q6voice | 3-5 wk | very high |
-| NFC | NXP NCI, mainline nxp-nci (kernel NFC stack) | NXP Android HAL expects a downstream char device | - | ? | out of scope for now |
+| NFC | kernel side works: NXP PN548 answers NCI on mainline, `nfc0` present | NXP Android HAL expects a `/dev/pn5xx` char device (or a new netlink AIDL HAL) | ZTE 4.4 patch `0013` in this repo + stock blobs/firmware | **not done** in Android; kernel NCI confirmed (2026-11-21, details §8) | 3-5 d char-driver port / 4-8 wk userspace HAL |
 | Fingerprint | TrustZone-owned | - | - | - | infeasible |
 
 ## 5. Testing without disturbing the other systems
@@ -506,6 +506,52 @@ most open-ended and the rest is useful as a Wi-Fi device without it.
   on the Proxmox host (`pct set 107 --memory ... --swap ...`), a host action.
 - `ios/` is a submodule (ios-sailfish). A fourth boot menu entry was
   prepared as a patch; not needed since LineageOS 24 uses 22.2's slot.
+
+### NFC: kernel side done, Android HAL still missing (2026-11-21)
+
+Hardware (from ZTE's 3.18 DT/driver in this repo,
+`lineageos-22.2/kernel-4.4-patches/0001-*` and `0013-*`): NXP PN548 at I2C
+0x28 on BLSP2 QUP2 (400 kHz), active-high level IRQ TLMM 9, VEN TLMM 12,
+firmware-download TLMM 96; the 19.2 MHz `bb_clk2`/clkreq path is compiled
+out in ZTE's own driver. Patch 0001 of the Nura series already carries the
+matching `nxp,nxp-nci-i2c` node and pinctrl, and the config enables
+`CONFIG_NFC`, `CONFIG_NFC_NCI`, `CONFIG_NFC_NXP_NCI{, _I2C}` as modules, so
+**no new kernel patch or APKBUILD change was needed**. A full clang rebuild
+of the unmodified series on 2026-11-21 (`Image.gz dtbs modules`) was clean
+apart from the pre-existing `sns_smgr.ko` modpost warning.
+
+Evidence: Nura's root run of 2026-11-10 (main commit `1a07559`) saw the chip
+answer NCI (reset/init interrupts, RF polling started); `nfc_init: NFC Core
+ver 0.1` and the NFC modules load in LOS builds (`ios/logs/los24-m1a-31-pstore-console-ramoops.txt`),
+and `rfkill0 -> .../3-0028/nfc/nfc0/rfkill0` in run 51's `-hw.txt`. On
+2026-11-21 the second phone (in Nura, battery 18-19 %) exposed
+`/sys/class/nfc/nfc0` and the fixed `tools/axon7-nfc-test.py info` printed
+`idx 0 name nfc0 protocols 0xfe powered 0`; `up`/`poll` need
+`CAP_NET_ADMIN` and returned EPERM for the SSH user (no Nura sudo password
+here), so that privileged test was not repeated. No tag was available for a
+read test. A minimal Android netlink client is
+`postmarketos/tools/axon7-nfc-netlink.c` (NDK build command in its header).
+
+Why Android UI still does not see NFC: AOSP's NXP NFC HAL speaks NXP ioctls
+on a `/dev/pn5xx` character device and downloads vendor firmware itself,
+while mainline `nxp-nci` is a kernel NCI driver reached over generic
+netlink. The driver's Kconfig says it will not work with NXP's libnfc.
+`virtual_ncidev` is a loopback char device for a userspace NCI stack, not a
+transport to this controller. Smallest paths:
+
+1. **Port ZTE's `pn5xx_i2c.c` (recommended, ~3-5 d).** 4.4 patch 0013 is in
+   this repo; port the GPIO/I2C API calls, change the existing DT node's
+   compatible to `nxp,pn5xx` for the LOS build (do not add a second node at
+   0x28) and disable `CONFIG_NFC_NXP_NCI*` there. Needs `NfcNci` +
+   `libnfc-nxp` blobs/config and the phone's NFC firmware on the mainline
+   filesystem, plus ueventd/SELinux rules for `/dev/pn5xx`. eSE/SWP can be
+   dropped.
+2. **Userspace netlink-to-NFC-AIDL HAL (~4-8 wk).** No vendor blobs, but the
+   NCI state machine, tag protocols and eSE all have to be written on top of
+   `NFC_CMD_DEV_UP`/`START_POLL`/`*_EVENTS`.
+3. **`virtual_ncidev` raw mode (~1 d, development aid only):** char device
+   for a userspace NCI stack; does not talk to the real PN548 or to the NXP
+   HAL.
 
 ## 9. What is implemented, running jobs (2026-11-10)
 
