@@ -579,6 +579,60 @@ place, re-run `qmi-raw 11 0x2f`; a USIM/PIN result would prove the path, and
 persistent error 3 would then justify investigating the SIM supply/pins or
 modem NV (read-only) instead.
 
+## 4.2 2026-11-21: milestone 1 implementation (build/test pending)
+
+Worktree branch `agent/radio`, based on the radio HAL committed on 2026-11-16
+(section 3, `device/zte/axon7m/radio/`). No SIM is inserted in the main phone,
+so everything below that depends on a card or a network is **correct by
+protocol inspection, not tested on the phone**.
+
+- QMI clients: `impl/Qmi.{h,cpp}` now covers WDS (1), DMS (2), NAS (3), WMS
+  (5) and UIM (11). `QmiListener` keeps one QRTR socket per service for
+  indications, re-registers every 30 s and re-looks the service up after a
+  modem restart; requests still use their own sockets so binder threads never
+  wait for the modem. Registrations sent: NAS Register Indications 0x03
+  (TLVs 0x13/0x17/0x18/0x19 = serving system, time, system info, signal),
+  UIM Register Events 0x2E (mask 1 = card status, indication 0x32),
+  DMS Set Event Report 0x01 (TLV 0x14 = operating mode, indication 0x01),
+  WMS Set Event Report 0x01 (TLV 0x10 = MT messages, indication 0x01) and
+  WDS Set Event Report 0x01 (TLVs 0x12/0x17 = bearer, call status).
+  On UIM/NAS/DMS indications the cached state is refreshed and
+  `simStatusChanged` / `networkStateChanged` are sent when it changed; the
+  5 s poll remains as a fallback for firmware that does not send indications.
+- `IRadioMessaging/slot1`: own `BnRadioMessaging` implementation. 3GPP SMS is
+  mapped to WMS Raw Send 0x20 (format 6, AIDL `smscPdu` + `pdu` hex bytes),
+  Send Ack 0x37 (transaction id from the Event Report TLV 0x11) and Get SMSC
+  0x34 when the firmware supports it. WMS Set Routes 0x32 asks for
+  transfer-only storage for all six message classes (read-only EFS/SIM).
+  CDMA/IMS/broadcast requests answer REQUEST_NOT_SUPPORTED; every request
+  gets a response. No SMS was sent in any test.
+- `IRadioVoice/slot1`: declared in VINTF so the framework binds all radio
+  services, but every request answers REQUEST_NOT_SUPPORTED; the messaging
+  and voice feature flags stay off for calling (`config_voice_capable=false`
+  overlay, no calling feature file). No q6voice audio path is claimed.
+- DMS Get/Set Operating Mode (0x2D/0x2E): the state is cached and logged by
+  value (0 = online), `setRadioPower(true)` re-applies online mode;
+  `setRadioPower(false)` keeps the modem online for GNSS. IMEI is only put
+  into the `getImeiResponse` parcel, never into a HAL log or a repo file.
+- FCM: `device/zte/axon7m/manifest.xml` target level raised 202404 -> 202504
+  (the 202404 matrix has no AIDL radio V4; 202504 accepts V3 and V4). A
+  `checkvintf` run is part of the remaining verification.
+
+Evidence collected on the main phone before the code change (root on LOS 24,
+`logs/radio-qmi-probe2.txt`, no personal data in the log): DMS Get Operating
+Mode succeeds with mode 0 (online); WMS Set Event Report 0x01 and UIM Register
+Events 0x2E both answer `result 0, QMI error 0` (UIM echoes mask 1);
+NAS Register Indications answers success; WMS Get Routes answers success with
+six route elements (class 2 stored on the SIM by default); WMS Get Supported
+Messages 0x1E answers error 71 and Get SMSC 0x34 answers error 52, so those
+two are not relied on. WDS Get Current Settings 0x2D with a zero mask answers
+error 15; WDS data calls stay out of scope until IPA v2.5 exists.
+
+Remaining: build `android.hardware.radio-service.axon7m` on the server, then
+check `service list`, `dumpsys telephony.registry`, signal strength and
+`logcat -b radio` on the main phone. SIM state propagation and SMS need a
+card (section 4.1); the voice stub is not a call implementation.
+
 ## Sources
 
 - `/srv/los24/ref/aospm-qrild` (README, `Android.bp`, `qrild/*.cc`, `notes/`), `/srv/los24/ref/aospm-libqril` (`qmi/*.qmi`, `lib/libqril_qmi.h`, `Android.bp`)
