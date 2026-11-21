@@ -18,8 +18,10 @@ on fs
     mount_all /vendor/etc/fstab.${ro.hardware} --early
     swapon_all /vendor/etc/fstab.${ro.hardware}
     # Kernel modules whose drivers need firmware: after mount_all --early,
-    # because /vendor/firmware links into the modem and vendor partitions
-    # (/mnt/vendor/firmware_mnt, /mnt/vendor/fw_vendor; AXON7_FIRMWARE=phone)
+    # because /vendor/firmware links into the modem partition and, for the
+    # GPU, into /metadata/axon7-fw (standalone, on the stock `cache`) or the
+    # GPT vendor partition (/mnt/vendor/fw_vendor, multiboot;
+    # AXON7_FIRMWARE=phone). /metadata is a first-stage mount.
     exec u:r:vendor_modprobe:s0 -- /vendor/bin/axon7m-modules.sh
 
 on late-fs

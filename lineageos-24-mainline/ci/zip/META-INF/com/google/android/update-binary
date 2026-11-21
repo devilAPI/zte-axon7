@@ -7,9 +7,14 @@
 #       boot     <- boot.img that ZTE LK boots directly
 #       system   <- super.img (system, system_ext, product, vendor)
 #       userdata <- formatted; /data with file-based encryption (FBE v2)
-#       cache    <- the GPU's a530_zap.* staged from the old system/vendor
-#                   before `system` is overwritten (the stock layout has no
-#                   vendor partition and the zip contains no firmware)
+#       cache    <- formatted ext4 and mounted as Android's PERSISTENT
+#                   /metadata (aconfig flags, apexd, vold checkpoints,
+#                   OTA/GSI state). The GPU's a530_zap.* is staged in
+#                   /metadata/axon7-fw there before `system` is overwritten.
+#                   The built /vendor/firmware links point at those files.
+#                   A separate `metadata` partition, if the device has one,
+#                   is wiped; the cache-backed /metadata is never wiped after
+#                   staging. No metadata_encryption: FBE keys stay on /data.
 #     No los_* partitions, no boot menu or shim needed, misc untouched.
 #   multiboot (AXON7_MULTIBOOT=1, developer builds only):
 #       system   <- super.img
@@ -22,13 +27,37 @@
 OUTFD=/proc/self/fd/$2
 ZIP=$3
 ui() { echo "ui_print $*" > "$OUTFD"; echo "ui_print" > "$OUTFD"; }
-die() { ui "ERROR: $*"; ui "Nothing after this step was written."; exit 1; }
+die() { ui "ERROR: $*"; ui "Stopped; no further partitions were written."; exit 1; }
 part() {	# partition name -> /dev/block/sdXN (TWRP sometimes lacks by-name links)
 	for b in /sys/class/block/*; do
 		grep -q "^PARTNAME=$1\$" "$b/uevent" 2>/dev/null && { echo "/dev/block/${b##*/}"; return; }
 	done
 }
 bytes() { echo $(( $(cat "/sys/class/block/${1##*/}/size") * 512 )); }
+
+# Every mount made below is recorded, then released on *every* exit path
+# (including die() and a signal), so TWRP can unmount/reboot/flash cleanly.
+mounted=
+unmount_all() {
+	[ -n "$mounted" ] || return 0
+	# shellcheck disable=SC2086
+	for mp in $mounted; do umount "$mp" 2>/dev/null || true; done
+	mounted=
+}
+unmount_one() {
+	target=$1
+	umount "$target" 2>/dev/null || true
+	rest=
+	# shellcheck disable=SC2086
+	for mp in $mounted; do [ "$mp" = "$target" ] || rest="$mp $rest"; done
+	mounted=$rest
+}
+trap 'unmount_all' EXIT
+trap 'exit 1' HUP INT TERM
+has_token() {	# space-separated cmdline -> token
+	case " $1 " in *" $2 "*) return 0 ;; esac
+	return 1
+}
 
 ui "LineageOS 24 (mainline Linux) for the ZTE Axon 7 - ALPHA"
 dev=$(getprop ro.product.device)
@@ -56,6 +85,38 @@ else
 fi
 read -r super_size boot_size < sizes
 
+# Preflight, BEFORE a single partition is written: a wrong boot image would
+# leave a phone that cannot mount logical partitions or find firmware; a
+# non-super image in `system` would leave an unbootable system. The header's
+# cmdline is at 64..576 in both v0 (LK) and v2 (developer) boot images.
+bootfile=boot.img
+[ "$flavour" = standalone ] || bootfile=los-boot.img
+[ "$(dd if="$bootfile" bs=1 count=8 2>/dev/null)" = "ANDROID!" ] ||
+	die "$bootfile in the zip has no Android boot header"
+boot_cmd=$(dd if="$bootfile" bs=1 skip=64 count=512 2>/dev/null | tr -c '[:print:]' '\n')
+has_token "$boot_cmd" androidboot.super_partition=system ||
+	die "$bootfile cmdline has no androidboot.super_partition=system; wrong or damaged zip"
+has_token "$boot_cmd" androidboot.boot_devices=soc@0/624000.ufshc ||
+	die "$bootfile cmdline has no androidboot.boot_devices=soc@0/624000.ufshc; wrong or damaged zip"
+has_token "$boot_cmd" firmware_class.path=/vendor/firmware ||
+	die "$bootfile cmdline has no firmware_class.path=/vendor/firmware; wrong or damaged zip"
+
+# Check the super image IN THE ZIP (the phone's `system` still holds the old
+# ROM at this point). The LP geometry magic is 0x616c4467 ("gDla", little
+# endian) in the first 4 bytes of the second 4096-byte page; the metadata
+# holds the four logical partition names. Decompress only the first 1 MiB.
+magic=$(unzip -p "$ZIP" super.raw.gz 2>/dev/null | gunzip -c 2>/dev/null |
+	dd bs=4096 skip=1 count=1 2>/dev/null | dd bs=1 count=4 2>/dev/null)
+[ "$magic" = gDla ] ||
+	die "super.raw.gz in the zip has no Android logical-partition metadata (magic '$magic'); wrong or damaged zip"
+lp_names=$(unzip -p "$ZIP" super.raw.gz 2>/dev/null | gunzip -c 2>/dev/null |
+	dd bs=4096 count=256 2>/dev/null | tr -c '[:print:]' '\n')
+for p in system system_ext product vendor; do
+	printf '%s\n' "$lp_names" | grep -q "^$p\$" ||
+		die "super image in the zip has no logical partition '$p' (expected system, system_ext, product, vendor)"
+done
+ui "Preflight: boot cmdline and super partitions OK."
+
 sys=$(part system)
 [ -n "$sys" ] || die "no system partition"
 [ "$(bytes "$sys")" -ge "$super_size" ] || die "partition system is smaller ($(bytes "$sys")) than super ($super_size)"
@@ -68,33 +129,54 @@ if [ "$flavour" = standalone ]; then
 	[ "$(bytes "$boot")" -ge "$boot_size" ] || die "partition boot is too small for boot.img ($boot_size)"
 	[ "$(sha1sum < boot.img | cut -d' ' -f1)" = "$(cat boot.img.sha1)" ] || die "boot.img damaged (download again)"
 
-	# The zip has no proprietary firmware. On the stock layout the GPU's
-	# signed a530_zap lives in system/etc/firmware; on ROMs with a vendor
-	# partition it lives in vendor/firmware. Save it on cache BEFORE writing
-	# super over system. The fstab mounts cache at /mnt/vendor/fw_vendor.
-	ui "Saving the GPU firmware from the old ROM to cache..."
-	mkdir -p /tmp/los24/old /tmp/los24/v /cache/firmware || die "cannot make firmware directories"
-	mount -t ext4 -o rw "$ca" /cache 2>/dev/null || true
-	grep -q ' /cache ' /proc/mounts || die "cannot mount the cache partition (needed for GPU firmware)"
+	# Find the GPU firmware in the old ROM before writing anything. A
+	# physical `vendor` partition (LineageOS 16-22.2) is the preferred
+	# source, like the developer flavour; otherwise use the old system.
+	old=/tmp/los24/old
+	oldv=/tmp/los24/v
+	mkdir -p "$old" "$oldv" || die "cannot make firmware directories"
+	if mount -o ro "$sys" "$old" 2>/dev/null; then mounted="$old $mounted"; fi
 	oldvendor=$(part vendor)
-	[ -z "$oldvendor" ] || mount -o ro,noload "$oldvendor" /tmp/los24/v 2>/dev/null || true
-	mount -o ro "$sys" /tmp/los24/old 2>/dev/null || true
+	if [ -n "$oldvendor" ] && mount -o ro,noload "$oldvendor" "$oldv" 2>/dev/null; then
+		mounted="$oldv $mounted"
+	fi
 	fw=
-	for d in /tmp/los24/v/firmware /tmp/los24/old/vendor/firmware \
-		 /tmp/los24/old/etc/firmware /tmp/los24/old/system/vendor/firmware \
-		 /tmp/los24/old/system/etc/firmware; do
-		[ -s "$d/a530_zap.mdt" ] || continue
-		fw=$d; break
-	done
+	[ ! -s "$oldv/firmware/a530_zap.mdt" ] || fw=$oldv/firmware
+	if [ -z "$fw" ]; then
+		for d in "$old/vendor/firmware" "$old/etc/firmware" \
+			 "$old/system/vendor/firmware" "$old/system/etc/firmware"; do
+			[ ! -s "$d/a530_zap.mdt" ] || { fw=$d; break; }
+		done
+	fi
 	[ -n "$fw" ] || die "no a530_zap GPU firmware found in the old system or vendor partition; restore your ROM and copy the firmware before flashing again"
+
+	# The stock `cache` partition is unused by modern Android: format it
+	# ext4 and use it as the persistent /metadata from fstab. The staged
+	# files in /metadata/axon7-fw are the targets of the built firmware
+	# symlinks, so the GPU works with or without a vendor partition.
+	ui "Formatting cache as ext4 (Android's persistent /metadata)..."
+	umount /cache 2>/dev/null || true
+	mkdir -p /cache || die "cannot make /cache"
+	if command -v mkfs.ext4 >/dev/null 2>&1; then
+		mkfs.ext4 -F -L metadata "$ca" >/dev/null 2>&1 || die "formatting cache as ext4 failed"
+	elif command -v make_ext4fs >/dev/null 2>&1; then
+		make_ext4fs -L metadata -a /metadata "$ca" >/dev/null 2>&1 || die "formatting cache as ext4 failed"
+	else
+		die "no ext4 formatter in TWRP (mkfs.ext4 / make_ext4fs); needed for /metadata"
+	fi
+	mount -t ext4 -o rw "$ca" /cache 2>/dev/null || die "cannot mount the formatted cache partition"
+	mounted="/cache $mounted"
+	fwdir=/cache/axon7-fw
+	mkdir -p "$fwdir" || die "cannot make $fwdir"
 	for f in a530_zap.mdt a530_zap.b00 a530_zap.b01 a530_zap.b02 a530_zap.b03 \
 		 a530_zap.b04 a530_zap.b05 a530_zap.b06 a530_zap.b07; do
-		[ ! -s "$fw/$f" ] || cp "$fw/$f" "/cache/firmware/$f" 2>/dev/null || die "cannot copy $f to cache"
+		[ ! -s "$fw/$f" ] || cp "$fw/$f" "$fwdir/$f" 2>/dev/null || die "cannot copy $f to /metadata/axon7-fw"
 	done
-	[ -s /cache/firmware/a530_zap.mdt ] || die "GPU firmware copy failed"
+	[ -s "$fwdir/a530_zap.mdt" ] || die "GPU firmware copy failed"
 	sync
-	ui "GPU firmware saved ($(find /cache/firmware -type f | wc -l) files)."
-	umount /tmp/los24/old /tmp/los24/v 2>/dev/null || true
+	ui "GPU firmware staged in /metadata/axon7-fw ($(find "$fwdir" -type f | wc -l) files)."
+	# Do not hold ro mounts on a block device that is about to be written.
+	unmount_one "$old"; unmount_one "$oldv"
 
 	ui "Writing system (super, $((super_size / 1048576)) MiB), takes a few minutes..."
 	unzip -p "$ZIP" super.raw.gz | gunzip -c | dd of="$sys" bs=1048576 2>/dev/null || die "writing super failed"
@@ -119,10 +201,18 @@ if [ "$flavour" = standalone ]; then
 		# first boot. Clearing the head also removes any old filesystem.
 		dd if=/dev/zero of="$ud" bs=1048576 count=64 2>/dev/null || die "erasing userdata failed"
 	fi
+	# Some layouts have a real `metadata` partition. Wipe it only if it
+	# EXISTS: it holds the old ROM's aconfig/vold state. The stock A2017G
+	# has none - its /metadata is the ext4 cache formatted and staged above,
+	# which must NOT be wiped here (that would delete the GPU firmware).
 	md=$(part metadata)
-	[ -z "$md" ] || dd if=/dev/zero of="$md" bs=1048576 count=16 2>/dev/null || true
+	if [ -n "$md" ]; then
+		ui "Erasing the separate metadata partition..."
+		dd if=/dev/zero of="$md" bs=1048576 count=16 2>/dev/null || die "erasing metadata failed"
+	fi
 	sync
 	rm -rf /tmp/los24
+	unmount_all
 	ui "Done. Reboot normally (no boot menu needed)."
 	ui "The first start takes a few minutes; do not interrupt it."
 	exit 0
@@ -164,6 +254,7 @@ sync
 ui "Erasing LineageOS data (los_metadata, los_data)..."
 dd if=/dev/zero of="$lm" bs=1048576 count=16 2>/dev/null; dd if=/dev/zero of="$ld" bs=1048576 count=64 2>/dev/null; sync
 rm -rf /tmp/los24
+unmount_all
 ui "Done. Reboot, then choose LineageOS in the boot menu."
 ui "The first start takes a few minutes."
 exit 0

@@ -1,20 +1,23 @@
 **LineageOS 24 (Android 17) on mainline Linux 7.3.1 for the ZTE Axon 7 (A2017G)**: an **alpha / developer preview**, flashable in TWRP as a **stand-alone ROM** (stock partition layout, no multi-boot). Not for daily use: no calls, no mobile data, no camera, no deep sleep.
 
+> **New, not yet tested on a phone:** the standalone ZIP and its install path. The "State" list below comes from the older developer multi-boot builds; the standalone installer was checked with an offline harness only.
+
 > **Alpha. Back up first.** Make a TWRP backup (Boot, System, Data, EFS, Modem) and copy it to a computer before installing. Any failure while flashing can brick the phone.
 
 ### Requirements (read first)
 
 - **A2017G** only (tested on 4 GB / 64 GB).
 - Unlocked bootloader, **TWRP 3.3.0-0 or newer** (3.3.0-0 is the tested version; older builds are refused by the installer).
-- **The stock partition layout**: the zip writes `boot`, `system` and `userdata` and needs a `cache` partition. No multi-boot setup, no `los_*` partitions, no `axon7-tripleboot-gpt`, no PARTY/vendor repartitioning. Installing over our developer multi-boot setup replaces the boot menu in `boot`.
-- An old Android ROM in `system` containing the GPU's signed `a530_zap` firmware (stock Oreo/Nougat keeps it in `system/etc/firmware`; LineageOS 16–22.2 in `vendor/firmware`). The installer copies it to `cache` before overwriting `system` and stops with a clear error if it cannot find it.
+- **The stock partition layout**: the zip writes `boot`, `system` and `userdata` and needs a `cache` partition (formatted ext4 as the persistent `/metadata`). No multi-boot setup, no `los_*` partitions, no `axon7-tripleboot-gpt`, no PARTY/vendor repartitioning. Installing over our developer multi-boot setup replaces the boot menu in `boot`.
+- An old Android ROM in `system` containing the GPU's signed `a530_zap` firmware (stock Oreo/Nougat keeps it in `system/etc/firmware`; LineageOS 16–22.2 in `vendor/firmware`). A physical `vendor` partition (LineageOS 16–22.2) is used as the preferred source. The installer copies the files into `/metadata/axon7-fw` before overwriting `system` and stops with a clear error if it cannot find them.
 
 ### What the zip changes
 
 - Writes `super.img` into the GPT partition `system` and the boot image (kernel + mainline Axon 7 DTB + ramdisk) into `boot`. ZTE's bootloader boots this image directly; there is **no boot menu or shim**.
-- Copies `a530_zap.mdt` and `a530_zap.bNN` from the old ROM into `/cache/firmware` first. The stock layout has no `vendor` partition; the ROM mounts `cache` read-only at `/mnt/vendor/fw_vendor` for its firmware symlinks.
-- Erases `userdata` (and `metadata` if present). Android sets up file-based encryption at the first start. Format Data in TWRP first to get rid of old encryption.
-- Does **not** touch `misc`, the boot menu, iOS, Nura, `persist`, the modem/EFS partitions (`modemst1/2`, `fsg`, `fsc`) or the bootloader.
+- Formats `cache` as ext4 and uses it as Android's **persistent `/metadata`** (aconfig flags, apexd, vold checkpoints, OTA/GSI state). There is no metadata encryption: file-based encryption keys stay on `userdata`, as in the developer flavour.
+- Copies `a530_zap.mdt` and `a530_zap.bNN` from the old ROM (or from a physical `vendor` partition, when present) into `/metadata/axon7-fw` on that filesystem first. The built `/vendor/firmware/qcom/msm8996/zte/axon7/a530_zap.*` symlinks point there; no `vendor` partition is required.
+- Erases `userdata`, and wipes a separate `metadata` partition **only if one exists** (the stock A2017G layout has none; the cache-backed `/metadata` is not wiped after staging). Android sets up file-based encryption at the first start. Format Data in TWRP first to get rid of old encryption.
+- Does **not** touch `misc`, the boot menu, iOS, Nura, `persist`, the modem/EFS partitions (`modemst1/2`, `fsg`, `fsc`) or the bootloader. Mounts made by the installer are released on every exit path; before writing it checks the boot cmdline and the super image in the zip.
 
 No proprietary firmware is in the zip. The ROM loads the modem, DSP, GPU and Wi-Fi board firmware straight from the phone's own partitions, read-only, at every start.
 

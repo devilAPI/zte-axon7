@@ -43,6 +43,20 @@ df -h /srv | tail -1
 # source file times: a changed file must be newer than its copy in out/)
 mkdir -p "$T/device/zte" "$T/.repo/local_manifests"
 rsync -rlpgoD --checksum --delete "$REPO/lineageos-24-mainline/device/zte/axon7m/" "$T/device/zte/axon7m/"
+# /vendor/firmware links are flavour-specific: standalone a530_zap targets
+# /metadata/axon7-fw (the staged copy on the stock cache partition), multiboot
+# targets /mnt/vendor/fw_vendor (the GPT vendor partition). The committed
+# Android.bp is the standalone default; regenerate it in the Android tree for
+# developer builds so one checkout can build both flavours.
+if [ "${AXON7_STANDALONE:-0}" = 1 ] && [ "${AXON7_MULTIBOOT:-0}" != 1 ]; then
+	fw_flavour=standalone
+else
+	fw_flavour=multiboot
+fi
+if [ "${AXON7_FIRMWARE:-phone}" = phone ]; then
+	python3 "$REPO/lineageos-24-mainline/scripts/gen-firmware-links.py" \
+		--flavour "$fw_flavour" -o "$T/device/zte/axon7m/firmware/Android.bp" || exit 1
+fi
 cp "$REPO/lineageos-24-mainline/manifest/axon7m.xml" "$T/.repo/local_manifests/"
 [ -f /srv/los24/kernel/prebuilt/Image ] || { echo "no kernel in /srv/los24/kernel/prebuilt: run kernel-build.sh first"; exit 1; }
 rsync -rlpgoD --checksum --delete /srv/los24/kernel/prebuilt/ "$T/device/zte/axon7m-kernel/"

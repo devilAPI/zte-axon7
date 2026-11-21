@@ -12,6 +12,11 @@ only the kernel, ramdisk, DTB and cmdline from the build). The appended DTB
 is the one built by scripts/kernel-build.sh, selected by qcom,msm-id and
 qcom,board-id; like the shim, this script refuses an image with no DTB.
 
+A build whose cmdline lost androidboot.super_partition=system,
+androidboot.boot_devices or firmware_class.path would boot into a first-stage
+init that cannot mount logical partitions or load firmware; instead of
+copying it blindly, refuse and print the cmdline that was found.
+
     make-standalone-boot.py IN.img -o OUT.img
 
 The result is checked by axon7-androidimg.py check-in-v0 mode? No: that tool
@@ -27,6 +32,14 @@ FDT_MAGIC = b"\xd0\x0d\xfe\xed"
 PAGE = 4096
 KBASE = 0x80000000
 KLIMIT = 0x83400000  # the splash reservation starts here
+# Tokens the standalone zip's boot image must carry (BoardConfig.mk). The
+# boot_devices value is the UFS controller of the A2017G; if it ever changes,
+# check this list as well as the build.
+REQUIRED_CMDLINE = (
+    "androidboot.super_partition=system",
+    "androidboot.boot_devices=soc@0/624000.ufshc",
+    "firmware_class.path=/vendor/firmware",
+)
 
 
 def die(msg):
@@ -36,6 +49,15 @@ def die(msg):
 
 def up(n, page):
     return (n + page - 1) // page * page
+
+
+def check_cmdline(raw, where):
+    cmdline = raw.split(b"\0", 1)[0].decode("utf-8", "replace")
+    print(f"cmdline ({where}): {cmdline}")
+    tokens = cmdline.split()
+    missing = [t for t in REQUIRED_CMDLINE if t not in tokens]
+    if missing:
+        die(f"{where} cmdline is missing required token(s): {' '.join(missing)}")
 
 
 def parse_v2(b):
@@ -126,6 +148,7 @@ def check_v0(img):
         die("decompressed kernel is not a raw arm64 Image")
     if not dtb or dtb[:4] != FDT_MAGIC:
         die("no DTB appended to the kernel")
+    check_cmdline(img[64:576], "converted")
     return f"OK: v0 image, kernel {ks} B (Image {len(image)}, DTB {len(dtb)}), ramdisk {rs} B"
 
 
@@ -141,6 +164,7 @@ def main():
         return
     if not a.output:
         die("-o is required")
+    check_cmdline(data[64:576], "build")
     out = make_v0(data)
     open(a.output, "wb").write(out)
     print(check_v0(out))

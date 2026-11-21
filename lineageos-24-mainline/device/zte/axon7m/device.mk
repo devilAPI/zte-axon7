@@ -231,8 +231,11 @@ endif
 # AXON7_FIRMWARE=phone (releases): no ZTE/Qualcomm image in the build. Only
 # the redistributable linux-firmware files are copied; the phone's own images
 # are reached through symlinks (firmware/Android.bp, from
-# scripts/gen-firmware-links.py) into the modem partition and the GPT vendor
-# partition, which fstab mounts under /mnt/vendor read-only.
+# scripts/gen-firmware-links.py) into the modem partition and, for the GPU,
+# either the staged copy on /metadata (standalone: stock `cache` partition,
+# written by update-binary) or the GPT vendor partition (multiboot, mounted
+# read-only at /mnt/vendor/fw_vendor). scripts/los24-build.sh regenerates
+# firmware/Android.bp for the flavour it is building.
 AXON7M_FW_PUBLIC := \
     ath10k/QCA6174/hw3.0/firmware-6.bin \
     qca/nvm_00440302.bin qca/rampatch_00440302.bin \

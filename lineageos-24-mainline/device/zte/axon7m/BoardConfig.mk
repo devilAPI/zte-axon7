@@ -66,9 +66,11 @@ BOARD_VENDOR_KERNEL_MODULES_BLOCKLIST_FILE := $(DEVICE_PATH)/configs/modules.blo
 # (sde13, 5.5 GiB) as the super device (named by androidboot.super_partition,
 # which the build adds). Two flavours:
 #  - AXON7_STANDALONE=1 (default, used by CI's ci/build-release.sh): the
-#    normal `boot` partition, /data on userdata. No los_* partitions, no
-#    multi-boot, no vendor partition: the installer stages the GPU firmware
-#    on the stock cache partition (fstab.axon7m.standalone).
+#    normal `boot` partition, /data on userdata, /metadata on the stock
+#    `cache` partition (persistent, ext4). No los_* partitions, no
+#    multi-boot. The installer stages the GPU firmware from the old ROM (or
+#    a physical vendor partition, when present) into /metadata/axon7-fw;
+#    fstab.axon7m.standalone also mounts a physical vendor read-only.
 #  - AXON7_MULTIBOOT=1 (developer builds only): kernel in los_boot,
 #    /metadata on los_metadata, /data on los_data, booted through ios/shim.
 #    The 512 MiB "vendor" partition (sde28) is not used.
