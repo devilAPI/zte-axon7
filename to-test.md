@@ -18,8 +18,8 @@ menu (Volume Down, then Power), or make it the default from Nura with
 
 - [x] **Second phone (864463f)** back in TWRP (owner, 2026-11-21 ~16:30). Open question: may Claude set its own sudo password (stored only on this PC, ~/.config/axon7, never in the repo) in that phone's Nura install, so root tests over SSH work without asking? Until then tests boot test kernels with the debug initramfs from TWRP.
 - [x] **Build server** back (owner restarted it, 2026-11-21 ~17:40).
-- [ ] **Second phone (864463f) is stuck in fastboot (2026-11-21 ~17:55, still
-      stuck at 18:30).** It enumerates on USB as `18d1:d001 ZTE Axon 7`, but
+- [x] **Second phone (864463f) was stuck in fastboot (2026-11-21 ~17:55–18:30);
+      owner power-reset it and reported TWRP at 18:31.** It had enumerated on USB as `18d1:d001 ZTE Axon 7`, but
       `fastboot devices` / `fastboot getvar product` do not see it at all
       ("waiting for any device") and `adb devices` lists only the main phone.
       The zip3 worker holds the phone lock and has tried fastboot commands and
