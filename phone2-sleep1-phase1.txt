@@ -1,0 +1,12 @@
+=== phase1 2026-11-21T18:33:29+01:00
+recovery
+Sending 'boot.img' (24360 KB)                      OKAY [  0.627s]
+Booting                                            OKAY [  0.523s]
+Finished. Total time: 2.393s
+booted at 2026-11-21T18:33:36+01:00
+--- export PATH=/bin:/usr/bin:/sbin:/usr/sbin; id; uname -r; cat /proc/cmdline
+--- export PATH=/bin:/usr/bin:/sbin:/usr/sbin; echo ==psci; dmesg | grep -iE "psci|CPU idle|invalid PSCI|qcom_stats|rpm_master" | head -60
+--- export PATH=/bin:/usr/bin:/sbin:/usr/sbin; mount -t debugfs debugfs /sys/kernel/debug 2>/dev/null; echo ==stats; ls /sys/kernel/debug/qcom_stats 2>&1; for f in /sys/kernel/debug/qcom_stats/*; do echo ==$f; cat $f; done; echo ==master; ls /sys/kernel/debug/qcom_rpm_master_stats 2>&1; for f in /sys/kernel/debug/qcom_rpm_master_stats/*; do echo ==$f; cat $f; done
+--- export PATH=/bin:/usr/bin:/sbin:/usr/sbin; echo ==idle; for c in /sys/devices/system/cpu/cpu0/cpuidle/state*/name /sys/devices/system/cpu/cpu2/cpuidle/state*/name; do printf "%s=" $c; cat $c; done; echo ==power; cat /sys/power/mem_sleep; cat /sys/power/state; cat /sys/power/suspend_stats/success
+--- export PATH=/bin:/usr/bin:/sbin:/usr/sbin; echo ==battery; cat /sys/class/power_supply/qcom-battery/uevent 2>/dev/null | grep -E "CAPACITY|CURRENT|VOLTAGE|STATUS"; echo ==supplies; ls /sys/class/power_supply/
+=== phase1 end 2026-11-21T18:35:46+01:00
