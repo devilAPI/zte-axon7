@@ -58,6 +58,9 @@ test artifacts (c2/, c2.tgz).
   activity feed at coordinator-briefs/feed/coordinator-feed.log, which is shown
   live in tmux window `opencode-axon7:coordinator-feed`. Use `oc-axon7-log "msg"`
   to add arbitrary events to that feed.
+- Server syncs clash: several workers run `server-sync-device.sh` against the
+  same `/srv/los24` tree and overwrite each other's files. Tell new workers to
+  use `oc-axon7-serversync "$PWD"` (takes ~/.cache/axon7-serversync.lock).
 
 Hard safety rules (also in every worker prompt): main phone 7e15695a (owner's
 multi-boot phone, never wipe), second phone 864463f (test phone, may be
