@@ -1,0 +1,25 @@
+=== baseline 2026-11-21T15:14:08+01:00
+List of devices attached
+7e15695a	device
+864463f	recovery
+
+864463f	 fastboot
+
+Sending 'boot.img' (24440 KB)                      OKAY [  0.640s]
+Booting                                            OKAY [  0.506s]
+Finished. Total time: 1.170s
+booted t6+ image at 2026-11-21T15:14:14+01:00
+network: enxd625886aa3ab  UP             172.16.42.2/24 
+--- uname -r; dmesg | grep -iE "psci|CPUidle|qcom_stats|rpm" | head -60
+--- cat /sys/power/mem_sleep; cat /sys/power/state; cat /sys/power/suspend_stats/success; cat /sys/power/wakeup_count
+--- mount -t debugfs debugfs /sys/kernel/debug 2>/dev/null; ls /sys/kernel/debug/ | head -40; ls /sys/kernel/debug/qcom_stats/ 2>/dev/null
+--- for f in /sys/kernel/debug/qcom_stats/*; do echo ==$f; cat $f 2>/dev/null; done
+--- which devmem; devmem 0x290014 32 2>/dev/null; devmem 0x200000 32 2>/dev/null; devmem 0x290000 32 2>/dev/null
+--- cat /sys/class/power_supply/qcom-battery/capacity; cat /sys/class/power_supply/qcom-battery/current_now; cat /sys/class/power_supply/qcom-battery/charge_counter 2>/dev/null; cat /sys/class/power_supply/qcom-battery/uevent | grep -iE "CHARGE|FULL|CAPACITY|CURRENT"
+--- grep -iE "xo|rpm" /sys/kernel/debug/clk/clk_summary 2>/dev/null | head -50
+--- ls /sys/kernel/debug/interconnect 2>/dev/null; ls /sys/class/remoteproc 2>/dev/null; for r in /sys/class/remoteproc/*; do echo $(cat $r/name) $(cat $r/state); done
+--- return to TWRP
+List of devices attached
+7e15695a	device
+
+< waiting for 864463f>

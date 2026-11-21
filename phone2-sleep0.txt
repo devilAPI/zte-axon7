@@ -1,0 +1,9 @@
+=== probe-sleep0 2026-11-21T17:26:48+01:00
+recovery
+< waiting for 864463f>
+Sending 'boot.img' (21068 KB)                      OKAY [  0.544s]
+Booting                                            OKAY [  0.491s]
+Finished. Total time: 1.060s
+adb state=error: device '864463f' not found ok=0
+phone did not come up
+< waiting for 864463f>
