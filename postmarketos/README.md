@@ -190,12 +190,16 @@ test image.  The RAM-boot test image is `boot-sleep1-root.img` in the worktree
 (the Nura ramdisk plus a test-only root shell service).
 
 Test status 2026-11-21: no rpm `vlow`/`vmin` count has been measured yet.
-The second phone was in Nura (a test kernel from another worktree) for the
-whole build and no root shell was available (no `PMOS_SUDO_PASS` in this
-environment; user SSH cannot read debugfs or write `/sys/power/state`), so
-the prepared `boot-sleep1-root.img` could not be RAM-booted without taking
-the phone out of reach.  No XDA changelog until the counters have been
-measured on the phone.
+`fastboot -s 864463f boot boot-sleep1-root.img` returned OKAY, but after the
+boot the phone reported `Linux version 7.3.1-t7+` and uptime matching that
+boot: the dual-boot shim loads the kernel from the `pmos_boot` partition
+(`ios/shim/pmos.c: pmos_load_part(PMOS_STASH)` takes precedence over the
+kernel in the RAM-booted image), so the test kernel was not running.  No
+`PMOS_SUDO_PASS` is available in this environment, and user SSH cannot read
+debugfs or write `/sys/power/state`; the test-only root telnet service in
+the boot image was therefore never reached.  The phone was left in Nura,
+reachable over `ssh user@172.16.42.1`.  No XDA changelog until the counters
+have been measured on the phone.
 
 ## Known gaps
 
