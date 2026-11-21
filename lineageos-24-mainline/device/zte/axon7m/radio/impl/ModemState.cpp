@@ -247,12 +247,20 @@ std::mutex gCacheLock;
 std::optional<sim::CardStatus> gCard;
 std::optional<net::RegStateResult> gReg;
 std::optional<net::SignalStrength> gSignal;
+std::optional<std::string> gImei;
+std::optional<std::string> gRevision;
+std::optional<std::string> gImsi;
 }  // namespace
 
 void refreshModemState() {
     auto card = readCardStatus();
     auto reg = readRegState();
     auto signal = reg ? std::optional<net::SignalStrength>(readSignalStrength()) : std::nullopt;
+    // Identity requests are polling work too: the framework asks for them on
+    // binder threads, which must not block on a restarting modem.
+    auto imei = readImei();
+    auto revision = readRevision();
+    auto imsi = readImsi();
     auto mode = readOperatingMode();
     if (mode) {
         static std::atomic<uint8_t> lastMode{0xff};
@@ -267,6 +275,24 @@ void refreshModemState() {
     gCard = card;
     gReg = reg;
     gSignal = signal;
+    gImei = imei;
+    gRevision = revision;
+    gImsi = imsi;
+}
+
+std::optional<std::string> cachedImei() {
+    std::lock_guard l(gCacheLock);
+    return gImei;
+}
+
+std::optional<std::string> cachedRevision() {
+    std::lock_guard l(gCacheLock);
+    return gRevision;
+}
+
+std::optional<std::string> cachedImsi() {
+    std::lock_guard l(gCacheLock);
+    return gImsi;
 }
 
 std::optional<sim::CardStatus> cachedCardStatus() {

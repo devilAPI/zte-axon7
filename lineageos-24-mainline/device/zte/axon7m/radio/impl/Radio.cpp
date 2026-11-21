@@ -86,7 +86,7 @@ ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool powerOn, bool forEm
 
 ScopedAStatus RadioModem::getImei(int32_t serial) {
     LOG_CALL;
-    auto imei = readImei();
+    auto imei = cachedImei();
     if (!imei) {
         respond()->getImeiResponse(errorResponse(serial, RadioError::MODEM_ERR), std::nullopt);
         return ok();
@@ -102,7 +102,8 @@ ScopedAStatus RadioModem::getImei(int32_t serial) {
 
 ScopedAStatus RadioModem::getBasebandVersion(int32_t serial) {
     LOG_CALL;
-    respond()->getBasebandVersionResponse(noError(serial), readRevision().value_or("unknown"));
+    respond()->getBasebandVersionResponse(noError(serial),
+                                          cachedRevision().value_or("unknown"));
     return ok();
 }
 
@@ -188,7 +189,7 @@ ScopedAStatus RadioSim::getIccCardStatus(int32_t serial) {
 
 ScopedAStatus RadioSim::getImsiForApp(int32_t serial, const std::string& aid) {
     LOG_CALL << aid;
-    auto imsi = readImsi();
+    auto imsi = cachedImsi();
     if (!imsi) {
         respond()->getImsiForAppResponse(errorResponse(serial, RadioError::SIM_ERR), "");
         return ok();

@@ -612,8 +612,10 @@ protocol inspection, not tested on the phone**.
   overlay, no calling feature file). No q6voice audio path is claimed.
 - DMS Get/Set Operating Mode (0x2D/0x2E): the state is cached and logged by
   value (0 = online), `setRadioPower(true)` re-applies online mode;
-  `setRadioPower(false)` keeps the modem online for GNSS. IMEI is only put
-  into the `getImeiResponse` parcel, never into a HAL log or a repo file.
+  `setRadioPower(false)` keeps the modem online for GNSS. IMEI, baseband
+  revision and IMSI are read on the poll thread as well, so no binder thread
+  waits for the modem; the values only go into AIDL responses, never into a
+  HAL log or a repo file.
 - FCM: `device/zte/axon7m/manifest.xml` target level raised 202404 -> 202504
   (the 202404 matrix has no AIDL radio V4; 202504 accepts V3 and V4). The
   host `checkvintf --check-compat` on the build server with this manifest and

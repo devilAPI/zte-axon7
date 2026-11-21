@@ -33,6 +33,12 @@ std::optional<::aidl::android::hardware::radio::sim::CardStatus> cachedCardStatu
 std::optional<::aidl::android::hardware::radio::network::RegStateResult> cachedRegState();
 ::aidl::android::hardware::radio::network::SignalStrength cachedSignalStrength();
 
+// Identity is polled too, so binder threads never wait for the modem.
+// Returned only in AIDL responses; never log these values.
+std::optional<std::string> cachedImei();
+std::optional<std::string> cachedRevision();
+std::optional<std::string> cachedImsi();
+
 // DMS Get Operating Mode (0x2D) TLV 0x01: 0 online, 1 low power, 2 offline.
 // Set (0x2E) is only used for "radio on"; the modem stays online in airplane
 // mode because GNSS uses the same QMI services.
