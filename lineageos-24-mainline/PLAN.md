@@ -553,6 +553,28 @@ transport to this controller. Smallest paths:
    for a userspace NCI stack; does not talk to the real PN548 or to the NXP
    HAL.
 
+**2026-11-21 (nfchal):** the privileged test is now done on the MAIN phone
+in LOS 24 (`logs/nfc-proof-final2-20261121.txt`): with the static NDK tool
+above, one `cycle 0` run did `DEV_UP`, `START_POLL`, `STOP_POLL` and
+`DEV_DOWN` on the same netlink socket; dmesg showed NCI 1.1,
+`manufact_id 0x4` (NXP), `manufact_specific_info 0x1f011048`, RF discovery
+`status 0x0` and deactivation `status 0x0`. The earlier standalone `stop`
+returned `-EINVAL` because closing the netlink socket already stops polling
+(`NETLINK_URELEASE`), not because the driver failed. No tag was present, so
+reading a tag is still untested.
+
+For Android the raw path is now implemented as a built-in `pn5xx-raw`
+character driver (Nura patch 0070): with `pn5xx_raw=1` it binds the existing
+`nxp,nxp-nci-i2c` node before the `nxp-nci_i2c` module loads and exports
+`/dev/nq-nci` (`/dev/pn5xx`, `/dev/pn54x` aliases) with the PN5XX ioctl and
+NCI read/write. Nura leaves the parameter unset and keeps `nfc0`; no DT
+compatible change or second node at 0x28. Device-tree files in
+`device/zte/axon7m/nfc/` add the HAL config/manifest/init/permissions behind
+`AXON7_NFC=1`. **Not a working Android NFC feature yet:** AOSP 17's
+`hardware/nxp/nfc` only builds the SNxxx HAL (no PN548 config/firmware) and
+the build server is unreachable from this PC, so no image or `dumpsys nfc`
+test was possible.
+
 ## 9. What is implemented, running jobs (2026-11-10)
 
 | What | Where | State |
@@ -615,6 +637,8 @@ transport to this controller. Smallest paths:
 | Stability soaks (2026-11-20, test-key release zip = kernels 0002-0016 incl. 0015 NoC keep_alive, PSCI cpuidle) | `ios/logs/los24-soak-testzip-dpu1.txt`, `-dpu2b.txt`, `-dpu2-console-ramoops-0.txt` | **Two clean 30-min soaks on one full build** (ftrace ring armed): 24 and 25 iterations, no reboot, no system_server restart, no kernel warning, none of the run 48 hang signatures (MDP SMMU TLB sync, UFS UIC timeouts, RCU stalls) and no SError; 1-2 recovered DPU kickoff timeouts per soak (seen since build 39). App crashes only from the setup wizard disabled for the test. An earlier soak-2 run ended in a clean power-off: `/data/system/shutdown-checkpoints` shows a user request through SystemUI's power menu (StatusBarManagerService.shutdown, reason userrequested) while the status bar could not be expanded by the soak's monkey: not a fault, not counted. Separately: a LineageOS "factory reset" request (reboot,factory_reset, trigger unknown) went through TWRP; the iOS userdata partition (TWRP's /data) still holds its HFSX volume, but a user's "Erase all data" in LOS 24 sends TWRP --wipe_data, which targets userdata = iOS in this layout (to handle: make LOS 24's factory reset wipe only los_data/los_metadata) |
 | QMI SIM evidence on the main phone (2026-11-21) | `lineageos-24-mainline/RIL-PLAN.md` 4.1, `tools/qmi-raw.c`, `logs/sim-session1.txt`-`-session4.txt` | Root on LineageOS 24: UIM GET_CARD_STATUS success, both slots `card error 3, no ATR`, 0 apps. **Physical presence could not be read**: UIM GET_SLOT_STATUS 0x47 and DMS UIM GET_STATE 0x44 both answer QMI error 94 NOT_SUPPORTED on this 2016 firmware; GET_ATR/POWER_ON are unsupported too. UIM GET_CONFIGURATION returns defaults; no IMEI written to any file (DMS 0x25 is GET_IDS, redacted). Stock A2017G DTS and our mainline DT configure no UIM pins/SIM LDO, `regulator_summary` has no SIM rail, and Nura/LOS use the same rmtfs + DMS-online setup (the earlier TLMM hog experiment showed the modem parks the UIM pins itself). No driver/config cause found; owner must insert/confirm a SIM (to-test.md text in the task report), then re-run `qmi-raw 11 0x2f` for an app/PIN state. Phone left in LOS 24 on adb, `svc power stayon false` |
 | Reference trees | `/srv/los24/ref` (dragonboard, AOSPM qrild/libqril/tinyhal/vibrator-ff/lights/device_generic_sdm845) | cloned |
+
+| NFC root proof + raw char driver (2026-11-21) | `logs/nfc-proof-*.txt` (this worktree), `tools/axon7-nfc-netlink.c`, `device/zte/axon7m/nfc/README.md` | **Kernel NCI side proven as root on the main phone** (LineageOS 24, battery 99 %, `adb root`): `info 0` found the nfc family; `cycle 0` printed `DEV_UP ok`, `START_POLL ok (protocols 0xfe)`, `STOP_POLL ok`, `DEV_DOWN ok` on one netlink socket (separate processes cannot stop polling: the kernel stops it at `NETLINK_URELEASE`). dmesg: `nci_ver 0x11, config_status 0x1`, `manufact_id 0x4`, `manufact_specific_info 0x1f011048`, `nfc_rf_disc_rsp status 0x0`, `nfc_rf_deactivate_rsp status 0x0`. Phone left on LOS 24, `svc power stayon false`. NDK r30 on `root@compiler` is unreachable (TCP 22 open, SSH banner times out); the tool was built locally as a static aarch64 binary with NDK 27. New `pn5xx-raw` driver (Nura patch 0070, `CONFIG_NFC_PN5XX_CHAR`, param `pn5xx_raw=1` for LOS only) and the gated `AXON7_NFC=1` device-tree files are written; kernel test boot and HAL build pending. At `android-17.0.0_r1` AOSP only builds the SNxxx NFC HAL, so the HAL cannot be enabled yet |
 
 Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/build-after.log /srv/los24/logs/build-latest.log'`.
 `build-latest.log` points at the queued rebuild once it starts.

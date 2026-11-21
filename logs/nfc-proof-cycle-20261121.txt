@@ -1,0 +1,122 @@
++ adb root
++ adb wait-for-device
++ adb shell lsmod
++ grep -i -E 'nfc|nci|nxp'
+nxp_nci_i2c            16384  0 
+nxp_nci                12288  1 nxp_nci_i2c
+nci                    73728  2 nxp_nci_i2c,nxp_nci
+nfc                   126976  2 nxp_nci,nci
+rfkill                 32768  4 cfg80211,nfc,bluetooth
++ for m in nfc nci nxp_nci nxp_nci_i2c nxp_nci_fw
++ adb shell 'echo "module nfc +p" > /sys/kernel/debug/dynamic_debug/control'
++ head -2
++ for m in nfc nci nxp_nci nxp_nci_i2c nxp_nci_fw
++ adb shell 'echo "module nci +p" > /sys/kernel/debug/dynamic_debug/control'
++ head -2
++ for m in nfc nci nxp_nci nxp_nci_i2c nxp_nci_fw
++ adb shell 'echo "module nxp_nci +p" > /sys/kernel/debug/dynamic_debug/control'
++ head -2
++ for m in nfc nci nxp_nci nxp_nci_i2c nxp_nci_fw
++ adb shell 'echo "module nxp_nci_i2c +p" > /sys/kernel/debug/dynamic_debug/control'
++ head -2
++ for m in nfc nci nxp_nci nxp_nci_i2c nxp_nci_fw
++ adb shell 'echo "module nxp_nci_fw +p" > /sys/kernel/debug/dynamic_debug/control'
++ head -2
+++ adb shell dmesg
+++ wc -l
++ D0=1309
++ echo DMESG_START=1309
+DMESG_START=1309
++ adb push /tmp/opencode/nfcal/axon7-nfc-netlink /data/local/tmp/axon7-nfc-netlink
++ adb shell chmod 755 /data/local/tmp/axon7-nfc-netlink
++ adb shell /data/local/tmp/axon7-nfc-netlink cycle 0
+nfc0: DEV_UP ok
+nfc0: START_POLL ok (protocols 0xfe)
+cmd 7: Invalid argument
++ echo '=== dmesg nfc since 1309 ==='
+=== dmesg nfc since 1309 ===
++ adb shell dmesg
++ grep -i -E 'nfc|nci|nxp|rf|fw|poll'
++ tail -n +1310
+[ 4676.469041] nci: nci_recv_frame: len 4
+[ 4676.469331] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x1, OID=0x0, plen=1
+[ 4676.469413] nci: nci_rf_disc_map_rsp_packet: status 0x0
+[ 4676.469717] nci: __nci_request: wait_for_completion return 1246
+[ 4678.470983] nfc: nfc_genl_start_poll: Poll start
+[ 4678.471093] nfc: nfc_start_poll: dev_name nfc0 initiator protocols 0xfe target protocols 0x0
+[ 4678.471123] llcp: nfc_llcp_build_tlv: type 1
+[ 4678.471139] llcp: nfc_llcp_build_tlv: type 4
+[ 4678.471151] llcp: nfc_llcp_build_gb: Local wks 0x1
+[ 4678.471160] llcp: nfc_llcp_build_tlv: type 3
+[ 4678.471171] llcp: nfc_llcp_build_tlv: type 2
+[ 4678.471188] nci: nci_send_cmd: opcode 0x2, plen 20
+[ 4678.471443] nci: nci_cmd_work: cmd_cnt 1
+[ 4678.471538] nci: nci_cmd_work: NCI TX: MT=cmd, PBF=0, GID=0x0, OID=0x2, plen=20
+[ 4678.471590] nci: nci_send_frame: len 23
+[ 4678.593395] nci: nci_recv_frame: len 5
+[ 4678.593735] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x0, OID=0x2, plen=2
+[ 4678.593838] nci: nci_core_set_config_rsp_packet: status 0x0
+[ 4678.594418] nci: __nci_request: wait_for_completion return 1219
+[ 4678.594443] nci: nci_send_cmd: opcode 0x2, plen 20
+[ 4678.594652] nci: nci_cmd_work: cmd_cnt 1
+[ 4678.594720] nci: nci_cmd_work: NCI TX: MT=cmd, PBF=0, GID=0x0, OID=0x2, plen=20
+[ 4678.594770] nci: nci_send_frame: len 23
+[ 4678.605520] nci: nci_recv_frame: len 5
+[ 4678.605853] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x0, OID=0x2, plen=2
+[ 4678.605941] nci: nci_core_set_config_rsp_packet: status 0x0
+[ 4678.606527] nci: __nci_request: wait_for_completion return 1247
+[ 4678.606557] nci: nci_send_cmd: opcode 0x103, plen 9
+[ 4678.606767] nci: nci_cmd_work: cmd_cnt 1
+[ 4678.606835] nci: nci_cmd_work: NCI TX: MT=cmd, PBF=0, GID=0x1, OID=0x3, plen=9
+[ 4678.606884] nci: nci_send_frame: len 12
+[ 4678.609326] nci: nci_recv_frame: len 4
+[ 4678.609698] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x1, OID=0x3, plen=1
+[ 4678.609782] nci: nci_rf_disc_rsp_packet: status 0x0
+[ 4678.610071] nci: __nci_request: wait_for_completion return 1249
+[ 4683.611272] netlink: 4 bytes leftover after parsing attributes in process `axon7-nfc-netli'.
+[ 4683.614108] nfc: nfc_genl_rcv_nl_event: NETLINK_URELEASE event from id 2645
+[ 4683.614267] nfc: nfc_urelease_event_work: portid 2645
+[ 4683.614371] nfc: nfc_stop_poll: dev_name=nfc0
+[ 4683.614406] nci: nci_send_cmd: opcode 0x106, plen 1
+[ 4683.614703] nci: nci_cmd_work: cmd_cnt 1
+[ 4683.614784] nci: nci_cmd_work: NCI TX: MT=cmd, PBF=0, GID=0x1, OID=0x6, plen=1
+[ 4683.614836] nci: nci_send_frame: len 4
+[ 4683.731598] nci: nci_recv_frame: len 4
+[ 4683.731862] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x1, OID=0x6, plen=1
+[ 4683.731924] nci: nci_rf_deactivate_rsp_packet: status 0x0
+[ 4683.733559] nci: __nci_request: wait_for_completion return 7470
++ echo '=== recent dmesg tail ==='
+=== recent dmesg tail ===
++ adb shell dmesg
++ tail -30
+[ 4678.594720] nci: nci_cmd_work: NCI TX: MT=cmd, PBF=0, GID=0x0, OID=0x2, plen=20
+[ 4678.594770] nci: nci_send_frame: len 23
+[ 4678.605520] nci: nci_recv_frame: len 5
+[ 4678.605853] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x0, OID=0x2, plen=2
+[ 4678.605941] nci: nci_core_set_config_rsp_packet: status 0x0
+[ 4678.606527] nci: __nci_request: wait_for_completion return 1247
+[ 4678.606557] nci: nci_send_cmd: opcode 0x103, plen 9
+[ 4678.606767] nci: nci_cmd_work: cmd_cnt 1
+[ 4678.606835] nci: nci_cmd_work: NCI TX: MT=cmd, PBF=0, GID=0x1, OID=0x3, plen=9
+[ 4678.606884] nci: nci_send_frame: len 12
+[ 4678.609326] nci: nci_recv_frame: len 4
+[ 4678.609698] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x1, OID=0x3, plen=1
+[ 4678.609782] nci: nci_rf_disc_rsp_packet: status 0x0
+[ 4678.610071] nci: __nci_request: wait_for_completion return 1249
+[ 4681.358816] type=1400 audit(1795142222.503:414): avc:  denied  { read } for  comm="android.hardwar" name="type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 4681.359400] type=1400 audit(1795142222.503:415): avc:  denied  { open } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 4681.360620] healthd: battery l=99 v=4330 t=28.7 h=2 st=5 c=305 chg=u
+[ 4681.383114] type=1400 audit(1795142222.503:416): avc:  denied  { getattr } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 4683.611272] netlink: 4 bytes leftover after parsing attributes in process `axon7-nfc-netli'.
+[ 4683.614108] nfc: nfc_genl_rcv_nl_event: NETLINK_URELEASE event from id 2645
+[ 4683.614267] nfc: nfc_urelease_event_work: portid 2645
+[ 4683.614371] nfc: nfc_stop_poll: dev_name=nfc0
+[ 4683.614406] nci: nci_send_cmd: opcode 0x106, plen 1
+[ 4683.614703] nci: nci_cmd_work: cmd_cnt 1
+[ 4683.614784] nci: nci_cmd_work: NCI TX: MT=cmd, PBF=0, GID=0x1, OID=0x6, plen=1
+[ 4683.614836] nci: nci_send_frame: len 4
+[ 4683.731598] nci: nci_recv_frame: len 4
+[ 4683.731862] nci: nci_rsp_packet: NCI RX: MT=rsp, PBF=0, GID=0x1, OID=0x6, plen=1
+[ 4683.731924] nci: nci_rf_deactivate_rsp_packet: status 0x0
+[ 4683.733559] nci: __nci_request: wait_for_completion return 7470
++ adb shell svc power stayon false
