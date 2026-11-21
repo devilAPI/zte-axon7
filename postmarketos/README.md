@@ -182,8 +182,20 @@ shutdown) and `vmin` (VDD min) stay at zero and the phone draws about
   and VDD on during suspend.  The msm8996 NoC driver drops those votes in
   `suspend_noirq` and restores them in `resume_noirq`.
 
-Test status: see the dated result note below; no XDA changelog until the
-counters have been measured on the phone.
+Build status 2026-11-21: the four kernel commits build cleanly as
+`7.3.1-sleep1` (clang r536225, `olddefconfig Image.gz dtbs`, make exit 0;
+`Image.gz` 10,593,641 bytes, `msm8996-zte-axon7.dtb` 85 KiB), with
+`CONFIG_QCOM_RPM_MASTER_STATS=y` and the fuel gauge/charger built in for the
+test image.  The RAM-boot test image is `boot-sleep1-root.img` in the worktree
+(the Nura ramdisk plus a test-only root shell service).
+
+Test status 2026-11-21: no rpm `vlow`/`vmin` count has been measured yet.
+The second phone was in Nura (a test kernel from another worktree) for the
+whole build and no root shell was available (no `PMOS_SUDO_PASS` in this
+environment; user SSH cannot read debugfs or write `/sys/power/state`), so
+the prepared `boot-sleep1-root.img` could not be RAM-booted without taking
+the phone out of reach.  No XDA changelog until the counters have been
+measured on the phone.
 
 ## Known gaps
 
