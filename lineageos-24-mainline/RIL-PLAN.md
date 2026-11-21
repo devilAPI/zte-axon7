@@ -615,8 +615,10 @@ protocol inspection, not tested on the phone**.
   `setRadioPower(false)` keeps the modem online for GNSS. IMEI is only put
   into the `getImeiResponse` parcel, never into a HAL log or a repo file.
 - FCM: `device/zte/axon7m/manifest.xml` target level raised 202404 -> 202504
-  (the 202404 matrix has no AIDL radio V4; 202504 accepts V3 and V4). A
-  `checkvintf` run is part of the remaining verification.
+  (the 202404 matrix has no AIDL radio V4; 202504 accepts V3 and V4). The
+  host `checkvintf --check-compat` on the build server with this manifest and
+  the seven-HAL radio fragment returned `COMPATIBLE`, rc=0
+  (`logs/radio-checkvintf.txt`, script `logs/radio-checkvintf.sh`).
 
 Evidence collected on the main phone before the code change (root on LOS 24,
 `logs/radio-qmi-probe2.txt`, no personal data in the log): DMS Get Operating
