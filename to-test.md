@@ -14,6 +14,10 @@ menu (Volume Down, then Power), or make it the default from Nura with
 
 ## 0. From the unattended session (2026-11-14 evening)
 
+**SIM card (2026-11-21):**
+
+- [ ] **SIM card (2026-11-21, updated)**: please insert a known-good SIM in the main phone and tell Claude which slot. QMI on LineageOS 24 (and on Nura) reports both slots "card error 3, no ATR"; this modem firmware answers NOT_SUPPORTED to UIM GET_SLOT_STATUS and DMS UIM GET_STATE, so it cannot tell whether a card is physically present. Calls, SMS and mobile data on both systems wait on this. Details: lineageos-24-mainline/RIL-PLAN.md section 4.1.
+
 **Boot menu:** while Claude works unattended the boot menu default is
 **LineageOS** (any reset must end in a system Claude can reach over adb;
 Nura needs its password). Your old setting was postmarketOS after 5 s. Back to
