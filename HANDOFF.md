@@ -13,21 +13,20 @@ Linux 7.3.1: "Nura" (postmarketOS-based, branch main) and LineageOS 24
 HANDOFF.md in github.com/devilAPI/zte-axon7 (main) first, then
 lineageos-24-mainline/PLAN.md on the lineageos-24-mainline branch (the run
 table at the end is the history). Set up the checkouts as in HANDOFF.md
-section 3. Rules (HANDOFF.md section 2) are binding: quiet hours, no
+section 3. Rules (HANDOFF.md section 2) are binding: no sound or vibration in tests, no
 passwords in files or commits, ETAs in every status update, no SLPI
-restarts. Current task: LineageOS 24 performance (HANDOFF.md section 5.1),
-then the open items in order. Work unattended on the phone; the test loop
+restarts. You are only the coordinator: all coding work goes to opencode
+workers as described in HANDOFF.md section 2b and
+~/Documents/opencode-setup/README.md. Goal: every driver works on both
+systems (2026-11-21: radio HAL, IPA mobile data, NFC, deep sleep,
+SELinux, standalone release zips in progress). Work unattended on the phone; the test loop
 (ios/tools/los24-run.sh) needs no hands on the phone. Commit with clear
 messages; push only when asked.
 ```
 
 ## 2. Rules from the owner
 
-- **Quiet hours 03:00-17:30 (local time, CET):** no audible tests (speaker,
-  earpiece, tones, speaker-to-mic loopbacks); vibration only short and weak.
-  Outside that window loud tests are fine. Schedule sound tests for 18:30.
-  Builds during quiet hours use `AXON7_SPEAKER_MUTE=1` (speaker and earpiece
-  amplifiers stay off in the mixer routes).
+- **No sound and no vibration in any phone test, at any time of day** (owner, 2026-11-21; this replaces the old quiet-hours rule). Builds use AXON7_SPEAKER_MUTE=1 (speaker and earpiece amplifiers stay off in the mixer routes). Listening tests go to to-test.md for the owner.
 - **Status updates always give ETAs** (build ~25 min incremental, test run
   ~15 min, kernel + image ~35 min).
 - **Never commit passwords.** Nura's sudo password comes from the
@@ -43,6 +42,31 @@ messages; push only when asked.
   pattern (it kills itself, exit 143/144).
 - Every user-visible Nura change gets a line in the changelog
   (XDA-POST-NURA.md "Changelog", newest date first).
+
+## 2b. How the work is split (coordinator and opencode workers)
+
+- Claude Code is only the coordinator: it plans, writes briefs, starts
+  workers, reviews their diffs and merges them. All coding, building and
+  testing goes to opencode workers (owner, 2026-11-21). Setup and rules:
+  ~/Documents/opencode-setup/README.md (section 'Axon 7 agents'); agent
+  files in agents-axon7/ (install.sh puts them in place).
+- Models: axon7-worker (hy4-flash-free) and the local Qwen agents are
+  unlimited; every other free model (Gemini, beam, DeepSeek, big-pickle,
+  ...) is LIMITED and shares one quota with the owner's other projects.
+  When a worker stops with 'Free usage limit reached', restart the task on
+  another model.
+- One worktree per task on the HDD: oc-axon7-worktree NAME [main|los24]
+  (branch agent/NAME, ios/ symlinked to the shared checkout). Start with
+  oc-start as a tracked background task; panes appear in the tmux session
+  opencode-axon7 (not the ios3ds session 'opencode').
+- Notifications are the top priority: besides the per-worker task
+  notification, a Monitor runs oc-axon7-watch LOGDIR (worker exit, fatal
+  errors, 30 min stalls) and is re-armed every time it expires.
+- Phones are shared through locks: flock ~/.cache/axon7-phone-SERIAL.lock
+  for every test session (main phone 7e15695a, second phone 864463f).
+- Before a merge: review the diff (privacy: no IMEI/ESN/MEID, SSIDs or
+  MACs in committed logs), commit author stays the owner, Co-Authored-By
+  names the model that wrote the change.
 
 ## 3. Checkouts, machines, access
 
