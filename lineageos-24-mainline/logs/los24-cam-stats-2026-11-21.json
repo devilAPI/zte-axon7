@@ -1,0 +1,65 @@
+{
+  "rear": {
+    "size": [
+      1920,
+      1080
+    ],
+    "lum_mean": 46.85,
+    "lum_std": 1.35,
+    "rgb_mean": [
+      46.87,
+      46.81,
+      47.02
+    ],
+    "green_dom": 0.3327,
+    "minmax": [
+      40,
+      53
+    ],
+    "black_pct": 0.0,
+    "white_pct": 0.0,
+    "center_lum_mean": 46.83
+  },
+  "rear_torch": {
+    "size": [
+      1920,
+      1080
+    ],
+    "lum_mean": 212.59,
+    "lum_std": 29.35,
+    "rgb_mean": [
+      207.76,
+      215.9,
+      208.58
+    ],
+    "green_dom": 0.3415,
+    "minmax": [
+      128,
+      236
+    ],
+    "black_pct": 0.0,
+    "white_pct": 0.0,
+    "center_lum_mean": 234.03
+  },
+  "front": {
+    "size": [
+      1920,
+      1080
+    ],
+    "lum_mean": 48.51,
+    "lum_std": 0.95,
+    "rgb_mean": [
+      48.5,
+      48.51,
+      48.62
+    ],
+    "green_dom": 0.3331,
+    "minmax": [
+      39,
+      58
+    ],
+    "black_pct": 0.0,
+    "white_pct": 0.0,
+    "center_lum_mean": 48.58
+  }
+}
