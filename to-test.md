@@ -17,7 +17,7 @@ menu (Volume Down, then Power), or make it the default from Nura with
 **Blockers for the unattended work (2026-11-21 afternoon):**
 
 - [x] **Second phone (864463f)** back in TWRP (owner, 2026-11-21 ~16:30). Open question: may Claude set its own sudo password (stored only on this PC, ~/.config/axon7, never in the repo) in that phone's Nura install, so root tests over SSH work without asking? Until then tests boot test kernels with the debug initramfs from TWRP.
-- [ ] **Build server root@compiler stopped answering SSH** (ping works, "Connection timed out during banner exchange" since ~16:10): probably out of memory during a build. If it doesn't recover, please restart it; LineageOS 24 builds (SELinux, radio HAL, standalone zip) wait on it.
+- [x] **Build server** back (owner restarted it, 2026-11-21 ~17:40).
 
 **SIM card (2026-11-21):**
 
