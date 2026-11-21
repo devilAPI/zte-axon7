@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # axon7-nfc-test.py info|up|down|poll|stop [idx]: minimal NFC generic-netlink
-# client for the mainline kernel stack (no neard needed). On 7.3.1 the NFC
-# netlink commands are not capability-checked, so this works as a normal user.
+# client for the mainline kernel stack (no neard needed). `info` works as a
+# normal user, but DEV_UP/START_POLL/etc. carry GENL_ADMIN_PERM and need
+# CAP_NET_ADMIN (root on Nura).
 import socket, struct, sys, os
 NETLINK_GENERIC = 16
 GENL_ID_CTRL, CTRL_CMD_GETFAMILY, CTRL_ATTR_FAMILY_ID, CTRL_ATTR_FAMILY_NAME = 0x10, 3, 1, 2

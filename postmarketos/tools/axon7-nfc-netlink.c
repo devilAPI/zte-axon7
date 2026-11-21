@@ -8,7 +8,8 @@
  * equivalent is postmarketos/tools/axon7-nfc-test.py). No neard needed:
  * the tool only sends NCI commands to the kernel's nfc0 device and checks
  * that the kernel acknowledges them. An ACK proves the netlink command was
- * accepted, not that a tag was read; use dmesg/interrupts for that.
+ * accepted, not that a tag was read; use dmesg/interrupts for that. Run it
+ * as root (adb root): DEV_UP/START_POLL/etc. require CAP_NET_ADMIN.
  *
  * Build: $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang \
  *          -O2 -Wall -o axon7-nfc-netlink axon7-nfc-netlink.c

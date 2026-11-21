@@ -24,7 +24,7 @@ kernel in the `boot` partition, so internal storage (and any other OS on
 | `scripts/pil-squasher.py` | joins split `.mdt` + `.bNN` firmware into `.mbn` |
 | `scripts/make-test-bootimg.sh` | builds a standalone test boot image (USB networking + telnet, no storage access) |
 | `test-initramfs/root/init`, `list.txt` | that test initramfs (busybox not included) |
-| `tools/axon7-nfc-test.py`, `tools/axon7-nfc-netlink.c` | minimal generic-netlink clients to bring `nfc0` up and start RF polling on Nura / Android (no neard needed) |
+| `tools/axon7-nfc-test.py`, `tools/axon7-nfc-netlink.c` | minimal generic-netlink clients for Nura / Android: `info` reads `nfc0`, `up`/`poll` need root (`GENL_ADMIN_PERM`); no neard needed |
 
 ## Device tree
 
@@ -198,15 +198,19 @@ Evidence for the kernel/NCI side:
   (reset/init interrupts on `up`, RF polling started) with
   `tools/axon7-nfc-test.py`. `to-test.md` §8 still asks the owner for a real
   tag/card to hold at the back of the phone; reading a tag is untested.
-- 2026-11-21, second phone in Nura (battery 18 %, short ~15 s check over USB
-  SSH): `/sys/class/nfc/nfc0` exists, `info` returns
-  `idx 0 name nfc0 protocols 0xfe powered 0`, and `up`, `poll`, `stop`, `down`
-  all return 0 (`ios/logs/nfc-20261121-nura.txt`, not committed). The NFC IRQ
-  (`msmgpio 9`, `nxp-nci_i2c`) stayed at 0 in this short run: an ACK only
-  proves the netlink command was accepted, so the chip-response evidence is
-  the 2026-11-10 run, not this one. The phone's SDP input limit is 500 mA and
-  its capacity was not rising, so no long LineageOS RAM-boot test was made;
-  the phone was left in Nura with NFC down.
+- 2026-11-21, second phone in Nura (battery 18-19 %, short check over USB
+  SSH): `/sys/class/nfc/nfc0` exists and the (now fixed)
+  `tools/axon7-nfc-test.py info` returns
+  `idx 0 name nfc0 protocols 0xfe powered 0`
+  (`ios/logs/nfc-20261121-nura.txt`, not committed). `up`/`poll`/`stop`/
+  `down` need `CAP_NET_ADMIN` (`GENL_ADMIN_PERM` in `net/nfc/netlink.c`) and
+  returned EPERM for the unprivileged SSH user; the early "ok" lines in that
+  log were a stale-ACK bug in the first version of the tool and are corrected
+  at the end of the file. No Nura sudo password was available here, root SSH
+  and unprivileged reboot are denied, so the privileged test could not be
+  repeated. The phone's SDP input limit is 500 mA and its capacity was not
+  rising, so no long LineageOS RAM-boot test was made; the phone was left in
+  Nura with NFC down.
 - LineageOS 24 (`ios/logs/los24-m1a-31-pstore-console-ramoops.txt`): `nfc:
   nfc_init: NFC Core ver 0.1` and the `nfc`/`nci`/`nxp-nci`/`nxp-nci_i2c`
   modules load; run 51's `los24-m1a-51-hw.txt` has
