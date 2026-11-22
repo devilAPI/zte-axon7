@@ -1,4 +1,4 @@
-# Axon 7 (A2017G): LineageOS 18.1 (Android 11) flashing plan
+# Axon 7 (A2017G / A2017U): LineageOS 18.1 (Android 11) flashing plan
 
 No LineageOS 19.1, 20, 21 or 22 build exists for axon7 (checked 2026-11-05).
 The newest is **LineageOS 18.1 UNOFFICIAL 2026-11-01** by Ricky Cheung
@@ -42,13 +42,23 @@ getprop ro.product.device; getprop ro.bootloader; getprop gsm.version.baseband
 ```
 If check 1 prints anything other than `TZ.BF.4.0.1-00353`, **stop** and report back. Do not flash firmware zips blindly (see "Firmware" below).
 
+### A2017U (US) owners
+
+The same ROM and partition layout work on the A2017U (the installer asserts `ailsa_ii`/`axon7` and the same TZ), but:
+
+- **This plan starts from an unlocked phone with TWRP.** Stock A2017U B35 has **no fastboot endpoint**; `adb reboot bootloader` does not expose one. The route reported in [issue #1](https://github.com/devilAPI/zte-axon7/issues/1) is an **EDL** flash (phone off, hold Volume Up + Volume Down, plug in USB) of the **B15-NEW `aboot` + `fbop`** from the archived full EDL package, which restores `fastboot oem unlock`; **B29 alone was not enough**. The package overwrites recovery, so **flash TWRP again afterwards** and re-check the TZ.
+- **Firmware/modem:** use the **A2017U** bootstack/modem package, never the A2017G one. The universal Oreo bootstack is shared; the modem is model-specific.
+- **f2fs trap:** TWRP 3.7.0_9-0 can leave `/data` as f2fs after Format Data, while LineageOS 22.2's fstab needs ext4 with `fileencryption=ice,quota`. First boot then fails with "invalid magic", apexd aborts and the phone loops. After step 3, check again and change Data to EXT4 if needed (`mke2fs -t ext4` also worked for the reporter). This plan's 18.1 zip may differ; the 22.2 zip definitely needs ext4.
+- **Vendor/PARTY:** the 512 MiB vendor partition is still required. PARTY's AFH download is dead; use `tools/axon7-make-vendor.sh` (a read-only plan by default, `--apply --yes` to write) or the `sgdisk` commands in [docs/variant-a2017u.md](../docs/variant-a2017u.md).
+- **Cellular:** calls/SMS/mobile data are **untested** on A2017U; do not claim they work from an A2017G test.
+
 ## Steps
 
 0. **Back up first.** In TWRP, back up Boot, System, Vendor, Data and **EFS** (modemst1/modemst2). Copy the backup off the phone. Also save the EFS-related partitions raw (`dd if=/dev/block/bootdevice/by-name/{modemst1,modemst2,fsg,fsc,persist} of=/sdcard/...`) and pull them to the PC. A lost EFS means a lost IMEI and cannot be recreated. Copy photos and files off internal storage, because step 3 erases it.
 1. **Update recovery to TWRP 3.7.0_9-0** (2026-11-14: an XDA user reports TWRP 3.7.0_9-0 restarting by itself in its main menu; the LineageOS 22.2 zip is tested with TWRP 3.3.0-0 only, see XDA-POST-LINEAGEOS.md) (old TWRP 3.3.0 would probably work for the zip, since it uses its own update-binary, but 3.7 handles Android 11 data/encryption better). In TWRP 3.3.0 go to Install > Install Image > `twrp-3.7.0_9-0-ailsa_ii.img` > **Recovery**. Or from fastboot: `fastboot flash recovery twrp-3.7.0_9-0-ailsa_ii.img`. Reboot to recovery and confirm it shows 3.7.0.
    - Alternative: the tipz `recovery.img` (Lineage Recovery for 18.1). Use it only if you don't want TWRP; it can't make backups.
 2. Copy the ROM zip and the GApps zip to the phone (`adb push` in recovery, or MTP/an SD card).
-3. **Clean wipe.** You are moving from someone else's 17.1 eng build, which is signed with different keys. Wipe > Advanced Wipe: Dalvik/ART cache, Cache, System, **Vendor**, Data. Then Wipe > **Format Data** (type `yes`) to remove the old encryption/metadata. This erases internal storage.
+3. **Clean wipe.** You are moving from someone else's 17.1 eng build, which is signed with different keys. Wipe > Advanced Wipe: Dalvik/ART cache, Cache, System, **Vendor**, Data. Then Wipe > **Format Data** (type `yes`) to remove the old encryption/metadata. This erases internal storage. **Afterwards check Data again** (Wipe > Advanced Wipe > Data > Repair or Change File System): if it now says **F2FS**, change it to **EXT4** — TWRP 3.7.0_9-0 can produce f2fs on this phone, and the 22.2 fstab requires ext4 (an A2017U user hit exactly this: first boot failed with "invalid magic" and looped).
 4. Install `lineage-18.1-20261101-UNOFFICIAL-axon7.zip`.
 5. (Optional) Install `MindTheGapps-11.0.0-arm64-20230922_081122.zip` right away, **before the first boot**. Adding GApps after the first boot causes crashes.
 6. (Optional) Magisk: flash it after the first successful boot.
@@ -64,7 +74,7 @@ If check 1 prints anything other than `TZ.BF.4.0.1-00353`, **stop** and report b
 ## Firmware (only if the TZ check fails)
 - The required bootstack gives `TZ.BF.4.0.1-00353` ("O bootloader" / Oreo universal bootstack + the A2017G Oreo modem, as used by LineageOS 15.1 to 18.1 for axon7). It is distributed only on XDA (official LineageOS 15.1 thread, DrakenFX and raystef66 threads) and AndroidFileHost. I did **not** download or verify any firmware zip.
 - **This is the irreversible / brick-capable step.** A wrong or mismatched bootstack (aboot/xbl/tz/rpm/hyp/cmnlib) can leave the phone without a working bootloader. Flash only a zip clearly labelled for A2017G/universal Oreo, and read its updater-script first. Never flash a stock full-OTA or a bootstack that re-locks the bootloader.
-- **EDL rescue:** Qualcomm 9008 mode is in the boot ROM and survives a bad bootloader. Power off, hold Vol+ and Vol- together, and plug in USB (or run `adb reboot edl` / `fastboot oem edl` while it still boots). The device shows up as `05c6:9008`. Restore with an A2017G full EDL package (Oreo B10/B12) and its `prog_ufs_firehose_8996_ddr.elf`, using QFIL/MiFlash on Windows, or `edl` (bkerler) on Linux. **Back up EFS before any firmware work**, because EDL full packages can wipe EFS and with it the IMEI.
+- **EDL rescue:** Qualcomm 9008 mode is in the boot ROM and survives a bad bootloader. Power off, hold Vol+ and Vol- together, and plug in USB (or run `adb reboot edl` / `fastboot oem edl` while it still boots). The device shows up as `05c6:9008`. Restore with a **full EDL package for your model** (A2017G, A2017U or A2017; they are not interchangeable) and its `prog_ufs_firehose_8996_ddr.elf`, using QFIL/MiFlash on Windows, or `edl` (bkerler) on Linux. **Back up EFS before any firmware work**, because EDL full packages can wipe EFS and with it the IMEI.
 
 ## Roll-back
 Restore the TWRP backup (Boot, System, Vendor, Data) from step 0. The bootloader and modem were never changed, so the old 17.1 build boots again.

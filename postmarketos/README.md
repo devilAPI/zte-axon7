@@ -136,6 +136,16 @@ protected while the phone runs normally.
 
 ## Installing (no fastboot on this phone)
 
+This is developed on an A2017G. The **A2017U (US)** shares the hardware and
+codename but its stock B35 has **no fastboot endpoint at all**; restore it
+with the B15-NEW EDL `aboot`+`fbop` (B29 alone was not enough for the
+reporter) and reflash TWRP. The TWRP/microSD path below needs neither
+fastboot nor a vendor partition: `axon7-firmware` falls back to the stock
+`system` firmware if there is no vendor partition. Use an **A2017U**
+modem/firmware base, and note that cellular is **untested** on A2017U. See
+[../docs/variant-a2017u.md](../docs/variant-a2017u.md) and run
+`tools/axon7-preflight.sh --rom nura` in TWRP.
+
 Firmware tarball from the phone in TWRP: `scripts/axon7-firmware.sh` (see
 *Firmware tarball*). Standalone boot from LK: LK unpacks the kernel to
 0x80080000 (7.3.1 `image_size` ends at 0x81f20000, DTB at 0x82400000) and

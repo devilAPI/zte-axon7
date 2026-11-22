@@ -8,7 +8,9 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-16 (the owner's posted version: "Does not work" lists
+Last update: 2026-11-21 (A2017U/US notes: user reports 22.2 boots, the
+stock-B35 no-fastboot route, the TWRP f2fs `/data` trap and the dead PARTY
+download; cellular still untested). Before: 2026-11-16 (the owner's posted version: "Does not work" lists
 only the SIM report; the wake/lock, black camera and second-start boot loop
 items were removed from the thread)
 
@@ -43,7 +45,7 @@ checks for both, and how to collect logs while it still boots.
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
-[CENTER][SIZE=6][B][ROM][15][UNOFFICIAL] LineageOS 22.2 for the ZTE Axon 7 (A2017G)[/B][/SIZE]
+[CENTER][SIZE=6][B][ROM][15][UNOFFICIAL] LineageOS 22.2 for the ZTE Axon 7 (A2017G / A2017U)[/B][/SIZE]
 [I]Android 15 on the 4.4 kernel, with ZTE's drivers ported from their 3.18 kernel.[/I][/CENTER]
 
 [B]Kernel source (GPLv2):[/B] [URL='https://github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7']github.com/devilAPI/android_kernel_zte_msm8996/tree/axon7[/URL] (Linux 4.4, exactly the kernel in the release zip)
@@ -83,8 +85,8 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 [*]This ROM only works with the [B]Oreo "universal" bootloader[/B] (TrustZone TZ.BF.4.0.1-00353, the bootstack LineageOS 15.1 to 18.1 needed) and the [B]modem package for your model[/B]. The installer checks the bootloader and stops if it is missing. If LineageOS 18.1 or crDroid 7.x installs on your phone, you have it (their installers check the same version).
 [*]Tested with [B]TWRP 3.3.0-0[/B] only. TWRP 3.7.0_9-0 has been reported to restart by itself on this phone; older TWRP builds (3.2.x, e.g. the 3.2.1 "TREBLE" build) are untested.
 [*]Installing [B]erases internal storage[/B] (Format Data, see below). Copy your photos and files to a computer first.
-[*]It needs the [B]community vendor partition[/B] (512 MB after system, the same as LineageOS 16 to 18.1). The original ZTE partition layout without a vendor partition is [B]not supported[/B]. With the vendor partition you cannot flash official ZTE firmware until you remove it again (PARTY tool).
-[*]Tested on the [B]A2017G[/B] only. A2017U / A2017 (China): untested, at your own risk.
+[*]It needs the [B]community vendor partition[/B] (512 MB after system, the same as LineageOS 16 to 18.1). The original ZTE partition layout without a vendor partition is [B]not supported[/B]. With the vendor partition you cannot flash official ZTE firmware until you remove it again (PARTY or the sgdisk replacement below).
+[*]Developed and tested on the [B]A2017G[/B]. [B]A2017U[/B] (US): a user reports 22.2-20261109 booting on a 4/64 A2017U (Android 15, orange verified boot, TZ.BF.4.0.1-00353); read the A2017U section below, [B]cellular is untested[/B]. A2017 (China): untested.
 [*]Any failure while flashing or repartitioning can brick the phone. Make a backup and keep EDL in mind.
 [/LIST]
 
@@ -94,20 +96,31 @@ The stock ZTE partition layout has [B]no vendor partition[/B], and this ROM need
 ls -l /dev/block/bootdevice/by-name/vendor[/CODE]
 [LIST]
 [*]The first line must contain [B]TZ.BF.4.0.1-00353[/B]. If not (Nougat or older bootloader), install the Oreo universal bootloader and the modem for your model first (step 1 below).
-[*]The second line must show a link to a block device. [I]No such file or directory[/I] means no vendor partition: create it with PARTY (step 2 below). Without it the ROM install stops with an error (after it has already overwritten system).
+[*]The second line must show a link to a block device. [I]No such file or directory[/I] means no vendor partition: create it with PARTY or the sgdisk procedure (step 2 below). Without it the ROM install stops with an error (after it has already overwritten system).
 [*]Note the baseband version of your current ROM (Settings → About phone) for a problem report.
 [/LIST]
 A good first test of firmware and partitions: install [B]LineageOS 18.1[/B] (rcky844's unofficial build, see his XDA thread) and check that calls, mobile data and the camera work there. If they do, your firmware is fine for this ROM too. Going back to stock ZTE firmware later needs the vendor partition removed again (PARTY) or a full stock package for your model; keep your TWRP backup and EFS backup.
 
+[SIZE=5][B]A2017U (US) owners: read this[/B][/SIZE]
+The U uses the same hardware and codename ([I]ailsa_ii[/I]/[I]axon7[/I]), so the installer's device check passes. A user reports [B]22.2-20261109 booting[/B] on an A2017U 4/64 (Android 15, orange verified boot, bootloader unlocked, [B]TZ.BF.4.0.1-00353[/B] confirmed after the Oreo bootstack). Five differences:
+[LIST]
+[*][B]Unlocking/recovery:[/B] stock A2017U B35 has [B]no fastboot endpoint[/B]; [I]adb reboot bootloader[/I] does not expose one. The route that worked was an [B]EDL[/B] flash (phone off, hold Volume Up + Volume Down, plug in USB) of the [B]B15-NEW aboot+fbop[/B] from the archived full EDL package, which restores [I]fastboot oem unlock[/I]; [B]B29 alone was not enough[/B]. The package overwrites recovery, so [B]flash TWRP again[/B] and re-check the TrustZone line above.
+[*][B]Modem:[/B] use an [B]A2017U[/B] modem/firmware package, never the A2017G one. The Oreo bootstack is universal, the modem is model-specific.
+[*][B][I]/data[/I] must be ext4:[/B] TWRP 3.7.0_9-0 can format userdata as [B]f2fs[/B]; this ROM then fails to mount [I]/data[/I] ("invalid magic"), root stays read-only, apexd aborts and the phone loops. [B]Check Data again after Format Data[/B] (step 6) and change it to EXT4. [I]mke2fs -t ext4[/I] also worked for the reporter.
+[*][B]Vendor:[/B] PARTY is no longer downloadable (the AFH file has no mirrors, the XDA attachment was not archived). The equivalent with TWRP's own [I]sgdisk[/I]: with the real sector numbers of partition 13 (system, 4096-byte sectors), [I]sgdisk --delete=13 /dev/block/sde[/I], recreate 13 from its start to [I]old_end-131072[/I], and create 28 from [I]old_end-131071[/I] to [I]old_end[/I] named [I]vendor[/I]. Then reboot to recovery. Do not copy sector numbers from another phone. The repository's [I]tools/axon7-make-vendor.sh[/I] computes and checks this and is read-only unless given [I]--apply --yes[/I].
+[*][B]Cellular is UNTESTED on A2017U.[/B] The reporter says the U variant uses a different modem path and has not verified calls, SMS or data. Do not assume they work.
+[/LIST]
+Before flashing, the repository's [I]tools/axon7-preflight.sh --rom los22[/I] (run in TWRP) checks f2fs, the vendor partition and the TrustZone read-only. Full notes and sources: [URL='https://github.com/devilAPI/zte-axon7/blob/main/docs/variant-a2017u.md']docs/variant-a2017u.md[/URL].
+
 [SIZE=5][B]Installation[/B][/SIZE]
 [B]Attention:[/B] the bootloader must be unlocked, and you need the vendor partition.
 [LIST=1]
-[*]Install the [B]Oreo universal bootloader[/B] and the [B]modem for your model[/B] (unnecessary if you ran LineageOS 15.1 to 18.1 before). They are linked in the [URL='https://xdaforums.com/t/official-lineageos-15-1-for-zte-axon-7.3800214/']official LineageOS 15.1 thread[/URL].
-[*]Create the [B]vendor partition[/B] with Oki's [URL='https://xdaforums.com/t/tool-treble-party-v0-5-vendor-partition-manager-2018-08-31.3831517/']PARTY tool[/URL] (a TWRP zip; unnecessary if you have it already, e.g. from LineageOS 16 to 18.1). If TWRP restarts on the first run, boot back into recovery and flash it again.
+[*]Install the [B]Oreo universal bootloader[/B] and the [B]modem for your model[/B] (unnecessary if you ran LineageOS 15.1 to 18.1 before). They are linked in the [URL='https://xdaforums.com/t/official-lineageos-15-1-for-zte-axon-7.3800214/']official LineageOS 15.1 thread[/URL]. [B]A2017U:[/B] stock B35 has no fastboot; first restore it with the B15-NEW EDL aboot+fbop route (see above), then flash TWRP again.
+[*]Create the [B]vendor partition[/B]. Oki's [URL='https://xdaforums.com/t/tool-treble-party-v0-5-vendor-partition-manager-2018-08-31.3831517/']PARTY tool[/URL] (TWRP zip) is unnecessary if you already have the partition (e.g. from LineageOS 16 to 18.1), but its download is [B]dead[/B] (AFH has no mirrors). The equivalent is TWRP's own [I]sgdisk[/I]: use the phone's real sector numbers for partition 13 ([I]system[/I], 4096-byte sectors), delete 13, recreate it 512 MiB shorter ([I]old_end-131072[/I]) and create 28 ([I]vendor[/I]) from [I]old_end-131071[/I] to [I]old_end[/I]. Then reboot to recovery. The repository's [I]tools/axon7-make-vendor.sh[/I] does the arithmetic, prints a read-only plan, backs up the GPT and refuses a wrong layout; it writes only with [I]--apply --yes[/I]. If TWRP restarts on the first PARTY run, boot back into recovery and flash it again.
 [*]Install [B]TWRP 3.3.0-0[/B] ([I]twrp-3.3.0-0-ailsa_ii.img[/I] from [URL='https://dl.twrp.me/ailsa_ii/']dl.twrp.me/ailsa_ii[/URL]; the version this zip was tested with): Install → Install Image → the .img → [B]Recovery[/B], then Reboot → Recovery and check the version in the title bar. If TWRP restarts by itself, do not flash anything with it; go back to 3.3.0-0.
 [*]Back up your current ROM in TWRP (Boot, System, Vendor, Data, EFS) and copy it, and your photos and files, to a computer.
 [*]Wipe → Advanced Wipe → tick only [B]Data[/B] → Repair or Change File System. If it says [B]F2FS[/B]: Change File System → [B]EXT4[/B] → swipe (this ROM mounts /data as ext4 only). Back.
-[*]Wipe → [B]Format Data[/B] → type [I]yes[/I]. [B]Always[/B], whichever ROM you come from (stock, LineageOS, crDroid, encrypted or not); only an update from an earlier LineageOS 22.2 build skips this. Android 15 uses file-based encryption and cannot use an old data partition; [I]Advanced Wipe → Data[/I] alone is not enough (it keeps internal storage). Then Reboot → Recovery.
+[*]Wipe → [B]Format Data[/B] → type [I]yes[/I]. [B]Always[/B], whichever ROM you come from (stock, LineageOS, crDroid, encrypted or not); only an update from an earlier LineageOS 22.2 build skips this. Android 15 uses file-based encryption and cannot use an old data partition; [I]Advanced Wipe → Data[/I] alone is not enough (it keeps internal storage). [B]Then check Data again[/B] (Advanced Wipe → Data → Repair or Change File System): TWRP 3.7.0_9-0 can leave it as [B]F2FS[/B]; change it to [B]EXT4[/B] if so. Then Reboot → Recovery.
 [*]Wipe → Advanced Wipe: [B]Dalvik / ART Cache, Cache, System, Vendor[/B].
 [*]Copy the ROM zip to the phone (USB in TWRP, or a microSD card) and install it: [URL='https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest']newest release[/URL] ([I]lineage-22.2-DATE-UNOFFICIAL-axon7.zip[/I]; check it against the [I].sha256[/I] file). The install must end without an error.
 [*]GApps (optional): a package for [B]Android 15, arm64[/B] (e.g. MindTheGapps 15), right after the ROM, before the first start. If the first start fails, try once without GApps.
@@ -124,6 +137,11 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-21"]
+[LIST]
+[*][B]A2017U (US) support notes[/B] (no new zip): a user reports 22.2-20261109 booting on an A2017U 4/64 with TZ.BF.4.0.1-00353. Added the stock-B35 no-fastboot route (EDL B15-NEW aboot+fbop, then reflash TWRP), the model-specific modem rule, the TWRP-3.7 f2fs [I]/data[/I] trap and the ext4 check after Format Data, and the dead-PARTY/[I]sgdisk[/I] replacement (read-only planner [I]tools/axon7-make-vendor.sh[/I]). Cellular on A2017U is [B]untested[/B]; the SIM report on A2017G stays open.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-09"]
 [LIST]
 [*]First TWRP-flashable zip (no multi-boot): needs the Oreo universal bootloader and the community vendor partition; download link under Installation.
