@@ -29,11 +29,13 @@ ash() { adb shell "$@" | tr -d '\r'; }
 cleanup() {
 	local rc=$?
 	say "cleanup (rc=$rc)"
-	if [ $inserted = 1 ]; then
-		ash "rmmod pn5xx_raw" || true
+	# A timed-out insmod may still have left the module loaded; always try
+	# to unload it by name, never by file name (commit dea4b69).
+	if ash 'grep -q "^pn5xx_raw " /proc/modules' >/dev/null 2>&1; then
+		ash "timeout 20 rmmod pn5xx_raw" || true
 	fi
-	if [ $bound = 1 ]; then
-		ash "echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind" || true
+	if [ $bound = 1 ] || ash 'grep -q "^pn5xx_raw " /proc/modules' >/dev/null 2>&1; then
+		ash "timeout 20 sh -c 'echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind'" || true
 	fi
 	sleep 2
 	say "nfc0 after cleanup: $(ash "test -e /sys/class/nfc/nfc0 && echo present || echo MISSING")"
@@ -69,12 +71,14 @@ sleep 1
 echo "nfc0 after unbind: $(ash 'test -e /sys/class/nfc/nfc0 && echo PRESENT || echo gone')"
 
 say "insert $MODNAME"
-ash "rmmod pn5xx_raw 2>/dev/null || true"	# a previous failed attempt may still be loaded
-if out=$(ash "insmod $remote/pn5xx-raw.ko pn5xx_raw=1 2>&1"); then
+ash "timeout 20 rmmod pn5xx_raw 2>/dev/null || true"	# a previous failed attempt may still be loaded
+# The level IRQ can be asserted while the old driver is being unbound; bound
+# insmod attempts happened on 2026-11-22, so never let one block the test.
+if out=$(ash "timeout 30 insmod $remote/pn5xx-raw.ko pn5xx_raw=1 2>&1"); then
 	echo "insmod: ok $out"
 	inserted=1
 else
-	echo "insmod FAILED: $out" >&2
+	echo "insmod FAILED or timed out: $out" >&2
 	# Rebind before giving up (cleanup does it through $bound, set it here).
 	bound=1
 	exit 3
@@ -94,10 +98,10 @@ adb shell dmesg | tail -n +$((D0 + 1)) | grep -i -E 'pn5xx|nq-nci|nfc|i2c|gpio' 
 
 # Restore the kernel stack before releasing the phone lock.
 if [ $inserted = 1 ]; then
-	ash "rmmod pn5xx_raw" || true
+	ash "timeout 20 rmmod pn5xx_raw" || true
 	inserted=0
 fi
-ash "echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind" || true
+ash "timeout 20 sh -c 'echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind'" || true
 bound=1
 sleep 2
 echo "nfc0 after rebind: $(ash 'test -e /sys/class/nfc/nfc0 && echo present || echo MISSING')"
