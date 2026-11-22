@@ -11,6 +11,10 @@ XML="$W/lineageos-24-mainline/tmp-radio-test/radio-axon7m.xml"
 DEST=/vendor/bin/hw/android.hardware.radio-service.axon7m
 XMDEST=/vendor/etc/vintf/manifest/radio-axon7m.xml
 LOG="$L/radio-bindmount-test.txt"
+# The image on the phone predates the messaging/voice V4 NDK libraries that
+# the new binary links against; a temporary wrapper sets LD_LIBRARY_PATH to
+# the copies pushed to /data/local/tmp (no /vendor remount, no partition write).
+LIBS=(android.hardware.radio.messaging-V4-ndk.so android.hardware.radio.voice-V4-ndk.so)
 MOUNTED=0; XMLMOUNTED=0; STARTED=0
 restore() {
   echo "-- restore $(date -u +%T)" >> "$LOG"
@@ -23,6 +27,7 @@ restore() {
   adb shell am crash com.android.phone >> "$LOG" 2>&1
   sleep 30
   adb shell svc power stayon false >> "$LOG" 2>&1
+  echo "-- restored radio services: $(adb shell 'service list | grep -i radio' | wc -l)" >> "$LOG"
   echo "-- restored: svc=$(adb shell getprop init.svc.vendor.radio-axon7m | tr -d '\r') stay_on=$(adb shell settings get global stay_on_while_plugged_in | tr -d '\r') reach=$(adb shell echo OK | tr -d '\r')" >> "$LOG"
 }
 trap restore EXIT
@@ -32,14 +37,25 @@ echo "-- battery --"; adb shell cat /sys/class/power_supply/qcom-battery/capacit
 adb root >/dev/null 2>&1
 md5sum "$BIN"
 adb push "$BIN" /data/local/tmp/radio-axon7m-test 2>&1 | tail -2
+adb shell chmod 755 /data/local/tmp/radio-axon7m-test
+for lib in "${LIBS[@]}"; do
+  adb push "$W/lineageos-24-mainline/tmp-radio-test/$lib" "/data/local/tmp/$lib" >/dev/null 2>&1
+  adb shell chcon u:object_r:vendor_file:s0 "/data/local/tmp/$lib"
+done
+adb push "$W/lineageos-24-mainline/tmp-radio-test/radio-wrapper.sh" /data/local/tmp/radio-wrapper.sh >/dev/null 2>&1
+adb shell chmod 755 /data/local/tmp/radio-wrapper.sh
+# Keep the bind-mounted file's label as it would be in a real image (the phone
+# is permissive, but a future enforcing build must still work).
+adb shell chcon u:object_r:hal_radio_default_exec:s0 /data/local/tmp/radio-wrapper.sh
 adb shell "md5sum /data/local/tmp/radio-axon7m-test"
 echo "-- stop old HAL --"; adb shell setprop ctl.stop vendor.radio-axon7m; sleep 2
-echo "-- bind mount binary --"
-adb shell "mount --bind /data/local/tmp/radio-axon7m-test $DEST" && MOUNTED=1
+echo "-- bind mount wrapper (LD_LIBRARY_PATH for the two new V4 libs) --"
+adb shell "mount --bind /data/local/tmp/radio-wrapper.sh $DEST" && MOUNTED=1
 if [ "$MOUNTED" != 1 ]; then echo "BIND MOUNT FAILED"; exit 3; fi
 adb shell "md5sum $DEST"
 if [ -f "$XML" ]; then
   adb push "$XML" /data/local/tmp/radio-axon7m.xml >/dev/null 2>&1
+  adb shell chcon u:object_r:vendor_configs_file:s0 /data/local/tmp/radio-axon7m.xml
   adb shell "mount --bind /data/local/tmp/radio-axon7m.xml $XMDEST" && XMLMOUNTED=1
 fi
 echo "-- start new HAL --"; adb shell setprop ctl.start vendor.radio-axon7m; STARTED=1

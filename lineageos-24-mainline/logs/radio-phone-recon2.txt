@@ -19,3 +19,8 @@ running
 -- battery / stay on --
 99
 0
+== 2026-11-22T16:51:00Z SELinux context recon
+Permissive
+u:object_r:hal_radio_default_exec:s0 /vendor/bin/hw/android.hardware.radio-service.axon7m
+u:object_r:vendor_configs_file:s0    /vendor/etc/vintf/manifest/radio-axon7m.xml
+u:object_r:shell_data_file:s0 /data/local/tmp
