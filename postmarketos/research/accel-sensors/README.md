@@ -41,6 +41,11 @@ module). sha256 `df9d684c4fd5c1b6643e73f48db34484dfcf458407575f2fb2b26cde4c532bb
 
 ## On-phone test
 
+`../accel-build/smgr_accel-fixed.ko` and `accel-build/sensread` (NDK r30 build
+of `lineageos-24-mainline/tools/sensread.c`, sha256
+`c3048ce7a39b26e53c7da0e879b2c897a42765706721e8af0191048ce3ec35bd`) are ready
+outside the git worktree.
+
 `smgr-accel-module-test.sh` runs under the main phone's flock, saves the
 original `/vendor/lib/modules/smgr_accel.ko` on the HDD, stops
 `vendor.sensors-axon7m`, unbinds the `qcom-smgr-accel` platform device, swaps
