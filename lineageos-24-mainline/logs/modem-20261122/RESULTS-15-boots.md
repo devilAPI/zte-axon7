@@ -67,4 +67,7 @@ After cycle 15: `sys.boot_completed=1`, `boot_id=050901fd-…` (same as cycle
 -s`, `State: OFF` (the loop disables Bluetooth after each check),
 `stay_on_while_plugged_in=0`, adb reachable. `los_boot` was only read; sha1
 `/dev/block/sda10` = `ed5bed8f1f3c935f0e34b9dd51969cdfc2d1472c`, unchanged
-from before the install (see `RESULTS-install-52.md`).
+from before the install (see `RESULTS-install-52.md`). A separate read-back
+after the whole series (`adb exec-out "dd if=/dev/block/sda10 bs=1M" |
+sha1sum`) returned the same sha1 and `settings get global
+stay_on_while_plugged_in` returned 0.
