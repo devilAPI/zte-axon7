@@ -1,0 +1,406 @@
+From 72429a0812658f3fcbb9b33cfc037d33e3f9d71c Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 20:27:28 +0100
+Subject: [PATCH] nfc: add gated PN5xx raw NCI character device
+
+Expose /dev/nq-nci (plus pn5xx/pn54x aliases) on the existing PN548
+I2C node when pn5xx_raw=1, for the Android NXP NFC HAL. Nura leaves
+the parameter off and keeps nxp-nci/nfc0.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/nfc/Kconfig     |  12 ++
+ drivers/nfc/Makefile    |   1 +
+ drivers/nfc/pn5xx-raw.c | 344 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 357 insertions(+)
+ create mode 100755 drivers/nfc/pn5xx-raw.c
+
+diff --git a/drivers/nfc/Kconfig b/drivers/nfc/Kconfig
+index 288c6f1c6..eda18075e 100644
+--- a/drivers/nfc/Kconfig
++++ b/drivers/nfc/Kconfig
+@@ -68,6 +68,18 @@ source "drivers/nfc/nfcmrvl/Kconfig"
+ source "drivers/nfc/st21nfca/Kconfig"
+ source "drivers/nfc/st-nci/Kconfig"
+ source "drivers/nfc/nxp-nci/Kconfig"
++config NFC_PN5XX_CHAR
++	bool "NXP PN5xx raw NFC character device (Android HAL)"
++	depends on NFC && I2C
++	default n
++	help
++	  Raw NCI character device for the NXP PN548 on the ZTE Axon 7.
++	  When the pn5xx_raw kernel parameter is set, this driver binds the
++	  nxp,nxp-nci-i2c device instead of nxp-nci_i2c and exposes
++	  /dev/nq-nci (also /dev/pn5xx and /dev/pn54x) for Android's NXP NFC
++	  HAL. With the parameter unset it does nothing, leaving the kernel
++	  NFC stack (nfc0) in charge, as on Nura.
++
+ source "drivers/nfc/s3fwrn5/Kconfig"
+ source "drivers/nfc/st95hf/Kconfig"
+ endmenu
+diff --git a/drivers/nfc/Makefile b/drivers/nfc/Makefile
+index 7b1bfde1d..4bc31e447 100644
+--- a/drivers/nfc/Makefile
++++ b/drivers/nfc/Makefile
+@@ -15,6 +15,7 @@ obj-$(CONFIG_NFC_TRF7970A)	+= trf7970a.o
+ obj-$(CONFIG_NFC_ST21NFCA)  	+= st21nfca/
+ obj-$(CONFIG_NFC_ST_NCI)	+= st-nci/
+ obj-$(CONFIG_NFC_NXP_NCI)	+= nxp-nci/
++obj-$(CONFIG_NFC_PN5XX_CHAR)	+= pn5xx-raw.o
+ obj-$(CONFIG_NFC_S3FWRN5)	+= s3fwrn5/
+ obj-$(CONFIG_NFC_ST95HF)	+= st95hf/
+ obj-$(CONFIG_NFC_VIRTUAL_NCI)	+= virtual_ncidev.o
+diff --git a/drivers/nfc/pn5xx-raw.c b/drivers/nfc/pn5xx-raw.c
+new file mode 100755
+index 000000000..3b03ec4e1
+--- /dev/null
++++ b/drivers/nfc/pn5xx-raw.c
+@@ -0,0 +1,344 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * NXP PN5xx raw character device for the Android NFC HAL
++ *
++ * The Axon 7's PN548 sits on the same I2C bus as the mainline nxp-nci
++ * driver.  Android's NXP NFC HAL wants a character device with NXP's
++ * PN5XX_SET_PWR ioctl and plain I2C NCI frames, not the kernel NCI stack.
++ *
++ * This driver binds to the existing nxp,nxp-nci-i2c device tree node when
++ * the pn5xx_raw kernel parameter is set (LineageOS); with the parameter
++ * off (Nura) it does not register an i2c_driver at all, so nxp-nci_i2c
++ * keeps the device.  No second device node at address 0x28 is created.
++ *
++ * Power, I2C framing and the ioctl numbers follow ZTE's 3.18 pn5xx_i2c.c,
++ * preserved in lineageos-22.2/kernel-4.4-patches/0013-*.  eSE/SWP and the
++ * 19.2 MHz clock request are not implemented (unused on this phone).
++ */
++
++#include <linux/delay.h>
++#include <linux/fs.h>
++#include <linux/gpio/consumer.h>
++#include <linux/i2c.h>
++#include <linux/interrupt.h>
++#include <linux/miscdevice.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/uaccess.h>
++#include <linux/wait.h>
++
++#define PN5XX_RAW_MAX_FRAME 512
++
++#define PN544_MAGIC 0xE9
++#define PN5XX_SET_PWR _IOW(PN544_MAGIC, 0x01, unsigned int)
++#define P61_SET_SPI_PWR _IOW(PN544_MAGIC, 0x02, unsigned int)
++#define P61_GET_PWR_STATUS _IOR(PN544_MAGIC, 0x03, unsigned int)
++#define P61_SET_WIRED_ACCESS _IOW(PN544_MAGIC, 0x04, unsigned int)
++#define P544_SET_NFC_SERVICE_PID _IOW(PN544_MAGIC, 0x05, unsigned int)
++
++static bool pn5xx_raw;
++module_param(pn5xx_raw, bool, 0444);
++MODULE_PARM_DESC(pn5xx_raw,
++		 "Bind the PN548 to the raw /dev/nq-nci character driver "
++		 "instead of the kernel nxp-nci stack");
++
++struct pn5xx_raw {
++	struct i2c_client *client;
++	struct gpio_desc *gpiod_en;
++	struct gpio_desc *gpiod_fw;
++	struct miscdevice misc_nq;
++	struct miscdevice misc_pn5xx;
++	struct miscdevice misc_pn54x;
++	struct mutex xfer_lock;
++	wait_queue_head_t read_wq;
++	atomic_t irq_pending;
++};
++
++/* One controller per phone; both device names share this state. */
++static struct pn5xx_raw *pn5xx_raw_dev;
++
++static int pn5xx_raw_open(struct inode *inode, struct file *filp)
++{
++	/* misc_open() points private_data at the miscdevice; use our state. */
++	if (!pn5xx_raw_dev)
++		return -ENODEV;
++	filp->private_data = pn5xx_raw_dev;
++	return 0;
++}
++
++static struct pn5xx_raw *pn5xx_raw_from_file(struct file *filp)
++{
++	return filp->private_data;
++}
++
++static irqreturn_t pn5xx_raw_irq(int irq, void *data)
++{
++	struct pn5xx_raw *raw = data;
++
++	/* Level IRQ: mask it here, read() re-enables after draining the FIFO. */
++	disable_irq_nosync(irq);
++	atomic_set(&raw->irq_pending, 1);
++	wake_up_interruptible(&raw->read_wq);
++	return IRQ_HANDLED;
++}
++
++static void pn5xx_raw_set_power(struct pn5xx_raw *raw, unsigned int mode)
++{
++	/* mode 0: off, 1: NCI mode, 2: firmware download (VEN toggled). */
++	if (mode == 2) {
++		gpiod_set_value_cansleep(raw->gpiod_fw, 1);
++		gpiod_set_value_cansleep(raw->gpiod_en, 1);
++		msleep(20);
++		gpiod_set_value_cansleep(raw->gpiod_en, 0);
++		msleep(50);
++		gpiod_set_value_cansleep(raw->gpiod_en, 1);
++		msleep(20);
++		return;
++	}
++
++	gpiod_set_value_cansleep(raw->gpiod_fw, 0);
++	gpiod_set_value_cansleep(raw->gpiod_en, mode == 1);
++	msleep(20);
++}
++
++static ssize_t pn5xx_raw_read(struct file *filp, char __user *buf,
++			      size_t count, loff_t *offset)
++{
++	struct pn5xx_raw *raw = pn5xx_raw_from_file(filp);
++	u8 data[PN5XX_RAW_MAX_FRAME];
++	size_t total;
++	int ret, len;
++
++	if (count > sizeof(data))
++		count = sizeof(data);
++	if (count < 3)
++		return -EINVAL;
++
++	if (!atomic_read(&raw->irq_pending)) {
++		ret = wait_event_interruptible(raw->read_wq,
++					       atomic_read(&raw->irq_pending));
++		if (ret)
++			return ret;
++	}
++
++	/* The IRQ handler masked the level IRQ; always unmask after the read. */
++	atomic_set(&raw->irq_pending, 0);
++	mutex_lock(&raw->xfer_lock);
++	/* NCI frame: 3-byte header (gid/oid/plen) followed by plen bytes. */
++	len = i2c_master_recv(raw->client, data, 3);
++	if (len == 3) {
++		total = 3 + data[2];
++		if (total > count)
++			total = count;
++		if (total > 3) {
++			ret = i2c_master_recv(raw->client, data + 3, total - 3);
++			len = ret > 0 ? 3 + ret : ret;
++		}
++	} else {
++		total = 0;
++	}
++	mutex_unlock(&raw->xfer_lock);
++	enable_irq(raw->client->irq);
++	if (len < 0)
++		return len;
++	if (len < 3 || (size_t)len != total)
++		return -EBADMSG;
++	if (copy_to_user(buf, data, len))
++		return -EFAULT;
++
++	return len;
++}
++
++static ssize_t pn5xx_raw_write(struct file *filp, const char __user *buf,
++			       size_t count, loff_t *offset)
++{
++	struct pn5xx_raw *raw = pn5xx_raw_from_file(filp);
++	u8 data[PN5XX_RAW_MAX_FRAME];
++	int ret;
++
++	if (count > sizeof(data))
++		count = sizeof(data);
++	if (!count)
++		return 0;
++	if (copy_from_user(data, buf, count))
++		return -EFAULT;
++
++	mutex_lock(&raw->xfer_lock);
++	ret = i2c_master_send(raw->client, data, count);
++	mutex_unlock(&raw->xfer_lock);
++	if (ret < 0)
++		return ret;
++	/* The controller is slow to accept a new I2C transaction (ZTE). */
++	udelay(1000);
++	return ret;
++}
++
++static long pn5xx_raw_ioctl(struct file *filp, unsigned int cmd,
++			    unsigned long arg)
++{
++	struct pn5xx_raw *raw = pn5xx_raw_from_file(filp);
++	unsigned int value = (unsigned int)arg;
++
++	switch (cmd) {
++	case PN5XX_SET_PWR:
++		if (value > 2)
++			return -EINVAL;
++		pn5xx_raw_set_power(raw, value);
++		return 0;
++	case P61_SET_SPI_PWR:
++	case P61_SET_WIRED_ACCESS:
++	case P544_SET_NFC_SERVICE_PID:
++		/* No eSE/SWP on the Axon 7: accept and ignore all values. */
++		return 0;
++	case P61_GET_PWR_STATUS: {
++		/* P61 (eSE) is always off. */
++		unsigned int off = 0;
++
++		if (copy_to_user((void __user *)arg, &off, sizeof(off)))
++			return -EFAULT;
++		return 0;
++	}
++	default:
++		return -EINVAL;
++	}
++}
++
++static const struct file_operations pn5xx_raw_fops = {
++	.owner = THIS_MODULE,
++	.open = pn5xx_raw_open,
++	.read = pn5xx_raw_read,
++	.write = pn5xx_raw_write,
++	.unlocked_ioctl = pn5xx_raw_ioctl,
++};
++
++static int pn5xx_raw_probe(struct i2c_client *client)
++{
++	struct device *dev = &client->dev;
++	struct pn5xx_raw *raw;
++	unsigned long irqflags;
++	int ret;
++
++	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
++		return -ENODEV;
++
++	raw = devm_kzalloc(dev, sizeof(*raw), GFP_KERNEL);
++	if (!raw)
++		return -ENOMEM;
++	raw->client = client;
++	mutex_init(&raw->xfer_lock);
++	init_waitqueue_head(&raw->read_wq);
++	atomic_set(&raw->irq_pending, 0);
++
++	raw->gpiod_en = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
++	if (IS_ERR(raw->gpiod_en))
++		return dev_err_probe(dev, PTR_ERR(raw->gpiod_en),
++				     "no enable GPIO\n");
++	raw->gpiod_fw = devm_gpiod_get_optional(dev, "firmware", GPIOD_OUT_LOW);
++	if (IS_ERR(raw->gpiod_fw))
++		return dev_err_probe(dev, PTR_ERR(raw->gpiod_fw),
++				     "no firmware GPIO\n");
++
++	irqflags = irq_get_trigger_type(client->irq);
++	if (!irqflags)
++		irqflags = IRQF_TRIGGER_HIGH;
++	ret = request_irq(client->irq, pn5xx_raw_irq, irqflags,
++			  "pn5xx-raw", raw);
++	if (ret)
++		return dev_err_probe(dev, ret, "unable to request IRQ\n");
++
++	raw->misc_nq.name = "nq-nci";
++	raw->misc_nq.minor = MISC_DYNAMIC_MINOR;
++	raw->misc_nq.fops = &pn5xx_raw_fops;
++	raw->misc_nq.parent = dev;
++	raw->misc_pn5xx.name = "pn5xx";
++	raw->misc_pn5xx.minor = MISC_DYNAMIC_MINOR;
++	raw->misc_pn5xx.fops = &pn5xx_raw_fops;
++	raw->misc_pn5xx.parent = dev;
++	raw->misc_pn54x.name = "pn54x";
++	raw->misc_pn54x.minor = MISC_DYNAMIC_MINOR;
++	raw->misc_pn54x.fops = &pn5xx_raw_fops;
++	raw->misc_pn54x.parent = dev;
++
++	ret = misc_register(&raw->misc_nq);
++	if (ret) {
++		dev_err(dev, "cannot register /dev/nq-nci: %d\n", ret);
++		goto err_free_irq;
++	}
++	ret = misc_register(&raw->misc_pn5xx);
++	if (ret) {
++		dev_err(dev, "cannot register /dev/pn5xx: %d\n", ret);
++		goto err_deregister_nq;
++	}
++	ret = misc_register(&raw->misc_pn54x);
++	if (ret) {
++		dev_err(dev, "cannot register /dev/pn54x: %d\n", ret);
++		goto err_deregister_pn5xx;
++	}
++
++	pn5xx_raw_dev = raw;
++	i2c_set_clientdata(client, raw);
++	dev_info(dev, "PN548 raw mode: /dev/nq-nci, /dev/pn5xx, /dev/pn54x, irq %d\n",
++		 client->irq);
++	return 0;
++
++err_deregister_pn5xx:
++	misc_deregister(&raw->misc_pn5xx);
++err_deregister_nq:
++	misc_deregister(&raw->misc_nq);
++err_free_irq:
++	free_irq(client->irq, raw);
++	return ret;
++}
++
++static void pn5xx_raw_remove(struct i2c_client *client)
++{
++	struct pn5xx_raw *raw = i2c_get_clientdata(client);
++
++	pn5xx_raw_dev = NULL;
++	misc_deregister(&raw->misc_pn54x);
++	misc_deregister(&raw->misc_pn5xx);
++	misc_deregister(&raw->misc_nq);
++	free_irq(client->irq, raw);
++	mutex_destroy(&raw->xfer_lock);
++}
++
++static const struct i2c_device_id pn5xx_raw_id[] = {
++	{ "pn5xx-raw", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, pn5xx_raw_id);
++
++static const struct of_device_id pn5xx_raw_of_match[] = {
++	{ .compatible = "nxp,nxp-nci-i2c" },
++	{ .compatible = "nxp,pn5xx" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, pn5xx_raw_of_match);
++
++static struct i2c_driver pn5xx_raw_driver = {
++	.driver = {
++		.name = "pn5xx-raw",
++		.of_match_table = pn5xx_raw_of_match,
++	},
++	.probe = pn5xx_raw_probe,
++	.remove = pn5xx_raw_remove,
++	.id_table = pn5xx_raw_id,
++};
++
++static int __init pn5xx_raw_init(void)
++{
++	if (!pn5xx_raw)
++		return 0; /* Nura: leave the device to nxp-nci_i2c */
++	return i2c_add_driver(&pn5xx_raw_driver);
++}
++module_init(pn5xx_raw_init);
++
++static void __exit pn5xx_raw_exit(void)
++{
++	if (pn5xx_raw)
++		i2c_del_driver(&pn5xx_raw_driver);
++}
++module_exit(pn5xx_raw_exit);
++
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("NXP PN5xx raw NCI character device for Android NFC HAL");
+-- 
+2.43.0
+
