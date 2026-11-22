@@ -7,4 +7,4 @@ vendor_public_prop(vendor_mesa_prop)
 vendor_internal_prop(vendor_axon7m_power_prop)
 
 # vendor.wlan.firmware.version: published by the legacy Wi-Fi HAL
-vendor_internal_prop(axon7m_wlan_fw_prop)
+vendor_internal_prop(vendor_axon7m_wlan_fw_prop)

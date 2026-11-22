@@ -1,4 +1,4 @@
 vendor.mesa.    u:object_r:vendor_mesa_prop:s0 prefix
 # keep-awake switch (init.axon7m.rc): 1 holds a wakelock, no system suspend
 persist.vendor.axon7m.nosuspend u:object_r:vendor_axon7m_power_prop:s0 exact bool
-vendor.wlan.firmware.version u:object_r:axon7m_wlan_fw_prop:s0 exact string
+vendor.wlan.firmware.version u:object_r:vendor_axon7m_wlan_fw_prop:s0 exact string
