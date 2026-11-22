@@ -651,6 +651,62 @@ signal strength and `logcat -b radio` with the new binary, plus `checkvintf`.
 SIM state propagation and SMS need a card (section 4.1); the voice stub is not
 a call implementation.
 
+## 4.3 2026-11-22: milestone 1 binary built and bind-mount tested on the main phone
+
+- **Build:** `m android.hardware.radio-service.axon7m` on `root@compiler` as
+  `build`, under `/srv/aosp/build.lock` (waited for another worker's build),
+  `module-build-exit 0` at 2026-11-22T16:56:51Z
+  (`logs/radio-module-build.txt`). One compile error was found and fixed:
+  AIDL V4 names the enum value `RadioError::INVALID_ARGUMENTS`, not
+  `INVALID_ARGUMENT`. The other ten diagnostics are deprecation warnings for
+  legacy CDMA V4 methods that the stub answers with REQUEST_NOT_SUPPORTED.
+  No full image was built or flashed in this task.
+- **Permissions:** the device tree labels the binary
+  `hal_radio_default_exec` and adds
+  `allow hal_radio_default self:qipcrtr_socket create_socket_perms_no_ioctl;`
+  (`device/zte/axon7m/sepolicy/vendor/{file_contexts,hal_radio_default.te}`);
+  AOSP supplies the domain itself. The phone's SELinux is **permissive**, so
+  that rule was not exercised in an enforcing test.
+- **Test setup:** main phone `7e15695a`, LineageOS 24 userdebug, `adb root`,
+  battery 99 % before and after, no sound/vibration. Only bind mounts were
+  used (no `adb remount`, no writes to boot/misc/persist/EFS/modem). The
+  original HAL, VINTF fragment and `com.android.phone` were restored on every
+  exit path; end state `svc=running`, 5 radio services (as before),
+  `stay_on_while_plugged_in=0`, `reach=OK`. Raw logs:
+  `logs/radio-bindmount-test.txt`, `logs/radio-bindmount-probe.txt`,
+  `logs/radio-bindmount-diag.txt`, `logs/radio-phone-recon2.txt`.
+- **Old-image workaround:** the installed image predates
+  `android.hardware.radio.messaging-V4-ndk.so` and
+  `android.hardware.radio.voice-V4-ndk.so`; a direct start failed with
+  `CANNOT LINK EXECUTABLE ... library "android.hardware.radio.messaging-V4-ndk.so"
+  not found`. A temporary `/system/bin/sh` wrapper sets `LD_LIBRARY_PATH` to
+  the freshly built libraries pushed to `/data/local/tmp`; a real image build
+  installs them as dependencies of the binary.
+- **What worked with the new binary:** init reported `svc=running` and the
+  process stayed up under uid `radio`. After restarting `com.android.phone`,
+  `service list` showed the five already-declared radio services and RILJ
+  answered `DATA_REGISTRATION_STATE` and `VOICE_REGISTRATION_STATE` with
+  `NOT_REG_MT_SEARCHING_OP`, `rat: GSM` from the new HAL, with no new
+  phone-process crash/ANR. `dumpsys telephony.registry` reported
+  `mRadioPowerState=1`, `NOT_REG_SEARCHING` over GSM and a live GSM signal of
+  `rssi=-83 dBm`, level 4. QMI DMS Get Operating Mode still answered
+  `result 0, QMI error 0` with TLV `0x01 = 00` (online).
+- **Why only five services:** `AServiceManager_isDeclared()` delegates to
+  servicemanager's `isVintfDeclared()`
+  (`frameworks/native/cmds/servicemanager/ServiceManager.cpp`), which uses a
+  VintfObject loaded at boot. The runtime bind-mounted fragment does show all
+  seven `<hal>` entries, but servicemanager does not re-read it, so
+  `IRadioMessaging` and `IRadioVoice` were not declared and the HAL correctly
+  did not register them (RIL-PLAN 2.1: never register undeclared services).
+  Verifying those two needs a boot with the extended fragment installed;
+  the voice service is a stub in any case.
+- **Still untestable here:** no SIM is inserted (UIM reports card error 3,
+  "no ATR", section 4.1), so SIM state changes, file access and SMS are
+  correct by inspection only. Identity values are answered from cached
+  DMS/UIM responses on binder threads and are never logged; no personal
+  values were written to any log or repo file. SELinux enforcing, modem
+  restart, a full image and voice/data calls were not tested.
+
 ## Sources
 
 - `/srv/los24/ref/aospm-qrild` (README, `Android.bp`, `qrild/*.cc`, `notes/`), `/srv/los24/ref/aospm-libqril` (`qmi/*.qmi`, `lib/libqril_qmi.h`, `Android.bp`)
