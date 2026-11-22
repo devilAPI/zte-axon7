@@ -636,6 +636,20 @@ config fragment (built in, inactive without `pn5xx_raw=1`). SELinux gets an
 `nfc_device` type, the HAL exec label and one allow rule. Build and phone
 test results are in the run table at the end of this file.
 
+Build note: `oc-axon7-serversync "$PWD"` copied the device tree, but a
+separate-OUT_DIR `m -j4 android.hardware.nfc-service.axon7m` was wedged for
+20 min in `soong_ui --dumpvar-mode TARGET_DEVICE` while other builds held
+`/srv/aosp/build.lock` and the server load was >30 (kill by PID, no other
+build touched). As a check of the source itself, `Nfc.cpp` and the generated
+`android.hardware.nfc-V2-ndk` sources were compiled and linked with the
+tree's NDK r30 clang (`--target=aarch64-linux-android35`, libc++ static,
+libbinder_ndk/libbase/liblog from the system): compile+link exit 0, binary
+`nfc-service.axon7m` 4.6 MB, only system library dependencies. The first
+syntax-only pass caught one real bug: bionic has no `pthread_cancel`, so
+`close()` now interrupts the driver's blocking `read()` with a no-op
+SIGUSR1 handler. A normal Soong module build is still desirable before an
+image build.
+
 ## 9. What is implemented, running jobs (2026-11-10)
 
 | What | Where | State |
