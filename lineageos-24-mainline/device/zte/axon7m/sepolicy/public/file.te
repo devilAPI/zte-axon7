@@ -5,3 +5,5 @@
 type sysfs_axon7m_diskstat, fs_type, sysfs_type;
 type sysfs_axon7m_block, fs_type, sysfs_type;
 type sysfs_axon7m_ksm, fs_type, sysfs_type;
+# UFS queue nodes: init sets discard, fsck/mkfs read "zoned"
+type sysfs_axon7m_ufshc, fs_type, sysfs_type;
