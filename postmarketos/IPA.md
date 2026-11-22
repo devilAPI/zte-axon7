@@ -23,7 +23,10 @@ IPA v3.0/v3.1 and assumes GSI, so the DT has no IPA node on msm8996, no
    immediate commands), and refactors most of `drivers/net/ipa` as it existed
    in 5.13. Patch 03/17 ("Refactor GSI code") is missing from Patchwork; it is
    archived as a mailing-list commit in
-   `linux-mailinglist-archives/linux-kernel.vger.kernel.org.2`.
+   `linux-mailinglist-archives/linux-kernel.vger.kernel.org.2`. The 16 patches
+   Patchwork does have are saved as `postmarketos/research/ipa-v2-rfc.mbox`
+   (from <https://patchwork.kernel.org/series/549525/mbox/>; lore.kernel.org
+   answers 403 from this PC).
 2. A later, rebased implementation exists as `ipa2-lite`: a self-contained
    IPA v2.x driver for mainline kernels from the msm8953-mainline tree, carried
    with MSM8996 fixes by the Xiaomi Mi MIX (lithium) port:
