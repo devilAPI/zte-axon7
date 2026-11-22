@@ -24,6 +24,13 @@ ZTE Axon 7 A2017G, 64 GB / 4 GB, bootloader unlocked, TWRP 3.3.0-0 as
 recovery. All values in the docs come from this device (its downstream
 device tree, our probe shim's register dumps, and boot tests).
 
+**A2017U (US):** the same hardware and codename (`ailsa_ii`/`axon7`), but a
+different stock software/modern path. A user reports LineageOS 22.2 booting
+on an A2017U, the stock-B35 no-fastboot situation, the TWRP f2fs `/data`
+trap and a working replacement for the dead PARTY tool. Cellular is
+**untested** on A2017U. Start at [docs/variant-a2017u.md](docs/variant-a2017u.md);
+`tools/axon7-preflight.sh` checks the blockers read-only.
+
 ## What is not in this repository
 
 Proprietary firmware (Qualcomm/ZTE blobs), Apple software (IPSW contents),
