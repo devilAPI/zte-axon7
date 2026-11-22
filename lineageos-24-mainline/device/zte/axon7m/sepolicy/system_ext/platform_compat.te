@@ -9,10 +9,11 @@ allow audioserver system_server_tmpfs:file { getattr read write map };
 allow mediaswcodec system_server_tmpfs:file { getattr read write map };
 allow system_server audioserver_tmpfs:file { getattr read write map };
 
-# libc maps the vendor default property area for properties without a more
-# specific context. The platform only dontaudits "read" for apps; open, getattr
-# and map are denied too and would stop HWUI/media in enforcing mode.
-allow { system_server surfaceflinger bootanim appdomain mediaswcodec } vendor_default_prop:file { getattr open read map };
+# libc scans every property area, including vendor_default_prop, when looking
+# up a property. Platform policy forbids system domains from reading that area
+# (neverallow in private/property.te) and already dontaudits the read for apps:
+# the failed open/map is benign (the wanted property is in another area), so
+# no rule is added here. All properties we own have explicit contexts.
 
 # crash_dump64 reads our RRO apk and its idmap when dumping a crashing app.
 allow crash_dump vendor_overlay_file:file r_file_perms;
