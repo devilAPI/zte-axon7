@@ -5,6 +5,10 @@ After=systemd-udevd.service axon7-firmware.service
 [Service]
 # simple, not oneshot: waiting for the card must not hold up the boot
 Type=simple
+# a failed run (card in use, stop did not finish, no card after two ADSP
+# restarts) is retried; the script never starts a half-stopped ADSP
+Restart=on-failure
+RestartSec=30
 ExecStart=/usr/libexec/axon7-audio-kick
 
 [Install]

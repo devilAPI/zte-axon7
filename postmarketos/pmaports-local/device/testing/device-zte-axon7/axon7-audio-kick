@@ -1,31 +1,185 @@
 #!/bin/sh
 # On some boots the SLIMbus controller never gets the ADSP's "master
 # capability" message: no AK4961 codec, no sound card. A restart of the
-# ADSP brings it back (seen 2026-11-12). Wait for the card, restart the
-# ADSP at most twice.
-card() { grep -q "ZTE Axon 7" /proc/asound/cards 2>/dev/null; }
-adsp=
-for r in /sys/class/remoteproc/remoteproc*; do
-	[ "$(cat "$r/name" 2>/dev/null)" = adsp ] && adsp=$r
-done
-[ -n "$adsp" ] || { echo "axon7-audio-kick: no ADSP remoteproc" >&2; exit 1; }
-for attempt in 0 1 2; do
+# ADSP brings it back (seen 2026-11-12). Wait for a *usable* card (card +
+# AK4961 + PCM), restart the ADSP at most twice.
+#
+# Two rules keep the restart safe (2026-11-22):
+# - Right before stopping the ADSP the card is checked once more: if it just
+#   appeared, nothing is restarted (a player may already hold it).
+# - Never stop the ADSP while any process holds /dev/snd/*. The ASoC card
+#   teardown waits for those files to be closed, so "echo stop" would block
+#   and the DSP could be left half stopped ("APR timeouts until reboot").
+#   If the card is in use, the service exits and systemd retries later.
+# - A stop that does not reach "offline" is never followed by a start.
+#
+# After a restart, the user audio session is asked to re-scan the card so a
+# player that cached the old card does not stay silent until a reboot.
+#
+# AXON7_AUDIO_ROOT=/some/dir and the AXON7_AUDIO_* variables are for the
+# off-device tests (test-audio-kick.sh); on the phone none of them are set.
+ROOT=${AXON7_AUDIO_ROOT:-}
+CARD_WAIT=${AXON7_AUDIO_CARD_WAIT:-45}
+TICK=${AXON7_AUDIO_TICK:-1}
+STOP_WAIT=${AXON7_AUDIO_STOP_WAIT:-10}
+BOOT_WAIT=${AXON7_AUDIO_BOOT_WAIT:-30}
+USER_AUDIO=${AXON7_AUDIO_USER_RESTART:-1}
+
+log() { echo "axon7-audio-kick: $*"; }
+
+card_present() { grep -q "ZTE Axon 7" "$ROOT/proc/asound/cards" 2>/dev/null; }
+codec_bound() { [ -e "$ROOT/sys/bus/slimbus/drivers/ak4961-slim/1dd:4961:2:0" ]; }
+pcm_present() { grep -q "MultiMedia2" "$ROOT/proc/asound/pcm" 2>/dev/null; }
+card_ready() { card_present && codec_bound && pcm_present; }
+
+# Is any process holding an ALSA device node?  Forced by the tests.
+snd_busy() {
+	case "${AXON7_AUDIO_SND_BUSY-}" in
+	0) return 1 ;;
+	1) return 0 ;;
+	esac
+	for f in "$ROOT"/proc/[0-9]*/fd/*; do
+		[ -e "$f" ] || continue
+		case $(readlink "$f" 2>/dev/null) in
+		/dev/snd/*) return 0 ;;
+		esac
+	done
+	return 1
+}
+
+adsp_find() {
+	for r in "$ROOT"/sys/class/remoteproc/remoteproc*; do
+		[ "$(cat "$r/name" 2>/dev/null)" = adsp ] && { echo "$r"; return 0; }
+	done
+	return 1
+}
+adsp_state() { cat "$1/state" 2>/dev/null; }
+wait_state() { # rproc dir, ticks, wanted state
 	i=0
-	while [ $i -lt 45 ]; do
-		if card; then
-			[ $attempt -gt 0 ] && echo "axon7-audio-kick: sound card after $attempt ADSP restart(s)"
-			exit 0
-		fi
-		sleep 1
+	while [ "$i" -lt "$2" ]; do
+		[ "$(adsp_state "$1")" = "$3" ] && return 0
+		sleep "$TICK"
 		i=$((i + 1))
 	done
-	[ $attempt = 2 ] && break
-	echo "axon7-audio-kick: no sound card after 45 s, restarting the ADSP"
-	if [ "$(cat "$adsp/state")" = running ]; then
-		echo stop > "$adsp/state"
-		sleep 2
+	return 1
+}
+
+restart_user_audio() {
+	[ "$USER_AUDIO" = 1 ] || return 0
+	command -v loginctl >/dev/null 2>&1 || return 0
+	command -v runuser >/dev/null 2>&1 || return 0
+	loginctl list-users --no-legend 2>/dev/null | while read -r uid user _; do
+		[ -S "/run/user/$uid/bus" ] || continue
+		runuser -u "$user" -- env XDG_RUNTIME_DIR="/run/user/$uid" \
+			systemctl --user try-restart wireplumber.service pipewire.service \
+			>/dev/null 2>&1 &&
+			log "asked the audio session of $user to re-scan the card"
+	done
+}
+
+stop_adsp() { # 0 stopped, 1 stop did not finish (do NOT start), 2 in use
+	[ "$(adsp_state "$adsp")" = running ] || return 0
+	if snd_busy; then
+		log "the card is open (a player or daemon holds /dev/snd); leaving the ADSP alone"
+		return 2
 	fi
-	echo start > "$adsp/state"
+	log "stopping the ADSP"
+	if command -v timeout >/dev/null 2>&1; then
+		timeout "$STOP_WAIT" sh -c "echo stop > '$adsp/state'" || {
+			log "stop did not finish in ${STOP_WAIT}s (state $(adsp_state "$adsp"))"
+			return 1
+		}
+	else
+		echo stop > "$adsp/state" || return 1
+	fi
+	wait_state "$adsp" "$STOP_WAIT" offline || {
+		log "ADSP is '$(adsp_state "$adsp")' after ${STOP_WAIT}s, not offline"
+		return 1
+	}
+	log "ADSP is offline"
+	return 0
+}
+
+start_adsp() {
+	log "starting the ADSP"
+	if command -v timeout >/dev/null 2>&1; then
+		timeout "$STOP_WAIT" sh -c "echo start > '$adsp/state'" ||
+			{ log "could not write start"; return 1; }
+	else
+		echo start > "$adsp/state" || { log "could not write start"; return 1; }
+	fi
+	wait_state "$adsp" "$BOOT_WAIT" running || {
+		log "ADSP is '$(adsp_state "$adsp")' after ${BOOT_WAIT}s, not running"
+		return 1
+	}
+	return 0
+}
+
+check() {
+	a=$(adsp_find) || { log "no ADSP remoteproc"; return 1; }
+	log "ADSP: $a state=$(adsp_state "$a")"
+	log "card=$(card_present && echo yes || echo no) codec=$(codec_bound && echo yes || echo no) pcm=$(pcm_present && echo yes || echo no) open=$(snd_busy && echo yes || echo no)"
+	if card_ready; then
+		log "the sound card is ready"
+		return 0
+	fi
+	log "the sound card is NOT ready"
+	return 1
+}
+
+case "${1:-}" in
+--check)
+	check
+	exit $?
+	;;
+"")
+	;;
+*)
+	echo "usage: $0 [--check]" >&2
+	exit 2
+	;;
+esac
+
+adsp=$(adsp_find) || { log "no ADSP remoteproc"; exit 1; }
+
+# One instance at a time (systemd restarts a failed run after RestartSec).
+if command -v flock >/dev/null 2>&1 && [ -d "$ROOT/run" ] &&
+	: >>"$ROOT/run/axon7-audio-kick.lock" 2>/dev/null; then
+	exec 9>>"$ROOT/run/axon7-audio-kick.lock"
+	flock -n 9 || { log "another instance is running"; exit 0; }
+fi
+
+attempt=0
+while :; do
+	i=0
+	while [ "$i" -lt "$CARD_WAIT" ]; do
+		if card_ready; then
+			if [ "$attempt" -gt 0 ]; then
+				log "sound card usable after $attempt ADSP restart(s)"
+				restart_user_audio
+			fi
+			exit 0
+		fi
+		sleep "$TICK"
+		i=$((i + 1))
+	done
+	# it may have appeared in the very last second, just before the DSP is
+	# touched; a player can already hold it then
+	if card_ready; then
+		log "sound card appeared just now"
+		exit 0
+	fi
+	log "no usable sound card after ${CARD_WAIT}s (card=$(card_present && echo yes || echo no) codec=$(codec_bound && echo yes || echo no) pcm=$(pcm_present && echo yes || echo no))"
+	[ "$attempt" -ge 2 ] && { log "giving up after $attempt ADSP restart(s)"; exit 1; }
+	stop_adsp
+	rc=$?
+	if [ "$rc" = 2 ]; then
+		log "the card is in use; systemd retries later"
+		exit 1
+	elif [ "$rc" != 0 ]; then
+		log "ADSP was not stopped; not starting it (that would wedge it)"
+		exit 1
+	fi
+	start_adsp || exit 1
+	attempt=$((attempt + 1))
 done
-echo "axon7-audio-kick: still no sound card" >&2
-exit 1

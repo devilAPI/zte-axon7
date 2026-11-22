@@ -164,11 +164,18 @@ input suspended. Only you can do these:
 scaler, GPU memory bandwidth, three crash fixes from LineageOS 24) run on the
 second phone (7.3.1-t3+ in its boot partition), checked without hands
 (ios/research/phone2/kernel-r27/RESULTS.md). One audio finding that r26
-has too: in a test, a second short playback (1 s, tinyplay) about 20 s after
+had too: in a test, a second short playback (1 s, tinyplay) about 20 s after
 the first, or one started about 70 s after boot while Nura restarts the audio
-processor, failed and the sound stayed off until a restart.
+processor, failed and the sound stayed off until a restart. Checked on the
+same kernel series under LineageOS 24 on 2026-11-22: ten playbacks with 1-60 s
+pauses and playbacks after an ADSP restart all work; the failure was the ADSP
+restart racing a card that had just appeared (details and logs in
+`postmarketos/README.md`, "Audio: repeated playback and the ADSP restart").
+`device-zte-axon7` r31 (pkgrel 26) makes the start helper wait for a usable
+card, never stops the ADSP under an open player and never starts a
+half-stopped one.
 
-- [ ] After r27: play two songs one after the other (and pause/resume); does the second one play? If not, `sudo dmesg | grep -i q6` and tell Claude
+- [ ] After r31: play ten short things in a row (or two songs, pause/resume between) and `sudo dmesg | grep -i q6`; no timeout/error lines and every playback starts. Then restart the ADSP by hand (`sudo sh -c 'echo stop > /sys/class/remoteproc/remoteproc2/state'; sleep 2; echo start > /sys/class/remoteproc/remoteproc2/state'`) while nothing is playing, wait for the card, and play again. If sound stays off, run `sudo /usr/libexec/axon7-audio-kick --check` and send the output plus `sudo dmesg | grep -iE 'q6|apr|slim'`.
 - [ ] In a desktop that uses hardware planes (Phosh/phoc), a scaled video or window looks right (no seam or edge in the middle of the screen)
 
 **Second phone, kernel 0047/0048 (2026-11-16 night):** the GPU fixes from

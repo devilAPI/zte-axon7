@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-21 (A2017U/US notes; images unchanged). Before: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
+Last update: 2026-11-22 (r31: audio restarts no longer leave the sound off). Before: 2026-11-21 (A2017U/US notes; images unchanged). Before: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -85,6 +85,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-22, r31"]
+[LIST]
+[*]Audio: a playback started while the audio processor (ADSP) was being restarted could leave the sound off until a reboot. The start helper now waits for a really usable sound card, re-checks it right before a restart, never restarts the processor while a player holds the card, never starts a half-stopped one, and asks the audio session to look for the card again afterwards.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-21"]
 [LIST]
 [*][B]A2017U (US) notes[/B]: same hardware and codename, but no fastboot on stock B35 (EDL B15-NEW aboot+fbop restores it; reflash TWRP afterwards) and a model-specific modem. Nura does not need fastboot or a vendor partition: the sdcard image and boot.img go through TWRP, and the first start copies firmware read-only from [I]modem[/I] and from [I]vendor[/I] or, without a vendor partition, from [I]system[/I]. Calls/SMS/data are [B]untested[/B] on A2017U. Nothing changed in the images.
