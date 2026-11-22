@@ -102,6 +102,10 @@ notes:
 
 ## 0. From the unattended session (2026-11-14 evening)
 
+**MAIN PHONE DOWN AGAIN (2026-11-22 22:32), needs your hands:**
+
+- [ ] The sleep worker's guarded test kernel booted LineageOS, then hung in a CPU idle state about a minute later (no adb/fastboot since 22:32; the automatic restore cannot run on a hung phone). Please hold **power ~10 s**, pick **TWRP** in the boot menu, leave it plugged in and tell Claude; the saved LineageOS boot image is put back from TWRP. Deep-sleep kernel tests on the main phone are stopped until you are around.
+
 **MAIN PHONE DOWN (2026-11-22 ~18:45), needs your hands:**
 
 - [x] (fixed 2026-11-22 19:40: owner reset to TWRP, Claude restored the #31 LOS 24 kernel, boots) The main phone (7e15695a) was off USB (no adb, no fastboot). The sleep worker wrote an untested test kernel into its **los_boot** partition and it did not boot. Please hold **power ~10 s**, then in the boot menu (Volume Down, Power) pick **TWRP**, leave it connected and tell Claude: a worker then restores the known-good LineageOS 24 boot image from TWRP over adb. Do **not** pick LineageOS first (it would start the broken test kernel again). Saved menu block: ai-worker/axon7/sleep/.kfast-sleep/misc-before.bin.
