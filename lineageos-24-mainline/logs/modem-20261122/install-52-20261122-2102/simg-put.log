@@ -1,0 +1,4 @@
+/home/devilapi/Documents/GitHub/zte-axon7/ios/research/los24-build-52/super.img: 5905580032 bytes (5.50 GiB), 1188 MiB of data in 21 runs to /dev/block/sde13
+  base /home/devilapi/Documents/GitHub/zte-axon7/ios/research/los24-build-51/super.img: 158 of 1191 MiB differ, 157 MiB to write in 40 runs
+  0/157 MiB  1/157 MiB  3/157 MiB  4/157 MiB  5/157 MiB  6/157 MiB  7/157 MiB  9/157 MiB  10/157 MiB  11/157 MiB  12/157 MiB  13/157 MiB  17/157 MiB  18/157 MiB  20/157 MiB  21/157 MiB  24/157 MiB  25/157 MiB  28/157 MiB  29/157 MiB  30/157 MiB  32/157 MiB  33/157 MiB  35/157 MiB  40/157 MiB  41/157 MiB  42/157 MiB  43/157 MiB  44/157 MiB  45/157 MiB  46/157 MiB  47/157 MiB  48/157 MiB  50/157 MiB  51/157 MiB  52/157 MiB  53/157 MiB  54/157 MiB  118/157 MiB  157/157 MiB
+verified: 21 runs, 1245282304 bytes

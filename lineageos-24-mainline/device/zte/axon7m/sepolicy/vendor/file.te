@@ -6,9 +6,12 @@ type firmware_file, file_type, contextmount_type, vendor_file_type;
 # /dev/block/by-name/persist (Qualcomm's type, as for firmware_file)
 type persist_block_device, dev_type;
 
-# modem EFS partitions (rmtfs reads them; rmtfs runs with -r) and rmtfs memory
+# modem EFS partitions (read only when making the /data shadow) and rmtfs memory
 type axon7m_modem_block_device, dev_type;
 type axon7m_rmtfs_device, dev_type;
+# private writable copy of the EFS images, so EFS writes survive a modem
+# restart without ever writing modemst1/2, fsg or fsc
+type axon7m_efs_shadow_data_file, file_type, data_file_type;
 # sysfs: SLPI sensor manager IIO devices, rmtfs memory, modem remoteproc
 type sysfs_axon7m_iio, fs_type, sysfs_type;
 type sysfs_axon7m_rmtfs, fs_type, sysfs_type;

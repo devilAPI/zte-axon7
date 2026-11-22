@@ -1,0 +1,232 @@
+[ 1319.705016] remoteproc remoteproc0: powering up 2080000.remoteproc
+[ 1319.706447] type=1400 audit(1795138853.311:423): avc:  denied  { dac_read_search } for  comm="mss-loop.sh" capability=2  scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=capability permissive=1
+[ 1319.707597] remoteproc remoteproc0: Booting fw image qcom/msm8996/zte/axon7/mba.mbn, size 213888
+[ 1319.732625] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[ 1319.742569] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[ 1319.880666] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[ 1321.480088] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1321.481747] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[ 1321.487286] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1321.501198] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[ 1321.509629] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[ 1321.515531] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[ 1321.523332] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[ 1321.531921] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[ 1321.628423] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[ 1321.631268] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[ 1321.638163] ueventd: LoadWithAliases was unable to load rpmsg:apr_voice_svc, tried: rpmsg:apr_voice_svc
+[ 1321.653250] ueventd: LoadWithAliases was unable to load rpmsg:LOOPBACK_CTL_MPSS, tried: rpmsg:LOOPBACK_CTL_MPSS
+[ 1322.140774] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CMD, tried: rpmsg:DIAG_CMD
+[ 1322.147803] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CNTL, tried: rpmsg:DIAG_CNTL
+[ 1322.155014] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2_CMD, tried: rpmsg:DIAG_2_CMD
+[ 1322.163236] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2, tried: rpmsg:DIAG_2
+[ 1322.172048] ueventd: LoadWithAliases was unable to load rpmsg:DIAG, tried: rpmsg:DIAG
+[ 1322.915434] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1322.936191] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1324.006156] servicemanager: Caller(pid=1148,uid=1001,sid=u:r:radio:s0) Found android.hardware.graphics.allocator.IAllocator/default in device VINTF manifest.
+[ 1324.013308] servicemanager: Caller(pid=1148,uid=1001,sid=u:r:radio:s0) Found android.hardware.graphics.allocator.IAllocator/default in device VINTF manifest.
+[ 1324.022910] servicemanager: Caller(pid=1148,uid=1001,sid=u:r:radio:s0) Found mapper/minigbm in device VINTF manifest.
+[ 1324.062386] axon7m-modem: DMS at 0:58 after 22 s
+[ 1324.080628] type=1400 audit(1795138857.683:424): avc:  denied  { open } for  comm="hwuiTask1" path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=404 scontext=u:r:radio:s0 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1
+[ 1324.081461] type=1400 audit(1795138857.683:425): avc:  denied  { getattr } for  comm="hwuiTask1" path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=404 scontext=u:r:radio:s0 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1
+[ 1324.081580] axon7m-modem: operating mode 5
+[ 1324.105542] type=1400 audit(1795138857.683:426): avc:  denied  { map } for  comm="hwuiTask1" path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=404 scontext=u:r:radio:s0 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1
+[ 1324.138084] type=1400 audit(1795138857.743:427): avc:  denied  { getattr } for  comm="RenderThread" path="/dev/dri/card0" dev="tmpfs" ino=1001 scontext=u:r:radio:s0 tcontext=u:object_r:graphics_device:s0 tclass=chr_file permissive=1
+[ 1327.170525] axon7m-modem: operating mode 0
+[ 1329.597229] axon7m-modem: DMS at 0:58 after 0 s
+[ 1329.641989] axon7m-modem: operating mode 0
+[ 1333.088282] type=1400 audit(1795138866.691:428): avc:  denied  { read } for  comm="android.hardwar" name="type" dev="sysfs" ino=52495 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1333.088990] type=1400 audit(1795138866.691:429): avc:  denied  { open } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=52495 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1333.089661] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1333.112607] type=1400 audit(1795138866.691:430): avc:  denied  { getattr } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=52495 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1333.141098] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1333.175948] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1343.262109] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1351.984296] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1353.438774] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1356.625142] type=1400 audit(1795138890.227:431): avc:  denied  { read } for  comm="storaged" name="stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1356.625675] type=1400 audit(1795138890.227:432): avc:  denied  { open } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1356.645525] type=1400 audit(1795138890.227:433): avc:  denied  { getattr } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1357.291544] axon7m-modem: modem online (switched 2 time(s))
+[ 1357.301572] init: Service 'axon7m-modem-online' (pid 2445) exited with status 0 oneshot service took 54.465000 seconds in background
+[ 1357.301962] init: Sending SIGKILL to service 'axon7m-modem-online' (pid 2445) process group...
+[ 1357.316800] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_0/pid_2445
+[ 1359.775673] axon7m-modem: modem online (switched 0 time(s))
+[ 1363.614847] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1373.791636] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1373.815453] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1373.837211] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1373.853728] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1383.958448] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1395.588515] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1405.762052] healthd: battery l=99 v=4337 t=25.2 h=2 st=5 c=305 chg=u
+[ 1408.426356] pi5usb302 2-000d: host, idle
+[ 1408.434584] dwc3 6a00000.usb: request 0000000051d58782 was not queued to ep0out
+[ 1408.478707] read descriptors
+[ 1408.478897] bcdVersion must be 0x0100, stored in Little Endian order. Userspace driver should be fixed, accepting 0x0001 for compatibility.
+[ 1408.481359] bcdVersion must be 0x0100, stored in Little Endian order. Userspace driver should be fixed, accepting 0x0001 for compatibility.
+[ 1408.493278] read strings
+[ 1408.509113] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/vendor/etc/init/hw/init.axon7m.usb.rc:42)
+[ 1408.516160] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/vendor/etc/init/hw/init.axon7m.usb.rc:45) took 0ms and failed: symlink() failed: File exists
+[ 1408.526185] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/vendor/etc/init/hw/init.axon7m.usb.rc:46) took 1ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+[ 1408.553766] power_supply smb1351-parallel: driver failed to report `status' property: -6
+[ 1408.559450] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.usb.configfs.rc:20)
+[ 1408.577468] xhci-hcd xhci-hcd.2.auto: xHCI Host Controller
+[ 1408.588707] ueventd: LoadWithAliases was unable to load platform:xhci-hcd, tried: platform:xhci_hcd
+[ 1408.596787] xhci-hcd xhci-hcd.2.auto: new USB bus registered, assigned bus number 1
+[ 1408.604077] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:22) took 0ms and failed: symlink() failed: File exists
+[ 1408.611330] xhci-hcd xhci-hcd.2.auto: hcc params 0x0228f665 hci version 0x100 quirks 0x0000808002000010
+[ 1408.626328] ueventd: LoadWithAliases was unable to load platform:xhci-hcd, tried: platform:xhci_hcd
+[ 1408.643736] xhci-hcd xhci-hcd.2.auto: irq 68, io mem 0x06a00000
+[ 1408.654334] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:23) took 1ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+[ 1408.662360] xhci-hcd xhci-hcd.2.auto: xHCI Host Controller
+[ 1408.664863] healthd: battery l=99 v=4272 t=25.0 h=2 st=3 c=213469 chg=
+[ 1408.681163] healthd: battery l=99 v=4272 t=25.0 h=2 st=3 c=213469 chg=
+[ 1408.698674] type=1400 audit(1795138942.303:434): avc:  denied  { read } for  comm="binder:348_3" name="name" dev="sysfs" ino=21497 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1408.699163] xhci-hcd xhci-hcd.2.auto: new USB bus registered, assigned bus number 2
+[ 1408.699217] xhci-hcd xhci-hcd.2.auto: Host supports USB 3.0 SuperSpeed
+[ 1408.702408] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.03
+[ 1408.725241] PM: suspend entry (s2idle)
+[ 1408.726813] type=1400 audit(1795138942.303:435): avc:  denied  { open } for  comm="binder:348_3" path="/sys/devices/platform/soc@0/4ad000.thermal-sensor/wakeup/wakeup4/name" dev="sysfs" ino=21497 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1408.727757] type=1400 audit(1795138942.315:436): avc:  denied  { read } for  comm="binder:348_3" name="name" dev="sysfs" ino=51012 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs_batteryinfo:s0 tclass=file permissive=1
+[ 1408.728176] type=1400 audit(1795138942.315:437): avc:  denied  { open } for  comm="binder:348_3" path="/sys/devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:fuel-gauge@4000/power_supply/qcom-battery/wakeup9/name" dev="sysfs" ino=51012 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs_batteryinfo:s0 tclass=file permissive=1
+[ 1408.759398] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[ 1408.775507] healthd: battery l=99 v=4272 t=25.0 h=2 st=3 c=213469 chg=
+[ 1408.796485] usb usb1: Product: xHCI Host Controller
+[ 1408.819596] Filesystems sync: 0.055 seconds
+[ 1408.836178] usb usb1: Manufacturer: Linux 7.3.1-axon7m xhci-hcd
+[ 1408.854424] Freezing user space processes
+[ 1408.858848] usb usb1: SerialNumber: xhci-hcd.2.auto
+[ 1408.872715] audit: audit_lost=9 audit_rate_limit=5 audit_backlog_limit=64
+[ 1408.873404] audit: rate limit exceeded
+[ 1408.882955] hub 1-0:1.0: USB hub found
+[ 1408.883962] hub 1-0:1.0: 1 port detected
+[ 1408.887582] Freezing user space processes completed (elapsed 0.017 seconds)
+[ 1408.891237] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[ 1408.892117] OOM killer disabled.
+[ 1408.898450] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.03
+[ 1408.906833] Freezing remaining freezable tasks
+[ 1408.910313] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[ 1408.922538] usb usb2: Product: xHCI Host Controller
+[ 1408.929714] usb usb2: Manufacturer: Linux 7.3.1-axon7m xhci-hcd
+[ 1408.934481] usb usb2: SerialNumber: xhci-hcd.2.auto
+[ 1408.942300] hub 2-0:1.0: USB hub found
+[ 1408.945343] hub 2-0:1.0: 1 port detected
+[ 1408.955878] Freezing remaining freezable tasks completed (elapsed 0.037 seconds)
+[ 1408.955996] printk: Suspending console(s) (use no_console_suspend to debug)
+[ 1408.988502] pi5usb302 2-000d: host, VBUS on (device attached)
+[ 1409.061033] dwc3-qcom-legacy 6af8800.usb: port-1 HS-PHY not in L2
+[ 1409.404420] qcom-pcie 600000.pcie: PCIe Gen.1 x1 link up
+[ 1409.513368] pi5usb302 2-000d: device (host attached)
+[ 1409.835108] OOM killer enabled.
+[ 1409.839621] Restarting tasks: Starting
+[ 1409.842828] xhci-hcd xhci-hcd.2.auto: remove, state 1
+[ 1409.857700] usb usb2: USB disconnect, device number 1
+[ 1409.868950] xhci-hcd xhci-hcd.2.auto: USB bus 2 deregistered
+[ 1409.869107] xhci-hcd xhci-hcd.2.auto: remove, state 4
+[ 1409.872769] Restarting tasks: Done
+[ 1409.879779] usb usb1: USB disconnect, device number 1
+[ 1409.882650] ueventd: LoadWithAliases was unable to load usb:v1D6Bp0002d0703dc09dsc00dp01ic09isc00ip00in00, tried: usb:v1D6Bp0002d0703dc09dsc00dp01ic09isc00ip00in00
+[ 1409.885026] random: crng reseeded on system resumption
+[ 1409.905029] type=1400 audit(1795138942.475:438): avc:  denied  { write } for  comm="kdevtmpfs" name="/" dev="devtmpfs" ino=1 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1409.906131] ueventd: LoadWithAliases was unable to load usb:v1D6Bp0002d0703dc09dsc00dp01ic09isc00ip00in00, tried: usb:v1D6Bp0002d0703dc09dsc00dp01ic09isc00ip00in00
+[ 1409.907196] type=1400 audit(1795138942.475:439): avc:  denied  { add_name } for  comm="kdevtmpfs" name="bus" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1409.909175] audit: audit_lost=20 audit_rate_limit=5 audit_backlog_limit=64
+[ 1409.909188] audit: rate limit exceeded
+[ 1409.910669] xhci-hcd xhci-hcd.2.auto: USB bus 1 deregistered
+[ 1409.914321] PM: suspend exit
+[ 1409.931810] ueventd: LoadWithAliases was unable to load usb:v1D6Bp0003d0703dc09dsc00dp03ic09isc00ip00in00, tried: usb:v1D6Bp0003d0703dc09dsc00dp03ic09isc00ip00in00
+[ 1409.949350] type=1400 audit(1795138942.475:440): avc:  denied  { create } for  comm="kdevtmpfs" name="bus" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1409.959298] ueventd: LoadWithAliases was unable to load usb:v1D6Bp0003d0703dc09dsc00dp03ic09isc00ip00in00, tried: usb:v1D6Bp0003d0703dc09dsc00dp03ic09isc00ip00in00
+[ 1409.966953] type=1400 audit(1795138942.479:441): avc:  denied  { write } for  comm="kdevtmpfs" name="bus" dev="devtmpfs" ino=387 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1409.977131] ueventd: LoadWithAliases was unable to load platform:xhci-hcd, tried: platform:xhci_hcd
+[ 1409.991979] type=1400 audit(1795138942.479:442): avc:  denied  { write } for  comm="kdevtmpfs" name="usb" dev="devtmpfs" ino=388 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1410.037663] ueventd: LoadWithAliases was unable to load usb:v1D6Bp0003d0703dc09dsc00dp03ic09isc00ip00in00, tried: usb:v1D6Bp0003d0703dc09dsc00dp03ic09isc00ip00in00
+[ 1410.044615] PM: suspend entry (s2idle)
+[ 1410.055632] type=1400 audit(1795139244.086:454): avc:  denied  { setattr } for  comm="kdevtmpfs" name="001" dev="devtmpfs" ino=390 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[ 1410.062820] ueventd: LoadWithAliases was unable to load usb:v1D6Bp0002d0703dc09dsc00dp01ic09isc00ip00in00, tried: usb:v1D6Bp0002d0703dc09dsc00dp01ic09isc00ip00in00
+[ 1410.068638] ueventd: LoadWithAliases was unable to load platform:xhci-hcd, tried: platform:xhci_hcd
+[ 1410.081442] type=1400 audit(1795139244.086:455): avc:  denied  { write } for  comm="kdevtmpfs" name="001" dev="devtmpfs" ino=389 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1410.127380] type=1400 audit(1795139244.086:456): avc:  denied  { unlink } for  comm="kdevtmpfs" name="001" dev="devtmpfs" ino=390 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[ 1410.128846] Filesystems sync: 0.061 seconds
+[ 1410.149975] type=1400 audit(1795139244.086:457): avc:  denied  { write } for  comm="kdevtmpfs" name="usb" dev="devtmpfs" ino=388 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1410.168535] Freezing user space processes
+[ 1410.170260] type=1400 audit(1795139244.086:458): avc:  denied  { write } for  comm="kdevtmpfs" name="bus" dev="devtmpfs" ino=387 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[ 1410.195461] Freezing user space processes aborted after 0.008 seconds (350 tasks refusing to freeze, wq_busy=0):
+[ 1410.208601] OOM killer enabled.
+[ 1410.218474] Restarting tasks: Starting
+[ 1410.229753] Restarting tasks: Done
+[ 1410.230430] random: crng reseeded on system resumption
+[ 1410.232152] PM: suspend exit
+[ 1410.441106] PM: suspend entry (s2idle)
+[ 1410.462303] Filesystems sync: 0.021 seconds
+[ 1410.463237] Freezing user space processes
+[ 1410.478817] Freezing user space processes completed (elapsed 0.013 seconds)
+[ 1410.478939] OOM killer disabled.
+[ 1410.485813] Freezing remaining freezable tasks
+[ 1410.492754] Freezing remaining freezable tasks aborted after 0.004 seconds (2 tasks refusing to freeze, wq_busy=0):
+[ 1410.492848] Restarting kernel threads ...
+[ 1410.504521] Done restarting kernel threads.
+[ 1410.507042] OOM killer enabled.
+[ 1410.510897] Restarting tasks: Starting
+[ 1410.523325] Restarting tasks: Done
+[ 1410.524036] random: crng reseeded on system resumption
+[ 1410.525790] PM: suspend exit
+[ 1410.529162] healthd: battery l=99 v=6249 t=25.0 h=2 st=5 c=862116 chg=u
+[ 1410.545619] healthd: battery l=99 v=6249 t=25.0 h=2 st=5 c=862116 chg=u
+[ 1410.591772] healthd: battery l=99 v=6249 t=25.0 h=2 st=5 c=862116 chg=u
+[ 1410.613743] healthd: battery l=99 v=6249 t=25.0 h=2 st=5 c=862116 chg=u
+[ 1410.638625] healthd: battery l=99 v=6249 t=25.0 h=2 st=5 c=862116 chg=u
+[ 1410.816068] healthd: battery l=99 v=6249 t=25.0 h=2 st=5 c=862116 chg=u
+[ 1416.627991] type=1400 audit(1795139250.802:462): avc:  denied  { read } for  comm="storaged" name="stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1416.628766] type=1400 audit(1795139250.802:463): avc:  denied  { open } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1416.648368] type=1400 audit(1795139250.802:464): avc:  denied  { getattr } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1420.459820] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-163725 chg=u
+[ 1420.460962] type=1400 audit(1795139254.630:465): avc:  denied  { read } for  comm="android.hardwar" name="type" dev="sysfs" ino=52495 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1420.469012] type=1400 audit(1795139254.630:466): avc:  denied  { open } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=52495 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1420.471202] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-163725 chg=u
+[ 1420.490502] type=1400 audit(1795139254.630:467): avc:  denied  { getattr } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=52495 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1420.521765] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-163725 chg=u
+[ 1426.275402] healthd: battery l=99 v=4372 t=25.0 h=2 st=5 c=152 chg=u
+[ 1426.281811] healthd: battery l=99 v=4372 t=25.0 h=2 st=5 c=152 chg=u
+[ 1426.292088] healthd: battery l=99 v=4372 t=25.0 h=2 st=5 c=152 chg=u
+[ 1433.532022] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-145873 chg=u
+[ 1433.538115] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-145873 chg=u
+[ 1433.544130] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-145873 chg=u
+[ 1436.447860] healthd: battery l=99 v=4372 t=24.7 h=2 st=5 c=152 chg=u
+[ 1436.470222] healthd: battery l=99 v=4372 t=24.7 h=2 st=5 c=152 chg=u
+[ 1436.482740] healthd: battery l=99 v=4372 t=24.7 h=2 st=5 c=152 chg=u
+[ 1443.701891] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-141142 chg=u
+[ 1443.713702] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-141142 chg=u
+[ 1443.725046] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-141142 chg=u
+[ 1446.614898] healthd: battery l=99 v=4373 t=24.7 h=2 st=5 c=152 chg=u
+[ 1446.628492] healthd: battery l=99 v=4373 t=24.7 h=2 st=5 c=152 chg=u
+[ 1446.648633] healthd: battery l=99 v=4373 t=24.7 h=2 st=5 c=152 chg=u
+[ 1452.419415] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-136870 chg=u
+[ 1452.432879] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-136870 chg=u
+[ 1452.443410] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-136870 chg=u
+[ 1455.332969] healthd: battery l=99 v=4374 t=24.7 h=2 st=5 c=152 chg=u
+[ 1455.346123] healthd: battery l=99 v=4374 t=24.7 h=2 st=5 c=152 chg=u
+[ 1455.363949] healthd: battery l=99 v=4374 t=24.7 h=2 st=5 c=152 chg=u
+[ 1462.588662] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-134886 chg=u
+[ 1462.611745] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-134886 chg=u
+[ 1462.628486] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-134886 chg=u
+[ 1465.499399] healthd: battery l=99 v=4374 t=24.7 h=2 st=5 c=152 chg=u
+[ 1465.517016] healthd: battery l=99 v=4374 t=24.7 h=2 st=5 c=152 chg=u
+[ 1465.530055] healthd: battery l=99 v=4374 t=24.7 h=2 st=5 c=152 chg=u
+[ 1471.302693] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-132445 chg=u
+[ 1471.331295] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-132445 chg=u
+[ 1471.353405] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-132445 chg=u
+[ 1471.364605] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-132445 chg=u
+[ 1475.667200] healthd: battery l=99 v=4375 t=25.0 h=2 st=5 c=152 chg=u
+[ 1475.679043] healthd: battery l=99 v=4375 t=25.0 h=2 st=5 c=152 chg=u
+[ 1475.690044] healthd: battery l=99 v=4375 t=25.0 h=2 st=5 c=152 chg=u
+[ 1476.630526] type=1400 audit(1795139310.806:468): avc:  denied  { read } for  comm="storaged" name="stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1476.631023] type=1400 audit(1795139310.806:469): avc:  denied  { open } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1476.650917] type=1400 audit(1795139310.806:470): avc:  denied  { getattr } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[ 1484.378649] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-130919 chg=u
+[ 1484.391159] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-130919 chg=u
+[ 1484.404852] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-130919 chg=u
+[ 1487.292554] healthd: battery l=99 v=4375 t=24.7 h=2 st=5 c=152 chg=u
+[ 1487.307538] healthd: battery l=99 v=4375 t=24.7 h=2 st=5 c=152 chg=u
+[ 1487.326178] healthd: battery l=99 v=4375 t=24.7 h=2 st=5 c=152 chg=u

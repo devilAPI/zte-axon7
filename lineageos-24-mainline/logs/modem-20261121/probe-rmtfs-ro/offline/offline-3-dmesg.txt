@@ -1,0 +1,65 @@
+[11792.282512] remoteproc remoteproc0: powering up 2080000.remoteproc
+[11792.285211] remoteproc remoteproc0: Booting fw image qcom/msm8996/zte/axon7/mba.mbn, size 213888
+[11792.292463] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11792.304549] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11792.457566] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11793.154880] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11794.225890] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11794.225928] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11794.229960] failed to announce new service
+[11794.233618] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11794.239839] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11794.241304] failed while handling packet from 0:-2
+[11794.260471] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11794.272372] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11794.278713] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11794.286738] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11794.609984] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11796.588095] type=1400 audit(1795149337.731:652): avc:  denied  { read } for  comm="storaged" name="stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11796.588799] type=1400 audit(1795149337.731:653): avc:  denied  { open } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11796.608235] type=1400 audit(1795149337.731:654): avc:  denied  { getattr } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11803.342093] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11813.528063] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11813.608328] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11813.629211] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11813.812833] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11825.169741] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11834.235315] qcom-q6v5-mss 2080000.remoteproc: fatal error received: SFR Init: wdog or kernel error suspected.
+[11834.235410] remoteproc remoteproc0: crash detected in 2080000.remoteproc: type fatal error
+[11834.244456] remoteproc remoteproc0: handling crash #19 in 2080000.remoteproc
+[11834.252644] remoteproc remoteproc0: recovering 2080000.remoteproc
+[11834.263382] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11834.267468] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11834.267699] remoteproc remoteproc0: stopped remote processor 2080000.remoteproc
+[11834.276817] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11834.292349] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11834.301076] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11834.309833] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11834.318426] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11834.331935] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11834.429547] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11835.346095] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11835.349558] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11836.033585] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11836.034114] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11836.041011] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11836.056058] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11836.064450] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11836.072019] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11836.080376] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11836.088059] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11836.223950] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11836.229602] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11836.236692] ueventd: LoadWithAliases was unable to load rpmsg:apr_voice_svc, tried: rpmsg:apr_voice_svc
+[11836.248370] ueventd: LoadWithAliases was unable to load rpmsg:LOOPBACK_CTL_MPSS, tried: rpmsg:LOOPBACK_CTL_MPSS
+[11836.735465] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CMD, tried: rpmsg:DIAG_CMD
+[11836.742246] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CNTL, tried: rpmsg:DIAG_CNTL
+[11836.749711] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2_CMD, tried: rpmsg:DIAG_2_CMD
+[11836.757601] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2, tried: rpmsg:DIAG_2
+[11836.766444] ueventd: LoadWithAliases was unable to load rpmsg:DIAG, tried: rpmsg:DIAG
+[11845.538530] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11849.901942] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=0 chg=u
+[11855.720149] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11855.740975] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11855.760537] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11865.900124] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u

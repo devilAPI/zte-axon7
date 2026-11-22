@@ -1,0 +1,16 @@
+[16150.843936] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=305 chg=u
+[16150.864974] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=305 chg=u
+[16150.883782] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=305 chg=u
+[16161.026395] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=305 chg=u
+[16169.760076] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=152 chg=u
+[16170.235541] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=152 chg=u
+[16181.402898] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=152 chg=u
+[16191.589421] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=152 chg=u
+[16191.610099] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=152 chg=u
+[16191.629223] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=152 chg=u
+[16200.062092] type=1400 audit(1795153741.203:1059): avc:  denied  { read } for  comm="binder:357_2" name="name" dev="sysfs" ino=21497 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[16200.062690] type=1400 audit(1795153741.203:1060): avc:  denied  { open } for  comm="binder:357_2" path="/sys/devices/platform/soc@0/4ad000.thermal-sensor/wakeup/wakeup4/name" dev="sysfs" ino=21497 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[16200.083197] type=1400 audit(1795153741.215:1061): avc:  denied  { read } for  comm="binder:357_2" name="name" dev="sysfs" ino=51106 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs_batteryinfo:s0 tclass=file permissive=1
+[16200.105575] type=1400 audit(1795153741.215:1062): avc:  denied  { open } for  comm="binder:357_2" path="/sys/devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:fuel-gauge@4000/power_supply/qcom-battery/wakeup9/name" dev="sysfs" ino=51106 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs_batteryinfo:s0 tclass=file permissive=1
+[16201.775268] healthd: battery l=99 v=4334 t=30.2 h=2 st=5 c=152 chg=u
+[16211.966785] healthd: battery l=99 v=4335 t=30.2 h=2 st=5 c=152 chg=u

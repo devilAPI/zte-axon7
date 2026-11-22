@@ -29,6 +29,11 @@ on post-fs-data
     mkdir /data/vendor/wifi 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
+    # rmtfs -r keeps the modem's EFS writes in RAM; a modem restart drops them
+    # and MPSS repeated its 42 s "SFR Init" watchdog crash. Give rmtfs a
+    # private writable copy of the EFS images under /data (the real
+    # modemst1/2, fsg and fsc partitions are never written).
+    exec u:r:vendor_modprobe:s0 -- /vendor/bin/axon7m-efs-shadow.sh
     start axon7m-sns-reg
     # no axon7m-slpi-kick: restarting the SLPI froze the phone (run 24)
 
@@ -98,12 +103,12 @@ service watchdogd /system/bin/watchdogd 10 20
     group root
     seclabel u:r:watchdogd:s0
 
-# Modem (qcom/README.md): rmtfs serves the modem's EFS partitions read-only
-# (-r: the modem's writes are discarded, modemst1/2, fsg and fsc are never
-# written) and starts the modem remoteproc (-s). Once it runs, the modem is
-# switched online over QMI DMS (radios, GPS). Tested by hand on build 31:
-# MBA + MPSS up, DMS/LOC/NAS/WMS/UIM/VOICE/WDS on QRTR, online in 3 s.
-service rmtfs /vendor/bin/rmtfs -o /dev/block/by-name -P -r -s
+# Modem (qcom/README.md): rmtfs serves EFS from the private writable copy
+# made by axon7m-efs-shadow.sh (post-fs-data) and starts the modem remoteproc
+# (-s). Its writes now survive a modem restart, without touching the phone's
+# EFS partitions. Once it runs, the modem is switched online over QMI DMS
+# (radios, GPS). Tested by hand on build 31 with -r before the change.
+service rmtfs /vendor/bin/rmtfs -o /data/vendor/axon7m-efs -s
     class core
     user root
     group system

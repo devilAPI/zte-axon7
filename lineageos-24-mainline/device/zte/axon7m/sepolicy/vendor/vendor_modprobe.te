@@ -12,3 +12,10 @@ allow vendor_modprobe vendor_data_file:dir create_dir_perms;
 allow vendor_modprobe axon7m_sensors_data_file:dir create_dir_perms;
 allow vendor_modprobe axon7m_sensors_data_file:file create_file_perms;
 type_transition vendor_modprobe vendor_data_file:dir axon7m_sensors_data_file "sensors";
+# axon7m-efs-shadow.sh: copy the four EFS images once, never overwrite them
+allow vendor_modprobe block_device:dir search;
+allow vendor_modprobe block_device:lnk_file read;
+allow vendor_modprobe axon7m_modem_block_device:blk_file r_file_perms;
+allow vendor_modprobe axon7m_efs_shadow_data_file:dir create_dir_perms;
+allow vendor_modprobe axon7m_efs_shadow_data_file:file create_file_perms;
+type_transition vendor_modprobe vendor_data_file:dir axon7m_efs_shadow_data_file "axon7m-efs";

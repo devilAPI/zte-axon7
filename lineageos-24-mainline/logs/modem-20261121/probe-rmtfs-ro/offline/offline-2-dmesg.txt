@@ -1,0 +1,93 @@
+[11702.534176] remoteproc remoteproc0: powering up 2080000.remoteproc
+[11702.536518] remoteproc remoteproc0: Booting fw image qcom/msm8996/zte/axon7/mba.mbn, size 213888
+[11702.545390] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11702.555569] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11702.709556] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11704.434372] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11704.435122] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11704.437816] failed to announce new service
+[11704.441606] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11704.448388] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11704.450845] failed while handling packet from 0:-2
+[11704.457683] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11704.479085] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11704.486777] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11704.495414] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11711.679297] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11720.451944] binder: release 5174:5178 transaction 651852 out, still active
+[11720.468232] binder: release 3671:3671 transaction 651857 in, still active
+[11720.468377] binder: send failed reply for transaction 651857 to 729:3392
+[11720.470748] init: Service 'vendor.camera.provider' (pid 3671) received SIGPIPE
+[11720.482402] init: Sending SIGKILL to service 'vendor.camera.provider' (pid 3671) process group...
+[11720.490687] binder: 729:3392 cannot find target node
+[11720.496267] libprocessgroup: Removed cgroup /sys/fs/cgroup/system/uid_1047/pid_3671
+[11720.496947] binder: 729:3392 transaction call to 0:0 failed 651858/29189/-22, code 1598311760 size 28-8 line 3253
+[11720.506711] init: Untracked process (pid: 3682 name: (softisp_ipa_pro) ppid: 1 pgrp: 3682 state: Z) received SIGKILL
+[11720.511586] binder: 3392:729 reply target not found
+[11720.521021] init: Untracked process (pid: 3682 name: (softisp_ipa_pro) ppid: 1 pgrp: 3682 state: Z) did not have an associated service entry and will not be reaped
+[11720.530299] binder: 729:3392 transaction reply to 0:0 failed 651859/29189/0, code 0 size 0-0 line 3185
+[11720.530325] binder: send failed reply for transaction 651852, target dead
+[11720.559850] init: Untracked process (pid: 3685 name: (softisp_ipa_pro) ppid: 1 pgrp: 3685 state: Z) received SIGKILL
+[11720.565841] init: Untracked process (pid: 3685 name: (softisp_ipa_pro) ppid: 1 pgrp: 3685 state: Z) did not have an associated service entry and will not be reaped
+[11720.577612] init: starting service 'vendor.camera.provider'...
+[11720.596913] libprocessgroup: Created cgroup /sys/fs/cgroup/system/uid_1047/pid_5179
+[11720.633714] init: ... started service 'vendor.camera.provider' has pid 5179
+[11720.774697] type=1400 audit(1795149261.919:641): avc:  denied  { write } for  comm="CameraManager" name="memfd:softIsp_params" dev="tmpfs" ino=618 scontext=u:r:hal_camera_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=1
+[11720.774973] type=1400 audit(1795149261.919:642): avc:  denied  { map } for  comm="CameraManager" path=2F6D656D66643A736F66744973705F706172616D73202864656C6574656429 dev="tmpfs" ino=618 scontext=u:r:hal_camera_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=1
+[11720.796652] Decoded path for audit(1795149261.919:642): /memfd:softIsp_params (deleted)
+[11720.818880] type=1400 audit(1795149261.919:643): avc:  denied  { read } for  comm="CameraManager" path=2F6D656D66643A736F66744973705F706172616D73202864656C6574656429 dev="tmpfs" ino=618 scontext=u:r:hal_camera_default:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=1
+[11720.828676] Decoded path for audit(1795149261.919:643): /memfd:softIsp_params (deleted)
+[11720.851066] type=1400 audit(1795149261.919:644): avc:  denied  { create } for  comm="CameraManager" scontext=u:r:hal_camera_default:s0 tcontext=u:r:hal_camera_default:s0 tclass=user_namespace permissive=1
+[11720.858935] type=1400 audit(1795149261.919:645): avc:  denied  { sys_admin } for  comm="CameraManager" capability=21  scontext=u:r:hal_camera_default:s0 tcontext=u:r:hal_camera_default:s0 tclass=cap_userns permissive=1
+[11720.877400] type=1400 audit(1795149261.963:646): avc:  denied  { read write } for  comm="softisp_ipa_pro" path=2F6D656D66643A736F66744973705F7374617473202864656C6574656429 dev="tmpfs" ino=619 scontext=u:r:axon7m_libcamera_ipa:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=1
+[11720.899135] Decoded path for audit(1795149261.963:646): /memfd:softIsp_stats (deleted)
+[11720.903192] servicemanager: Caller(pid=5179,uid=1047,sid=u:r:hal_camera_default:s0) Found android.hardware.camera.provider.ICameraProvider/internal/0 in device VINTF manifest.
+[11720.921449] type=1400 audit(1795149261.963:647): avc:  denied  { map } for  comm="softisp_ipa_pro" path=2F6D656D66643A736F66744973705F706172616D73202864656C6574656429 dev="tmpfs" ino=618 scontext=u:r:axon7m_libcamera_ipa:s0 tcontext=u:object_r:tmpfs:s0 tclass=file permissive=1
+[11720.947238] Decoded path for audit(1795149261.963:647): /memfd:softIsp_params (deleted)
+[11721.863538] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11730.591764] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11730.937138] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11731.043722] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11731.063867] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11732.046796] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11742.230875] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11744.432278] qcom-q6v5-mss 2080000.remoteproc: fatal error received: SFR Init: wdog or kernel error suspected.
+[11744.432369] remoteproc remoteproc0: crash detected in 2080000.remoteproc: type fatal error
+[11744.432453] remoteproc remoteproc0: handling crash #18 in 2080000.remoteproc
+[11744.449511] remoteproc remoteproc0: recovering 2080000.remoteproc
+[11744.461951] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11744.464343] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11744.466707] remoteproc remoteproc0: stopped remote processor 2080000.remoteproc
+[11744.473561] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11744.480878] type=1400 audit(1795149285.627:648): avc:  denied  { dac_read_search } for  comm="kworker/u17:0" capability=2  scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=capability permissive=1
+[11744.488536] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11744.515413] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11744.523936] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11744.532120] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11744.546422] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11744.637535] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11746.058349] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11746.058948] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11746.063072] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11746.078434] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11746.086698] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11746.095393] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11746.103618] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11746.111442] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11746.246885] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11746.253842] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11746.260879] ueventd: LoadWithAliases was unable to load rpmsg:apr_voice_svc, tried: rpmsg:apr_voice_svc
+[11746.272501] ueventd: LoadWithAliases was unable to load rpmsg:LOOPBACK_CTL_MPSS, tried: rpmsg:LOOPBACK_CTL_MPSS
+[11746.759591] ueventd: LoadWithAliases was unable to load rpmsg:DIAG, tried: rpmsg:DIAG
+[11746.766103] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CMD, tried: rpmsg:DIAG_CMD
+[11746.772698] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CNTL, tried: rpmsg:DIAG_CNTL
+[11746.781398] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2_CMD, tried: rpmsg:DIAG_2_CMD
+[11746.789457] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2, tried: rpmsg:DIAG_2
+[11752.415696] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11762.595697] type=1400 audit(1795149303.739:649): avc:  denied  { read } for  comm="android.hardwar" name="type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11762.596000] type=1400 audit(1795149303.739:650): avc:  denied  { open } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11762.596735] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11762.619630] type=1400 audit(1795149303.739:651): avc:  denied  { getattr } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11772.779110] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11772.786360] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11772.793347] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u

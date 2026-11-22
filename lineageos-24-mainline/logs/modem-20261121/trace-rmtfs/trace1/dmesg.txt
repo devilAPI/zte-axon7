@@ -1,0 +1,30 @@
+[12020.123707] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[12020.144678] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[12020.163220] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[12020.206397] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[12030.307630] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[12030.459293] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[12036.593971] type=1400 audit(1795149577.735:655): avc:  denied  { read } for  comm="storaged" name="stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12036.594271] type=1400 audit(1795149577.735:656): avc:  denied  { open } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12036.614087] type=1400 audit(1795149577.735:657): avc:  denied  { getattr } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12041.945955] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[12052.129110] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=305 chg=u
+[12062.314480] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[12062.335719] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[12062.354971] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[12072.494039] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[12082.680834] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[12089.953390] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[12092.857720] type=1400 audit(1795149633.999:658): avc:  denied  { read } for  comm="android.hardwar" name="type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12092.858022] type=1400 audit(1795149633.999:659): avc:  denied  { open } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12092.858982] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[12092.881520] type=1400 audit(1795149633.999:660): avc:  denied  { getattr } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12096.594892] type=1400 audit(1795149637.739:661): avc:  denied  { read } for  comm="storaged" name="stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12096.595153] type=1400 audit(1795149637.739:662): avc:  denied  { open } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12096.615089] type=1400 audit(1795149637.739:663): avc:  denied  { getattr } for  comm="storaged" path="/sys/devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat" dev="sysfs" ino=35028 scontext=u:r:storaged:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12103.039497] type=1400 audit(1795149644.183:664): avc:  denied  { read } for  comm="android.hardwar" name="type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12103.039773] type=1400 audit(1795149644.183:665): avc:  denied  { open } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12103.040544] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[12103.063206] type=1400 audit(1795149644.183:666): avc:  denied  { getattr } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[12103.091599] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[12103.125128] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u

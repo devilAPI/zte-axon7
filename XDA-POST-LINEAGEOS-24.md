@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-22 (camera pictures measured on the phone: rear flashlight response, front light-dependent frames; no new build). Before: 2026-11-21 (A2017U/US notes; no new build); 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
+Last update: 2026-11-22 (modem restart loop fixed in build 52: 15 consecutive boots with the modem online once and Bluetooth on each time; before that on the same day: camera pictures measured on the phone, rear flashlight response and front light-dependent frames). Before: 2026-11-21 (A2017U/US notes; no new build); 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -18,6 +18,14 @@ the firmware read from the phone's partitions (new in this release). Encryption 
 this alpha.
 
 Changelog notes:
+- 2026-11-22 (build 52): the modem no longer falls into the restart loop
+  that followed some boots. rmtfs used to serve the modem's EFS files from
+  the phone's partitions with its writes kept only in RAM, which the modem
+  lost on its own restart; the phone now makes a private writable copy under
+  /data (the real EFS partitions are never written). Verified on 15
+  consecutive boots: the modem came up once each time, with no fatal errors,
+  and Bluetooth turned on in every boot with no HCI reset failures. Calls,
+  SMS and mobile data still need a SIM and the remaining modem work.
 - 2026-11-22: stills from both cameras were captured through the camera
   service and checked numerically. The rear camera with the flashlight on
   changes from mean brightness 47 to 213 and shortens its exposure from

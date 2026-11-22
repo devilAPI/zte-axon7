@@ -1,0 +1,14 @@
+[15984.931526] healthd: battery l=99 v=4334 t=31.0 h=2 st=5 c=0 chg=u
+[15984.947480] healthd: battery l=99 v=4334 t=31.0 h=2 st=5 c=0 chg=u
+[15984.963114] healthd: battery l=99 v=4334 t=31.0 h=2 st=5 c=0 chg=u
+[15990.752976] healthd: battery l=99 v=4334 t=31.0 h=2 st=5 c=152 chg=u
+[15995.121658] healthd: battery l=99 v=4334 t=31.0 h=2 st=5 c=305 chg=u
+[16005.312064] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=305 chg=u
+[16015.499713] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=305 chg=u
+[16025.687651] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=152 chg=u
+[16025.739235] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=152 chg=u
+[16025.759358] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=152 chg=u
+[16025.945376] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=152 chg=u
+[16037.330577] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=152 chg=u
+[16047.520381] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=152 chg=u
+[16050.431049] healthd: battery l=99 v=4334 t=30.7 h=2 st=5 c=305 chg=u

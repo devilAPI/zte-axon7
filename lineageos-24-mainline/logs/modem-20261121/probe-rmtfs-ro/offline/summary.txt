@@ -1,0 +1,3 @@
+offline round 1: fatals=0 after 77 s state=running
+offline round 2: fatals=2 after 77 s state=running
+offline round 3: fatals=2 after 77 s state=running

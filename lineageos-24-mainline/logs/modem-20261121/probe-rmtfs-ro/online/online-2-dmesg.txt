@@ -1,0 +1,168 @@
+[11104.214266] remoteproc remoteproc0: powering up 2080000.remoteproc
+[11104.216705] remoteproc remoteproc0: Booting fw image qcom/msm8996/zte/axon7/mba.mbn, size 213888
+[11104.224842] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11104.236271] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11104.393550] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11106.170808] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11106.171796] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11106.174307] failed to announce new service
+[11106.175640] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11106.181066] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11106.187375] failed while handling packet from 0:-2
+[11106.194458] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11106.215674] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11106.223729] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11106.232169] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11112.357404] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11112.378431] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11112.399588] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11122.539400] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11129.812354] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=305 chg=u
+[11132.721137] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=305 chg=u
+[11142.903218] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11146.169509] qcom-q6v5-mss 2080000.remoteproc: fatal error received: SFR Init: wdog or kernel error suspected.
+[11146.169603] remoteproc remoteproc0: crash detected in 2080000.remoteproc: type fatal error
+[11146.169670] remoteproc remoteproc0: handling crash #11 in 2080000.remoteproc
+[11146.187001] remoteproc remoteproc0: recovering 2080000.remoteproc
+[11146.201548] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11146.204550] remoteproc remoteproc0: stopped remote processor 2080000.remoteproc
+[11146.204630] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11146.219508] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11146.227079] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11146.235743] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11146.244199] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11146.252508] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11146.265208] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11146.373533] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11147.972881] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11147.974596] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11147.974730] failed to announce new service
+[11147.978825] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11147.982684] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11147.989369] failed while handling packet from 0:-2
+[11147.995825] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11148.017499] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11148.025828] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11148.034072] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11148.721672] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11153.085515] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11153.224780] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11153.245371] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11153.430806] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11164.723306] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11174.905567] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=305 chg=u
+[11185.087981] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=305 chg=u
+[11187.971129] qcom-q6v5-mss 2080000.remoteproc: fatal error received: SFR Init: wdog or kernel error suspected.
+[11187.971221] remoteproc remoteproc0: crash detected in 2080000.remoteproc: type fatal error
+[11187.971307] remoteproc remoteproc0: handling crash #12 in 2080000.remoteproc
+[11187.988382] remoteproc remoteproc0: recovering 2080000.remoteproc
+[11188.000749] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11188.003325] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11188.005074] remoteproc remoteproc0: stopped remote processor 2080000.remoteproc
+[11188.012284] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11188.027569] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11188.036096] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11188.045194] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11188.053662] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11188.067754] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11188.173538] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11189.792726] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11189.799743] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11189.800814] failed to announce new service
+[11189.801515] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11189.808848] failed while handling packet from 0:-2
+[11189.818869] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11189.832098] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11189.839960] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11189.847956] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11189.855656] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11190.906672] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11190.927016] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11195.271943] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=305 chg=u
+[11195.292617] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=305 chg=u
+[11195.311218] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=305 chg=u
+[11205.452437] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11215.637472] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11225.821467] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=0 chg=u
+[11229.791214] qcom-q6v5-mss 2080000.remoteproc: fatal error received: SFR Init: wdog or kernel error suspected.
+[11229.791312] remoteproc remoteproc0: crash detected in 2080000.remoteproc: type fatal error
+[11229.800352] remoteproc remoteproc0: handling crash #13 in 2080000.remoteproc
+[11229.808543] remoteproc remoteproc0: recovering 2080000.remoteproc
+[11229.820601] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11229.823415] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11229.824623] remoteproc remoteproc0: stopped remote processor 2080000.remoteproc
+[11229.831791] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11229.847365] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11229.856238] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11229.864817] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11229.873106] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11229.887045] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11229.985551] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11231.579200] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11231.581434] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11231.583576] failed to announce new service
+[11231.585170] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11231.590156] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11231.594994] failed while handling packet from 0:-2
+[11231.603463] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11231.625076] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11231.633687] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11231.641538] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11236.004320] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11236.025045] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11236.043380] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11246.185152] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=305 chg=u
+[11250.548684] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11256.368237] healthd: battery l=99 v=4341 t=29.2 h=2 st=5 c=152 chg=u
+[11268.003940] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11271.580237] qcom-q6v5-mss 2080000.remoteproc: fatal error received: SFR Init: wdog or kernel error suspected.
+[11271.580336] remoteproc remoteproc0: crash detected in 2080000.remoteproc: type fatal error
+[11271.589651] remoteproc remoteproc0: handling crash #14 in 2080000.remoteproc
+[11271.597606] remoteproc remoteproc0: recovering 2080000.remoteproc
+[11271.609046] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11271.612593] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11271.616811] remoteproc remoteproc0: stopped remote processor 2080000.remoteproc
+[11271.621033] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11271.636744] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11271.645401] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11271.653960] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11271.662171] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11271.675697] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11271.781541] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11273.378571] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11273.379123] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11273.384966] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11273.398756] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11273.406692] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11273.415137] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11273.423430] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11273.431748] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11273.565395] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11273.568465] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11273.575804] ueventd: LoadWithAliases was unable to load rpmsg:apr_voice_svc, tried: rpmsg:apr_voice_svc
+[11273.589676] ueventd: LoadWithAliases was unable to load rpmsg:LOOPBACK_CTL_MPSS, tried: rpmsg:LOOPBACK_CTL_MPSS
+[11274.076370] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2, tried: rpmsg:DIAG_2
+[11274.082239] ueventd: LoadWithAliases was unable to load rpmsg:DIAG, tried: rpmsg:DIAG
+[11274.088507] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CMD, tried: rpmsg:DIAG_CMD
+[11274.096783] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CNTL, tried: rpmsg:DIAG_CNTL
+[11274.105026] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2_CMD, tried: rpmsg:DIAG_2_CMD
+[11274.773694] servicemanager: Caller(pid=1126,uid=1001,sid=u:r:radio:s0) Found android.hardware.graphics.allocator.IAllocator/default in device VINTF manifest.
+[11274.778721] servicemanager: Caller(pid=1126,uid=1001,sid=u:r:radio:s0) Found android.hardware.graphics.allocator.IAllocator/default in device VINTF manifest.
+[11274.789545] servicemanager: Caller(pid=1126,uid=1001,sid=u:r:radio:s0) Found mapper/minigbm in device VINTF manifest.
+[11274.835900] type=1400 audit(1795148815.979:624): avc:  denied  { open } for  comm="hwuiTask1" path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=404 scontext=u:r:radio:s0 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1
+[11274.836382] type=1400 audit(1795148815.979:625): avc:  denied  { getattr } for  comm="hwuiTask1" path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=404 scontext=u:r:radio:s0 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1
+[11274.860036] type=1400 audit(1795148815.979:626): avc:  denied  { map } for  comm="hwuiTask1" path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=404 scontext=u:r:radio:s0 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1
+[11274.883193] type=1400 audit(1795148815.983:627): avc:  denied  { getattr } for  comm="RenderThread" path="/dev/dri/card0" dev="tmpfs" ino=998 scontext=u:r:radio:s0 tcontext=u:object_r:graphics_device:s0 tclass=chr_file permissive=1
+[11276.776406] axon7m-modem: DMS at 0:58 after 162 s
+[11276.792252] axon7m-modem: operating mode 5
+[11278.182646] type=1400 audit(1795148819.327:628): avc:  denied  { read } for  comm="android.hardwar" name="type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11278.182954] type=1400 audit(1795148819.327:629): avc:  denied  { open } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11278.184064] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11278.206391] type=1400 audit(1795148819.327:630): avc:  denied  { getattr } for  comm="android.hardwar" path="/sys/devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply/smb1351-parallel/type" dev="sysfs" ino=51784 scontext=u:r:hal_health_default:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=1
+[11278.232996] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11278.266349] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11279.844540] axon7m-modem: operating mode 0
+[11288.370217] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11298.548553] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=0 chg=u
+[11308.732363] healthd: battery l=99 v=4340 t=29.2 h=2 st=5 c=152 chg=u
+[11309.956258] axon7m-modem: modem online (switched 1 time(s))
