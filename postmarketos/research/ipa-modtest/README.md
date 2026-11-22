@@ -23,3 +23,19 @@ test possible: no kernel image, boot or misc partition write and no reboot.
 phone. After the test the modules stay loaded until the next reboot; the
 real Nura patch applies the DT node at boot and loads the driver from
 userspace only after the modem is up.
+
+`qmi-wds.c` is a minimal QMI-over-QRTR client (kernel's 7-byte wire header)
+built with the Android NDK on the build server:
+
+```
+NDK=/srv/los24/tools/android-ndk-r30
+$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang \
+  -O2 -Wall -o /tmp/qmi-wds qmi-wds.c
+adb push /tmp/qmi-wds /data/local/tmp/qmi-wds
+adb shell /data/local/tmp/qmi-wds 0 41 0x20        # WDS Get Packet Service Status
+adb shell /data/local/tmp/qmi-wds 0 48 0x20 01040001000000  # WDA Set Data Format
+```
+
+The node/port pairs come from `qrtr-lookup` on the phone. Responses match
+the transaction and command, but the result TLVs report failure because the
+phone has no SIM/active data service; this is not a mobile-data proof.

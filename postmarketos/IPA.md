@@ -155,4 +155,41 @@ The `ueventd: LoadWithAliases` line is only Android trying to autoload a
 module by DT alias from `/vendor/lib/modules`; the module was loaded by hand
 from `/data/local/tmp`, as intended.
 
-Full-mode result: pending (the phone lock was held by another worker).
+Full-mode probe (no `test_mode`), evidence in
+`ipa-phone-evidence/full-20261122-200830.log`, `dmesg-full.txt`,
+`links-full.txt`, `qmi-wds3.log` and `qmi-wda.log`:
+
+```
+13: rmnet_ipa0: <> mtu 2012 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+14: ipa_lan0: <> mtu 2012 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+feature/rx_offload=MAPv4
+feature/tx_offload=MAPv4
+[ 1666.581929] ipa-dt-test: apply ret=0 ovcs_id=1
+[ 1678.319799] axon7m-modem: modem online (switched 0 time(s))
+2026-11-22T20:08:56+01:00 post: boot_completed=1 kernel=7.3.1-axon7m battery=99 adb=device
+2026-11-22T20:08:57+01:00 modem: running
+```
+
+`qrtr-lookup` on the phone lists **both** IPA control services: the modem's
+(`service 49, instance 2, node 0 port 24`) and the one our module registers
+on the AP (`service 49, instance 1, node 1 port 16396`). So the driver's QMI
+server is up on QRTR and the modem is online. A tiny NDK-built QMI client
+(`postmarketos/research/ipa-modtest/qmi-wds.c`) completed real transactions:
+
+```
+WDS Get Packet Service Status (0:41, cmd 0x20):
+recv from 0:41 n=14 type=0x02 txn=0x0001 cmd=0x0020 len=7 tlv02=01000300
+WDA Set Data Format (0:48, cmd 0x20, QMAP):
+recv from 0:48 n=14 type=0x02 txn=0x0001 cmd=0x0020 len=7 tlv02=01000100
+```
+
+Both replies are well-formed QMI responses to our transaction, but their
+result TLVs report failure (no SIM / no active data service on this phone),
+so the data-format negotiation is **not** proven. What is proven: the IPA
+v2.5 node applies, the driver probes with the modem running, `rmnet_ipa0`
+and `ipa_lan0` appear, MAPv4 offload is advertised, the IPA QMI service is
+registered, the modem stays online and the phone stays in LOS 24 with adb
+root and `boot_completed=1`. No IPA errors, panics or resets in dmesg.
+The test modules remain loaded until reboot; they are not part of the Nura
+image. Mobile data itself still needs a SIM and a Nura image boot with the
+real DT node to be confirmed.
