@@ -49,5 +49,28 @@
       28
     ],
     "note": "libcamera lc-manual, AeEnable=false, exposure 10 ms, gain 1; camera-service auto frames had mean 47"
+  },
+  "front_ambient_comparison": {
+    "0_lux_2026_11_21": {
+      "lum_mean": 48.51,
+      "lum_std": 0.95,
+      "p99": 50,
+      "distinct_8bit_levels": 18,
+      "tile_mean_min_max": [48.29, 48.64]
+    },
+    "7_lux_2026_11_22": {
+      "lum_mean": 47.15,
+      "lum_std": 2.44,
+      "p99": 53,
+      "distinct_8bit_levels": 54,
+      "tile_mean_min_max": [46.55, 47.74]
+    },
+    "note": "same front camera, same 1920x1080 JPEG path; more ambient light gives 2.6x more spatial variation and 3x more distinct pixel levels, not a fixed or synthetic frame"
+  },
+  "exif": {
+    "orientation": 1,
+    "make": "libcamera",
+    "model": "cameraModel",
+    "note": "cam2test2 requests with ANDROID_JPEG_ORIENTATION 90/270 were echoed in result metadata as 90/270; the default test requests here do not set it, so EXIF stays 1"
   }
 }
