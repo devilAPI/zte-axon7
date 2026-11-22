@@ -16,9 +16,23 @@ say() { echo "[$(date +%T)] $*" | tee -a "$OUT/host.log"; }
 rsh() { A shell "$@"; }
 
 say "serial=$S out=$OUT"
-st=$(A get-state 2>/dev/null || true)
-[ "$st" = device ] || { say "phone is not in LineageOS (adb state $st); abort"; exit 1; }
+# The phone is shared: whoever held the lock before us may have left it in
+# TWRP or mid-reboot. Give it up to ~12 min to come back in LineageOS.
+ok=0
+for i in $(seq 1 48); do
+  st=$(A get-state 2>/dev/null || true)
+  case $st in
+    device) ok=1; break ;;
+    recovery) [ $i -le 2 ] && { say "phone in TWRP: rebooting to LineageOS"; A reboot >/dev/null 2>&1 || true; } ;;
+  esac
+  sleep 15
+done
+[ $ok = 1 ] || { say "no LineageOS on adb after 12 min (state $st); abort"; exit 1; }
 A root >/dev/null 2>&1; sleep 3; A wait-for-device
+for i in $(seq 1 60); do
+  [ "$(rsh getprop sys.boot_completed | tr -d '\r')" = 1 ] && break
+  sleep 5
+done
 [ "$(rsh getprop sys.boot_completed | tr -d '\r')" = 1 ] || { say "boot not completed"; exit 1; }
 bat=$(rsh cat /sys/class/power_supply/qcom-battery/capacity | tr -d '\r')
 say "battery=$bat%"
