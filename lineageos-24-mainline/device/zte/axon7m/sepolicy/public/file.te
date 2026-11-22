@@ -1,0 +1,7 @@
+# Mainline sysfs paths without a platform label: eMMC statistics read by
+# storaged, UFS partition nodes read by fsck/mkfs, /sys/kernel/mm/ksm read by
+# system_server.  Public so both the vendor and system_ext policies can use
+# the labels from genfs_contexts.
+type sysfs_axon7m_diskstat, fs_type, sysfs_type;
+type sysfs_axon7m_block, fs_type, sysfs_type;
+type sysfs_axon7m_ksm, fs_type, sysfs_type;

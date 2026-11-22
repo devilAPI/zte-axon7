@@ -123,6 +123,11 @@ BOARD_HAVE_BLUETOOTH := true
 
 # SELinux
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
+# platform-domain rules need platform-private types (storaged, system_server,
+# toolbox, ...), which vendor policy cannot name; sysfs types shared between
+# the two policies are public.
+SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/public
+SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/system_ext
 # libperfmgr power HAL (vendor.powerhal.* props, cpufreq nodes)
 include device/lineage/sepolicy/libperfmgr/sepolicy.mk
 

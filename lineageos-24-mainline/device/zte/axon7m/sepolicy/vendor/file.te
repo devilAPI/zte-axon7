@@ -22,12 +22,6 @@ type sysfs_axon7m_mss, fs_type, sysfs_type;
 type sysfs_axon7m_zram, fs_type, sysfs_type;
 type sysfs_axon7m_ufshc, fs_type, sysfs_type;
 type sysfs_axon7m_pci, fs_type, sysfs_type;
-# eMMC statistics read by storaged, UFS partition nodes read by fsck/mkfs,
-# and /sys/kernel/mm/ksm read by system_server: the platform has no labels
-# for these nodes on a mainline kernel.
-type sysfs_axon7m_diskstat, fs_type, sysfs_type;
-type sysfs_axon7m_block, fs_type, sysfs_type;
-type sysfs_axon7m_ksm, fs_type, sysfs_type;
 
 # persist (read-only, sns.reg for the sensor registry) and the registry the
 # SLPI reads from /data/vendor/sensors
