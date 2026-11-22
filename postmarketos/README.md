@@ -345,7 +345,29 @@ so Android must have run once). Then the SLPI offers the Sensor Manager
 sensor: `qcom-smgr-accel`, `-gyro`, `-mag` (buffered only, Q16: scale
 1/65536 m/s², rad/s, gauss) and `-prox-light` (proximity count, lux in
 Q16). The report's index TLV lists one entry per data type; the WIP driver
-decoded it as a single struct (0039). Read a few samples:
+decoded it as a single struct (0039).
+
+Sensor scale measurements, 2026-11-21 (main phone, LineageOS 24, kernel
+`#31 SMP PREEMPT`, build 51; read back from `/dev/iio:device{0,1,2}` with
+24-byte scans, phone flat on the table):
+
+| Sensor | raw x, y, z (means) | driver scale | value at rest |
+| --- | --- | --- | --- |
+| accel | -14730, 2327, -690149 (norm 690310) | 0.000015328 (9.81/640000) | norm 10.58 m/s², 7.9 % high |
+| gyro | 302, 1028, 2931 (norm 3125) | 1/65536 | norm 0.048 rad/s (bias at rest) |
+| mag | 40229, -8100, 18772 (norm 45131) | 1/65536, HAL x100 (G -> uT) | norm 0.689 G = 68.9 uT |
+
+A plain Q16 scale (1/65536) would still leave the accel 7.4 % high: the
+factory calibration which the SLPI applies to the reports from the phone's
+own `sns.reg` makes 1 g about 690310 counts here, not the 640000 assumed by
+the original WIP driver. `sensread` (sensorservice -> HAL -> IIO through
+the same kernel) confirms it: `BMI160 Accelerometer ... -0.017 0.178 10.594`
+in uT/m/s², i.e. norm 10.59 m/s². The same run reports
+`BMI160 Gyroscope ... -0.018 -0.004 -0.045` rad/s at rest and
+`AK09915 Magnetometer ... 10.200 -59.998 -28.798` uT (norm 67.4 uT).
+Fixed in kernel patch 0059: `smgr_accel` now uses 14211 nm/s^2 per LSB (9.81 / 690310) instead of 15328, so a flat phone reads ~9.81 m/s^2. Gyro and mag keep their 1/65536 (Q16) scale: gyro bias is not a scale issue, mag reads ~67 uT (in range).
+
+Read a few samples:
 
 ```sh
 D=$(grep -l qcom-smgr-accel /sys/bus/iio/devices/iio:device*/name); D=${D%/name}

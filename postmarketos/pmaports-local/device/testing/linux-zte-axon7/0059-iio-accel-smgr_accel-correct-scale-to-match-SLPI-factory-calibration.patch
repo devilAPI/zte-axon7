@@ -1,0 +1,37 @@
+From 72fe3f3fe82e4f6738212aeb2f0f85c6bc8a155b Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 21:51:10 +0100
+Subject: [PATCH] iio: accel: smgr_accel: correct scale to match SLPI factory
+ calibration
+
+---
+ drivers/iio/accel/smgr_accel.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/iio/accel/smgr_accel.c b/drivers/iio/accel/smgr_accel.c
+index 778846709..326eadb8e 100644
+--- a/drivers/iio/accel/smgr_accel.c
++++ b/drivers/iio/accel/smgr_accel.c
+@@ -23,14 +23,13 @@ static int smgr_accel_read_raw(struct iio_dev *iio_dev,
+ 		return IIO_VAL_INT;
+ 	case IIO_CHAN_INFO_SCALE:
+ 		/*
+-		 * TODO: Find out if the scale is standard across devices or
+-		 * find a way to get the correct scale for a device
+-		 *
+-		 * Device reports around 640000 when axis is aligned with
+-		 * gravity, therefore scale is 9.81m/s^2 / 640000.
++		 * The SLPI applies the factory calibration from /persist/sensors/sns.reg,
++		 * so 1 g comes out as ~690310 counts on this device rather than the
++		 * 640000 a plain Q16 scale (9.81 / 65536) would imply. Scale is
++		 * therefore 9.81 m/s^2 / 690310 = 0.000014211 m/s^2 per LSB.
+ 		 */
+ 		*val = 0;
+-		*val2 = 15328; /* scale * 10^9 */
++		*val2 = 14211; /* scale * 10^9 */
+ 		return IIO_VAL_INT_PLUS_NANO;
+ 	}
+ 
+-- 
+2.43.0
+

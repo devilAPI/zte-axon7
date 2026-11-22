@@ -8,7 +8,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=29
+pkgrel=30
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -97,6 +97,7 @@ source="
 	0056-power-supply-add-the-SMB1351-parallel-charger.patch
 	0057-arm64-dts-qcom-msm8996-zte-axon7-SMB1351-parallel-ch.patch
 	0058-Bluetooth-btqca-ROME-reset-after-changing-the-addres.patch
+	0059-iio-accel-smgr_accel-correct-scale-to-match-SLPI-factory-calibration.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -187,5 +188,6 @@ d3e44a06288b3a26b46cdd37c912d27a9f6a44a2d7e0481c12ba4042c87b1f90d29b175d310fc0b6
 48db0e2ab3fc87a8663d74a9970503f84d35f66935ee2733500bfd8f85d5fc24709ef7e064868733bb5ec663a081672178614a582052f0c48b771a404d1e7de2  0056-power-supply-add-the-SMB1351-parallel-charger.patch
 ff429cf5203eb465f0e975d9481708b8ae38c81bc0c3932762c0f2a1183e2c6f63c1bb5616a9a8aa17f4104952fa87d43157d70e8a977198f2b7a8dc8ce90a9e  0057-arm64-dts-qcom-msm8996-zte-axon7-SMB1351-parallel-ch.patch
 97383e8a9ecd22d52a494010c1dabfc306c77427f7ff4ee117ab33235330c9fa2fc368f2bc60a6723823bf79e2ff20046ed4d28393234f58d7ebfe132674605b  0058-Bluetooth-btqca-ROME-reset-after-changing-the-addres.patch
+7077a34fba615e885191b8f8dce606192b71434028f9c3b22d192cd8cc26b127cf9516577639768044fcf05aea38dfb6b5d8dd36e3a9a9076630276c6e170224  0059-iio-accel-smgr_accel-correct-scale-to-match-SLPI-factory-calibration.patch
 9517782adf95e606ac9049a4e553d45e808178036aa538ceec307e092bd3ee1a4967738d3629577aa4d631408b7ef8a4b9ff14772a1238c535d950cac6f3d259  config-zte-axon7.aarch64
 "
