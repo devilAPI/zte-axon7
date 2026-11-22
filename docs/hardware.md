@@ -194,3 +194,8 @@ these, not another phone's), `a530v3_gpmu.fw2`, `a530v3_seq.fw2`.
 | Power + Volume Up held ~10 s | forced reset into recovery; pstore survives |
 | Vol+ and Vol- held while plugging USB, phone off | Qualcomm EDL (9008), boot ROM emergency download |
 | APSS watchdog | 0x09830000 (`EN` +0x08, `BARK` +0x10, `BITE` +0x14, 32768 Hz ticks); LK leaves it **disabled** |
+
+## A2017U note
+
+Same SoC/display/UFS/codename; modem firmware and stock software differ.
+See variant-a2017u.md.

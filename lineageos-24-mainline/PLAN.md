@@ -667,3 +667,11 @@ run unattended (`ios/tools/axon7-los-test.sh`, `LOS_SETTLE`).
 - Linaro, AOSP on Pixel 3 / Poco F1: https://old.linaro.org/blog/aosp-on-pixel3-pocof1-running-aosp-with-mainline-kernel-on-form-factor-devices
 - This repo: `ios/shim/android.c` (LineageOS boot path), `docs/bootloader.md`,
   `postmarketos/README.md`, `DEV-MULTIBOOT.md`
+## A2017U variant
+
+Same hardware and codename; untested.
+See docs/variant-a2017u.md and tools/axon7-preflight.sh.
+Stock B35 has no fastboot endpoint.
+Restore via EDL B15-NEW aboot plus fbop, then reflash TWRP.
+This ROM needs the multi-boot layout and a vendor partition.
+Cellular is not implemented on any model.

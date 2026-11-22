@@ -52,3 +52,7 @@ unattended test boots also set `AXON7_TEST=1`.
 | [port-22.2/](port-22.2/) | the device tree forward-port to 22.2 (patch series, not built yet) |
 
 ROM zips, recovery images and vendor blobs are not in this repository.
+
+A2017U (US): same device tree; see docs/variant-a2017u.md.
+Stock B35 has no fastboot; TWRP f2fs /data trap; PARTY replaced by tools/axon7-make-vendor.sh.
+Cellular untested. Run tools/axon7-preflight.sh --rom los22.

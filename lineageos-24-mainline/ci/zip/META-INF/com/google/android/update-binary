@@ -41,6 +41,12 @@ has_menu() {
 }
 has_menu || die "the boot partition has no boot menu with a LineageOS entry (install the multi-boot setup first)"
 
+# LineageOS 24 reads the Adreno 530 zap shader (a530_zap) from the vendor
+# partition; without it the screen can stay black. Make the missing partition
+# a clear, early failure instead of a black screen after boot.
+vendor=$(part vendor)
+[ -n "$vendor" ] || die "no vendor partition: LineageOS 24 needs the 512 MiB community vendor partition for the GPU firmware (create it with tools/axon7-make-vendor.sh or install LineageOS 22.2 first)"
+
 cd /tmp || die "no /tmp"
 rm -rf /tmp/los24 && mkdir /tmp/los24 && cd /tmp/los24 || die "/tmp"
 unzip -o "$ZIP" sizes los-boot.img los-boot.img.sha1 super.raw.sha1 >/dev/null || die "zip incomplete"
