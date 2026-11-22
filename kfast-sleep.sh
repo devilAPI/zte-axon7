@@ -10,8 +10,8 @@
 set -euo pipefail
 W=$(cd "$(dirname "$0")" && pwd)
 H=${H:-/media/devilapi/Secondary HDD 2TB/ai-worker/axon7}
-KOUT="$H/sleep-loskout"
-KPRE="$H/sleep-losprebuilt"
+KOUT=$HOME/axon7-kbuild/sleep-loskout
+KPRE=$HOME/axon7-kbuild/sleep-losprebuilt
 IOS=/home/devilapi/Documents/GitHub/zte-axon7/ios
 MK=/home/devilapi/axon7-kbuild/mkbootimg
 BASE="$IOS/research/los24-build-51/boot.img"
