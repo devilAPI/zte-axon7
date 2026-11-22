@@ -37,7 +37,13 @@ app, the AIDL HAL and the NFC feature XML.
 
 * Kernel side: raw driver written and built; the generic-netlink path was
   proven on the main phone with `tools/axon7-nfc-netlink.c` (`DEV_UP`,
-  `START_POLL`, `STOP_POLL`; NCI 1.1, manufacturer id 0x4).
+  `START_POLL`, `STOP_POLL`; NCI 1.1, manufacturer id 0x4). On 2026-11-22 the
+  char path was proven too, without a reboot: `pn5xx-raw.ko` inserted into
+  the running LOS kernel produced `/dev/nq-nci`, `/dev/pn5xx`, `/dev/pn54x`
+  and answered `NCI_CORE_RESET` (`40 00 03 00 11 00`) and `NCI_CORE_INIT`
+  (`40 01 19 00 03 1e ...`) through `PN5XX_SET_PWR` (log
+  `nfchal-logs/nfchal-char-module-20261122T192548Z.log`). `nfc0` was rebound
+  afterwards.
 * Android side: **not buildable yet**. At `android-17.0.0_r1`
   `hardware/nxp/nfc/Android.bp` only builds the SNxxx (SN1xx/SN220/SN300)
   AIDL HAL; the PN548 implementation (`pn8x/`) is no longer in the build and

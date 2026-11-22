@@ -196,7 +196,7 @@ unattended test loop).
 | Modem control | online (rmtfs, qrtr, DMS); restarts itself every 40 s for the first ~5 min after boot (since build 38) | radio AIDL HAL over QRTR/QMI (`radio/`: libminradio + DMS/UIM/NAS) | AOSP libminradio | first step done (identity, SIM state, registration, signal); SIM files, SMS, voice, data open | very high |
 | Mobile data | no IPA v2.5 driver | rmnet + IPA v2.5 port | Sireesh's RFC | 3-4 wk | very high |
 | Call audio | no q6voice upstream | q6voice/CVD port + HAL voice path | out-of-tree q6voice | 3-5 wk | very high |
-| NFC | kernel side works: NXP PN548 answers NCI on mainline, `nfc0` present | NXP Android HAL expects a `/dev/pn5xx` char device (or a new netlink AIDL HAL) | ZTE 4.4 patch `0013` in this repo + stock blobs/firmware | **not done** in Android; kernel NCI confirmed (2026-11-21, details §8) | 3-5 d char-driver port / 4-8 wk userspace HAL |
+| NFC | kernel side works: PN548 answers NCI on mainline (`nfc0`) and through the new raw char driver (`/dev/nq-nci`, Nura 0070) | NXP Android HAL expects a `/dev/pn5xx` char device (or a new netlink AIDL HAL) | Nura 0070 (`pn5xx-raw.c`), ZTE 4.4 patch `0013` + stock firmware for the HAL | **kernel char driver proven on the main phone** (2026-11-22: NCI reset/init over `/dev/nq-nci`); Android HAL still missing, `AXON7_NFC=1` off by default (details §8) | 4-8 wk userspace HAL (AOSP 17 has no PN548 AIDL HAL) |
 | Fingerprint | TrustZone-owned | - | - | - | infeasible |
 
 ## 5. Testing without disturbing the other systems
@@ -574,6 +574,36 @@ compatible change or second node at 0x28. Device-tree files in
 `hardware/nxp/nfc` only builds the SNxxx HAL (no PN548 config/firmware) and
 the build server is unreachable from this PC, so no image or `dumpsys nfc`
 test was possible.
+
+**2026-11-22 (nfchal): the char driver itself is proven on the main phone,
+without writing any boot partition.** The module variant of Nura patch 0070
+was built with the pinned clang against the prepared 7.3.1-axon7m headers
+(`~/axon7-kbuild/nfchal-mod/pn5xx-raw.ko`, vermagic
+`7.3.1-axon7m SMP preempt mod_unload aarch64`). Under the main-phone lock,
+`lineageos-24-mainline/scripts/nfc-char-module-test.sh` unbound `3-0028` from
+`nxp-nci_i2c`, inserted the module (`pn5xx_raw=1`) and all three aliases
+appeared; the static NDK client sent reset/init over `/dev/nq-nci`:
+`40 00 03 00 11 00` (status 0, NCI 1.1, config 0) and
+`40 01 19 00 03 1e 03 ...` (status 0), then `PN5XX_SET_PWR(0)`.
+Evidence: `nfchal-logs/nfchal-char-module-20261122T192548Z.log` (a later
+run tightened `read()` to return only the NCI-header-declared bytes; needs a
+repeat once the phone lock is free). The script restored `nfc0` and left
+LOS at `boot_completed=1`, battery 99 %. Two bugs were found and fixed by
+this test: the misc aliases needed `MISC_DYNAMIC_MINOR` (probe failed with
+-EBUSY otherwise), and `rmmod` needs the module name `pn5xx_raw`.
+
+The full built-in kernel (`CONFIG_NFC_PN5XX_CHAR=y`) also builds cleanly
+(`nfchal-kernel-build2.log`, 30 MiB Image); **no test kernel was written to
+`los_boot`**, so the owner's rollback rule was never triggered. A safe
+kernel-only test path with sha1 backup and automatic TWRP rollback is
+committed as `scripts/los24-nfc-kernel-test.sh` if one is ever needed.
+
+Android HAL status is unchanged: AOSP 17 `hardware/nxp/nfc/Android.bp` does
+not include `pn8x/` (the PN548 HIDL implementation); `snxxx/` is the only
+AIDL HAL and it is tied to SN1xx/SN220/SN300 firmware. `AXON7_NFC=1` stays
+off in default builds and `dumpsys nfc` has not shown an NFC service. The
+build server is reachable again, but `/srv/aosp/build.lock` was held by
+another worker whenever checked, so no image was built.
 
 ## 9. What is implemented, running jobs (2026-11-10)
 
