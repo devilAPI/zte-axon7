@@ -1,0 +1,17 @@
+/* Test-only overlay: add the IPA v2.5 node to the running LOS 24 kernel DT.
+ * The target is /soc@0 in this kernel's FDT; phandle 0x20 is the RPM clock
+ * controller (RPM_SMD_IPA_CLK = 68), read from the phone's live FDT. */
+/dts-v1/;
+/plugin/;
+
+&{/soc@0} {
+	ipa@680000 {
+		compatible = "qcom,ipa-v2.5";
+		reg = <0x00680000 0x4effc>;
+		clocks = <0x20 68>;
+		interrupts = <0 333 4>, <0 432 4>;
+		interrupt-names = "ipa", "dma";
+		qcom,bam-remote-mode;
+		status = "okay";
+	};
+};
