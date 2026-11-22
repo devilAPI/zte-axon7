@@ -189,6 +189,15 @@ Build status 2026-11-21: the four kernel commits build cleanly as
 test image.  The RAM-boot test image is `boot-sleep1-root.img` in the worktree
 (the Nura ramdisk plus a test-only root shell service).
 
+Baseline 2026-11-22 (MAIN phone, LineageOS 24 kernel `7.3.1-axon7m` #31,
+`baseline-suspend-20261122.log`): an RTC-alarm `echo mem > /sys/power/state`
+succeeded (`suspend_stats/success` 1, `dmesg`: `PM: suspend entry (s2idle)` at
+81215.72 s, `PM: suspend exit` at 81217.27 s), but both
+`/sys/kernel/debug/qcom_stats/vlow` and `.../vmin` still reported
+`Count: 0` (`Client Votes: 0xf0d0f0d` for vlow).  The adb link drops when the
+gadget suspends and comes back after the wake; the shell command that started
+the suspend therefore cannot be used to time the cycle.
+
 Test status 2026-11-21: no rpm `vlow`/`vmin` count has been measured yet.
 `fastboot -s 864463f boot boot-sleep1-root.img` returned OKAY, but after the
 boot the phone reported `Linux version 7.3.1-t7+` and uptime matching that
