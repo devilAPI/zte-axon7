@@ -1,2 +1,5 @@
-# radio HAL: QMI over QRTR sockets (DMS, NAS, UIM on the modem)
+# radio HAL: QMI over QRTR sockets (DMS, NAS, UIM, WDS/WDA/DPM on the modem)
 allow hal_radio_default self:qipcrtr_socket create_socket_perms_no_ioctl;
+# mobile data: create the QMAP rmnet link on rmnet_ipa0 over rtnetlink
+allow hal_radio_default self:capability net_admin;
+allow hal_radio_default self:netlink_route_socket { create bind write nlmsg_write read };

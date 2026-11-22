@@ -28,6 +28,8 @@ enum QmiService : uint32_t {
     kNas = 3,
     kWms = 5,
     kUim = 11,
+    kWda = 26,  // data format (QMAP)
+    kDpm = 47,  // data port manager (IPA endpoint)
 };
 
 struct QmiResponse {
@@ -79,6 +81,8 @@ class QmiListener {
 void putTlvU8(std::vector<uint8_t>* b, uint8_t type, uint8_t v);
 void putTlvU16(std::vector<uint8_t>* b, uint8_t type, uint16_t v);
 void putTlvU32(std::vector<uint8_t>* b, uint8_t type, uint32_t v);
+void putTlvBytes(std::vector<uint8_t>* b, uint8_t type, const void* data, size_t len);
+void putTlvString(std::vector<uint8_t>* b, uint8_t type, const std::string& v);
 template <typename T>
 bool getLe(const std::vector<uint8_t>& b, size_t off, T* out) {
     if (off + sizeof(T) > b.size()) return false;

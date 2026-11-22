@@ -143,6 +143,19 @@ void putTlvU32(std::vector<uint8_t>* b, uint8_t type, uint32_t v) {
                          static_cast<uint8_t>(v >> 16), static_cast<uint8_t>(v >> 24)});
 }
 
+void putTlvBytes(std::vector<uint8_t>* b, uint8_t type, const void* data, size_t len) {
+    if (len > 0xffff) return;
+    b->push_back(type);
+    b->push_back(len & 0xff);
+    b->push_back((len >> 8) & 0xff);
+    const auto* p = static_cast<const uint8_t*>(data);
+    b->insert(b->end(), p, p + len);
+}
+
+void putTlvString(std::vector<uint8_t>* b, uint8_t type, const std::string& v) {
+    putTlvBytes(b, type, v.data(), v.size());
+}
+
 std::optional<QmiResponse> qmiRequest(uint32_t service, uint16_t msg,
                                        const std::vector<uint8_t>& tlvs, int timeoutMs) {
     int64_t deadline = nowMs() + timeoutMs;
