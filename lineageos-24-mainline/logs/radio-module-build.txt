@@ -1,0 +1,206 @@
+== 2026-11-22T16:49:44Z radio HAL single-module build
+waiting for /srv/aosp/build.lock (16:49:44)
+got /srv/aosp/build.lock 16:53:35
+Trying dependencies-only mode on a non-existing device tree?
+
+============================================
+PLATFORM_VERSION_CODENAME=REL
+PLATFORM_VERSION=17
+LINEAGE_VERSION=24.0-20261122-UNOFFICIAL-axon7m
+PRODUCT_SOURCE_ROOT_DIRS=-kernel/platform -prebuilts/misc/protobuf_vendorcompat
+TARGET_PRODUCT=lineage_axon7m
+TARGET_BUILD_VARIANT=userdebug
+TARGET_ARCH=arm64
+TARGET_ARCH_VARIANT=armv8-a
+TARGET_CPU_VARIANT=kryo
+HOST_OS=linux
+HOST_OS_EXTRA=Linux-7.0.14-23-pve-x86_64-Debian-GNU/Linux-13-(trixie)
+HOST_CROSS_OS=windows
+BUILD_ID=CP2A.260605.016
+OUT_DIR=out
+PRODUCT_SOONG_NAMESPACES=device/zte/axon7m device/zte/axon7m-mesa device/zte/axon7m-libcamera hardware/google/interfaces hardware/google/pixel hardware/google/pixel/power-libperfmgr hardware/lineage/interfaces/power-libperfmgr
+SOONG_ONLY=false
+SOONG_INCREMENTAL_ANALYSIS=false
+============================================
+TARGET=lineage_axon7m VARIANT=userdebug CCACHE=/srv/los24/fast/ccache
+== m 16:53:42
+Running product configuration...
+============================================
+PLATFORM_VERSION_CODENAME=REL
+PLATFORM_VERSION=17
+LINEAGE_VERSION=24.0-20261122-UNOFFICIAL-axon7m
+PRODUCT_SOURCE_ROOT_DIRS=-kernel/platform -prebuilts/misc/protobuf_vendorcompat
+TARGET_PRODUCT=lineage_axon7m
+TARGET_BUILD_VARIANT=userdebug
+TARGET_ARCH=arm64
+TARGET_ARCH_VARIANT=armv8-a
+TARGET_CPU_VARIANT=kryo
+HOST_OS=linux
+HOST_OS_EXTRA=Linux-7.0.14-23-pve-x86_64-Debian-GNU/Linux-13-(trixie)
+HOST_CROSS_OS=windows
+BUILD_ID=CP2A.260605.016
+OUT_DIR=out
+PRODUCT_SOONG_NAMESPACES=device/zte/axon7m device/zte/axon7m-mesa device/zte/axon7m-libcamera hardware/google/interfaces hardware/google/pixel hardware/google/pixel/power-libperfmgr hardware/lineage/interfaces/power-libperfmgr
+SOONG_ONLY=false
+SOONG_INCREMENTAL_ANALYSIS=true
+============================================
+[100% 1/1] bootstrap blueprint
+Running globs...
+ninja: 
+ninja: SISO_EXPERIMENTS=fallback-on-exec-error enabled
+SISO_EXPERIMENTS=ignore-missing-out-in-depfile enabled
+
+ninja: ignore missing out error in depfile 
+
+ninja:  0.35s Build Succeeded: 0 steps - 0.00/s
+
+out/soong/release-config/release_config-lineage_axon7m-cp2a.vars was modified, regenerating...
+Adding CUSTOM_LOCALES [ast_ES ckb_IQ ckb_IR gd_GB cy_GB fur_IT nn_NO] to PRODUCT_LOCALES [en_US en_US af_ZA am_ET ar_EG ar_XB as_IN az_AZ be_BY bg_BG bn_BD bs_BA ca_ES cs_CZ da_DK de_DE el_GR en_AU en_CA en_GB en_IN en_XA es_ES es_US et_EE eu_ES fa_IR fi_FI fr_CA fr_FR gl_ES gu_IN hi_IN hr_HR hu_HU hy_AM in_ID is_IS it_IT iw_IL ja_JP ka_GE kk_KZ km_KH kn_IN ko_KR ky_KG lo_LA lt_LT lv_LV mk_MK ml_IN mn_MN mr_IN ms_MY my_MM nb_NO ne_NP nl_NL or_IN pa_IN pl_PL pt_BR pt_PT ro_RO ru_RU si_LK sk_SK sl_SI sq_AL sr_Latn_RS sr_RS sv_SE sw_TZ ta_IN te_IN th_TH tl_PH tr_TR uk_UA ur_PK uz_UZ vi_VN zh_CN zh_HK zh_TW zu_ZA en_XC]
+out/soong/release-config/release_config-lineage_axon7m-cp2a.vars was modified, regenerating...
+[100% 2/2] initializing Make module parser
+Adding CUSTOM_LOCALES [ast_ES ckb_IQ ckb_IR gd_GB cy_GB fur_IT nn_NO] to PRODUCT_LOCALES [en_US en_US af_ZA am_ET ar_EG ar_XB as_IN az_AZ be_BY bg_BG bn_BD bs_BA ca_ES cs_CZ da_DK de_DE el_GR en_AU en_CA en_GB en_IN en_XA es_ES es_US et_EE eu_ES fa_IR fi_FI fr_CA fr_FR gl_ES gu_IN hi_IN hr_HR hu_HU hy_AM in_ID is_IS it_IT iw_IL ja_JP ka_GE kk_KZ km_KH kn_IN ko_KR ky_KG lo_LA lt_LT lv_LV mk_MK ml_IN mn_MN mr_IN ms_MY my_MM nb_NO ne_NP nl_NL or_IN pa_IN pl_PL pt_BR pt_PT ro_RO ru_RU si_LK sk_SK sl_SI sq_AL sr_Latn_RS sr_RS sv_SE sw_TZ ta_IN te_IN th_TH tl_PH tr_TR uk_UA ur_PK uz_UZ vi_VN zh_CN zh_HK zh_TW zu_ZA en_XC]
+[ 30% 3/10] including out/soong/installs-lineage_axon7m.mk
+[ 40% 4/10] including out/soong/Android-lineage_axon7m.mk
+[ 50% 5/10] including build/make/target/board/android-info.mk
+[ 60% 6/10] including bootable/deprecated-ota/updater/Android.mk
+[ 70% 7/10] including hardware/broadcom/wlan/bcmdhd/Android.mk
+[ 80% 8/10] including hardware/qcom/Android.mk
+[ 90% 9/10] including hardware/synaptics/wlan/synadhd/Android.mk
+[100% 10/10] including out/soong/late-lineage_axon7m.mk
+[100% 11/11] finishing Make module rules
+[100% 12/12] finishing Make module rules: Adding module dependencies
+[100% 13/13] finishing Make packaging rules
+[ 41% 14/34] including build/make/core/tasks/art.mk
+[ 44% 15/34] including build/make/core/tasks/build_custom_images.mk
+[ 47% 16/34] including build/make/core/tasks/dex_preopt_check.mk
+[ 50% 17/34] including build/make/core/tasks/find-shareduid-violation.mk
+[ 52% 18/34] including build/make/core/tasks/fontchain_lint.mk
+[ 55% 19/34] including build/make/core/tasks/host_init_verifier.mk
+[ 58% 20/34] including build/make/core/tasks/meta-lic.mk
+[ 61% 21/34] including build/make/core/tasks/module-info.mk
+[ 64% 22/34] including build/make/core/tasks/oem_image.mk
+[ 67% 23/34] including build/make/core/tasks/offline-sdk-docs.mk
+[ 70% 24/34] including build/make/core/tasks/platform_availability_check.mk
+[ 73% 25/34] including build/make/core/tasks/sdv.mk
+[ 76% 26/34] including build/make/core/tasks/vendor_module_check.mk
+[ 79% 27/34] including build/make/core/tasks/with-license.mk
+[ 82% 28/34] including vendor/lineage/build/tasks/bacon.mk
+[ 85% 29/34] including vendor/lineage/build/tasks/build-manifest_xml.mk
+[ 88% 30/34] including vendor/lineage/build/tasks/dt_image.mk
+[ 91% 31/34] including vendor/lineage/build/tasks/generate_lineage_sdk_coverage.mk
+[ 94% 32/34] including vendor/lineage/build/tasks/kernel.mk
+vendor/lineage/build/tasks/kernel.mk:195: warning: ***************************************************************
+vendor/lineage/build/tasks/kernel.mk:196: warning: * Using prebuilt kernel binary instead of source              *
+vendor/lineage/build/tasks/kernel.mk:197: warning: * THIS IS DEPRECATED, AND IS NOT ADVISED.                     *
+vendor/lineage/build/tasks/kernel.mk:198: warning: * Please configure your device to download the kernel         *
+vendor/lineage/build/tasks/kernel.mk:199: warning: * source repository to kernel/zte/axon7m
+vendor/lineage/build/tasks/kernel.mk:200: warning: * for more information                                        *
+vendor/lineage/build/tasks/kernel.mk:201: warning: ***************************************************************
+[ 97% 33/34] including device/generic/goldfish/build/tasks/combine_initramfs.mk
+[100% 34/34] finishing Make packaging rules
+[100% 35/35] finishing Make packaging rules: Adding phony targets
+[100% 36/36] finishing Make packaging rules: Checking licensing and SBOM
+[100% 37/37] writing make module actions
+No need to regenerate ninja file
+Starting ninja...
+ninja: 
+ninja: SISO_EXPERIMENTS=allow-unexpected-rsp-remove enabled
+SISO_EXPERIMENTS=ignore-missing-out-in-depfile enabled
+SISO_EXPERIMENTS=oom-score-adj enabled
+
+ninja: ignore missing out error in depfile 
+
+[ 76% 38/50] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m clang++ impl/ModemState.cpp
+stderr:
+device/zte/axon7m/radio/impl/ModemState.cpp:72:8: warning: 'cdmaSubscriptionAppIndex' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   72 |     cs.cdmaSubscriptionAppIndex = -1;
+      |        ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.sim-V4-ndk-source/gen/include/aidl/android/hardware/radio/sim/CardStatus.h:48:26: note: 'cdmaSubscriptionAppIndex' has been explicitly marked deprecated here
+   48 |   int32_t __attribute__((deprecated("Legacy CDMA is unsupported."))) cdmaSubscriptionAppIndex = 0;
+      |                          ^
+1 warning generated.
+[ 78% 39/50] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m clang++ impl/service.cpp
+[ 80% 40/50] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m clang++ impl/Radio.cpp
+stderr:
+device/zte/axon7m/radio/impl/Radio.cpp:181:14: warning: 'cdmaSubscriptionAppIndex' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+  181 |         none.cdmaSubscriptionAppIndex = -1;
+      |              ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.sim-V4-ndk-source/gen/include/aidl/android/hardware/radio/sim/CardStatus.h:48:26: note: 'cdmaSubscriptionAppIndex' has been explicitly marked deprecated here
+   48 |   int32_t __attribute__((deprecated("Legacy CDMA is unsupported."))) cdmaSubscriptionAppIndex = 0;
+      |                          ^
+1 warning generated.
+[ 82% 41/50] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m clang++ impl/RadioMessaging.cpp
+stderr:
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:39:31: warning: 'acknowledgeLastIncomingCdmaSmsResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   39 |     if (respond()) respond()->acknowledgeLastIncomingCdmaSmsResponse(notSupported(serial));
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:76:154: note: 'acknowledgeLastIncomingCdmaSmsResponse' has been explicitly marked deprecated here
+   76 |   virtual ::ndk::ScopedAStatus acknowledgeLastIncomingCdmaSmsResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                                          ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:45:31: warning: 'deleteSmsOnRuimResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   45 |     if (respond()) respond()->deleteSmsOnRuimResponse(notSupported(serial));
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:79:139: note: 'deleteSmsOnRuimResponse' has been explicitly marked deprecated here
+   79 |   virtual ::ndk::ScopedAStatus deleteSmsOnRuimResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                           ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:57:31: warning: 'getCdmaBroadcastConfigResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   57 |     if (respond()) respond()->getCdmaBroadcastConfigResponse(notSupported(serial), {});
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:81:250: note: 'getCdmaBroadcastConfigResponse' has been explicitly marked deprecated here
+   81 |   virtual ::ndk::ScopedAStatus getCdmaBroadcastConfigResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info, const std::vector<::aidl::android::hardware::radio::messaging::CdmaBroadcastSmsConfigInfo>& in_configs) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                                                                                                                                          ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:69:31: warning: 'sendCdmaSmsResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   69 |     if (respond()) respond()->sendCdmaSmsResponse(notSupported(serial), {});
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:86:209: note: 'sendCdmaSmsResponse' has been explicitly marked deprecated here
+   86 |   virtual ::ndk::ScopedAStatus sendCdmaSmsResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info, const ::aidl::android::hardware::radio::messaging::SendSmsResult& in_sms) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                                                                                                 ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:75:31: warning: 'sendCdmaSmsExpectMoreResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   75 |     if (respond()) respond()->sendCdmaSmsExpectMoreResponse(notSupported(serial), {});
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:85:219: note: 'sendCdmaSmsExpectMoreResponse' has been explicitly marked deprecated here
+   85 |   virtual ::ndk::ScopedAStatus sendCdmaSmsExpectMoreResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info, const ::aidl::android::hardware::radio::messaging::SendSmsResult& in_sms) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                                                                                                           ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:87:31: warning: 'setCdmaBroadcastActivationResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   87 |     if (respond()) respond()->setCdmaBroadcastActivationResponse(notSupported(serial));
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:90:150: note: 'setCdmaBroadcastActivationResponse' has been explicitly marked deprecated here
+   90 |   virtual ::ndk::ScopedAStatus setCdmaBroadcastActivationResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                                      ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:93:31: warning: 'setCdmaBroadcastConfigResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+   93 |     if (respond()) respond()->setCdmaBroadcastConfigResponse(notSupported(serial));
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:91:146: note: 'setCdmaBroadcastConfigResponse' has been explicitly marked deprecated here
+   91 |   virtual ::ndk::ScopedAStatus setCdmaBroadcastConfigResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                                  ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:111:31: warning: 'writeSmsToRuimResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+  111 |     if (respond()) respond()->writeSmsToRuimResponse(notSupported(serial), {});
+      |                               ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h:95:156: note: 'writeSmsToRuimResponse' has been explicitly marked deprecated here
+   95 |   virtual ::ndk::ScopedAStatus writeSmsToRuimResponse(const ::aidl::android::hardware::radio::RadioResponseInfo& in_info, int32_t in_index) __attribute__((deprecated("Legacy CDMA is unsupported."))) = 0;
+      |                                                                                                                                                            ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:214:87: warning: 'messageRef' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+  214 |         if (auto* ref = r->tlv(0x01); ref && ref->size() >= 2) getLe(*ref, 0, &result.messageRef);
+      |                                                                                       ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/SendSmsResult.h:35:26: note: 'messageRef' has been explicitly marked deprecated here
+   35 |   int32_t __attribute__((deprecated("Legacy CDMA is unsupported."))) messageRef = 0;
+      |                          ^
+device/zte/axon7m/radio/impl/RadioMessaging.cpp:222:20: warning: 'errorCode' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+  222 |             result.errorCode = rp;
+      |                    ^
+out/soong/.intermediates/hardware/interfaces/radio/aidl/android.hardware.radio.messaging-V4-ndk-source/gen/include/aidl/android/hardware/radio/messaging/SendSmsResult.h:37:26: note: 'errorCode' has been explicitly marked deprecated here
+   37 |   int32_t __attribute__((deprecated("Legacy CDMA is unsupported."))) errorCode = 0;
+      |                          ^
+10 warnings generated.
+[ 84% 42/50] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m link android.hardware.radio-service.axon7m
+[ 86% 43/50] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m strip android.hardware.radio-service.axon7m
+[ 88% 44/50] cp out/target/product/axon7m/symbols/vendor/bin/hw/android.hardware.radio-service.axon7m
+[ 90% 45/50] Install: out/target/product/axon7m/vendor/bin/hw/android.hardware.radio-service.axon7m
+[ 92% 46/50] target Prebuilt: android.hardware.radio-service.axon7m (out/target/product/axon7m/obj/EXECUTABLES/android.hardware.radio-service.axon7m_intermediates/android.hardware.radio-service.axon7m)
+[ 94% 47/50] out/host/linux-x86/bin/symbols_map -elf out/target/product/axon7m/symbols/vendor/bin/hw/android.hardware.radio-service.axon7m -write_if_changed out/target/product/axon7m/obj/PACKAGING/elf_symbol_mapping_intermediates/vendor/bin/hw/android.hardware.radio-service.axon7m.textproto
+ninja: 22.51s Build Succeeded: 10 steps - 0.44/s
+
+
+#### build completed successfully (03:09 (mm:ss)) ####
+
+module-build-exit 0 2026-11-22T16:56:51Z

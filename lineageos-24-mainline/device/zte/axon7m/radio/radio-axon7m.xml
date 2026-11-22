@@ -10,6 +10,11 @@
         <fqname>IRadioData/slot1</fqname>
     </hal>
     <hal format="aidl">
+        <name>android.hardware.radio.messaging</name>
+        <version>4</version>
+        <fqname>IRadioMessaging/slot1</fqname>
+    </hal>
+    <hal format="aidl">
         <name>android.hardware.radio.modem</name>
         <version>4</version>
         <fqname>IRadioModem/slot1</fqname>
@@ -23,5 +28,12 @@
         <name>android.hardware.radio.sim</name>
         <version>4</version>
         <fqname>IRadioSim/slot1</fqname>
+    </hal>
+    <!-- Declared for a healthy phone process; every method answers
+         REQUEST_NOT_SUPPORTED until call audio has been proven. -->
+    <hal format="aidl">
+        <name>android.hardware.radio.voice</name>
+        <version>4</version>
+        <fqname>IRadioVoice/slot1</fqname>
     </hal>
 </manifest>

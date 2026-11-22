@@ -1,0 +1,78 @@
+== 2026-11-22T17:01:41Z radio HAL startup diagnostic
+/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/radio/lineageos-24-mainline/tmp-radio-test/radio-axon7m-new: 1 file pushed, 0 skipped. 6.7 MB/s (480560 bytes in 0.069s)
+-- V4 NDK libs on device --
+ls: /system/lib64/android.hardware.radio.*-V4-ndk.so: No such file or directory
+ls: /apex/com.android.art/lib64/android.hardware.radio.*-V4-ndk.so: No such file or directory
+-rw-r--r-- 1 root root 102168 2026-11-16 00:21 /vendor/lib64/android.hardware.radio.config-V4-ndk.so
+-rw-r--r-- 1 root root 152232 2026-11-16 00:21 /vendor/lib64/android.hardware.radio.data-V4-ndk.so
+-rw-r--r-- 1 root root 135192 2026-11-16 00:21 /vendor/lib64/android.hardware.radio.modem-V4-ndk.so
+-rw-r--r-- 1 root root 285232 2026-11-16 00:21 /vendor/lib64/android.hardware.radio.network-V4-ndk.so
+-rw-r--r-- 1 root root 185024 2026-11-16 00:21 /vendor/lib64/android.hardware.radio.sim-V4-ndk.so
+-- stop old HAL --
+-- start new HAL --
+svc=restarting
+ps:
+radio         7933   565   14693800 212832 __futex_wait        0 S com.android.phone
+services:
+-- radio logcat --
+-- main logcat (radio/debug) --
+11-21 00:03:54.712   651   651 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:chcon u:object_r:hal_radio_default_exec:s0 /data/local/tmp/radio-axon7m-test'
+11-21 00:03:54.975   651   651 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:chcon u:object_r:vendor_configs_file:s0 /data/local/tmp/radio-axon7m.xml'
+11-21 00:03:55.226   651   651 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:setprop ctl.stop vendor.radio-axon7m'
+11-21 00:03:57.410   651   651 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:mount --bind /data/local/tmp/radio-axon7m-test /vendor/bin/hw/android.hardware.radio-service.axon7m'
+11-21 00:03:57.527   651   651 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:mount --bind /data/local/tmp/radio-axon7m.xml /vendor/etc/vintf/manifest/radio-axon7m.xml'
+11-21 00:03:57.806   651   651 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:setprop ctl.start vendor.radio-axon7m'
+11-21 00:04:02.937   651   651 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:getprop init.svc.vendor.radio-axon7m'
+-- direct foreground run (8s) --
+CANNOT LINK EXECUTABLE "/data/local/tmp/radio-axon7m-test": library "android.hardware.radio.messaging-V4-ndk.so" not found: needed by main executable
+-- tombstones --
+-rw-rw-r-- 1 tombstoned system 134604 2026-11-20 03:44 /data/tombstones/tombstone_02
+-rw-rw-r-- 1 tombstoned system  59415 2026-11-20 03:44 /data/tombstones/tombstone_02.pb
+-rw-rw-r-- 1 tombstoned system 134903 2026-11-20 01:24 /data/tombstones/tombstone_01
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+LineageOS Version: '24.0-20261120-UNOFFICIAL-axon7m'
+Build fingerprint: 'ZTE/lineage_axon7m/axon7m:17/CP2A.260605.016/eng.build:userdebug/test-keys'
+Kernel Release: '7.3.1-axon7m'
+Revision: '0'
+ABI: 'arm64'
+Timestamp: 2026-11-20 03:44:25.974255334+0000
+Process uptime: 0s
+Executable: /vendor/bin/hw/android.hardware.camera.provider-service.lineage
+Cmdline: /vendor/bin/hw/android.hardware.camera.provider-service.lineage
+pid: 599, ppid: 1, tid: 620, name: CameraManager  >>> /vendor/bin/hw/android.hardware.camera.provider-service.lineage <<<
+uid: 1047
+tagged_addr_ctrl: [REDACTED] (PR_TAGGED_ADDR_ENABLE)
+signal 6 (SIGABRT), code -1 (SI_QUEUE), fault addr --------
+    x0  [REDACTED]  x1  [REDACTED]c  x2  [REDACTED]  x3  0000ed4dcf1011e0
+    x4  2e333561686b2e64  x5  2e333561686b2e64  x6  2e333561686b2e64  x7  7f7f7f7f7f7f7f7f
+    x8  [REDACTED]f0  x9  ebb8d231ce0b6902  x10 000000ff00000020  x11 0000ed506418e070
+    x12 b400ed4fef406cf0  x13 0000ed4dcf1010e1  x14 [REDACTED]  x15 [REDACTED]
+    x16 0000ed506417f4c0  x17 0000ed[REDACTED]  x18 0000ed4dcd474000  x19 [REDACTED]
+    x20 [REDACTED]c  x21 00000000ffffffff  x22 b400ed4fef40a6d0  x23 b400ed4edf40c030
+    x24 b400ed4f7f415030  x25 b400ed4f7f415040  x26 0000ed4dcf101428  x27 b400ed4e9f40d1c0
+    x28 [REDACTED]b  x29 0000ed4dcf101260
+    lr  0000ed50641028f8  sp  0000ed4dcf1011e0  pc  0000ed[REDACTED]  pst [REDACTED]
+    esr [REDACTED]  vg  [REDACTED]
+
+12 total frames
+backtrace:
+      #00 pc [REDACTED]a918  /apex/com.android.runtime/lib64/bionic/libc.so (abort+156) (BuildId: 3c862b955f98687549c[REDACTED]ae4)
+      #01 pc [REDACTED]  /vendor/lib64/libcamera-base.so (libcamera::LogMessageAbortGuard<(libcamera::LogSeverity)4>::~LogMessageAbortGuard()+56)
+      #02 pc [REDACTED]f8c50  /vendor/lib64/libcamera.so (libcamera::PipelineHandler::stop(libcamera::Camera*)+588)
+      #03 pc [REDACTED]bc9c  /vendor/lib64/libcamera-base.so (libcamera::Object::message(libcamera::Message*)+68)
+      #04 pc [REDACTED]f28  /vendor/lib64/libcamera-base.so (libcamera::Thread::dispatchMessages(libcamera::Message::Type, libcamera::Object*)+552)
+      #05 pc [REDACTED]e86c  /vendor/lib64/libcamera-base.so (libcamera::EventDispatcherPoll::processEvents()+48)
+      #06 pc [REDACTED]b78  /vendor/lib64/libcamera-base.so (libcamera::Thread::exec()+80)
+      #07 pc [REDACTED]bcd54  /vendor/lib64/libcamera.so (libcamera::CameraManager::Private::run()+164)
+      #08 pc [REDACTED]  /vendor/lib64/libcamera-base.so (libcamera::Thread::startThread()+228)
+      #09 pc [REDACTED]  /vendor/lib64/libcamera-base.so
+      #10 pc [REDACTED]c758  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*) (.__uniq.[REDACTED])+180) (BuildId: 3c862b955f98687549c[REDACTED]ae4)
+      #11 pc [REDACTED]ddd8  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+68) (BuildId: 3c862b955f98687549c[REDACTED]ae4)
+
+Note: To display stack pointer information, use the pbtombstone tool:
+        pbtombstone --display-sp tombstone_XX.pb
+
+memory near x3:
+    0000ed4dcf1011c0 b400ed4fef40a6d0 b400ed4f7f415030  ..@.O...0PA.O...
+-- restore 17:01:51
+-- restored svc=running services=5 stay_on=0 reach=OK

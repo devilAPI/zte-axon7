@@ -1,0 +1,24 @@
+== 2026-11-21T15:02:16Z QMI registration probe
+-- 2 0x2d
+service 2 at 0:58
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x01 len 1: 00
+-- 1 0x2d 10 04 00 00 00 00 00
+service 1 at 0:46
+TLV 0x02 len 4: 01 00 0f 00
+result 1, QMI error 15
+-- 5 0x01 10 01 00 01
+service 5 at 0:44
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+-- 11 0x2e 01 04 00 01 00 00 00
+service 11 at 0:52
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x10 len 4: 01 00 00 00
+-- 3 0x03 13 01 00 01 17 01 00 01 18 01 00 01 19 01 00 01
+service 3 at 0:42
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+== end

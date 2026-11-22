@@ -1,0 +1,13 @@
+== 2026-11-21T17:15:40Z checkvintf with staged FCM 202504 manifest and radio V4 fragment
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest.xml:<manifest version="1.0" type="device" target-level="202504">
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest/radio-axon7m.xml:        <name>android.hardware.radio.config</name>
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest/radio-axon7m.xml:        <name>android.hardware.radio.data</name>
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest/radio-axon7m.xml:        <name>android.hardware.radio.messaging</name>
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest/radio-axon7m.xml:        <name>android.hardware.radio.modem</name>
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest/radio-axon7m.xml:        <name>android.hardware.radio.network</name>
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest/radio-axon7m.xml:        <name>android.hardware.radio.sim</name>
+/srv/los24/tmp/radio-agent-stage/root/vendor/etc/vintf/manifest/radio-axon7m.xml:        <name>android.hardware.radio.voice</name>
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/srv/los24/tmp/radio-agent-stage/apex/apex-info-list.xml': OK
+COMPATIBLE
+checkvintf-rc=0

@@ -65,9 +65,28 @@ RadioModem::RadioModem(std::shared_ptr<minimal::SlotContext> context)
     : minimal::RadioModem(context, {{RadioTechnology::LTE, RadioTechnology::HSPA,
                                      RadioTechnology::UMTS, RadioTechnology::GSM}}) {}
 
+ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool powerOn, bool forEmergencyCall,
+                                        bool preferredForEmergencyCall) {
+    LOG_CALL << powerOn;
+    if (!powerOn) {
+        // The GNSS HAL needs the modem's QMI services even in airplane mode;
+        // do not take it offline here (RIL-PLAN 3.1, deferred until GNSS has
+        // its own power policy).
+        LOG(INFO) << "radio off requested: modem stays online for GNSS";
+        respond()->setRadioPowerResponse(noError(serial));
+        return ok();
+    }
+    if (!setOperatingModeOnline()) {
+        respond()->setRadioPowerResponse(errorResponse(serial, RadioError::MODEM_ERR));
+        return ok();
+    }
+    respond()->setRadioPowerResponse(noError(serial));
+    return ok();
+}
+
 ScopedAStatus RadioModem::getImei(int32_t serial) {
     LOG_CALL;
-    auto imei = readImei();
+    auto imei = cachedImei();
     if (!imei) {
         respond()->getImeiResponse(errorResponse(serial, RadioError::MODEM_ERR), std::nullopt);
         return ok();
@@ -83,7 +102,8 @@ ScopedAStatus RadioModem::getImei(int32_t serial) {
 
 ScopedAStatus RadioModem::getBasebandVersion(int32_t serial) {
     LOG_CALL;
-    respond()->getBasebandVersionResponse(noError(serial), readRevision().value_or("unknown"));
+    respond()->getBasebandVersionResponse(noError(serial),
+                                          cachedRevision().value_or("unknown"));
     return ok();
 }
 
@@ -169,7 +189,7 @@ ScopedAStatus RadioSim::getIccCardStatus(int32_t serial) {
 
 ScopedAStatus RadioSim::getImsiForApp(int32_t serial, const std::string& aid) {
     LOG_CALL << aid;
-    auto imsi = readImsi();
+    auto imsi = cachedImsi();
     if (!imsi) {
         respond()->getImsiForAppResponse(errorResponse(serial, RadioError::SIM_ERR), "");
         return ok();

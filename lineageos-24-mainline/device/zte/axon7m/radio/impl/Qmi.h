@@ -1,24 +1,32 @@
 /*
- * Synchronous QMI requests over QRTR for the radio HAL: one datagram socket
- * per request (on QRTR a QMI client is just a socket port, no client id to
- * allocate), the service is found through the kernel's name service. Fine
- * for the few polled requests this HAL makes; indications are not used.
+ * QMI clients over QRTR for the radio HAL. On QRTR a QMI client is just a
+ * datagram socket port (no client id to allocate): the modem's services are
+ * found through the kernel's name service. Requests use one socket each so a
+ * slow modem never blocks a binder thread; QmiListener keeps a socket open for
+ * indications from DMS/NAS/UIM/WMS/WDS and re-looks the service up if it goes
+ * away with the modem.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 #pragma once
 
+#include <atomic>
 #include <cstdint>
+#include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace axon7m::radio {
 
 enum QmiService : uint32_t {
+    kWds = 1,
     kDms = 2,
     kNas = 3,
+    kWms = 5,
     kUim = 11,
 };
 
@@ -40,8 +48,37 @@ std::optional<QmiResponse> qmiRequest(uint32_t service, uint16_t msg,
                                       const std::vector<uint8_t>& tlvs = {},
                                       int timeoutMs = 1000);
 
+// A request a listener sends once it has a socket to the service (event
+// registration, operating-mode reports, ...). It is repeated after a modem
+// restart.
+struct QmiRegistration {
+    uint16_t msg;
+    std::vector<uint8_t> tlvs;
+};
+
+class QmiListener {
+  public:
+    using Callback = std::function<void(uint16_t msg, const QmiResponse& response)>;
+    QmiListener(uint32_t service, std::vector<QmiRegistration> registrations, Callback callback);
+    ~QmiListener();
+
+    QmiListener(const QmiListener&) = delete;
+    QmiListener& operator=(const QmiListener&) = delete;
+
+  private:
+    void run();
+
+    const uint32_t mService;
+    const std::vector<QmiRegistration> mRegistrations;
+    const Callback mCallback;
+    std::atomic<bool> mStop{false};
+    std::thread mThread;
+};
+
 // TLV builders and readers (little-endian)
 void putTlvU8(std::vector<uint8_t>* b, uint8_t type, uint8_t v);
+void putTlvU16(std::vector<uint8_t>* b, uint8_t type, uint16_t v);
+void putTlvU32(std::vector<uint8_t>* b, uint8_t type, uint32_t v);
 template <typename T>
 bool getLe(const std::vector<uint8_t>& b, size_t off, T* out) {
     if (off + sizeof(T) > b.size()) return false;

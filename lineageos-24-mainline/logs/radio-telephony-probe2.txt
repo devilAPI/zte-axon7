@@ -1,0 +1,9 @@
+== 2026-11-21T15:27:26Z telephony identity/state probe (values redacted where personal)
+-- baseband version --
+unknown
+-- SIM state --
+-- IMEI field present in framework registry (value not printed) --
+mDeviceId fields: 0
+-- HAL process uptime --
+  613    01:41:09 android.hardware.radio-service.axon7m
+== end 2026-11-21T15:27:29Z
