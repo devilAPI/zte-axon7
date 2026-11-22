@@ -100,6 +100,11 @@ SMP2P `ipa-ap-to-modem`/`ipa-modem-to-ap` entries. `ipa2-lite.ko` has
 `depends=qcom_common,qmi_helpers`, alias `of:N*T*Cqcom,ipa-v2.5` and
 `vermagic=7.3.1+ SMP preempt mod_unload aarch64`.
 
+The four APKBUILD patches were also applied with `git apply --check` and
+`git apply` onto a clean `gpl-nura` worktree: all four apply in order, the
+result is byte-identical to the tree that was built, and `sha512sum -c` of
+their APKBUILD hashes prints OK for each.
+
 ## Phone test plan (2026-11-22)
 
 The SECOND phone (864463f) has no sudo password in this environment, so it
