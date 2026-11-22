@@ -49,7 +49,8 @@ say "battery=$bat%"
 [ "$bat" -ge 30 ] || { say "battery below 30%; abort"; exit 1; }
 
 for c in $(seq 1 "$N"); do
-  say "=== cycle $c/$N: uptime=$(rsh cut -d. -f1 /proc/uptime | tr -d '\r')s ==="
+  before_up=$(rsh cut -d. -f1 /proc/uptime | tr -d '\r')
+  say "=== cycle $c/$N: uptime=${before_up}s ==="
   bat=$(rsh cat /sys/class/power_supply/qcom-battery/capacity | tr -d '\r')
   [ "$bat" -ge 30 ] || { say "battery=$bat% below 30%; abort"; exit 1; }
   name=$(rsh cat /sys/class/remoteproc/remoteproc0/name | tr -d '\r')
@@ -94,7 +95,17 @@ for c in $(seq 1 "$N"); do
   [ "$c" = "$N" ] && break
   say "rebooting for cycle $((c+1))"
   A reboot >/dev/null 2>&1 || { say "adb reboot failed"; exit 1; }
+  # Do not let a still-connected pre-reboot adbd count as the next boot.
+  for k in $(seq 1 30); do
+    st=$(A get-state 2>/dev/null || true)
+    case $st in device) sleep 2 ;; *) break ;; esac
+  done
   wait_los || exit 1
+  after_up=$(rsh cut -d. -f1 /proc/uptime | tr -d '\r')
+  if [ "$after_up" -ge "$before_up" ] 2>/dev/null; then
+    say "uptime did not reset (${before_up}s -> ${after_up}s): the reboot did not happen; abort"
+    exit 1
+  fi
 done
 
 end_sha=$(A exec-out 'sha1sum /dev/block/bootdevice/by-name/los_boot' 2>/dev/null | tr -d '\r' | cut -d' ' -f1)
