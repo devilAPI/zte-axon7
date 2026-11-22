@@ -205,7 +205,7 @@ ScopedAStatus RadioMessaging::sendSmsImpl(int32_t serial, const std::string& sms
     aidlMsg::SendSmsResult result{};
     if (!raw || raw->empty() || raw->size() > 65535) {
         if (respond()) respond()->sendSmsResponse(
-                errorResponse(serial, RadioError::INVALID_ARGUMENT), result);
+                errorResponse(serial, RadioError::INVALID_ARGUMENTS), result);
         return ok();
     }
     // SMS sends may take longer than the usual QMI timeout (network delivery).
