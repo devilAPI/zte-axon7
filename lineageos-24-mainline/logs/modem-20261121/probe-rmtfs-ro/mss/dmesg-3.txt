@@ -1,0 +1,99 @@
+[ 1608.741339] remoteproc remoteproc0: powering up 2080000.remoteproc
+[ 1608.744227] remoteproc remoteproc0: Booting fw image qcom/msm8996/zte/axon7/mba.mbn, size 213888
+[ 1608.754113] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[ 1608.766164] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[ 1609.008606] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[ 1611.734020] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1611.735985] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[ 1611.740666] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1611.742290] failed to announce new service
+[ 1611.755302] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[ 1611.758603] failed while handling packet from 0:-2
+[ 1611.767655] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[ 1611.778210] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[ 1611.785788] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[ 1611.794120] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[ 1615.124087] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-120543 chg=u
+[ 1615.134374] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-120543 chg=u
+[ 1615.143272] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-120543 chg=u
+[ 1616.574248] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-115355 chg=u
+[ 1616.590088] healthd: battery l=99 v=4398 t=25.0 h=2 st=2 c=-115355 chg=u
+[ 1616.668643] healthd: battery l=99 v=4398 t=25.0 h=2 st=2 c=-115355 chg=u
+[ 1618.038851] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1618.061896] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1618.082479] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1626.747346] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119933 chg=u
+[ 1626.764720] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119933 chg=u
+[ 1626.779677] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119933 chg=u
+[ 1629.658933] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1629.675805] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1629.691323] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1638.368128] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119323 chg=u
+[ 1638.381711] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119323 chg=u
+[ 1638.391379] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119323 chg=u
+[ 1641.279921] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1641.293255] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1641.308912] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1649.990849] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-118254 chg=u
+[ 1650.007299] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-118254 chg=u
+[ 1650.025258] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-118254 chg=u
+[ 1651.439893] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-113677 chg=u
+[ 1651.743978] qcom-q6v5-mss 2080000.remoteproc: fatal error received: SFR Init: wdog or kernel error suspected.
+[ 1651.744072] remoteproc remoteproc0: crash detected in 2080000.remoteproc: type fatal error
+[ 1651.744163] remoteproc remoteproc0: handling crash #2 in 2080000.remoteproc
+[ 1651.761208] remoteproc remoteproc0: recovering 2080000.remoteproc
+[ 1651.773549] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1651.775866] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[ 1651.780221] remoteproc remoteproc0: stopped remote processor 2080000.remoteproc
+[ 1651.784756] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[ 1651.800212] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1651.809061] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[ 1651.818062] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[ 1651.826022] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[ 1651.841041] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[ 1651.944697] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[ 1652.897846] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1652.906092] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1652.914150] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1653.567198] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1653.568387] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[ 1653.574014] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[ 1653.588799] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[ 1653.597149] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[ 1653.605306] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[ 1653.612579] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[ 1653.620888] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[ 1653.747939] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[ 1653.752535] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[ 1653.759084] ueventd: LoadWithAliases was unable to load rpmsg:apr_voice_svc, tried: rpmsg:apr_voice_svc
+[ 1653.772519] ueventd: LoadWithAliases was unable to load rpmsg:LOOPBACK_CTL_MPSS, tried: rpmsg:LOOPBACK_CTL_MPSS
+[ 1654.259752] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CMD, tried: rpmsg:DIAG_CMD
+[ 1654.264465] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CNTL, tried: rpmsg:DIAG_CNTL
+[ 1654.271422] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2_CMD, tried: rpmsg:DIAG_2_CMD
+[ 1654.279909] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2, tried: rpmsg:DIAG_2
+[ 1654.289016] ueventd: LoadWithAliases was unable to load rpmsg:DIAG, tried: rpmsg:DIAG
+[ 1655.963984] axon7m-modem: DMS at 0:58 after 36 s
+[ 1655.987604] axon7m-modem: operating mode 5
+[ 1658.714502] healthd: battery l=99 v=4324 t=25.0 h=2 st=5 c=305 chg=u
+[ 1658.737573] healthd: battery l=99 v=4324 t=25.0 h=2 st=5 c=305 chg=u
+[ 1658.758072] healthd: battery l=99 v=4324 t=25.0 h=2 st=5 c=305 chg=u
+[ 1659.019658] axon7m-modem: operating mode 0
+[ 1663.067297] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119323 chg=u
+[ 1663.089029] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119323 chg=u
+[ 1663.110274] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-119323 chg=u
+[ 1665.975894] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1665.991730] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1666.006487] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1674.686783] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-118560 chg=u
+[ 1674.707499] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-118560 chg=u
+[ 1674.719938] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-118560 chg=u
+[ 1677.597119] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1677.615352] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1677.633167] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1686.306708] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-117797 chg=u
+[ 1686.330643] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-117797 chg=u
+[ 1686.347715] healthd: battery l=98 v=4398 t=25.0 h=2 st=2 c=-117797 chg=u
+[ 1689.139539] axon7m-modem: modem online (switched 1 time(s))
+[ 1689.216906] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1689.226415] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u
+[ 1689.238374] healthd: battery l=99 v=4377 t=25.0 h=2 st=5 c=152 chg=u

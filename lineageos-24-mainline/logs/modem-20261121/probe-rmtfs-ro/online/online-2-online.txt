@@ -1,0 +1,4 @@
+axon7m-modem: DMS at 0:58 after 162 s
+axon7m-modem: operating mode 5
+axon7m-modem: operating mode 0
+axon7m-modem: modem online (switched 1 time(s))

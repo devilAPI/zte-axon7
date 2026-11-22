@@ -1,0 +1,32 @@
+[11612.740026] remoteproc remoteproc0: powering up 2080000.remoteproc
+[11612.741065] remoteproc remoteproc0: Booting fw image qcom/msm8996/zte/axon7/mba.mbn, size 213888
+[11612.750309] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11612.762679] ueventd: LoadWithAliases was unable to load auxiliary:qcom_common.pd-mapper, tried: auxiliary:qcom_common.pd_mapper
+[11612.921550] qcom-q6v5-mss 2080000.remoteproc: MBA booted without debug policy, loading mpss
+[11614.703573] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11614.704034] remoteproc remoteproc0: remote processor 2080000.remoteproc is now up
+[11614.716970] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11614.725612] ueventd: LoadWithAliases was unable to load rpmsg:rpmsg_ctrl, tried: rpmsg:rpmsg_ctrl
+[11614.733864] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11614.742540] ueventd: LoadWithAliases was unable to load rpmsg:glink_ssr, tried: rpmsg:glink_ssr
+[11614.749735] ueventd: LoadWithAliases was unable to load rpmsg:IPCRTR, tried: rpmsg:IPCRTR
+[11614.755645] ueventd: LoadWithAliases was unable to load rpmsg:GLINK_CTRL, tried: rpmsg:GLINK_CTRL
+[11614.863409] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11614.868379] ueventd: LoadWithAliases was unable to load rpmsg:sys_mon, tried: rpmsg:sys_mon
+[11614.877670] ueventd: LoadWithAliases was unable to load rpmsg:apr_voice_svc, tried: rpmsg:apr_voice_svc
+[11614.888946] ueventd: LoadWithAliases was unable to load rpmsg:LOOPBACK_CTL_MPSS, tried: rpmsg:LOOPBACK_CTL_MPSS
+[11615.375823] ueventd: LoadWithAliases was unable to load rpmsg:DIAG, tried: rpmsg:DIAG
+[11615.382353] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CMD, tried: rpmsg:DIAG_CMD
+[11615.388901] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_CNTL, tried: rpmsg:DIAG_CNTL
+[11615.397593] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2_CMD, tried: rpmsg:DIAG_2_CMD
+[11615.405194] ueventd: LoadWithAliases was unable to load rpmsg:DIAG_2, tried: rpmsg:DIAG_2
+[11618.581678] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[11628.763903] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=305 chg=u
+[11638.947275] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=305 chg=u
+[11649.129911] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[11649.150201] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[11649.170038] healthd: battery l=99 v=4340 t=29.0 h=2 st=5 c=152 chg=u
+[11659.310583] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=305 chg=u
+[11669.493825] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11669.509437] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
+[11679.676771] healthd: battery l=99 v=4340 t=28.7 h=2 st=5 c=152 chg=u
