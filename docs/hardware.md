@@ -6,6 +6,13 @@ Everything here was read from a real A2017G (64 GB / 4 GB RAM, codename
 Items marked *unverified* come from the downstream device tree only and
 have not been confirmed on hardware yet.
 
+The **A2017U** (US) and **A2017** (China) use the same SoC, display, UFS
+layout and codename; the known differences are the modem/band firmware, the
+stock software and the EFS contents. This page's values come from the
+A2017G and are expected to apply, but no A2017U has been measured here.
+Model-specific setup, the US bootloader/fastboot route, the f2fs `/data`
+trap and cellular (untested) are in [variant-a2017u.md](variant-a2017u.md).
+
 ## SoC and memory
 
 | Item | Value |
@@ -65,7 +72,7 @@ holding Power + Volume Up. Each zone starts with the 12-byte
 | system | sde13 | 5.5 GiB | |
 | recovery | sde14 | 64 MiB | TWRP |
 | splash | sde24 | 32.6 MiB | `boot_logo.bmp`, `chargelogo.bmp`, `chargelogo2.bmp` (text index at offset 0) |
-| vendor | sde28 | 512 MiB | added for Treble ROMs |
+| vendor | sde28 | 512 MiB | added for Treble ROMs, **not in the stock layout**; carved from the tail of system (see [variant-a2017u.md](variant-a2017u.md); `sde` uses 4096-byte sectors) |
 | modem | sde7 | 95 MiB | FAT, NON-HLOS firmware (`image/`) |
 | persist | sdf5 | 32 MiB | calibration, keep a backup |
 | modemst1/2, fsg, fsc | sdf1/sdf2, sde4, sdf3 | | EFS (IMEI), keep a backup |

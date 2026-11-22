@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
+Last update: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -93,7 +93,7 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [SIZE=5][B]Warning[/B][/SIZE]
 [LIST]
 [*]This is an [B]alpha[/B]. Things will break. Back up first (TWRP: Boot, EFS, Modem, and anything else you want to keep) and copy the backup to a computer.
-[*]Tested on the [B]A2017G[/B] (4 GB / 64 GB) only. Other models: don't.
+[*]Developed and tested on the [B]A2017G[/B] (4 GB / 64 GB). [B]A2017U[/B] (US) and A2017 (China) share the hardware/codename but are [B]untested[/B] here; see the A2017U note under Installation. Cellular is not implemented on this build on any model.
 [*]It only installs into our [B]multi-boot setup[/B] (boot menu with iOS, Nura and LineageOS), a developer setup: [URL='https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md']DEV-MULTIBOOT.md[/URL]. It is not a stand-alone ROM yet.
 [*]Any failure while flashing can brick the phone. Keep EDL in mind.
 [/LIST]
@@ -109,6 +109,8 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [/LIST]
 [B]No proprietary firmware in the download:[/B] LineageOS 24 loads the modem, DSP, GPU and Wi-Fi firmware straight from your phone's own partitions, read-only, at every start (the modem partition, and the GPU's a530_zap from the vendor partition). This is new in this release and still being tested; if the screen stays black or Wi-Fi/sound are missing, please send the logs below.
 
+[B]A2017U (US):[/B] same hardware and codename ([I]ailsa_ii[/I]/[I]axon7[/I]), [B]untested[/B] for this ROM. The zip installs through TWRP, so the stock-B35 no-fastboot problem only matters for unlocking/recovery (the reported route is an EDL flash of the B15-NEW aboot+fbop, B29 alone was not enough, then reflash TWRP). This ROM needs the multi-boot layout and a [B]vendor partition[/B] for the GPU firmware (from LineageOS 16-18.1/22.2); without it the screen can stay black. Use an A2017U modem/firmware base, never an A2017G one. The installer's device check already accepts [I]A2017U[/I] and verifies every partition size and read-back before writing, but run [I]tools/axon7-preflight.sh --rom los24[/I] in TWRP first (read-only): it checks [I]los_boot[/I]/[I]los_metadata[/I]/[I]los_data[/I], the boot menu and the vendor partition. Notes and sources: [URL='https://github.com/devilAPI/zte-axon7/blob/main/docs/variant-a2017u.md']docs/variant-a2017u.md[/URL].
+
 [SIZE=5][B]Problems?[/B][/SIZE]
 [LIST]
 [*][B]It starts, but something does not work:[/B] switch on USB debugging (Settings → About phone → tap Build number 7 times; System → Developer options), and before rebooting run [I]adb logcat -b all -d > logcat.txt[/I] and [I]adb shell dmesg > dmesg.txt[/I].
@@ -117,6 +119,11 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-21"]
+[LIST]
+[*][B]A2017U (US) notes[/B] (no new build): same hardware/codename but untested. The TWRP zip needs neither fastboot nor the stock bootloader, but it does need the multi-boot layout and a vendor partition for the GPU firmware. Stock-B35 unlock is the EDL B15-NEW aboot+fbop route (B29 alone was not enough; reflash TWRP afterwards). Cellular is not implemented on any model, so nothing is claimed for A2017U. Read [I]docs/variant-a2017u.md[/I] and run [I]tools/axon7-preflight.sh --rom los24[/I].
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-20"]
 [LIST]
 [*]Install tested end to end the way you do it: TWRP 3.3.0-0, ADB sideload, reboot through the boot menu, setup wizard after about 4-5 minutes. The installer no longer refuses a valid boot menu.

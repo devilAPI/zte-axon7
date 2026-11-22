@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
+Last update: 2026-11-21 (A2017U/US notes; images unchanged). Before: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -68,7 +68,7 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 
 [SIZE=5][B]Installation[/B][/SIZE]
 [LIST]
-[*]Tested on the [B]A2017G[/B] (4 GB / 64 GB) only. Other models: don't.
+[*]Developed and tested on the [B]A2017G[/B] (4 GB / 64 GB). [B]A2017U[/B] (US) and [B]A2017[/B] (China) share the hardware/codename but are untested here; on stock A2017U B35 there is no fastboot, so unlock it first via the EDL B15-NEW aboot+fbop route (B29 alone was not enough) and flash TWRP again. Use an A2017U modem/firmware base, never an A2017G one.
 [*]Your [B]microSD card is erased[/B]; the [B]boot partition is replaced[/B] (restore your TWRP Boot backup to go back to Android). Internal storage stays as it is.
 [*]You need: unlocked bootloader, TWRP 3.3.0 or newer, a microSD card (8 GB+), a computer with an image writer (balenaEtcher).
 [/LIST]
@@ -85,6 +85,11 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-21"]
+[LIST]
+[*][B]A2017U (US) notes[/B]: same hardware and codename, but no fastboot on stock B35 (EDL B15-NEW aboot+fbop restores it; reflash TWRP afterwards) and a model-specific modem. Nura does not need fastboot or a vendor partition: the sdcard image and boot.img go through TWRP, and the first start copies firmware read-only from [I]modem[/I] and from [I]vendor[/I] or, without a vendor partition, from [I]system[/I]. Calls/SMS/data are [B]untested[/B] on A2017U. Nothing changed in the images.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-20, r30"]
 [LIST]
 [*]Bluetooth: the real cause of the failed starts is fixed in the kernel. After the phone sets its Bluetooth address the chip restarts, and the next command came too early; Nura now waits for the chip. 16 starts in a row without a failure; the restart helper from r29 stays as a fallback.

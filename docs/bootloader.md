@@ -36,6 +36,19 @@ adb reboot
 
 Keep a copy of the working boot image to restore it the same way.
 
+## A2017U: no fastboot at all on stock B35
+
+The notes above describe the A2017G bootloader, where fastboot exists but
+`fastboot boot` does not. On an A2017U with stock B35 there is **no fastboot
+endpoint**: `adb reboot bootloader` just boots Android again, so there is
+nothing to flash until fastboot is restored. The route reported in
+[issue #1](https://github.com/devilAPI/zte-axon7/issues/1) is an **EDL**
+flash (9008 mode) of the **B15-NEW aboot + fbop**, which restores
+`fastboot oem unlock`; B29 alone was not enough. Those packages overwrite
+recovery, so TWRP must be flashed again afterwards. Details, sources and
+warnings (model-specific modem, never cross-flash A2017G/A2017U firmware):
+[variant-a2017u.md](variant-a2017u.md).
+
 ## Getting back into TWRP automatically
 
 Write `0x77665502` to the IMEM restart reason (physical 0x066bf65c) before

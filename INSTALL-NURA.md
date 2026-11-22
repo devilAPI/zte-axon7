@@ -1,7 +1,9 @@
 # Nura on the ZTE Axon 7: installation guide
 
-Nura is Linux for the ZTE Axon 7 (A2017G), based on
+Nura is Linux for the ZTE Axon 7, based on
 [postmarketOS](https://postmarketos.org) with a mainline Linux 7.3 kernel.
+It is developed and tested on the **A2017G**; A2017U (US) and A2017 (China)
+share the hardware but are untested (see *A2017U owners* below).
 This guide installs Nura **on its own**: Nura lives on the microSD card and
 starts directly when you switch the phone on. (The multi-boot setup with iOS
 and LineageOS is a development tool, see [DEV-MULTIBOOT.md](DEV-MULTIBOOT.md).)
@@ -23,14 +25,24 @@ developers. Every step is a button press or a command you can copy.
 
 ## ⚠️ Read this first
 
-- Tested on the **A2017G** (global, 4 GB / 64 GB) only. Other models (A2017U, A2017 China): don't.
+- Developed and tested on the **A2017G** (global, 4 GB / 64 GB). The **A2017U** (US) and **A2017** (China) use the same SoC, display, touch and UFS layout but are untested here; their modem/band firmware and stock software differ. On a stock A2017U B35 there is no fastboot, so the unlock step is different (see *A2017U owners*). Cellular is untested on A2017U.
 - **Your microSD card is erased** (Nura lives on it).
 - The phone's **`boot` partition is replaced** by Nura's kernel: Android no longer starts until you put your saved boot image back (see *Back to Android*). Your internal storage (photos, apps) is **not** touched.
 - Bootloader, modem, EFS/IMEI and recovery are **never** touched. TWRP stays your way back.
 
+### A2017U owners (US model)
+
+The install itself is the same TWRP/sdcard procedure (Nura does not need fastboot and does not need a vendor partition). Three things are different before step 1:
+
+- **Getting root/recovery:** stock A2017U B35 has no fastboot endpoint. The route that worked for the reporter of [issue #1](https://github.com/devilAPI/zte-axon7/issues/1) was an **EDL flash** (phone off, hold Volume Up + Volume Down, plug in USB) of the **B15-NEW `aboot` + `fbop`** from the archived full EDL package, which restores `fastboot oem unlock`; **B29 alone was not enough**. Those packages overwrite recovery, so **flash TWRP again afterwards**.
+- **Modem/firmware:** use an A2017U (US) modem/firmware base, never an A2017G one. At its first start Nura copies the files from your phone's `modem`, `vendor` (or `system`) partitions read-only; with no vendor partition it falls back to the stock firmware path in `system` (r27 and newer). Nothing is written to those partitions.
+- **Cellular:** calls, SMS and mobile data are **untested** on A2017U. Nura's modem starts and goes online on the A2017G, but that does not prove the U's different modem path works. Do not rely on it.
+
+Run `tools/axon7-preflight.sh --rom nura` in TWRP before starting (read-only). If you also want LineageOS 22.2 on the same phone, its ext4/f2fs and vendor-partition requirements are separate; read [docs/variant-a2017u.md](docs/variant-a2017u.md).
+
 ## What you need
 
-**Phone:** ZTE Axon 7 A2017G, **bootloader unlocked**, **TWRP** as recovery
+**Phone:** ZTE Axon 7 A2017G (tested) or A2017U/A2017 (untested, see above), **bootloader unlocked**, **TWRP** as recovery
 (3.3.0-0, the tested one: [dl.twrp.me/ailsa_ii](https://dl.twrp.me/ailsa_ii/); 3.7.0_9-0 has been reported to restart by itself),
 an Android ROM installed (ideally LineageOS 16 to 18.1: Nura takes the GPU
 firmware from its `vendor` partition). A **microSD card**, 8 GB or more.
@@ -158,7 +170,7 @@ still holds Nura: format it in Android to use it as a normal card again.
 ## Rescue
 
 - **Black screen / hangs at the logo:** hold **Power + Volume Up** about 10 s → TWRP. Get the log (below), then either flash the Nura boot image again (step 3) or go back to Android.
-- **Nothing boots, not even TWRP:** not seen so far. EDL mode (phone off, hold Volume Up + Volume Down, plug in USB) and a full A2017G EDL package; see the *EDL rescue* note in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md).
+- **Nothing boots, not even TWRP:** not seen so far. EDL mode (phone off, hold Volume Up + Volume Down, plug in USB) and a **full EDL package for your model** (A2017G, A2017U or A2017; never cross-flash one model's package onto another); see the *EDL rescue* note in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md).
 
 ## Getting logs (for bug reports)
 

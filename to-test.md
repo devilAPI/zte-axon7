@@ -12,6 +12,94 @@ To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
 menu (Volume Down, then Power), or make it the default from Nura with
 `sudo axon7-bootmenu default pmos 5` (back: `sudo axon7-bootmenu default los 5`).
 
+## A2017U (US) hardware checklist (2026-11-21)
+
+For the reporter of [issue #1](https://github.com/devilAPI/zte-axon7/issues/1)
+or anyone with an A2017U. **No phone in this project's test rack is an
+A2017U**, so every item below is for a person with the US phone. Start with
+`docs/variant-a2017u.md`; the shared scripts are read-only unless a step
+explicitly says `--apply --yes`.
+
+**Never** write `persist`, `modemst1/2`, `fsg`, `fsc`, `modem`, `aboot`,
+`xbl` or any other bootloader partition for these tests. Back up EFS/persist
+to a computer first. Do not cross-flash an A2017G/A2017U/A2017 EDL or modem
+package. Do not post IMEI/MEID/ESN, SIM IDs (ICCID/IMSI), phone numbers,
+Wi-Fi names (SSIDs) or MAC addresses; redact them from logs.
+
+### A. Read-only baseline (TWRP or Android; no changes)
+
+- [ ] `getprop ro.product.device` -> `ailsa_ii`; `getprop ro.product.model` -> A2017U; `getprop ro.lineage.version` and `getprop gsm.version.baseband` (baseband is the modem version, safe to post).
+- [ ] `cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING` -> `QC_IMAGE_VERSION_STRING=TZ.BF.4.0.1-00353`.
+- [ ] `tools/axon7-preflight.sh --rom los22` (or `los24`/`nura`) -> paste the whole output. It reports the `/data` filesystem (ext4/f2fs), the vendor partition size and the TZ.
+- [ ] `ls -l /dev/block/bootdevice/by-name/{system,vendor,userdata}` and `for p in system vendor userdata; do b=$(readlink -f /dev/block/bootdevice/by-name/$p); echo "$p $(( $(cat /sys/class/block/${b##*/}/size) / 2048 )) MiB"; done`.
+- [ ] `tools/axon7-make-vendor.sh` (no `--apply`) -> paste the plan; it must show the phone's own sector numbers, not a copied example.
+
+If `--rom los22` says `FAIL /data is f2fs`: that is the issue-#1 trap. In
+TWRP, **Wipe > Advanced Wipe > Data > Repair or Change File System > EXT4**
+(or `mke2fs -t ext4` *erases internal storage*), then reboot to recovery and
+run the check again. Do not flash a ROM while it still says f2fs.
+
+If it says no vendor partition: create it on purpose, after the plan looks
+right and you have copied the printed GPT backup off the phone:
+
+```sh
+tools/axon7-make-vendor.sh --apply --yes     # then reboot to recovery
+```
+
+(The script backs up the GPT, refuses an occupied partition 28 or a wrong
+layout, and never touches EFS/persist/modem/bootloader.) Afterwards wipe
+**System** before flashing, because the old ext4 filesystem is larger than
+the shrunken partition.
+
+### B. LineageOS 22.2 (the ROM the reporter already booted)
+
+- [ ] Clean install per the XDA post (Format Data, **then check Data again and
+      set EXT4 if needed**, wipe System/Vendor), flash `lineage-22.2-*-axon7.zip`.
+- [ ] First boot: `adb logcat -b all -d > logcat.txt`, `adb shell dmesg > dmesg.txt`,
+      `adb shell getprop > props.txt`; if it loops, grab `/sys/fs/pstore/`
+      from TWRP right away.
+- [ ] `adb shell getprop sys.boot_completed` -> 1; Settings shows Android 15.
+- [ ] Cellular (only if you have a SIM and accept that this is experimental):
+      - [ ] insert a known-good SIM in slot 1; `adb shell getprop gsm.version.baseband` (no IMEI).
+      - [ ] `adb shell dumpsys telephony.registry > telephony.txt` and `adb logcat -b radio -d > radio.txt` (**redact ICCID/IMSI/phone number**).
+      - [ ] Does Settings > About > SIM status show the carrier? Can you call a known number, send an SMS to yourself, and load a page over mobile data with Wi-Fi off?
+      - [ ] Report exactly which of the three works; "SIM detected" alone is not "cellular works".
+- [ ] Note whether `/data` stayed ext4 after the first boot (`tools/axon7-preflight.sh --rom los22` again).
+
+### C. LineageOS 24 (multi-boot, untested on U)
+
+- [ ] Only after the multi-boot layout and a vendor partition exist. Run `tools/axon7-preflight.sh --rom los24`; all of `boot`, `los_boot`, `los_metadata`, `los_data`, `system`, `vendor` must be present.
+- [ ] Install by ADB sideload as in the XDA post; the installer verifies every write. First start 4-6 min.
+- [ ] `adb logcat -b all -d`, `adb shell dmesg`; check the screen/GPU (a black screen usually means no `a530_zap` on vendor), Wi-Fi and sound route logs. No cellular is implemented; do not test calls as a pass/fail item.
+
+### D. Nura (mainland Linux; untested on U)
+
+- [ ] Write the sdcard image, flash `boot.img` in TWRP, first start. `journalctl -u axon7-firmware` and `sudo dmesg > dmesg.txt`; report whether the modem/DSP/GPU/Wi-Fi firmware was found (with or without a vendor partition).
+- [ ] `cat /sys/class/power_supply/qcom-battery/capacity` before/after; no long run below 30 %.
+- [ ] Cellular: `sudo qmicli -d qrtr://0 --uim-get-card-status` (redact ICCID/IMSI) and `sudo mmcli -L`/`-m 0`; say whether the modem is online and whether a SIM is seen. Calls/SMS/data remain **untested** until someone actually places a call / sends an SMS / transfers data.
+- [ ] Wi-Fi and GPU: connect to a network (do not post the SSID/password), `glxinfo -B` or a GLES test; report the renderer (freedreno) and any firmware error.
+
+### E. iOS 16 (alpha; untested on U)
+
+- [ ] Follow `DEV-MULTIBOOT.md` (no downloads; build from the IPSW). The U's unlock/recovery step is the A2017U one above. There is no cellular support on this port; do not test it.
+- [ ] Report: does the boot menu appear, does iOS reach the lock/home screen, does Wi-Fi rejoin, does touch work? `tools/sweet-log-pull.sh` in TWRP plus `/sys/fs/pstore/pmsg-ramoops-0`.
+
+### F. Report template
+
+```text
+Model/revision: A2017U 4/64
+ROM + build date:
+TZ string:
+TWRP version:
+/data filesystem before/after: ext4 / f2fs
+vendor: absent / <size> MiB / fs
+preflight output (paste):
+first boot: OK / loop (pstore attached)
+cellular: not tested / SIM seen / call / SMS / data (which ones)
+Nura: firmware found / modem online / Wi-Fi / GPU
+notes:
+```
+
 ## 0. From the unattended session (2026-11-14 evening)
 
 **Blockers for the unattended work (2026-11-21 afternoon):**

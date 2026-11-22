@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-08
+Last update: 2026-11-21 (A2017U/US notes; no iOS code change)
 
 <!-- XDA-POST-BEGIN -->
 ```bbcode
@@ -45,8 +45,14 @@ Phase: [B]alpha[/B]. For developers and the curious.
 [SIZE=5][B]Installation[/B][/SIZE]
 [B]No downloads and no flashable zips during the alpha[/B] (and iOS itself can never be offered as a download: it is built from Apple's IPSW on your PC).
 Developers can build and install it; the developer setup (a multi-boot with Nura and LineageOS on one phone) is described here: [URL='https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md']DEV-MULTIBOOT.md[/URL]. Your internal storage is erased by it.
+[B]A2017U (US):[/B] same hardware and codename, but [B]untested[/B] for iOS here. On stock A2017U B35 there is no fastboot endpoint; a user reports that an EDL flash of the B15-NEW aboot+fbop restores [I]fastboot oem unlock[/I] (B29 alone was not enough), and the package overwrites recovery, so flash TWRP again. The iOS guide's GPU-firmware step already falls back to [I]system/vendor/firmware[/I] when there is no vendor partition. Notes and sources: [URL='https://github.com/devilAPI/zte-axon7/blob/main/docs/variant-a2017u.md']docs/variant-a2017u.md[/URL]. Cellular is not part of this port on any model.
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-21"]
+[LIST]
+[*][B]A2017U (US) notes[/B]: the same hardware/codename, but no fastboot on stock B35 (EDL B15-NEW aboot+fbop restores it; reflash TWRP afterwards), a model-specific modem, and no cellular support on this port. iOS is still untested on A2017U; nothing changed in the image.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-07"]
 [LIST]
 [*]iOS no longer restarts about 25 s after every start (a watchdog in the boot loader). Images flashed before: flash the iOS kernel again.
