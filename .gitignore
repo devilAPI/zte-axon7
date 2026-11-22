@@ -30,3 +30,9 @@ __pycache__/
 
 # private phone backups (EFS holds the IMEI)
 backup/
+# local test build outputs (not source)
+/.bundle-work/
+/.tools/
+/.kfast-sleep/
+/.kfast-repo/
+*.img

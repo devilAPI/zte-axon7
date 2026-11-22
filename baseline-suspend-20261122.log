@@ -1,0 +1,37 @@
+=== start baseline 2026-11-22T17:50:18+0100
+device
+7.3.1-axon7m
+#31 SMP PREEMPT Fri Nov 20 01:58:00 CET 2026
+POWER_SUPPLY_STATUS=Charging
+POWER_SUPPLY_VOLTAGE_MAX_DESIGN=4400000
+POWER_SUPPLY_VOLTAGE_MIN_DESIGN=3400000
+POWER_SUPPLY_VOLTAGE_NOW=4341863
+POWER_SUPPLY_CURRENT_NOW=-57220
+POWER_SUPPLY_CONSTANT_CHARGE_CURRENT_MAX=2000000
+POWER_SUPPLY_CAPACITY=98
+POWER_SUPPLY_CHARGE_TERM_CURRENT=150000
+vlow
+vmin
+/sys/kernel/debug/qcom_stats/vlow=Count: 0
+Last Entered At: 0
+Last Exited At: 0
+Accumulated Duration: 0
+Client Votes: 0xf0d0f0d
+/sys/kernel/debug/qcom_stats/vmin=Count: 0
+Last Entered At: 0
+Last Exited At: 0
+Accumulated Duration: 0
+Client Votes: 0x0
+WFI use=343859
+cpu-sleep-0 use=5167495
+0
+0
+=== suspend 30 s 2026-11-22T17:50:22+0100
+=== after resume 2026-11-22T17:50:23+0100
+error: device '7e15695a' not found
+adb: device '7e15695a' not found
+adb: device '7e15695a' not found
+adb: device '7e15695a' not found
+adb: device '7e15695a' not found
+adb: device '7e15695a' not found
+=== end baseline 2026-11-22T17:50:23+0100
