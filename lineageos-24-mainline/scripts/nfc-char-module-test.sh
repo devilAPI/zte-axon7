@@ -30,7 +30,7 @@ cleanup() {
 	local rc=$?
 	say "cleanup (rc=$rc)"
 	if [ $inserted = 1 ]; then
-		ash "rmmod $MODNAME" || true
+		ash "rmmod pn5xx_raw" || true
 	fi
 	if [ $bound = 1 ]; then
 		ash "echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind" || true
@@ -69,7 +69,7 @@ sleep 1
 echo "nfc0 after unbind: $(ash 'test -e /sys/class/nfc/nfc0 && echo PRESENT || echo gone')"
 
 say "insert $MODNAME"
-ash "rmmod $MODNAME 2>/dev/null || true"	# a previous failed attempt may still be loaded
+ash "rmmod pn5xx_raw 2>/dev/null || true"	# a previous failed attempt may still be loaded
 if out=$(ash "insmod $remote/pn5xx-raw.ko pn5xx_raw=1 2>&1"); then
 	echo "insmod: ok $out"
 	inserted=1
@@ -94,7 +94,7 @@ adb shell dmesg | tail -n +$((D0 + 1)) | grep -i -E 'pn5xx|nq-nci|nfc|i2c|gpio' 
 
 # Restore the kernel stack before releasing the phone lock.
 if [ $inserted = 1 ]; then
-	ash "rmmod $MODNAME" || true
+	ash "rmmod pn5xx_raw" || true
 	inserted=0
 fi
 ash "echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind" || true
