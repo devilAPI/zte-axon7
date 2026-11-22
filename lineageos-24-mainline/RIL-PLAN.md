@@ -674,7 +674,11 @@ a call implementation.
   exit path; end state `svc=running`, 5 radio services (as before),
   `stay_on_while_plugged_in=0`, `reach=OK`. Raw logs:
   `logs/radio-bindmount-test.txt`, `logs/radio-bindmount-diag.txt`,
-  `logs/radio-phone-recon2.txt`.
+  `logs/radio-phone-recon2.txt`. To repeat, copy the built binary and the two
+  V4 NDK libraries from the server's `out/target/product/axon7m/` plus the
+  seven-HAL fragment into `tmp-radio-test/` (untracked build artifacts, never
+  committed), then run `logs/radio-bindmount-test.sh` while holding the main
+  phone's lock.
 - **Old-image workaround:** the installed image predates
   `android.hardware.radio.messaging-V4-ndk.so` and
   `android.hardware.radio.voice-V4-ndk.so`; a direct start failed with
