@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-22 (r31: accelerometer scale corrected). Before: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
+Last update: 2026-11-22 (r31: accelerometer scale corrected and measured at rest: 9.85 m/s² instead of 10.63). Before: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -88,6 +88,7 @@ Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://
 [SPOILER="2026-11-22, r31"]
 [LIST]
 [*]Sensors: accelerometer magnitude was ~8 % high at rest (10.58 m/s^2 instead of 9.81). The SLPI applies the factory calibration from /persist/sensors/sns.reg, so 1 g comes out as ~690310 counts rather than the 640000 a plain Q16 scale assumes; the driver scale is corrected to 9.81 / 690310. Gyroscope and magnetometer keep their Q16 scale (gyro bias is not a scale issue; magnetometer reads ~67 uT, in range).
+[*]2026-11-22 measurement: the patched module was loaded into the running LineageOS 24 kernel to check the same driver without flashing a test kernel. Flat on the table, screen up: 10.650 m/s^2 before, 9.876 m/s^2 after (target 9.81 +/- 1 %); the original module was put back. Gyro bias and magnetometer reading did not change.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-20, r30"]

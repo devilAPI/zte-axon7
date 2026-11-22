@@ -49,10 +49,16 @@ outside the git worktree.
 `smgr-accel-module-test.sh` runs under the main phone's flock, saves the
 original `/vendor/lib/modules/smgr_accel.ko` on the HDD, stops
 `vendor.sensors-axon7m`, unbinds the `qcom-smgr-accel` platform device, swaps
-the module, measures raw IIO values/scale (and `sensread` if present), then
+the module, reads `in_accel_scale` and measures with `sensread` (buffered IIO,
+so there are no `in_accel_*_raw` files), then
 restores the original module and HAL. It never touches boot/misc/persist/EFS.
 
-**Status 2026-11-22: not yet run** — neither Axon phone was attached to USB
-(`adb devices` empty; only an unrelated 18d1:d001 in fastboot). The pre-fix
-measurement from build #31 is in `postmarketos/README.md`; the post-fix
-on-phone measurement is still required before calling the fix verified.
+**Status 2026-11-22: verified on the main phone in LOS 24 build #31.**
+`smgr-accel-module-test.sh` was run under the phone's flock: `in_accel_scale`
+went from 0.000015328 to 0.000014211 and the resting magnitude from 10.650 to
+9.876 m/s² (target 9.81 ± 1 %); gyro bias and mag magnitude were unchanged.
+The original module/HAL were restored and adb stayed up. Full measurements,
+the test log and the one-orientation limitation are in
+`RESULTS-2026-11-22.md` and `2026-11-22-module-swap.log`.
+`qcom-smgr-accel` is buffered-only (no `in_accel_*_raw` sysfs files), so the
+log uses `sensread` for the acceleration values.

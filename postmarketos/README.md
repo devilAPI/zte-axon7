@@ -371,11 +371,18 @@ Verified on 2026-11-22 that the patched driver compiles into a module for the
 running LineageOS 24 kernel (`7.3.1-axon7m SMP preempt mod_unload aarch64`,
 same `vermagic` as the image's `smgr_accel.ko`): `llvm-objdump -d` of the new
 module shows `mov w8, #0x3783 // =14211` in `smgr_accel_read_raw` where the
-old module has `mov w8, #0x3be0 // =15328`. The post-fix reading on the phone
-is still outstanding: neither Axon was attached to USB when this was written.
-`postmarketos/research/accel-sensors/` has the module-swap test script (saves
-and restores the original `/vendor` module, no reboot, no boot/misc writes)
-for the next session with the main phone on adb.
+old module has `mov w8, #0x3be0 // =15328`.
+
+Measured on the main phone the same day (LineageOS 24 build #31, adb root,
+under the phone flock, no reboot/test kernel/SLPI restart): with the original
+module `in_accel_scale = 0.000015328` and `|a| = 10.650 / 10.628 m/s^2` at
+rest (flat, screen up); with the patched module swapped in `0.000014211` and
+`9.876 / 9.849 m/s^2`, inside the 9.81 ± 1 % target. Gyro bias (0.049 rad/s)
+and mag magnitude (66-67 uT) were unchanged. The original module and sensors
+HAL were restored (scale back to 0.000015328, HAL running, adb up, battery
+99 %). Details and the full test log:
+`postmarketos/research/accel-sensors/RESULTS-2026-11-22.md`. Only one
+orientation was measured: an unattended run cannot turn the phone.
 
 Read a few samples:
 

@@ -1,0 +1,55 @@
+== 2026-11-22T22:45:23Z preconditions
+boot_completed=1 battery=99% uname=#31 SMP PREEMPT Fri Nov 20 01:58:00 CET 2026
+patched module sha256: df9d684c4fd5c1b6643e73f48db34484dfcf458407575f2fb2b26cde4c532bbb  /media/devilapi/Secondary HDD 2TB/ai-worker/axon7/accel-build/smgr_accel-fixed.ko
+original module (phone): -rw-r--r-- 1 root root 11096 2026-11-12 02:48 /vendor/lib/modules/smgr_accel.ko
+== 2026-11-22T22:45:27Z save the original module (read-only)
+saved 11096 bytes, sha256: f07c44eda20e5b62b70be5a52bbe67d5cf78030ddc5a44757f8f6577931cd0a8  /media/devilapi/Secondary HDD 2TB/ai-worker/axon7/accel-build/logs-20261122T224523Z/smgr_accel-orig.ko
+--- before: IIO device /sys/bus/iio/devices/iio:device0 ---
+  in_accel_scale = 0.000015328
+cat: /sys/bus/iio/devices/iio:device0/in_accel_x_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_y_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_z_raw: No such file or directory
+  raw[1] =   norm = 0.0
+cat: /sys/bus/iio/devices/iio:device0/in_accel_x_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_y_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_z_raw: No such file or directory
+  raw[2] =   norm = 0.0
+cat: /sys/bus/iio/devices/iio:device0/in_accel_x_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_y_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_z_raw: No such file or directory
+  raw[3] =   norm = 0.0
+BMI160 Accelerometer       92 events   48.7 Hz  first    -0.036     0.087    10.650  last    -0.019     0.075    10.628
+BMI160 Gyroscope           93 events   48.7 Hz  first    -0.026    -0.003    -0.038  last    -0.020    -0.004    -0.045
+AK09915 Magnetometer       92 events   48.7 Hz  first    10.200   -61.647   -24.298  last    10.650   -61.047   -23.398
+RPR0521 Light               1 events    0.0 Hz  first     1.000     0.000     0.000  last     1.000     0.000     0.000
+RPR0521 Proximity           1 events    0.0 Hz  first     5.000     0.000     0.000  last     5.000     0.000     0.000
+DMESG_START=911
+== 2026-11-22T22:45:43Z stop HAL, unbind qcom-smgr-accel, swap module
+insmod: 
+== 2026-11-22T22:45:51Z after the swap
+loaded: smgr_accel 12288 0 - Live 0x0000000000000000 (O)
+--- after: IIO device /sys/bus/iio/devices/iio:device0 ---
+  in_accel_scale = 0.000014211
+cat: /sys/bus/iio/devices/iio:device0/in_accel_x_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_y_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_z_raw: No such file or directory
+  raw[1] =   norm = 0.0
+cat: /sys/bus/iio/devices/iio:device0/in_accel_x_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_y_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_z_raw: No such file or directory
+  raw[2] =   norm = 0.0
+cat: /sys/bus/iio/devices/iio:device0/in_accel_x_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_y_raw: No such file or directory
+cat: /sys/bus/iio/devices/iio:device0/in_accel_z_raw: No such file or directory
+  raw[3] =   norm = 0.0
+BMI160 Accelerometer       93 events   48.7 Hz  first    -0.022     0.085     9.876  last    -0.029     0.094     9.849
+BMI160 Gyroscope           94 events   48.7 Hz  first    -0.026    -0.011    -0.054  last    -0.018    -0.004    -0.045
+AK09915 Magnetometer       92 events   48.7 Hz  first    11.099   -62.547   -24.449  last    11.250   -61.047   -25.049
+RPR0521 Light               1 events    0.0 Hz  first     0.000     0.000     0.000  last     0.000     0.000     0.000
+RPR0521 Proximity           1 events    0.0 Hz  first     5.000     0.000     0.000  last     5.000     0.000     0.000
+== 2026-11-22T22:46:06Z new dmesg
+== 2026-11-22T22:46:07Z cleanup (rc=0)
+rmmod: failed to unload smgr_accel: No such file or directory
+== 2026-11-22T22:46:11Z after restore: module=1 device=/sys/bus/iio/devices/iio:device0 scale=0.000015328
+== 2026-11-22T22:46:13Z boot_completed=1 battery=99%
+== 2026-11-22T22:46:13Z LOGDIR=/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/accel-build/logs-20261122T224523Z

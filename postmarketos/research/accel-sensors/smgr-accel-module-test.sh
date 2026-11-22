@@ -41,12 +41,18 @@ measure() {
 	echo "--- $tag: IIO device $d ---"
 	[ -n "$d" ] || { echo "no accel IIO device"; return 1; }
 	ash "cat $d/in_accel_scale" | sed 's/^/  in_accel_scale = /'
-	for i in 1 2 3; do
-		r=$(ash "cat $d/in_accel_x_raw; cat $d/in_accel_y_raw; cat $d/in_accel_z_raw" | tr '\n' ' ')
-		n=$(python3 -c "import math,sys; v=[int(x) for x in sys.argv[1:]]; print(math.sqrt(sum(x*x for x in v)))" $r)
-		echo "  raw[$i] = $r  norm = $n"
-		sleep 1
-	done
+	# qcom-smgr-accel is buffered-only: there are no in_accel_*_raw files.
+	# sensread below reads the IIO buffer via sensorservice and gives |a|.
+	if ash "test -r $d/in_accel_x_raw"; then
+		for i in 1 2 3; do
+			r=$(ash "cat $d/in_accel_x_raw; cat $d/in_accel_y_raw; cat $d/in_accel_z_raw" | tr '\n' ' ')
+			n=$(python3 -c "import math,sys; v=[int(x) for x in sys.argv[1:]]; print(math.sqrt(sum(x*x for x in v)))" $r)
+			echo "  raw[$i] = $r  norm = $n"
+			sleep 1
+		done
+	else
+		echo "  (buffered-only IIO device, no in_accel_*_raw; using sensread)"
+	fi
 	if [ -x "$SENSREAD" ]; then
 		adb push "$SENSREAD" "$remote/sensread" >/dev/null
 		ash "chmod 755 $remote/sensread && timeout 20 $remote/sensread 2"
