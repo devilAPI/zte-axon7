@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build the two temporary test modules against the prepared LOS 24 kernel
 # build tree for the running #31 kernel (phone config, no MODVERSIONS).
-# Requires a kernel worktree based on gpl-los24 with patches 0060-0062
+# Requires a kernel worktree based on gpl-los24 with patches 0059-0061
 # applied, and a copy of the prepared out-r536225 build directory.
 set -euo pipefail
 K=/home/devilapi/axon7-kbuild/ipa-los
