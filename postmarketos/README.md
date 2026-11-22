@@ -164,6 +164,52 @@ Logs after a crash: boot TWRP and read `/sys/fs/pstore/*` (see `../docs/hardware
 - **Wi-Fi roaming**: the QCA6174 firmware often does not acknowledge key deletions; ath10k waited 3 s for it on every roam and group rekey, after which a WPA3/PMF router (FRITZ!Box here) rejected the new association and every 4-way handshake timed out for minutes. Patch 0008 (after Richard Acayan's RFC on the ath10k list) stops waiting for DISABLE_KEY. Tested: forced roams 2.4 → 5 GHz and back now take 0.4–0.5 s with no key timeout.
 - Still missing: the SMB1351 parallel charger (charging stops at 2 A), headset buttons, camera autofocus loop and OIS, fingerprint (TrustZone), suspend (broken on msm8996 mainline in general). Charging, audio, sensors and both cameras are in the table below.
 
+## Audio: repeated playback and the ADSP restart (2026-11-22)
+
+The r26/r27 finding (a second 1 s playback about 20 s after the first, or one
+started while `axon7-audio-kick` restarts the ADSP, failed and sound stayed
+off until a reboot) does not reproduce as a playback bug in the kernel: on
+the main phone under LineageOS 24 (same 7.3.1 kernel series, the same
+q6asm/q6adm/q6afe/q6routing, APR, SLIMbus NGD and AK4961 code) ten 1 s
+silent playbacks with pauses of 1, 2, 3, 5, 10, 20, 30, 60, 5 and 1 s all
+returned rc=0, the PCM went back to `closed` after each one, and dmesg had
+no q6/APR/SLIMbus errors; a playback started after an ADSP stop/start and
+one 20 s later also succeeded
+(`ios/logs/audio-20261122-los-final.txt`; silence over
+MultiMedia2 -> SLIMBUS_0_RX, the TFA9890 switches verified `Off` and
+`Digital Playback Volume 0 0` before every playback).
+
+What does break is the ADSP *restart*: stopping the ADSP removes the APR
+devices, which unregisters the sound card, and the ASoC card teardown waits
+for every open `/dev/snd` file to be closed. With a process that ignores the
+card-removal event the `echo stop` never returns; the ADSP is left half
+stopped (state still `running`, card gone), and every later APR command times
+out until that process is gone. Reproduced on the main phone by holding
+`/dev/snd/controlC0` open: the stop did not finish within 30 s while the card
+disappeared, and recovered as soon as the holder was killed
+(`ios/logs/audio-20261122-los-stop-blocked-fd.txt`). This is the "APR
+services timing out until a reboot" state. The old `axon7-audio-kick` did
+`echo stop`, `sleep 2`, `echo start` and could hit it when the card appeared
+between its last check and the stop, or when a player already held it.
+
+Fix in `device-zte-axon7` (r31, pkgrel 26): `axon7-audio-kick` now waits for
+a *usable* card (`/proc/asound/cards`, the AK4961 bound on
+`/sys/bus/slimbus/drivers/ak4961-slim/1dd:4961:2:0`, MultiMedia2 in
+`/proc/asound/pcm`), looks again immediately before touching the DSP, refuses
+to stop while any process holds `/dev/snd/*`, bounds the stop with `timeout`
+and requires state `offline` before writing `start` (a half-stopped DSP is
+never started), and the unit retries with `Restart=on-failure`. After a
+successful restart it asks the logged-in user's PipeWire/WirePlumber to
+re-scan the card, so a player that cached the old card does not stay silent
+until a reboot. Off-device tests (fake sysfs/proc): `audio-tools/test-audio-kick.sh`
+23/23 pass; on the second phone (Nura 7.3.1-t7+) `axon7-audio-kick --check`
+as the unprivileged user printed
+`card=yes codec=yes pcm=yes open=no` and "the sound card is ready".
+
+Still to do: install r31 on the second phone, play ten times with pauses and
+once while forcing an ADSP restart (`to-test.md`); the script's `--check`
+needs no root, the restart itself does.
+
 ## NFC wiring and mainline status (2026-11-21)
 
 The Axon 7 has an NXP PN548 (PN547/PN548 "NPC300" family) NFC controller.
@@ -262,7 +308,7 @@ No XDA changelog yet: nothing changed for an end user on either OS.
 | Torch | `leds-qcom-pmi8994-torch` (0013), `white:torch`, 1-16 (12.5 mA steps per LED) | registers as downstream, no LED fault; to be seen |
 | Hi-Fi audio | `ak4490`, `ak8157`, `isl98608-regulator`, MI2S in `apq8096` (0014) | plays in real time on Quaternary MI2S, clocked by the AK8157; to be heard |
 | Speakers | `ak4961` (new: SLIMbus slim1dd,4961, registers over SPI on BLSP2 QUP3) + mainline `tfa989x` x2 (0015, 0016, 0018) | confirmed: a -21 dBFS 1 kHz tone saturates the microphone; SBI1 looped back to SLIMbus TX is bit-exact |
-| Sound card at boot | `axon7-audio-kick` (device-zte-axon7 r23): waits 45 s for the card, restarts the ADSP up to twice | on some boots the SLIMbus controller never gets the ADSP's "master capability", so no AK4961 and no card; tested: ADSP stopped by hand, the service restarted it and the card came back |
+| Sound card at boot | `axon7-audio-kick` (device-zte-axon7 r31, pkgrel 26): waits 45 s for a *usable* card (card + AK4961 bound + MultiMedia2 PCM), restarts the ADSP up to twice, never stops it while `/dev/snd` is open, never starts a half-stopped ADSP, and asks the user audio session to re-scan afterwards | on some boots the SLIMbus controller never gets the ADSP's "master capability", so no AK4961 and no card; tested: ADSP stopped by hand, the service restarted it and the card came back. The restart race and the frozen "APR timeouts" are explained in *Audio: repeated playback and the ADSP restart* |
 | Microphones 1 and 2 | `ak4961` AIF1 capture: ADC1 left = AIN1 (bottom, TX7, 0018), right = AIN2 (top, TX8, 0026) | confirmed: the vibrator raises mic 1 by ~30 dB; a tone from the top speaker is 18 dB louder on mic 2 |
 | NFC | mainline `nxp-nci-i2c` (NXP PN5xx at 0x28 on `blsp2_i2c2`, IRQ TLMM 9, enable TLMM 12, firmware TLMM 96; in the DT since the start) | confirmed: the controller answers NCI (`tools/axon7-nfc-test.py up`: 3 interrupts for reset/init; `poll`: RF discovery runs). Reading a tag not tried (no tag at hand) |
 | Headset microphone | `ak4961` AIN4 with MPWR2 bias on Mic_1L (0031), UCM device `Headset` | measured without a headset: PM4/PM5 = 0x0a while recording, open-input bias noise; voice to be heard. There is no third analog microphone: ZTE never routes AIN3 |
