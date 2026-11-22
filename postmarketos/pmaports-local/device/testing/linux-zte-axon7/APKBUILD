@@ -8,7 +8,7 @@
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=30
+pkgrel=31
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"
@@ -101,6 +101,7 @@ source="
 	0060-net-ipa2-lite-support-IPA-v2.5-on-MSM8996.patch
 	0061-net-ipa2-lite-QMAPv4-checksums-and-TX-lifetime-fixes.patch
 	0062-arm64-dts-qcom-msm8996-zte-axon7-add-IPA-v2.5.patch
+	0063-iio-accel-smgr_accel-correct-scale-to-match-SLPI-factory-calibration.patch
 	config-$_flavor.$arch
 "
 builddir="$srcdir/linux-$_kernver"
@@ -195,5 +196,6 @@ ff429cf5203eb465f0e975d9481708b8ae38c81bc0c3932762c0f2a1183e2c6f63c1bb5616a9a8aa
 455149d3300f75ab8db66936421e6684834a638382fdbd805e868a7e5c4afb7a249ad83a620f52bddac6368a92be85f038ff971a65ea322aee12feecfc49ce69  0060-net-ipa2-lite-support-IPA-v2.5-on-MSM8996.patch
 8186aa420af6745582eb004f3b31da1b6aba69860238706d2dc9b98b11337601b1cdf19106d653251659808b12965d0bdb8393275d88b8fae334645610c93679  0061-net-ipa2-lite-QMAPv4-checksums-and-TX-lifetime-fixes.patch
 1ca360f6e277b0b20d7884636337283bbaaac6a6b115f47c2be5fc923370a61e02840754e2821e3e34c65247df45240d4682151aafdd06649093bdc486386216  0062-arm64-dts-qcom-msm8996-zte-axon7-add-IPA-v2.5.patch
+7077a34fba615e885191b8f8dce606192b71434028f9c3b22d192cd8cc26b127cf9516577639768044fcf05aea38dfb6b5d8dd36e3a9a9076630276c6e170224  0063-iio-accel-smgr_accel-correct-scale-to-match-SLPI-factory-calibration.patch
 9517782adf95e606ac9049a4e553d45e808178036aa538ceec307e092bd3ee1a4967738d3629577aa4d631408b7ef8a4b9ff14772a1238c535d950cac6f3d259  config-zte-axon7.aarch64
 "

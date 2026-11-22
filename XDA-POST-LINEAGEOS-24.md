@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
+Last update: 2026-11-22 (accelerometer scale fix from Nura patch 0063 measured on build #31 with a runtime module swap; not in a release kernel yet). Before: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -18,6 +18,11 @@ the firmware read from the phone's partitions (new in this release). Encryption 
 this alpha.
 
 Changelog notes:
+- 2026-11-22: the accelerometer scale fix from Nura kernel patch 0063 was
+  measured on the main phone's LineageOS 24 build #31 kernel by loading the
+  patched module at runtime (the release kernel is unchanged): lying flat,
+  10.650 m/s^2 before and 9.876 m/s^2 after (target 9.81 +/- 1 %). The
+  original module was restored. Gyro and magnetometer scales are unchanged.
 - 2026-11-16: builds 40-47 (PLAN.md runs 40-47). Vibration counted by the
   driver, not felt; camera frames come through, picture not looked at (phone
   in the dark); hall sensor closed state needs a magnet. Animations still
