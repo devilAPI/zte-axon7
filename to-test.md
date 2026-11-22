@@ -147,12 +147,19 @@ cat /sys/class/power_supply/qcom-battery/{capacity,status,voltage_now,current_no
 ## 6. Cameras (raw, developers)
 
 Confirmed: both cameras deliver raw pictures (README "Front camera" and
-"Rear camera" have the commands). The rear camera has only been seen
-lying on a table (torch reflection, colour bars), never a real scene.
+"Rear camera" have the commands). On LineageOS 24 the rear camera was also
+checked with the flashlight through the camera service (mean brightness
+47 -> 213, exposure 22.8 ms -> 15.4 ms). The phone was lying screen-up in a
+dark room for those tests, so nobody has seen a real scene yet.
 
 - [ ] Rear camera, a real scene: stand the phone up with the back facing
       a bright window or lamp and tell Claude; it takes the picture over
       SSH (nothing to type)
+- [ ] Front camera, a lit scene: put a bright, plain object (a white sheet
+      of paper or a lamp) about 30 cm in front of the selfie camera and
+      tell Claude; it takes the picture over adb. The room light alone
+      changed the front frames numerically, but a lit photo would settle
+      the picture content and the rotation metadata.
 - [ ] Focus: Claude takes a few pictures at different lens positions; one
       of them should be sharp for the distance of the scene
 
