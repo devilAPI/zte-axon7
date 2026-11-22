@@ -47,7 +47,8 @@ say "los_boot=$lb system=$sd"
 # Save the boot image before any write, and verify the copy by sha1.
 A exec-out "dd if=$lb bs=1M 2>/dev/null" > "$OUT/los-before.img" || { say "los_boot read failed"; exit 1; }
 boot_sha=$(sha1sum < "$OUT/los-before.img" | cut -d' ' -f1)
-read_sha=$(A exec-out "sha1sum $lb" | tr -d '\r' | cut -d' ' -f1)
+# TWRP has no sha1sum on this build: read the partition back and hash locally.
+read_sha=$(A exec-out "dd if=$lb bs=1M 2>/dev/null" | sha1sum | cut -d' ' -f1)
 [ "$boot_sha" = "$read_sha" ] || { say "los_boot copy sha1 mismatch ($boot_sha vs $read_sha)"; exit 1; }
 printf '%s  %s\n' "$boot_sha" "$lb" > "$OUT/los-before.sha1"
 say "los_boot saved: sha1=$boot_sha size=$(stat -c %s "$OUT/los-before.img")"
@@ -72,7 +73,7 @@ if [ $ok != 1 ]; then
   if [ "$(state)" != recovery ]; then say "phone is not in TWRP; no kernel was written, stopping"; exit 2; fi
   A push "$OUT/los-before.img" /tmp/los-before.img >/dev/null 2>&1 || { say "push of saved boot failed"; exit 2; }
   A shell "dd if=/tmp/los-before.img of=$lb bs=1M 2>/dev/null; sync" >/dev/null
-  back=$(A exec-out "sha1sum $lb" | tr -d '\r' | cut -d' ' -f1)
+  back=$(A exec-out "dd if=$lb bs=1M 2>/dev/null" | sha1sum | cut -d' ' -f1)
   say "restored los_boot sha1=$back (expected $boot_sha)"
   [ "$back" = "$boot_sha" ] && A reboot >/dev/null
   exit 2

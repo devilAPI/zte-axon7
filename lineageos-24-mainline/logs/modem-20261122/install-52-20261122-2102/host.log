@@ -1,0 +1,8 @@
+[21:02:38] serial=7e15695a build=52 src=/home/devilapi/Documents/GitHub/zte-axon7/ios/research/los24-build-52 out=/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/modem/lineageos-24-mainline/logs/modem-20261122/install-52-20261122-2102
+[21:02:45] LineageOS: rebooting to TWRP
+[21:03:12] los_boot=/dev/block/sda10 system=/dev/block/sde13
+[21:05:34] los_boot saved: sha1=ed5bed8f1f3c935f0e34b9dd51969cdfc2d1472c size=100663296
+[21:05:34] writing super.img (system=/dev/block/sde13) with /home/devilapi/Documents/GitHub/zte-axon7/ios/research/los24-build-51/super.img as delta base
+[21:07:28] rebooting into LineageOS (boot image unchanged)
+[21:08:46] boot completed; verifying the new rmtfs service
+[21:08:50] done; phone left in LineageOS with adb
