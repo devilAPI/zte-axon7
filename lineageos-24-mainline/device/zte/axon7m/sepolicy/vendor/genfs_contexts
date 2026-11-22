@@ -20,3 +20,14 @@ genfscon sysfs /block/zram0/comp_algorithm u:object_r:sysfs_axon7m_zram:s0
 genfscon sysfs /devices/platform/soc@0/624000.ufshc/host0/target0:0:0/0:0:0:0/block/sda/queue u:object_r:sysfs_axon7m_ufshc:s0
 # axon7m-modules.sh re-enumerates the PCIe bus after the Wi-Fi firmware is up
 genfscon sysfs /bus/pci/rescan u:object_r:sysfs_axon7m_pci:s0
+# platform domains that walk mainline sysfs: disk statistics, UFS partitions
+# and the ksm statistics read by system_server
+genfscon sysfs /devices/platform/soc@0/74a4900.mmc/mmc_host/mmc0/mmc0:0007/block/mmcblk0/stat u:object_r:sysfs_axon7m_diskstat:s0
+genfscon sysfs /devices/platform/soc@0/624000.ufshc/host0/target0:0:0/0:0:0:0/block/sda u:object_r:sysfs_axon7m_block:s0
+genfscon sysfs /kernel/mm/ksm u:object_r:sysfs_axon7m_ksm:s0
+# wakeup class nodes behind the suspend service, extcon cable and UDC state
+# paths read by system_server (the platform labels only /sys/class/wakeup)
+genfscon sysfs /devices/platform/soc@0/4ad000.thermal-sensor/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:fuel-gauge@4000/power_supply/qcom-battery/wakeup u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:charger@1000/extcon u:object_r:sysfs_extcon:s0
+genfscon sysfs /devices/platform/soc@0/6af8800.usb/6a00000.usb/udc u:object_r:sysfs_udc:s0

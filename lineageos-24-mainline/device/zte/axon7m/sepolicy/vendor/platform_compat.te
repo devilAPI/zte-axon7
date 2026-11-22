@@ -1,0 +1,28 @@
+# Denials in platform domains that the mainline kernel/device tree causes.
+# Every rule names the exact domain and type seen in los24-m1a-51's AVC log.
+
+# On this kernel memfd inodes carry the generic tmpfs label (there is no
+# memfd_file class). Binder passes MessageQueue fds between processes: these
+# are the receiving domains that actually needed read/map in the boot log.
+allow { audioserver mediaswcodec system_server } tmpfs:file { getattr read write map };
+allow audioserver system_server_tmpfs:file { getattr read write map };
+allow mediaswcodec system_server_tmpfs:file { getattr read write map };
+allow system_server audioserver_tmpfs:file { getattr read write map };
+
+# libc maps the vendor default property area for properties without a more
+# specific context. The platform only dontaudits "read" for apps; open, getattr
+# and map are denied too and would stop HWUI/media in enforcing mode.
+allow { system_server surfaceflinger bootanim appdomain mediaswcodec } vendor_default_prop:file { getattr open read map };
+
+# crash_dump64 reads our RRO apk and its idmap when dumping a crashing app.
+allow crash_dump vendor_overlay_file:file r_file_perms;
+allow crash_dump resourcecache_data_file:file r_file_perms;
+
+# mainline sysfs paths without a platform label (see genfs_contexts)
+allow storaged sysfs_axon7m_diskstat:file r_file_perms;
+allow { fsck e2fs } sysfs_axon7m_block:file r_file_perms;
+allow { fsck e2fs } sysfs_axon7m_ufshc:file r_file_perms;
+allow system_server sysfs_axon7m_ksm:file r_file_perms;
+
+# init.axon7m.rc calls mkswap /dev/block/zram0 through toolbox
+allow toolbox ram_device:blk_file { getattr open read write ioctl };
