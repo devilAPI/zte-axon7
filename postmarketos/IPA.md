@@ -79,9 +79,26 @@ spaces, so `make O=...` cannot be used directly under
 source and kout under `/home/devilapi/axon7-kbuild/ipa-*` (no spaces);
 the commits stay in the HDD clone.
 
-## Build evidence
+## Build evidence (2026-11-22)
 
-(to be filled in)
+Full clang build of the v7.3.1 tree with patches 0001-0063 and
+`CONFIG_QCOM_IPA2_LITE=m` (Nura config), on
+`/home/devilapi/axon7-kbuild/ipa-ext` with output in `ipa-kout`:
+
+```
+make ... -j6 Image.gz dtbs modules
+=== full build exit 0 Sun Nov 22 06:25:44 PM CET 2026 ===
+  CC [M]  drivers/net/ipa2-lite/ipa.o
+  CC [M]  drivers/net/ipa2-lite/ipa-qmi.o
+  LD [M]  drivers/net/ipa2-lite/ipa2-lite.ko
+```
+
+`grep ': warning:|: error:'` on the full build log: no matches. The generated
+DTB contains `ipa@680000` with `compatible = "qcom,ipa-v2.5"`, IRQ 333/432,
+`modem-remoteproc`, `qcom,bam-remote-mode` and `status = "okay"`, and the
+SMP2P `ipa-ap-to-modem`/`ipa-modem-to-ap` entries. `ipa2-lite.ko` has
+`depends=qcom_common,qmi_helpers`, alias `of:N*T*Cqcom,ipa-v2.5` and
+`vermagic=7.3.1+ SMP preempt mod_unload aarch64`.
 
 ## Phone evidence
 
