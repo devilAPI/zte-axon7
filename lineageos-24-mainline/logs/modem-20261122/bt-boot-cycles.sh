@@ -55,17 +55,18 @@ for c in $(seq 1 "$N"); do
   bt_fail=$(grep -c -E 'Opcode 0x0c03 failed|hci0:.*-110|QCA no reset answer' "$OUT/cycle-$c-dmesg.txt" || true)
   rsh dmesg -C >/dev/null 2>&1
   # Turn Bluetooth on, then wait for the AOSP HAL to report ON.
-  timeout 20 rsh 'svc bluetooth enable' >/dev/null 2>&1 || timeout 20 rsh 'cmd bluetooth_manager enable' >/dev/null 2>&1 || true
+  # timeout needs an executable; rsh is a shell function.
+  timeout 20 adb -s "$S" shell 'svc bluetooth enable' >/dev/null 2>&1 || timeout 20 adb -s "$S" shell 'cmd bluetooth_manager enable' >/dev/null 2>&1 || true
   on=0
   for i in $(seq 1 12); do
-    d=$(timeout 20 rsh dumpsys bluetooth_manager 2>/dev/null | grep -m1 -i '^  State:' | tr -d '\r')
+    d=$(timeout 20 adb -s "$S" shell dumpsys bluetooth_manager 2>/dev/null | grep -m1 -i '^  State:' | tr -d '\r')
     case "$d" in *ON*) on=1; break ;; esac
     sleep 3
   done
   detail="cycle=$c uptime=$uname fatals=$fatals qca_reset_msgs=$qca_reset bt_fail_msgs=$bt_fail bt_on=$on state=${d:-none}"
   say "$detail"
   echo "$detail" >> "$OUT/summary.txt"
-  timeout 20 rsh 'svc bluetooth disable' >/dev/null 2>&1 || timeout 20 rsh 'cmd bluetooth_manager disable' >/dev/null 2>&1 || true
+  timeout 20 adb -s "$S" shell 'svc bluetooth disable' >/dev/null 2>&1 || timeout 20 adb -s "$S" shell 'cmd bluetooth_manager disable' >/dev/null 2>&1 || true
   rsh 'svc power stayon false' >/dev/null 2>&1 || true
   rsh "dmesg > /data/local/tmp/modem-bt-cycle-after.txt"
   A pull /data/local/tmp/modem-bt-cycle-after.txt "$OUT/cycle-$c-dmesg-after.txt" >/dev/null 2>&1

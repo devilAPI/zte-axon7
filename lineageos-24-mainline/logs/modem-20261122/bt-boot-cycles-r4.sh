@@ -32,7 +32,7 @@ wait_los() {
   done
   [ "$booted" = 1 ] || { say "no adb device after 12 min (state=$st); abort"; return 1; }
   A root >/dev/null 2>&1; sleep 3
-  timeout 30 A wait-for-device >/dev/null 2>&1 || true
+  timeout 30 adb -s "$S" wait-for-device >/dev/null 2>&1 || true
   for j in $(seq 1 96); do                      # up to 8 min for boot_completed
     [ "$(rsh getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ] && return 0
     sleep 5
@@ -71,10 +71,11 @@ for c in $(seq 1 "$N"); do
   bt_fail=$(grep -c -E 'Opcode 0x0c03 failed|hci0:.*-110|QCA no reset answer' "$OUT/cycle-$c-dmesg.txt" || true)
   rsh 'dmesg -C' >/dev/null 2>&1
 
-  timeout 25 rsh 'svc bluetooth enable' 2>&1 | tr -d '\r' | sed "s/^/[$(date +%T)] BT-enable /" | tee -a "$OUT/host.log"
+  # timeout needs an executable: shell functions (rsh/A) are not commands.
+  timeout 25 adb -s "$S" shell 'svc bluetooth enable' 2>&1 | tr -d '\r' | sed "s/^/[$(date +%T)] BT-enable /" | tee -a "$OUT/host.log"
   on=0; d=none
   for i in $(seq 1 12); do
-    d=$(timeout 20 rsh dumpsys bluetooth_manager 2>/dev/null | grep -m1 -i '^  State:' | tr -d '\r')
+    d=$(timeout 20 adb -s "$S" shell dumpsys bluetooth_manager 2>/dev/null | grep -m1 -i '^  State:' | tr -d '\r')
     case "$d" in *ON*) on=1; break ;; esac
     sleep 3
   done
@@ -86,7 +87,7 @@ for c in $(seq 1 "$N"); do
   detail="cycle=$c boot_completed=1 battery=$bat% shadow=$shadow files=$files modem=$rpstate fatals=$fatals sfr=$sfr qca_reset=$qca bt_fail=$bt_fail bt_on=$on fatals_after_bt=$fatals2 qca_after_bt=$qca2 bt_fail_after_bt=$bt_fail2 state=${d:-none}"
   say "$detail"
   echo "$detail" >> "$OUT/summary.txt"
-  timeout 25 rsh 'svc bluetooth disable' >/dev/null 2>&1 || true
+  timeout 25 adb -s "$S" shell 'svc bluetooth disable' >/dev/null 2>&1 || true
   rsh 'svc power stayon false' >/dev/null 2>&1 || true
   [ "$shadow" = 1 ] && [ "$files" -ge 4 ] || { say "EFS shadow missing in cycle $c"; exit 1; }
   [ "$fatals" = 0 ] && [ "$fatals2" = 0 ] || { say "modem fatal in cycle $c"; exit 1; }

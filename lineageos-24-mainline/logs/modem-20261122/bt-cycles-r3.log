@@ -1,0 +1,12 @@
+[21:09:13] serial=7e15695a cycles=15 out=/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/modem/lineageos-24-mainline/logs/modem-20261122/bt-cycles-20261122-2109
+[21:09:15] battery=98%
+[21:09:15] === cycle 1/15: uptime 94s ===
+[21:09:53] cycle=1 uptime=#31 SMP PREEMPT Fri Nov 20 01:58:00 CET 2026 fatals=0 qca_reset_msgs=0 bt_fail_msgs=0 bt_on=0 state=none
+[21:09:55] Bluetooth did not turn on in cycle 1
+[21:09:55] === final state ===
+  State:         OFF
+running
+98
+1
+[21:09:56] summary:
+cycle=1 uptime=#31 SMP PREEMPT Fri Nov 20 01:58:00 CET 2026 fatals=0 qca_reset_msgs=0 bt_fail_msgs=0 bt_on=0 state=none
