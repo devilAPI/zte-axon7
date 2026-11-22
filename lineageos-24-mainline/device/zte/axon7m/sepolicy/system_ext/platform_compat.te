@@ -26,3 +26,6 @@ allow system_server sysfs_axon7m_ksm:file r_file_perms;
 
 # init.axon7m.rc calls mkswap /dev/block/zram0 through toolbox
 allow toolbox ram_device:blk_file { getattr open read write ioctl };
+
+# vendor_init reads init.svc.rmtfs (platform-private property label)
+get_prop(vendor_init, init_service_status_private_prop);
