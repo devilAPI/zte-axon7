@@ -69,6 +69,7 @@ sleep 1
 echo "nfc0 after unbind: $(ash 'test -e /sys/class/nfc/nfc0 && echo PRESENT || echo gone')"
 
 say "insert $MODNAME"
+ash "rmmod $MODNAME 2>/dev/null || true"	# a previous failed attempt may still be loaded
 if out=$(ash "insmod $remote/pn5xx-raw.ko pn5xx_raw=1 2>&1"); then
 	echo "insmod: ok $out"
 	inserted=1

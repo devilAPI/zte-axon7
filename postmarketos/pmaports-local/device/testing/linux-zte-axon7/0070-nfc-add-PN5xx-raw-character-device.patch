@@ -1,6 +1,6 @@
-From 987199eeecd6f7704bd8db013301eed5b5e52535 Mon Sep 17 00:00:00 2001
+From df136c8d0b9e05047ea95681f1e2ec6da85df487 Mon Sep 17 00:00:00 2001
 From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
-Date: Sun, 22 Nov 2026 20:02:18 +0100
+Date: Sun, 22 Nov 2026 20:23:54 +0100
 Subject: [PATCH] nfc: add gated PN5xx raw NCI character device
 
 Expose /dev/nq-nci (plus pn5xx/pn54x aliases) on the existing PN548
@@ -12,8 +12,8 @@ Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
 ---
  drivers/nfc/Kconfig     |  12 ++
  drivers/nfc/Makefile    |   1 +
- drivers/nfc/pn5xx-raw.c | 326 ++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 339 insertions(+)
+ drivers/nfc/pn5xx-raw.c | 329 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 342 insertions(+)
  create mode 100755 drivers/nfc/pn5xx-raw.c
 
 diff --git a/drivers/nfc/Kconfig b/drivers/nfc/Kconfig
@@ -53,10 +53,10 @@ index 7b1bfde1d..4bc31e447 100644
  obj-$(CONFIG_NFC_VIRTUAL_NCI)	+= virtual_ncidev.o
 diff --git a/drivers/nfc/pn5xx-raw.c b/drivers/nfc/pn5xx-raw.c
 new file mode 100755
-index 000000000..d3a562530
+index 000000000..f9a710b5a
 --- /dev/null
 +++ b/drivers/nfc/pn5xx-raw.c
-@@ -0,0 +1,326 @@
+@@ -0,0 +1,329 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * NXP PN5xx raw character device for the Android NFC HAL
@@ -291,12 +291,15 @@ index 000000000..d3a562530
 +		return dev_err_probe(dev, ret, "unable to request IRQ\n");
 +
 +	raw->misc_nq.name = "nq-nci";
++	raw->misc_nq.minor = MISC_DYNAMIC_MINOR;
 +	raw->misc_nq.fops = &pn5xx_raw_fops;
 +	raw->misc_nq.parent = dev;
 +	raw->misc_pn5xx.name = "pn5xx";
++	raw->misc_pn5xx.minor = MISC_DYNAMIC_MINOR;
 +	raw->misc_pn5xx.fops = &pn5xx_raw_fops;
 +	raw->misc_pn5xx.parent = dev;
 +	raw->misc_pn54x.name = "pn54x";
++	raw->misc_pn54x.minor = MISC_DYNAMIC_MINOR;
 +	raw->misc_pn54x.fops = &pn5xx_raw_fops;
 +	raw->misc_pn54x.parent = dev;
 +
