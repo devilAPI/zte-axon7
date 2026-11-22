@@ -51,6 +51,8 @@ class RadioModem : public minimal::RadioModem {
     RadioModem(std::shared_ptr<minimal::SlotContext> context);
 
   protected:
+    ::ndk::ScopedAStatus setRadioPower(int32_t serial, bool powerOn, bool forEmergencyCall,
+                                       bool preferredForEmergencyCall) override;
     ::ndk::ScopedAStatus getImei(int32_t serial) override;
     ::ndk::ScopedAStatus getBasebandVersion(int32_t serial) override;
 };

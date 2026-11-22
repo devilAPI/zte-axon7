@@ -1,0 +1,26 @@
+== 2026-11-22T16:24:33Z radio bind-mount preconditions
+List of devices attached
+7e15695a	device
+
+adbd is already running as root
+-- build/state --
+CP2A.260605.016 test-keys
+running
+
+-- files --
+-rwxr-xr-x 1 root shell 413064 2026-11-16 02:02 /vendor/bin/hw/android.hardware.radio-service.axon7m
+-rw-r--r-- 1 root root     907 2026-11-19 20:45 /vendor/etc/vintf/manifest/radio-axon7m.xml
+-- declared services --
+37	android.hardware.radio.config.IRadioConfig/default: [android.hardware.radio.config.IRadioConfig]
+38	android.hardware.radio.data.IRadioData/slot1: [android.hardware.radio.data.IRadioData]
+39	android.hardware.radio.modem.IRadioModem/slot1: [android.hardware.radio.modem.IRadioModem]
+40	android.hardware.radio.network.IRadioNetwork/slot1: [android.hardware.radio.network.IRadioNetwork]
+41	android.hardware.radio.sim.IRadioSim/slot1: [android.hardware.radio.sim.IRadioSim]
+-- battery / stay on --
+99
+0
+== 2026-11-22T16:51:00Z SELinux context recon
+Permissive
+u:object_r:hal_radio_default_exec:s0 /vendor/bin/hw/android.hardware.radio-service.axon7m
+u:object_r:vendor_configs_file:s0    /vendor/etc/vintf/manifest/radio-axon7m.xml
+u:object_r:shell_data_file:s0 /data/local/tmp

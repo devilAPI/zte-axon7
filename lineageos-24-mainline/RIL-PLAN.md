@@ -579,6 +579,142 @@ place, re-run `qmi-raw 11 0x2f`; a USIM/PIN result would prove the path, and
 persistent error 3 would then justify investigating the SIM supply/pins or
 modem NV (read-only) instead.
 
+## 4.2 2026-11-21: milestone 1 implementation (build/test pending)
+
+Worktree branch `agent/radio`, based on the radio HAL committed on 2026-11-16
+(section 3, `device/zte/axon7m/radio/`). No SIM is inserted in the main phone,
+so everything below that depends on a card or a network is **correct by
+protocol inspection, not tested on the phone**.
+
+- QMI clients: `impl/Qmi.{h,cpp}` now covers WDS (1), DMS (2), NAS (3), WMS
+  (5) and UIM (11). `QmiListener` keeps one QRTR socket per service for
+  indications, re-registers every 30 s and re-looks the service up after a
+  modem restart; requests still use their own sockets so binder threads never
+  wait for the modem. Registrations sent: NAS Register Indications 0x03
+  (TLVs 0x13/0x17/0x18/0x19 = serving system, time, system info, signal),
+  UIM Register Events 0x2E (mask 1 = card status, indication 0x32),
+  DMS Set Event Report 0x01 (TLV 0x14 = operating mode, indication 0x01),
+  WMS Set Event Report 0x01 (TLV 0x10 = MT messages, indication 0x01) and
+  WDS Set Event Report 0x01 (TLVs 0x12/0x17 = bearer, call status).
+  On UIM/NAS/DMS indications the cached state is refreshed and
+  `simStatusChanged` / `networkStateChanged` are sent when it changed; the
+  5 s poll remains as a fallback for firmware that does not send indications.
+- `IRadioMessaging/slot1`: own `BnRadioMessaging` implementation. 3GPP SMS is
+  mapped to WMS Raw Send 0x20 (format 6, AIDL `smscPdu` + `pdu` hex bytes),
+  Send Ack 0x37 (transaction id from the Event Report TLV 0x11) and Get SMSC
+  0x34 when the firmware supports it. WMS Set Routes 0x32 asks for
+  transfer-only storage for all six message classes (read-only EFS/SIM).
+  CDMA/IMS/broadcast requests answer REQUEST_NOT_SUPPORTED; every request
+  gets a response. No SMS was sent in any test.
+- `IRadioVoice/slot1`: declared in VINTF so the framework binds all radio
+  services, but every request answers REQUEST_NOT_SUPPORTED; the messaging
+  and voice feature flags stay off for calling (`config_voice_capable=false`
+  overlay, no calling feature file). No q6voice audio path is claimed.
+- DMS Get/Set Operating Mode (0x2D/0x2E): the state is cached and logged by
+  value (0 = online), `setRadioPower(true)` re-applies online mode;
+  `setRadioPower(false)` keeps the modem online for GNSS. IMEI, baseband
+  revision and IMSI are read on the poll thread as well, so no binder thread
+  waits for the modem; the values only go into AIDL responses, never into a
+  HAL log or a repo file.
+- FCM: `device/zte/axon7m/manifest.xml` target level raised 202404 -> 202504
+  (the 202404 matrix has no AIDL radio V4; 202504 accepts V3 and V4). The
+  host `checkvintf --check-compat` on the build server with this manifest and
+  the seven-HAL radio fragment returned `COMPATIBLE`, rc=0
+  (`logs/radio-checkvintf.txt`, script `logs/radio-checkvintf.sh`).
+
+Evidence collected on the main phone before the code change (root on LOS 24,
+`logs/radio-qmi-probe2.txt`, no personal data in the log): DMS Get Operating
+Mode succeeds with mode 0 (online); WMS Set Event Report 0x01 and UIM Register
+Events 0x2E both answer `result 0, QMI error 0` (UIM echoes mask 1);
+NAS Register Indications answers success; WMS Get Routes answers success with
+six route elements (class 2 stored on the SIM by default); WMS Get Supported
+Messages 0x1E answers error 71 and Get SMSC 0x34 answers error 52, so those
+two are not relied on. WDS Get Current Settings 0x2D with a zero mask answers
+error 15; WDS data calls stay out of scope until IPA v2.5 exists.
+
+Telephony evidence on the main phone **with the previously built HAL** (the
+new code is not on the phone yet), `logs/radio-telephony-probe*.txt`: the
+service has been running for 1h41 without a restart, `service list` shows the
+five previously declared radio services, `dumpsys telephony.registry` reports
+`mRadioPowerState=1`, `NOT_REG_MT_SEARCHING_OP` over GSM and a live GSM signal
+of `rssi=-73 dBm`, level 4; `logcat -b radio` shows the matching
+`networkStateChanged` indication and no phone-process crash/ANR. A DMS Get
+Revision request on the same boot returns the MPSS build string (the HAL maps
+it to the baseband version; no personal data in the log). This confirms the
+pre-existing HAL path and the framework's health, **not** the new messaging,
+voice, indication or FCM changes.
+
+Remaining: build `android.hardware.radio-service.axon7m` on the server (SSH to
+root@compiler was still not answering during this work; build not attempted),
+then check the seven `service list` entries, `dumpsys telephony.registry`,
+signal strength and `logcat -b radio` with the new binary, plus `checkvintf`.
+SIM state propagation and SMS need a card (section 4.1); the voice stub is not
+a call implementation.
+
+## 4.3 2026-11-22: milestone 1 binary built and bind-mount tested on the main phone
+
+- **Build:** `m android.hardware.radio-service.axon7m` on `root@compiler` as
+  `build`, under `/srv/aosp/build.lock` (waited for another worker's build),
+  `module-build-exit 0` at 2026-11-22T16:56:51Z
+  (`logs/radio-module-build.txt`). One compile error was found and fixed:
+  AIDL V4 names the enum value `RadioError::INVALID_ARGUMENTS`, not
+  `INVALID_ARGUMENT`. The other ten diagnostics are deprecation warnings for
+  legacy CDMA V4 methods that the stub answers with REQUEST_NOT_SUPPORTED.
+  No full image was built or flashed in this task.
+- **Permissions:** the device tree labels the binary
+  `hal_radio_default_exec` and adds
+  `allow hal_radio_default self:qipcrtr_socket create_socket_perms_no_ioctl;`
+  (`device/zte/axon7m/sepolicy/vendor/{file_contexts,hal_radio_default.te}`);
+  AOSP supplies the domain itself. The phone's SELinux is **permissive**, so
+  that rule was not exercised in an enforcing test.
+- **Test setup:** main phone `7e15695a`, LineageOS 24 userdebug, `adb root`,
+  battery 99 % before and after, no sound/vibration. Only bind mounts were
+  used (no `adb remount`, no writes to boot/misc/persist/EFS/modem). The
+  original HAL, VINTF fragment and `com.android.phone` were restored on every
+  exit path; end state `svc=running`, 5 radio services (as before),
+  `stay_on_while_plugged_in=0`, `reach=OK`. Raw logs:
+  `logs/radio-bindmount-test.txt`, `logs/radio-bindmount-diag.txt`,
+  `logs/radio-phone-recon2.txt`. To repeat, copy the built binary and the two
+  V4 NDK libraries from the server's `out/target/product/axon7m/` plus the
+  seven-HAL fragment into `tmp-radio-test/` (untracked build artifacts, never
+  committed), then run `logs/radio-bindmount-test.sh` while holding the main
+  phone's lock.
+- **Old-image workaround:** the installed image predates
+  `android.hardware.radio.messaging-V4-ndk.so` and
+  `android.hardware.radio.voice-V4-ndk.so`; a direct start failed with
+  `CANNOT LINK EXECUTABLE ... library "android.hardware.radio.messaging-V4-ndk.so"
+  not found`. A temporary `/system/bin/sh` wrapper sets `LD_LIBRARY_PATH` to
+  the freshly built libraries pushed to `/data/local/tmp`; a real image build
+  installs them as dependencies of the binary.
+- **What worked with the new binary:** init reported `svc=running` and the
+  process stayed up under uid `radio`. After restarting `com.android.phone`,
+  `service list` showed the five already-declared radio services and RILJ
+  answered `DATA_REGISTRATION_STATE` and `VOICE_REGISTRATION_STATE` with
+  `NOT_REG_MT_SEARCHING_OP`, `rat: GSM` from the new HAL, with no new
+  phone-process crash/ANR. `dumpsys telephony.registry` reported
+  `mRadioPowerState=1`, `NOT_REG_SEARCHING` over GSM and a live GSM signal of
+  `rssi=-83 dBm`, level 4. QMI DMS Get Operating Mode still answered
+  `result 0, QMI error 0` with TLV `0x01 = 00` (online).
+- **Why only five services:** `AServiceManager_isDeclared()` delegates to
+  servicemanager's `isVintfDeclared()`
+  (`frameworks/native/cmds/servicemanager/ServiceManager.cpp`), which uses a
+  VintfObject loaded at boot. The runtime bind-mounted fragment does show all
+  seven `<hal>` entries, but servicemanager does not re-read it, so
+  `IRadioMessaging` and `IRadioVoice` were not declared and the HAL correctly
+  did not register them (RIL-PLAN 2.1: never register undeclared services).
+  Verifying those two needs a boot with the extended fragment installed;
+  the voice service is a stub in any case.
+- **Still untestable here:** no SIM is inserted (UIM reports card error 3,
+  "no ATR", section 4.1), so SIM state changes, file access and SMS are
+  correct by inspection only. Identity values are answered from cached
+  DMS/UIM responses on binder threads and are never logged; no personal
+  values were written to any log or repo file. SELinux enforcing, modem
+  restart, a full image and voice/data calls were not tested.
+- A follow-up probe for framework identity requests could not run: after the
+  successful test the main phone disappeared from USB (`adb devices` empty)
+  while its lock was held by another worker. No phone actions were attempted
+  after that and the failed attempt's empty logs are not kept.
+
 ## Sources
 
 - `/srv/los24/ref/aospm-qrild` (README, `Android.bp`, `qrild/*.cc`, `notes/`), `/srv/los24/ref/aospm-libqril` (`qmi/*.qmi`, `lib/libqril_qmi.h`, `Android.bp`)

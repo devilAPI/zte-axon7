@@ -1,0 +1,133 @@
+== 2026-11-21T14:59:21Z radio phone probe
+List of devices attached
+7e15695a               device usb:5-3 product:lineage_axon7m model:A2017G device:axon7m transport_id:3
+
+-- battery --
+99
+-- state --
+1
+17
+-- radio services --
+37	android.hardware.radio.config.IRadioConfig/default: [android.hardware.radio.config.IRadioConfig]
+38	android.hardware.radio.data.IRadioData/slot1: [android.hardware.radio.data.IRadioData]
+39	android.hardware.radio.modem.IRadioModem/slot1: [android.hardware.radio.modem.IRadioModem]
+40	android.hardware.radio.network.IRadioNetwork/slot1: [android.hardware.radio.network.IRadioNetwork]
+41	android.hardware.radio.sim.IRadioSim/slot1: [android.hardware.radio.sim.IRadioSim]
+-- qmi-raw on phone --
+-rwxr-xr-x 1 root root 9022208 2026-11-21 14:16 /data/local/tmp/qmi-raw
+-- WMS supported messages 0x1e --
+service 5 at 0:44
+TLV 0x02 len 4: 01 00 47 00
+result 1, QMI error 71
+-- WMS get SMSC 0x34 --
+service 5 at 0:44
+TLV 0x02 len 4: 01 00 34 00
+result 1, QMI error 52
+-- WMS get routes 0x33 --
+service 5 at 0:44
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x01 len 26: 06 00 00 00 ff 02 00 01 ff 02 00 02 00 01 00 03 ff 02 00 04 ff 02 00 05 ff 02
+TLV 0x10 len 1: 01
+-- VINTF radio manifest --
+        device/zte/axon7m/manifest.xml
+-->
+<manifest version="9.0" type="device" target-level="202404">
+    <sepolicy>
+        <version>202604</version>
+    </sepolicy>
+</manifest>
+--- /vendor/etc/vintf/manifest/allocator.xml
+--
+        external/minigbm/cros_gralloc/aidl/allocator.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.graphics.allocator</name>
+        <version>3</version>
+        <fqname>IAllocator/default</fqname>
+    </hal>
+--
+        hardware/lineage/interfaces/camera/aidl/provider/android.hardware.camera.provider-service.lineage.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.camera.provider</name>
+        <fqname>ICameraProvider/internal/0</fqname>
+    </hal>
+</manifest>
+--
+        device/zte/axon7m/gnss/android.hardware.gnss-service.axon7m.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.gnss</name>
+        <version>4</version>
+        <fqname>IGnss/default</fqname>
+    </hal>
+--
+        hardware/interfaces/health/aidl/default/android.hardware.health-service.example.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.health</name>
+        <version>5</version>
+        <fqname>IHealth/default</fqname>
+    </hal>
+--
+        hardware/lineage/interfaces/power-libperfmgr/aidl/android.hardware.power-service.lineage.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.power</name>
+        <version>7</version>
+        <fqname>IPower/default</fqname>
+    </hal>
+--
+        hardware/interfaces/security/keymint/aidl/default/android.hardware.security.keymint-service.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.security.keymint</name>
+        <version>5</version>
+        <fqname>IKeyMintDevice/default</fqname>
+    </hal>
+--
+        hardware/interfaces/security/keymint/aidl/default/android.hardware.security.secureclock-service.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.security.secureclock</name>
+        <fqname>ISecureClock/default</fqname>
+    </hal>
+</manifest>
+--
+        hardware/interfaces/security/keymint/aidl/default/android.hardware.security.sharedsecret-service.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.security.sharedsecret</name>
+        <fqname>ISharedSecret/default</fqname>
+    </hal>
+</manifest>
+--
+        device/zte/axon7m/sensors/hal/android.hardware.sensors-service.axon7m.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.sensors</name>
+        <version>3</version>
+        <fqname>ISensors/default</fqname>
+    </hal>
+--
+        hardware/interfaces/wifi/aidl/default/android.hardware.wifi-service.xml
+-->
+<manifest version="9.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.wifi</name>
+        <version>4</version>
+        <fqname>IWifi/default</fqname>
+    </hal>
+--
+        external/wpa_supplicant_8/hostapd/android.hardware.wifi.hostapd.xml
+== end 2026-11-21T14:59:25Z

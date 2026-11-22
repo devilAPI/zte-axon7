@@ -12,6 +12,194 @@ To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
 menu (Volume Down, then Power), or make it the default from Nura with
 `sudo axon7-bootmenu default pmos 5` (back: `sudo axon7-bootmenu default los 5`).
 
+## A2017U (US) hardware checklist (2026-11-21)
+
+For the reporter of [issue #1](https://github.com/devilAPI/zte-axon7/issues/1)
+or anyone with an A2017U. **No phone in this project's test rack is an
+A2017U**, so every item below is for a person with the US phone. Start with
+`docs/variant-a2017u.md`; the shared scripts are read-only unless a step
+explicitly says `--apply --yes`.
+
+**Never** write `persist`, `modemst1/2`, `fsg`, `fsc`, `modem`, `aboot`,
+`xbl` or any other bootloader partition for these tests. Back up EFS/persist
+to a computer first. Do not cross-flash an A2017G/A2017U/A2017 EDL or modem
+package. Do not post IMEI/MEID/ESN, SIM IDs (ICCID/IMSI), phone numbers,
+Wi-Fi names (SSIDs) or MAC addresses; redact them from logs.
+
+### A. Read-only baseline (TWRP or Android; no changes)
+
+- [ ] `getprop ro.product.device` -> `ailsa_ii`; `getprop ro.product.model` -> A2017U; `getprop ro.lineage.version` and `getprop gsm.version.baseband` (baseband is the modem version, safe to post).
+- [ ] `cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING` -> `QC_IMAGE_VERSION_STRING=TZ.BF.4.0.1-00353`.
+- [ ] `tools/axon7-preflight.sh --rom los22` (or `los24`/`nura`) -> paste the whole output. It reports the `/data` filesystem (ext4/f2fs), the vendor partition size and the TZ.
+- [ ] `ls -l /dev/block/bootdevice/by-name/{system,vendor,userdata}` and `for p in system vendor userdata; do b=$(readlink -f /dev/block/bootdevice/by-name/$p); echo "$p $(( $(cat /sys/class/block/${b##*/}/size) / 2048 )) MiB"; done`.
+- [ ] `tools/axon7-make-vendor.sh` (no `--apply`) -> paste the plan; it must show the phone's own sector numbers, not a copied example.
+
+If `--rom los22` says `FAIL /data is f2fs`: that is the issue-#1 trap. In
+TWRP, **Wipe > Advanced Wipe > Data > Repair or Change File System > EXT4**
+(or `mke2fs -t ext4` *erases internal storage*), then reboot to recovery and
+run the check again. Do not flash a ROM while it still says f2fs.
+
+If it says no vendor partition: create it on purpose, after the plan looks
+right and you have copied the printed GPT backup off the phone:
+
+```sh
+tools/axon7-make-vendor.sh --apply --yes     # then reboot to recovery
+```
+
+(The script backs up the GPT, refuses an occupied partition 28 or a wrong
+layout, and never touches EFS/persist/modem/bootloader.) Afterwards wipe
+**System** before flashing, because the old ext4 filesystem is larger than
+the shrunken partition.
+
+### B. LineageOS 22.2 (the ROM the reporter already booted)
+
+- [ ] Clean install per the XDA post (Format Data, **then check Data again and
+      set EXT4 if needed**, wipe System/Vendor), flash `lineage-22.2-*-axon7.zip`.
+- [ ] First boot: `adb logcat -b all -d > logcat.txt`, `adb shell dmesg > dmesg.txt`,
+      `adb shell getprop > props.txt`; if it loops, grab `/sys/fs/pstore/`
+      from TWRP right away.
+- [ ] `adb shell getprop sys.boot_completed` -> 1; Settings shows Android 15.
+- [ ] Cellular (only if you have a SIM and accept that this is experimental):
+      - [ ] insert a known-good SIM in slot 1; `adb shell getprop gsm.version.baseband` (no IMEI).
+      - [ ] `adb shell dumpsys telephony.registry > telephony.txt` and `adb logcat -b radio -d > radio.txt` (**redact ICCID/IMSI/phone number**).
+      - [ ] Does Settings > About > SIM status show the carrier? Can you call a known number, send an SMS to yourself, and load a page over mobile data with Wi-Fi off?
+      - [ ] Report exactly which of the three works; "SIM detected" alone is not "cellular works".
+- [ ] Note whether `/data` stayed ext4 after the first boot (`tools/axon7-preflight.sh --rom los22` again).
+
+### C. LineageOS 24 (multi-boot, untested on U)
+
+- [ ] Only after the multi-boot layout and a vendor partition exist. Run `tools/axon7-preflight.sh --rom los24`; all of `boot`, `los_boot`, `los_metadata`, `los_data`, `system`, `vendor` must be present.
+- [ ] Install by ADB sideload as in the XDA post; the installer verifies every write. First start 4-6 min.
+- [ ] `adb logcat -b all -d`, `adb shell dmesg`; check the screen/GPU (a black screen usually means no `a530_zap` on vendor), Wi-Fi and sound route logs. No cellular is implemented; do not test calls as a pass/fail item.
+
+### D. Nura (mainland Linux; untested on U)
+
+- [ ] Write the sdcard image, flash `boot.img` in TWRP, first start. `journalctl -u axon7-firmware` and `sudo dmesg > dmesg.txt`; report whether the modem/DSP/GPU/Wi-Fi firmware was found (with or without a vendor partition).
+- [ ] `cat /sys/class/power_supply/qcom-battery/capacity` before/after; no long run below 30 %.
+- [ ] Cellular: `sudo qmicli -d qrtr://0 --uim-get-card-status` (redact ICCID/IMSI) and `sudo mmcli -L`/`-m 0`; say whether the modem is online and whether a SIM is seen. Calls/SMS/data remain **untested** until someone actually places a call / sends an SMS / transfers data.
+- [ ] Wi-Fi and GPU: connect to a network (do not post the SSID/password), `glxinfo -B` or a GLES test; report the renderer (freedreno) and any firmware error.
+
+### E. iOS 16 (alpha; untested on U)
+
+- [ ] Follow `DEV-MULTIBOOT.md` (no downloads; build from the IPSW). The U's unlock/recovery step is the A2017U one above. There is no cellular support on this port; do not test it.
+- [ ] Report: does the boot menu appear, does iOS reach the lock/home screen, does Wi-Fi rejoin, does touch work? `tools/sweet-log-pull.sh` in TWRP plus `/sys/fs/pstore/pmsg-ramoops-0`.
+
+### F. Report template
+
+```text
+Model/revision: A2017U 4/64
+ROM + build date:
+TZ string:
+TWRP version:
+/data filesystem before/after: ext4 / f2fs
+vendor: absent / <size> MiB / fs
+preflight output (paste):
+first boot: OK / loop (pstore attached)
+cellular: not tested / SIM seen / call / SMS / data (which ones)
+Nura: firmware found / modem online / Wi-Fi / GPU
+notes:
+```
+
+## 0. From the unattended session (2026-11-14 evening)
+
+**Blockers for the unattended work (2026-11-21 afternoon):**
+
+- [x] **Second phone (864463f)** back in TWRP (owner, 2026-11-21 ~16:30). Open question: may Claude set its own sudo password (stored only on this PC, ~/.config/axon7, never in the repo) in that phone's Nura install, so root tests over SSH work without asking? Until then tests boot test kernels with the debug initramfs from TWRP.
+- [x] **Build server** back (owner restarted it, 2026-11-21 ~17:40).
+- [x] **Second phone (864463f) was stuck in fastboot (2026-11-21 ~17:55–18:30);
+      owner power-reset it and reported TWRP at 18:31.** It had enumerated on USB as `18d1:d001 ZTE Axon 7`, but
+      `fastboot devices` / `fastboot getvar product` do not see it at all
+      ("waiting for any device") and `adb devices` lists only the main phone.
+      The zip3 worker holds the phone lock and has tried fastboot commands and
+      an SSH reboot (the latter cannot work in fastboot). Please hold the
+      **power key for ~10 s** to force a power-off, then let it boot and tell
+      Claude which state it reaches (TWRP, Nura, or fastboot again). Do not
+      write any partitions. This blocks zip3's install test and all other
+      second-phone work (ipa/sleep/accel).
+
+**SIM card (2026-11-21):**
+
+- [ ] **SIM card (2026-11-21, updated)**: please insert a known-good SIM in the main phone and tell Claude which slot. QMI on LineageOS 24 (and on Nura) reports both slots "card error 3, no ATR"; this modem firmware answers NOT_SUPPORTED to UIM GET_SLOT_STATUS and DMS UIM GET_STATE, so it cannot tell whether a card is physically present. Calls, SMS and mobile data on both systems wait on this. Details: lineageos-24-mainline/RIL-PLAN.md section 4.1.
+
+**Boot menu:** while Claude works unattended the boot menu default is
+**LineageOS** (any reset must end in a system Claude can reach over adb;
+Nura needs its password). Your old setting was postmarketOS after 5 s. Back to
+it from Nura: `sudo axon7-bootmenu default pmos 5` (the original block is
+also saved as `ios/research/axon7/manual-boot/misc-before.bin`).
+
+**Second phone (serial 864463f) runs Nura r25 now** (2026-11-15, from its
+internal storage: the card image is in its userdata partition, boot.img with
+two startup fixes for 4096-byte UFS sectors, see
+ios/research/phone2/nura-userdata/). Boots, display on, touch bus at 400 kHz,
+touch keys (F1A) present; GPU without firmware (this phone has no vendor
+partition, a530_zap missing). Only you can do the touch part: on that phone,
+swipe and type at the login, press the three touch keys, then tell Claude.
+If typing works, Claude publishes the r25 draft (nura-latest).
+Checked there without hands: 15 thermal zones at 30-40 C, a plain restart
+comes back into Nura, Wi-Fi/modem/ADSP/SLPI firmware load; the GPU works
+after the firmware fix of 11518fe (not in r25: on phones without a vendor
+partition r25 leaves the GPU off).
+
+**Second phone stuck at start (2026-11-20 ~02:00):** after about 70 test
+restarts it stopped in the startup stage (initramfs) and has stayed there
+since: USB networking answers ping, but no SSH and no telnet, which matches
+the "Filesystem needs manual repair (fsck)" screen, where the startup waits
+for a key. Please:
+
+- [ ] Look at the second phone's screen. If it shows the fsck message, press Volume Up (the start continues); otherwise hold the power key ~10 s to restart. Then tell Claude, it repairs the file system over SSH.
+
+**Second phone, r28 kernel (2026-11-19 evening):** suspend, the SMB1351
+second charger chip and CPU idle states, checked without hands on the second
+phone (ios/research/phone2/kernel-r27/RESULTS-r28.md): 7 suspend cycles with
+an alarm wake (30 s to 5 min), USB, Wi-Fi, modem, touch and Bluetooth back
+each time; the SMB1351 driver loads and, off by default, only holds the chip's
+input suspended. Only you can do these:
+
+- [ ] Wall charger (not a PC port), battery below about 80 %. The SMB1351 is off by default; switch it on for this test with one line, `echo 1 | sudo tee /sys/module/smb1351_charger/parameters/enable` (lasts until the next restart; permanently: `echo "options smb1351_charger enable=1" | sudo tee /etc/modprobe.d/smb1351.conf`, or `smb1351_charger.enable=1` on the kernel command line). Then `cat /sys/class/power_supply/smb1351-parallel/online` shows 1 within a minute and `sudo dmesg | grep smb1351` says "parallel charging on"; `cat /sys/class/power_supply/qcom-battery/current_now` is more negative than about -2000000 (more than 2 A into the battery). The phone must not get hot; unplug if it does
+- [ ] Unplugged, `sudo systemctl suspend`: the screen goes dark; a short press of the power key wakes it
+- [ ] Unplugged and suspended: plugging in a charger wakes it
+- [ ] SIM: put a SIM card into the phone and run `sudo qmicli -d qrtr://0 --uim-get-card-status`: does slot 1 say "present" instead of "no-atr-received"?
+
+**Second phone, r27 kernel (2026-11-19):** kernel 0049-0053 (display
+scaler, GPU memory bandwidth, three crash fixes from LineageOS 24) run on the
+second phone (7.3.1-t3+ in its boot partition), checked without hands
+(ios/research/phone2/kernel-r27/RESULTS.md). One audio finding that r26
+has too: in a test, a second short playback (1 s, tinyplay) about 20 s after
+the first, or one started about 70 s after boot while Nura restarts the audio
+processor, failed and the sound stayed off until a restart.
+
+- [ ] After r27: play two songs one after the other (and pause/resume); does the second one play? If not, `sudo dmesg | grep -i q6` and tell Claude
+- [ ] In a desktop that uses hardware planes (Phosh/phoc), a scaled video or window looks right (no seam or edge in the middle of the screen)
+
+**Second phone, kernel 0047/0048 (2026-11-16 night):** the GPU fixes from
+LineageOS 24 (vblank after a display timeout, shared GPU buffers) are in the
+Nura kernel series (linux-zte-axon7 r26) and run on the second phone (test
+kernel 7.3.1-t1+ in its boot partition). Checked without hands: no GPU faults
+in 10 minutes of kmscube, no buffer leak, vblank interrupts keep coming, all
+other drivers as before (ios/research/phone2/kernel-0047-0048/RESULTS.md).
+That phone showed the "Your device is corrupt" screen at every start and
+waited for a key; fixed with `adb reboot "dm-verity enforcing"` from TWRP.
+
+- [ ] On the second phone: the screen shows Nura's console and buffyboard, touch and the three touch keys react
+- [ ] After the r26 release: in Phosh, scroll and open/close apps for a few minutes; `sudo dmesg | grep -i "gpu fault"` prints nothing
+
+**Nura r25** (draft release, built by GitHub after the push of 97fb832):
+touchscreen fix (0044/0045), temperature sensors (tsens), plain reboot fix
+(0046). Flash it, then:
+
+- [ ] Typing on the on-screen keyboard works, quick taps register
+- [ ] `cat /sys/class/thermal/thermal_zone*/type` lists cpu0-thermal ... gpu-top-thermal (about 14 zones); `cat /sys/class/thermal/thermal_zone*/temp` shows 30000-60000 (30-60 C)
+- [ ] `sudo reboot` comes back into Nura (not TWRP), also after a `sudo systemctl reboot --reboot-argument=recovery` + reboot from TWRP
+- [ ] Then publish the draft release on GitHub and paste the changelog from XDA-POST-NURA.md
+
+**LineageOS 24** (build 31 + kernel from los24-kfast.sh, on the phone now):
+
+- [x] Touch: quick taps and typing work (owner, 2026-11-14; 9.8 ms per report)
+- [ ] Speaker sound: not possible yet, ringtones/alarms are silent (Vorbis decoder fails in LOS 24, Claude is on it)
+- [ ] Wi-Fi: connect to your network once (Settings), tell Claude it worked or what it said
+- [ ] Headphones: plug in while music plays (after the decoder fix), sound moves to the headphones
+- [ ] **SIM card**: is a SIM in the phone (which slot)? The modem now runs in LineageOS 24 and reports both slots as "card error, no ATR" (QMI UIM, 2026-11-14). With a SIM inserted that would point to the SIM supply; with none it is just "empty". Just tell Claude yes/no and the slot.
+
 ## 1. Headphone audio (Hi-Fi DAC, AK4490)
 
 Plug in wired headphones first. Start quietly.
@@ -147,12 +335,19 @@ cat /sys/class/power_supply/qcom-battery/{capacity,status,voltage_now,current_no
 ## 6. Cameras (raw, developers)
 
 Confirmed: both cameras deliver raw pictures (README "Front camera" and
-"Rear camera" have the commands). The rear camera has only been seen
-lying on a table (torch reflection, colour bars), never a real scene.
+"Rear camera" have the commands). On LineageOS 24 the rear camera was also
+checked with the flashlight through the camera service (mean brightness
+47 -> 213, exposure 22.8 ms -> 15.4 ms). The phone was lying screen-up in a
+dark room for those tests, so nobody has seen a real scene yet.
 
 - [ ] Rear camera, a real scene: stand the phone up with the back facing
       a bright window or lamp and tell Claude; it takes the picture over
       SSH (nothing to type)
+- [ ] Front camera, a lit scene: put a bright, plain object (a white sheet
+      of paper or a lamp) about 30 cm in front of the selfie camera and
+      tell Claude; it takes the picture over adb. The room light alone
+      changed the front frames numerically, but a lit photo would settle
+      the picture content and the rotation metadata.
 - [ ] Focus: Claude takes a few pictures at different lens positions; one
       of them should be sharp for the distance of the scene
 

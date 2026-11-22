@@ -16,6 +16,7 @@
 #include <libminradio/network/structs.h>
 
 #include <algorithm>
+#include <atomic>
 #include <mutex>
 #include <cstdio>
 
@@ -246,16 +247,52 @@ std::mutex gCacheLock;
 std::optional<sim::CardStatus> gCard;
 std::optional<net::RegStateResult> gReg;
 std::optional<net::SignalStrength> gSignal;
+std::optional<std::string> gImei;
+std::optional<std::string> gRevision;
+std::optional<std::string> gImsi;
 }  // namespace
 
 void refreshModemState() {
     auto card = readCardStatus();
     auto reg = readRegState();
     auto signal = reg ? std::optional<net::SignalStrength>(readSignalStrength()) : std::nullopt;
+    // Identity requests are polling work too: the framework asks for them on
+    // binder threads, which must not block on a restarting modem.
+    auto imei = readImei();
+    auto revision = readRevision();
+    auto imsi = readImsi();
+    auto mode = readOperatingMode();
+    if (mode) {
+        static std::atomic<uint8_t> lastMode{0xff};
+        if (*mode != lastMode) {
+            lastMode = *mode;
+            LOG(INFO) << "DMS operating mode " << (*mode == 0 ? "online" :
+                         *mode == 1 ? "low power" : *mode == 2 ? "offline" : "unknown")
+                      << " (" << static_cast<int>(*mode) << ")";
+        }
+    }
     std::lock_guard l(gCacheLock);
     gCard = card;
     gReg = reg;
     gSignal = signal;
+    gImei = imei;
+    gRevision = revision;
+    gImsi = imsi;
+}
+
+std::optional<std::string> cachedImei() {
+    std::lock_guard l(gCacheLock);
+    return gImei;
+}
+
+std::optional<std::string> cachedRevision() {
+    std::lock_guard l(gCacheLock);
+    return gRevision;
+}
+
+std::optional<std::string> cachedImsi() {
+    std::lock_guard l(gCacheLock);
+    return gImsi;
 }
 
 std::optional<sim::CardStatus> cachedCardStatus() {
@@ -271,6 +308,18 @@ std::optional<net::RegStateResult> cachedRegState() {
 net::SignalStrength cachedSignalStrength() {
     std::lock_guard l(gCacheLock);
     return gSignal ? *gSignal : ::android::hardware::radio::minimal::structs::makeSignalStrength();
+}
+
+std::optional<uint8_t> readOperatingMode() {
+    auto r = qmiRequest(kDms, 0x2D);
+    auto* t = r && r->ok() ? r->tlv(0x01) : nullptr;
+    if (!t || t->empty()) return std::nullopt;
+    return (*t)[0];
+}
+
+bool setOperatingModeOnline() {
+    auto r = qmiRequest(kDms, 0x2E, {0x01, 1, 0, 0});  // 0 = online
+    return r && r->ok();
 }
 
 std::optional<std::string> readImei() {

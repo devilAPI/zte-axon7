@@ -288,3 +288,7 @@ active; `axon7-wifi-rescan.service` rescans the bus and the chip appears
 Speaker stereo is open: with the bottom amplifier on "Right" its output was
 nearly silent in a measurement (the TFA9890 in DSP bypass may ignore the
 channel select), so UCM puts both amplifiers on the left channel (mono).
+
+## A2017U (US) note
+Same hardware and codename; stock B35 has no fastboot.
+See docs/variant-a2017u.md and tools/axon7-preflight.sh --rom nura.

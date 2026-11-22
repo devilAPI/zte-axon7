@@ -62,3 +62,10 @@ charging logos):
   `oem enable-charger-screen`, `oem disable-charger-screen`,
   `oem off-mode-charge`, `oem select-display-panel`, `flashing unlock`, ...
 - LK reads `boot_logo.bmp` from the `splash` partition.
+
+## A2017U (US): no fastboot at all on stock B35
+
+The notes above describe the A2017G bootloader.
+On an A2017U with stock B35 there is no fastboot endpoint.
+adb reboot bootloader boots Android again.
+Details: variant-a2017u.md

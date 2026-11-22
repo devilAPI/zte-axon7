@@ -4,7 +4,7 @@
 
 ### Requirements (read first)
 
-- **A2017G** only (tested on 4 GB / 64 GB).
+- Developed and tested on the **A2017G** (4 GB / 64 GB). **A2017U** (US) and **A2017** (China): same hardware and codename (`ailsa_ii`/`axon7`), untested here. The TWRP zip installs through TWRP, so it does not need fastboot, but it does need the multi-boot layout and a **vendor partition** for the GPU firmware. Stock A2017U B35 has no fastboot endpoint; restore it with the EDL B15-NEW aboot+fbop route (B29 alone was not enough) and reflash TWRP. Use an A2017U modem/firmware base, never an A2017G one. Cellular is not implemented on this build on any model. Run `tools/axon7-preflight.sh --rom los24` first.
 - Unlocked bootloader, **TWRP 3.3.0-0** (`twrp-3.3.0-0-ailsa_ii.img` from https://dl.twrp.me/ailsa_ii/; the tested version).
 - The project's **multi-boot setup** (boot menu with iOS / Nura / LineageOS), including the partition step `axon7-tripleboot-gpt`, which creates the LineageOS partitions: [DEV-MULTIBOOT.md](https://github.com/devilAPI/zte-axon7/blob/main/DEV-MULTIBOOT.md). This build does not install on its own.
 - The **vendor partition** of a ROM installed before (LineageOS 16–18.1, or this project's LineageOS 22.2) must still be in place: the GPU firmware is read from it. Do not wipe Vendor in TWRP.

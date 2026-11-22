@@ -1,8 +1,8 @@
 # ZTE Axon 7 multi-boot (iOS 16 + Nura + LineageOS): development setup
 
 **This is the developers' setup**, used to work on all three systems on one
-phone: a boot menu after the ZTE logo starts iOS, Nura (postmarketOS) or
-LineageOS. To just use Nura, follow [INSTALL-NURA.md](INSTALL-NURA.md)
+phone (developed on an A2017G; A2017U/A2017 notes below): a boot menu after
+the ZTE logo starts iOS, Nura (postmarketOS) or LineageOS. To just use Nura, follow [INSTALL-NURA.md](INSTALL-NURA.md)
 instead; LineageOS on its own is a TWRP zip ([newest release](https://github.com/devilAPI/zte-axon7/releases/tag/lineageos-latest)).
 iOS is **alpha**: no downloads; this guide builds iOS and the multi-boot
 LineageOS from source.
@@ -27,14 +27,23 @@ step is a button press or a command you can copy.
 
 ## ⚠️ Read this first
 
-- Tested on the **A2017G** (global, 4 GB / 64 GB) only. Other models (A2017U, A2017 China) are untested: don't.
+- Developed and tested on the **A2017G** (global, 4 GB / 64 GB). **A2017U** (US) and **A2017** (China) share the SoC, display and UFS layout but are untested here; modem/band firmware and stock software differ. On stock A2017U B35 there is no fastboot, so the unlock step differs (see below). Cellular is untested on A2017U.
 - **Your internal storage is erased** (iOS lives in `userdata`). **Your microSD card is erased** (Nura lives on it). Copy your photos and files off the phone first.
 - Bootloader, modem, EFS/IMEI and recovery are **never** touched. If something goes wrong you can always get back to TWRP (see *Rescue*).
 - This is experimental software. Not for your daily phone.
 
+### A2017U (US) owners
+
+The multi-boot setup works from TWRP and does not need fastboot, but four A2017U-specific points apply:
+
+- **Unlock/recovery:** stock B35 has no fastboot endpoint. The reported route is an **EDL** flash of the **B15-NEW `aboot` + `fbop`** (B29 alone was not enough), which restores `fastboot oem unlock`; the package overwrites recovery, so **flash TWRP again**. See [docs/variant-a2017u.md](docs/variant-a2017u.md).
+- **Modem:** use an A2017U modem/firmware base, never an A2017G one. iOS and Nura copy firmware read-only from `modem`/`vendor`/`system`; LineageOS 22.2 uses the modem services.
+- **Vendor partition:** LineageOS 22.2/24 need the 512 MiB vendor partition. PARTY's download is dead; `tools/axon7-make-vendor.sh` is the read-only-plan/`--apply` `sgdisk` replacement. Create it before the LineageOS slot, or install a ROM that already has it.
+- **`/data`:** the standalone LineageOS 22.2 zip requires **ext4**; TWRP 3.7 can format userdata as f2fs and the first boot then loops ("invalid magic"). This multi-boot layout uses `los_data` for LineageOS, but run `tools/axon7-preflight.sh --rom los24` (or `los22`) before flashing. Cellular on A2017U is **untested**.
+
 ## What you need
 
-**Phone:** ZTE Axon 7 A2017G, **bootloader unlocked**, **TWRP** as recovery
+**Phone:** ZTE Axon 7 A2017G (tested) or A2017U/A2017 (untested, see above), **bootloader unlocked**, **TWRP** as recovery
 (3.3.0 or newer; 3.7.0_9-0: [dl.twrp.me/ailsa_ii](https://dl.twrp.me/ailsa_ii/twrp-3.7.0_9-0-ailsa_ii.img.html)), ideally
 LineageOS 16–18.1 installed before (its `vendor` partition holds the GPU
 firmware the guide copies). A microSD card (8 GB or more) for Nura.
@@ -220,7 +229,7 @@ Change the default from Nura: `sudo axon7-bootmenu default pmos 5`
 - **Boot menu broken (phone always goes to TWRP or hangs):** in TWRP restore the boot partition:
   `adb push backup/stock-lineage-boot.img /tmp/b.img && adb shell dd if=/tmp/b.img of=/dev/block/bootdevice/by-name/boot`
 - **Back to Android (LineageOS 18.1):** TWRP → Wipe → Format Data, then flash the ROM zip as described in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md). This removes iOS. If you ran `axon7-tripleboot-gpt`, restore the saved partition table first (from Nura: `sudo sfdisk /dev/sda < /root/axon7-lun0-before-tripleboot-*.sfdisk`), otherwise Android only sees 20 GB.
-- **Nothing boots, not even TWRP:** EDL mode (above) and a full A2017G EDL package; see the *EDL rescue* note in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md). Not needed so far.
+- **Nothing boots, not even TWRP:** EDL mode (above) and a **full EDL package for your model** (A2017G, A2017U or A2017; never cross-flash a package onto another model); see the *EDL rescue* note in [lineageos-22.2/FLASHING-PLAN.md](lineageos-22.2/FLASHING-PLAN.md). Not needed so far.
 
 ## Getting logs (for bug reports)
 
