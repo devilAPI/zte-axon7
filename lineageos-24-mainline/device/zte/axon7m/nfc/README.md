@@ -42,7 +42,9 @@ app, the AIDL HAL and the NFC feature XML.
   the running LOS kernel produced `/dev/nq-nci`, `/dev/pn5xx`, `/dev/pn54x`
   and answered `NCI_CORE_RESET` (`40 00 03 00 11 00`) and `NCI_CORE_INIT`
   (`40 01 19 00 03 1e ...`) through `PN5XX_SET_PWR` (log
-  `nfchal-logs/nfchal-char-module-20261122T192548Z.log`). `nfc0` was rebound
+  `nfchal-logs/nfchal-char-module-20261122T192548Z.log`). With NCI-frame-sized
+  reads the retest returned exactly 6 and 28 bytes
+  (`nfchal-logs/nfchal-char-module-20261122T200145Z.log`). `nfc0` was rebound
   afterwards.
 * Android side: **not buildable yet**. At `android-17.0.0_r1`
   `hardware/nxp/nfc/Android.bp` only builds the SNxxx (SN1xx/SN220/SN300)

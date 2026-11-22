@@ -585,12 +585,17 @@ was built with the pinned clang against the prepared 7.3.1-axon7m headers
 appeared; the static NDK client sent reset/init over `/dev/nq-nci`:
 `40 00 03 00 11 00` (status 0, NCI 1.1, config 0) and
 `40 01 19 00 03 1e 03 ...` (status 0), then `PN5XX_SET_PWR(0)`.
-Evidence: `nfchal-logs/nfchal-char-module-20261122T192548Z.log` (a later
-run tightened `read()` to return only the NCI-header-declared bytes; needs a
-repeat once the phone lock is free). The script restored `nfc0` and left
-LOS at `boot_completed=1`, battery 99 %. Two bugs were found and fixed by
-this test: the misc aliases needed `MISC_DYNAMIC_MINOR` (probe failed with
--EBUSY otherwise), and `rmmod` needs the module name `pn5xx_raw`.
+Evidence: `nfchal-logs/nfchal-char-module-20261122T192548Z.log`. After
+`read()` was tightened to return only the NCI-header-declared bytes, the
+retest (`nfchal-logs/nfchal-char-module-20261122T200145Z.log`, wrapper
+`nfchal-build/nfc-retest-20261122T200040Z.log`) returned exactly
+`40 00 03 00 11 00` (6 bytes, status 0 / NCI 1.1 / config 0) and
+`40 01 19 00 03 1e ...` (28 bytes, status 0). The script restored `nfc0`
+and left LOS at `boot_completed=1`, battery 99 %. Three bugs were found and
+fixed by these tests: the misc aliases needed `MISC_DYNAMIC_MINOR` (probe
+failed with -EBUSY otherwise), `rmmod` needs the module name `pn5xx_raw`,
+and an `insmod` that hung for 16 min was bounded so the cleanup always
+restores the nxp-nci binding (script commit `1fcf5d4`).
 
 The full built-in kernel (`CONFIG_NFC_PN5XX_CHAR=y`) also builds cleanly
 (`nfchal-kernel-build2.log`, 30 MiB Image); **no test kernel was written to
