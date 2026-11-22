@@ -1,0 +1,36 @@
++ adb root
++ adb push /tmp/opencode/nfcal/axon7-nfc-netlink /data/local/tmp/axon7-nfc-netlink
++ adb shell chmod 755 /data/local/tmp/axon7-nfc-netlink
+++ adb shell dmesg
+++ wc -l
++ D0=1365
++ echo DMESG_START=1365
+DMESG_START=1365
++ adb shell /data/local/tmp/axon7-nfc-netlink down 0
+nfc0: DEV_DOWN ok
++ sleep 1
++ adb shell /data/local/tmp/axon7-nfc-netlink cycle 0
+nfc0: DEV_UP ok
+nfc0: START_POLL ok (protocols 0xfe)
+cmd 7: Invalid argument
++ echo '=== filtered dmesg ==='
+=== filtered dmesg ===
++ adb shell dmesg
++ tail -n +1366
++ grep -i -E 'nfc_dev_up|nfc_dev_down|nci_core_reset|nci_core_init|manufact|nfc_start_poll|nfc_stop_poll|rf_disc|rf_deactivate|leftover'
+[ 4727.879961] nci: nci_core_init_rsp_packet: supported_rf_interfaces[3] 0x3
+[ 4727.879971] nci: nci_core_init_rsp_packet: max_logical_connections 2
+[ 4727.879981] nci: nci_core_init_rsp_packet: max_routing_table_size 720
+[ 4727.879991] nci: nci_core_init_rsp_packet: max_ctrl_pkt_payload_len 255
+[ 4727.880002] nci: nci_core_init_rsp_packet: max_size_for_large_params 2
+[ 4727.880013] nci: nci_core_init_rsp_packet: manufact_id 0x4
+[ 4727.880023] nci: nci_core_init_rsp_packet: manufact_specific_info 0x1f011048
+[ 4727.893312] nci: nci_rf_disc_map_rsp_packet: status 0x0
+[ 4729.894614] nfc: nfc_start_poll: dev_name nfc0 initiator protocols 0xfe target protocols 0x0
+[ 4730.033712] nci: nci_rf_disc_rsp_packet: status 0x0
+[ 4735.034945] netlink: 4 bytes leftover after parsing attributes in process `axon7-nfc-netli'.
+[ 4735.037122] nfc: nfc_stop_poll: dev_name=nfc0
+[ 4735.159986] nci: nci_rf_deactivate_rsp_packet: status 0x0
++ adb shell svc power stayon false
++ adb shell getprop sys.boot_completed
+1

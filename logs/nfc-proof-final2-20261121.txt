@@ -1,0 +1,33 @@
++ adb root
++ adb push /tmp/opencode/nfcal/axon7-nfc-netlink /data/local/tmp/axon7-nfc-netlink
++ adb shell chmod 755 /data/local/tmp/axon7-nfc-netlink
+++ adb shell dmesg
+++ wc -l
++ D0=1432
++ echo DMESG_START=1432
+DMESG_START=1432
++ adb shell /data/local/tmp/axon7-nfc-netlink down 0
+nfc0: DEV_DOWN ok
++ sleep 1
++ adb shell /data/local/tmp/axon7-nfc-netlink cycle 0
+nfc0: DEV_UP ok
+nfc0: START_POLL ok (protocols 0xfe)
+nfc0: STOP_POLL ok
+nfc0: DEV_DOWN ok
++ echo '=== filtered dmesg ==='
+=== filtered dmesg ===
++ adb shell dmesg
++ tail -n +1433
++ grep -i -E 'nfc_dev_up|nfc_dev_down|nci_core_reset_rsp|nci_ver|nci_core_init_rsp_v1|manufact|nfc_start_poll|nfc_stop_poll|rf_disc_rsp|rf_deactivate_rsp|leftover'
+[ 4788.600260] nci: nci_core_init_rsp_packet: manufact_id 0x4
+[ 4788.600286] nci: nci_core_init_rsp_packet: manufact_specific_info 0x1f011048
+[ 4790.615201] nfc: nfc_start_poll: dev_name nfc0 initiator protocols 0xfe target protocols 0x0
+[ 4790.753622] nci: nci_rf_disc_rsp_packet: status 0x0
+[ 4795.754633] nfc: nfc_stop_poll: dev_name=nfc0
+[ 4795.872351] nci: nci_rf_deactivate_rsp_packet: status 0x0
+[ 4796.873606] nfc: nfc_dev_down: dev_name=nfc0
+[ 4797.005148] nci: nci_core_reset_rsp_packet: status 0x0
+[ 4797.005192] nci: nci_core_reset_rsp_packet: nci_ver 0x11, config_status 0x1
++ adb shell svc power stayon false
++ adb shell getprop sys.boot_completed
+1

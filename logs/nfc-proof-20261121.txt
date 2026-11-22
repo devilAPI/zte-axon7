@@ -1,0 +1,48 @@
++ adb root
++ adb wait-for-device
++ adb shell 'date; uname -a; cat /sys/class/power_supply/qcom-battery/capacity; ls -l /sys/class/nfc/'
+Fri Nov 20 02:34:47 GMT 2026
+Linux localhost 7.3.1-axon7m #31 SMP PREEMPT Fri Nov 20 01:58:00 CET 2026 aarch64 Toybox
+99
+total 0
+lrwxrwxrwx 1 root root 0 2026-11-20 01:32 nfc0 -> ../../devices/platform/soc@0/75b6000.i2c/i2c-3/3-0028/nfc/nfc0
+++ adb shell dmesg
+++ wc -l
++ D0=1294
++ echo 'dmesg lines before: 1294'
+dmesg lines before: 1294
++ adb push /tmp/opencode/nfcal/axon7-nfc-netlink /data/local/tmp/
+/tmp/opencode/nfcal/axon7-nfc-netlink: 1 file pushed, 0 skipped. 234.6 MB/s (2224648 bytes in 0.009s)
++ adb shell chmod 755 /data/local/tmp/axon7-nfc-netlink
++ adb shell /data/local/tmp/axon7-nfc-netlink info 0
+nfc device present (family 28)
++ adb shell /data/local/tmp/axon7-nfc-netlink up 0
+nfc0: DEV_UP ok
++ sleep 2
++ adb shell /data/local/tmp/axon7-nfc-netlink poll 0
+nfc0: START_POLL ok (protocols 0xfe)
++ sleep 5
++ adb shell /data/local/tmp/axon7-nfc-netlink stop 0
+cmd 7: Invalid argument
++ adb shell /data/local/tmp/axon7-nfc-netlink down 0
+nfc0: DEV_DOWN ok
++ adb shell 'cat /sys/class/nfc/nfc0/power_state 2>/dev/null; cat /sys/class/nfc/nfc0/device/uevent; grep -i nfc /proc/interrupts | head'
+DRIVER=nxp-nci_i2c
+OF_NAME=nfc
+OF_FULLNAME=/soc@0/i2c@75b6000/nfc@28
+OF_COMPATIBLE_0=nxp,nxp-nci-i2c
+OF_COMPATIBLE_N=1
+MODALIAS=of:NnfcT(null)Cnxp,nxp-nci-i2c
++ echo '=== dmesg since test ==='
+=== dmesg since test ===
+++ adb shell dmesg
+++ wc -l
++ D1=1295
++ echo 'dmesg lines after: 1295'
+dmesg lines after: 1295
++ adb shell dmesg
++ tail -n +1295
+[ 4547.606864] healthd: battery l=99 v=4330 t=28.7 h=2 st=5 c=305 chg=u
++ adb shell svc power stayon false
++ adb shell getprop sys.boot_completed
+1
