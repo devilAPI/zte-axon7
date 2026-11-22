@@ -54,6 +54,28 @@ reference.
   `CONFIG_QCOM_IPA=m` stays for newer SoCs). The module is deliberately not
   loaded from `modules-load.d`: it must be loaded only after the modem runs.
 
+## Port progress (2026-11-22)
+
+The kernel port is committed on branch `agent/ipa` of the GPL tree
+(`gpl-nura` + 4 commits): `net: add the ipa2-lite driver for IPA v2.x`
+(d119afce9), `net: ipa2-lite: support IPA v2.5 on MSM8996` (7ef3a4237,
+BAM remote mode + header processing context), `net: ipa2-lite: QMAPv4
+checksums and TX/lifetime fixes` (3d0c35217) and
+`arm64: dts: qcom: msm8996-zte-axon7: add IPA v2.5` (e926b6bfd). The DT
+adds the IPA node at 0x680000 with the modem/TZ-owned BAM and the IPA
+entries in the MSS SMP2P; the mpss carveout is already in msm8996.dtsi.
+
+The driver patches are the Xiaomi Mi MIX tree's 0026/0033/0039/0043,
+rebased onto v7.3.1. Their upstream evidence (Mi MIX, same MSM8996/IPA
+v2.5) is probe + `rmnet_ipa0` + data with a SIM; we have no SIM, so our
+done criterion is probe + modem up + netdev + a WDA/QMI data-format call.
+
+Build note: GNU make 4.3's `$(realpath ...)` returns empty for paths with
+spaces, so `make O=...` cannot be used directly under
+`/media/devilapi/Secondary HDD 2TB/...`. The build uses a copy of the
+source and kout under `/home/devilapi/axon7-kbuild/ipa-*` (no spaces);
+the commits stay in the HDD clone.
+
 ## Build evidence
 
 (to be filled in)
