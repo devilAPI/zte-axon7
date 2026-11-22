@@ -104,7 +104,8 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/bin/axon7m-bdaddr.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-bdaddr.sh \
     $(DEVICE_PATH)/bin/axon7m-audio-routes.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-audio-routes.sh \
     $(DEVICE_PATH)/bin/axon7m-sns-reg.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-sns-reg.sh \
-    $(DEVICE_PATH)/bin/axon7m-slpi-kick.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-slpi-kick.sh
+    $(DEVICE_PATH)/bin/axon7m-slpi-kick.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-slpi-kick.sh \
+    $(DEVICE_PATH)/bin/axon7m-efs-shadow.sh:$(TARGET_COPY_OUT_VENDOR)/bin/axon7m-efs-shadow.sh
 # q6asm takes period sizes in steps of 480 frames only (capture periods up to
 # 4096 bytes): with aosp/hardware/interfaces 0001 the AIDL HAL rounds its PCM
 # buffers to 4 periods of 480-frame steps (85 ms at 48 kHz -> 3840 frames,

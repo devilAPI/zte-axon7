@@ -6,6 +6,9 @@ init_daemon_domain(axon7m_rmtfs)
 allow axon7m_rmtfs block_device:dir search;
 allow axon7m_rmtfs block_device:lnk_file read;
 allow axon7m_rmtfs axon7m_modem_block_device:blk_file { open read getattr };
+allow axon7m_rmtfs vendor_data_file:dir search;
+allow axon7m_rmtfs axon7m_efs_shadow_data_file:dir r_dir_perms;
+allow axon7m_rmtfs axon7m_efs_shadow_data_file:file rw_file_perms;
 allow axon7m_rmtfs axon7m_rmtfs_device:chr_file { open read write getattr };
 allow axon7m_rmtfs self:capability net_admin;
 allow axon7m_rmtfs self:qipcrtr_socket { bind create getattr read setopt write };
