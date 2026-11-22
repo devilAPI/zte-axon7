@@ -1,0 +1,6 @@
+== 2026-11-22T20:51:33 build 52
+902ccf8461c5b95a48e35d310b3193944556287fe8fa1c9c4a03dc4a4fe7be51  boot.img
+5e91d7c543ceb40ff6a41df4e326241f98438ab3cea97a9b6828728e9ef5f61d  super.img
+boot.img: OK
+super.img: OK
+fetched: -rw-rw-r-- 1 devilapi devilapi  31M Nov 22 20:51 /home/devilapi/Documents/GitHub/zte-axon7/ios/research/los24-build-52/boot.img -rw-r--r-- 1 devilapi devilapi 1,2G Nov 22 20:52 /home/devilapi/Documents/GitHub/zte-axon7/ios/research/los24-build-52/super.img 
