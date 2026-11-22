@@ -1,17 +1,23 @@
-From cd80e33a06211172702e9211b054e970a23b0d36 Mon Sep 17 00:00:00 2001
+From 987199eeecd6f7704bd8db013301eed5b5e52535 Mon Sep 17 00:00:00 2001
 From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
-Date: Sat, 21 Nov 2026 16:48:41 +0100
-Subject: [PATCH] nfc: add PN5xx raw character device for Android HAL
+Date: Sun, 22 Nov 2026 20:02:18 +0100
+Subject: [PATCH] nfc: add gated PN5xx raw NCI character device
 
+Expose /dev/nq-nci (plus pn5xx/pn54x aliases) on the existing PN548
+I2C node when pn5xx_raw=1, for the Android NXP NFC HAL. Nura leaves
+the parameter off and keeps nxp-nci/nfc0.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
 ---
  drivers/nfc/Kconfig     |  12 ++
  drivers/nfc/Makefile    |   1 +
- drivers/nfc/pn5xx-raw.c | 325 ++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 338 insertions(+)
- create mode 100644 drivers/nfc/pn5xx-raw.c
+ drivers/nfc/pn5xx-raw.c | 326 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 339 insertions(+)
+ create mode 100755 drivers/nfc/pn5xx-raw.c
 
 diff --git a/drivers/nfc/Kconfig b/drivers/nfc/Kconfig
-index 288c6f1..eda1807 100644
+index 288c6f1c6..eda18075e 100644
 --- a/drivers/nfc/Kconfig
 +++ b/drivers/nfc/Kconfig
 @@ -68,6 +68,18 @@ source "drivers/nfc/nfcmrvl/Kconfig"
@@ -34,7 +40,7 @@ index 288c6f1..eda1807 100644
  source "drivers/nfc/st95hf/Kconfig"
  endmenu
 diff --git a/drivers/nfc/Makefile b/drivers/nfc/Makefile
-index 7b1bfde..4bc31e4 100644
+index 7b1bfde1d..4bc31e447 100644
 --- a/drivers/nfc/Makefile
 +++ b/drivers/nfc/Makefile
 @@ -15,6 +15,7 @@ obj-$(CONFIG_NFC_TRF7970A)	+= trf7970a.o
@@ -46,11 +52,11 @@ index 7b1bfde..4bc31e4 100644
  obj-$(CONFIG_NFC_ST95HF)	+= st95hf/
  obj-$(CONFIG_NFC_VIRTUAL_NCI)	+= virtual_ncidev.o
 diff --git a/drivers/nfc/pn5xx-raw.c b/drivers/nfc/pn5xx-raw.c
-new file mode 100644
-index 0000000..3b3f113
+new file mode 100755
+index 000000000..d3a562530
 --- /dev/null
 +++ b/drivers/nfc/pn5xx-raw.c
-@@ -0,0 +1,325 @@
+@@ -0,0 +1,326 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * NXP PN5xx raw character device for the Android NFC HAL
@@ -128,6 +134,8 @@ index 0000000..3b3f113
 +{
 +	struct pn5xx_raw *raw = data;
 +
++	/* Level IRQ: mask it here, read() re-enables after draining the FIFO. */
++	disable_irq_nosync(irq);
 +	atomic_set(&raw->irq_pending, 1);
 +	wake_up_interruptible(&raw->read_wq);
 +	return IRQ_HANDLED;
@@ -171,8 +179,7 @@ index 0000000..3b3f113
 +			return ret;
 +	}
 +
-+	/* A level IRQ stays asserted until the frame has been read. */
-+	disable_irq(raw->client->irq);
++	/* The IRQ handler masked the level IRQ; always unmask after the read. */
 +	atomic_set(&raw->irq_pending, 0);
 +	mutex_lock(&raw->xfer_lock);
 +	ret = i2c_master_recv(raw->client, data, count);
@@ -225,8 +232,8 @@ index 0000000..3b3f113
 +	case P61_SET_SPI_PWR:
 +	case P61_SET_WIRED_ACCESS:
 +	case P544_SET_NFC_SERVICE_PID:
-+		/* No eSE/SWP on the Axon 7: accept and ignore. */
-+		return value ? -EOPNOTSUPP : 0;
++		/* No eSE/SWP on the Axon 7: accept and ignore all values. */
++		return 0;
 +	case P61_GET_PWR_STATUS: {
 +		/* P61 (eSE) is always off. */
 +		unsigned int off = 0;
