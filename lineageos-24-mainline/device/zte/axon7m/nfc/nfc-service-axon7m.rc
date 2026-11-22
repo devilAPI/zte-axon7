@@ -1,0 +1,6 @@
+# PN548 AIDL NFC HAL (device/zte/axon7m/nfc/), installed with AXON7_NFC=1.
+service vendor.nfc_hal_service /vendor/bin/hw/android.hardware.nfc-service.axon7m
+    class early_hal
+    user nfc
+    group nfc
+    seclabel u:r:hal_nfc_default:s0

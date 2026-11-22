@@ -1,0 +1,22 @@
+// AIDL android.hardware.nfc HAL for the PN548 on the mainline kernel.
+// libnfc-nci in packages/modules/Nfc does the NCI protocol work; this HAL
+// only drives /dev/nq-nci from the kernel's pn5xx-raw driver.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_binary {
+    name: "android.hardware.nfc-service.axon7m",
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["nfc-service-axon7m.rc"],
+    vintf_fragments: ["manifest_nfc.xml"],
+    srcs: ["Nfc.cpp"],
+    cflags: ["-Wall", "-Werror"],
+    shared_libs: [
+        "android.hardware.nfc-V2-ndk",
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+    ],
+}

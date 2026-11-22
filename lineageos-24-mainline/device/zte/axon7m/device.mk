@@ -285,20 +285,17 @@ PRODUCT_COPY_FILES += $(DEVICE_PATH)/power/powerhint.json:$(TARGET_COPY_OUT_VEND
 PRODUCT_VENDOR_PROPERTIES += vendor.powerhal.disp.idle_support=false
 
 # NFC (experimental, AXON7_NFC=1): PN548 on the mainline kernel via the
-# pn5xx-raw character driver (nfc/libnfc-*.conf, nfc/README.md). The NXP AIDL
-# HAL and the NFC app are only built with the switch, so normal builds keep
-# the untouched Nura kernel NCI stack and do not advertise NFC.
-# NOTE: at android-17.0.0_r1 hardware/nxp/nfc only builds the SNxxx HAL;
-# its PN548 firmware/config has to be ported before this can be enabled in
-# a release. Do not set AXON7_NFC=1 in CI yet.
+# pn5xx-raw character driver and our small AIDL HAL in nfc/ (README.md).
+# AOSP's libnfc-nci stack speaks NCI through it; the HAL only owns the device.
+# The HAL, its manifest/init rc and the NFC app are only built with the switch,
+# so normal builds keep the untouched Nura kernel NCI stack and do not
+# advertise NFC. Do not set AXON7_NFC=1 in CI before the phone test passes.
 ifeq ($(AXON7_NFC),1)
 PRODUCT_PACKAGES += \
     Nfc \
-    android.hardware.nfc-service.nxp
+    android.hardware.nfc-service.axon7m
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/nfc/libnfc-nci.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nci.conf \
-    $(DEVICE_PATH)/nfc/libnfc-nxp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nxp.conf \
-    $(DEVICE_PATH)/nfc/manifest_nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vintf/manifest/manifest_nfc.xml \
     $(DEVICE_PATH)/nfc/init.axon7m.nfc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.axon7m.nfc.rc \
     frameworks/native/data/etc/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.xml
 endif

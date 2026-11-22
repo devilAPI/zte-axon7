@@ -121,10 +121,10 @@ BOARD_HOSTAPD_DRIVER := NL80211
 # Bluetooth: HCI user channel (AOSP default AIDL HAL)
 BOARD_HAVE_BLUETOOTH := true
 
-# NFC (AXON7_NFC=1 only): the kernel's nxp-nci stack and the Android NXP HAL
-# cannot own the same PN548. pn5xx_raw=1 makes the built-in pn5xx-raw driver
-# bind the existing nxp,nxp-nci-i2c node and expose /dev/nq-nci instead.
-# Nura and normal LineageOS builds leave this unset and keep nxp-nci/nfc0.
+# NFC (AXON7_NFC=1 only): the kernel's nxp-nci stack and our AIDL HAL cannot
+# own the same PN548. pn5xx_raw=1 makes the built-in pn5xx-raw driver (LOS
+# kernel patch 0022) bind the existing nxp,nxp-nci-i2c node and expose
+# /dev/nq-nci instead. Nura and normal LOS builds leave this unset.
 AXON7_NFC ?= 0
 ifeq ($(AXON7_NFC),1)
 BOARD_KERNEL_CMDLINE += pn5xx_raw=1
