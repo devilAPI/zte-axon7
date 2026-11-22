@@ -206,6 +206,15 @@ until a reboot. Off-device tests (fake sysfs/proc): `audio-tools/test-audio-kick
 as the unprivileged user printed
 `card=yes codec=yes pcm=yes open=no` and "the sound card is ready".
 
+One path stays uncovered by that test: while Android held the card, the
+LineageOS build kept the SLIMbus NGD `active`
+(`/sys/bus/platform/devices/qcom,slim-ngd.1/power/runtime_status`), while on
+Nura it is `suspended` between streams (patch 0018 rewrites the AK4961 port
+arrays in every `hw_params` exactly for that). So the NGD resume after a long
+idle is still to be exercised on Nura; on the second phone the card, codec
+and PCM are present, but the SSH user cannot open `/dev/snd` and there is no
+sudo password, so `to-test.md` asks the owner for it.
+
 Still to do: install r31 on the second phone, play ten times with pauses and
 once while forcing an ADSP restart (`to-test.md`); the script's `--check`
 needs no root, the restart itself does.
