@@ -64,7 +64,8 @@ only with `AXON7_NFC=1`; normal builds are unchanged.
 * Kernel side: raw driver proven as a module in the running LOS #31 kernel
   and added to the LOS kernel patches as `0022` (not yet built into a boot
   image here).
-* HAL: source compiles and links cleanly; see `PLAN.md` for the build notes
-  and the bind-mount test on the main phone. Default builds keep
-  `AXON7_NFC=0`; do not enable it in CI before the test has shown
-  `dumpsys nfc` with polling.
+* HAL: source compiles and links cleanly (NDK r30, generated V2 AIDL
+  sources); see `PLAN.md` for the build notes. The bind-mount test on the
+  main phone could not run on 2026-11-22 because that phone was off USB
+  after another worker's test kernel hung it. Default builds keep
+  `AXON7_NFC=0`; do not enable it in CI before `dumpsys nfc` shows polling.
