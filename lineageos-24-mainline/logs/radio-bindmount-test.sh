@@ -42,7 +42,7 @@ for lib in "${LIBS[@]}"; do
   adb push "$W/lineageos-24-mainline/tmp-radio-test/$lib" "/data/local/tmp/$lib" >/dev/null 2>&1
   adb shell chcon u:object_r:vendor_file:s0 "/data/local/tmp/$lib"
 done
-adb push "$W/lineageos-24-mainline/tmp-radio-test/radio-wrapper.sh" /data/local/tmp/radio-wrapper.sh >/dev/null 2>&1
+adb push "$W/lineageos-24-mainline/logs/radio-test-wrapper.sh" /data/local/tmp/radio-wrapper.sh >/dev/null 2>&1
 adb shell chmod 755 /data/local/tmp/radio-wrapper.sh
 # Keep the bind-mounted file's label as it would be in a real image (the phone
 # is permissive, but a future enforcing build must still work).

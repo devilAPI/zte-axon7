@@ -1,0 +1,45 @@
+== 2026-11-22T17:28:08Z radio bind-mount test
+-- battery --
+99
+6d266b6a0fb42f883058ba30b677ee9f  /media/devilapi/Secondary HDD 2TB/ai-worker/axon7/radio/lineageos-24-mainline/tmp-radio-test/radio-axon7m-new
+/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/radio/lineageos-24-mainline/tmp-radio-test/radio-axon7m-new: 1 file pushed, 0 skipped. 4.6 MB/s (480560 bytes in 0.100s)
+6d266b6a0fb42f883058ba30b677ee9f  /data/local/tmp/radio-axon7m-test
+-- stop old HAL --
+-- bind mount wrapper (LD_LIBRARY_PATH for the two new V4 libs) --
+f8dfaa43112241c21e519b554fabc5cb  /vendor/bin/hw/android.hardware.radio-service.axon7m
+-- start new HAL --
+svc=running
+-- restart phone process to rebind --
+-- battery after --
+99
+-- service list (expect 7 radio services) --
+37	android.hardware.radio.config.IRadioConfig/default: [android.hardware.radio.config.IRadioConfig]
+38	android.hardware.radio.data.IRadioData/slot1: [android.hardware.radio.data.IRadioData]
+39	android.hardware.radio.modem.IRadioModem/slot1: [android.hardware.radio.modem.IRadioModem]
+40	android.hardware.radio.network.IRadioNetwork/slot1: [android.hardware.radio.network.IRadioNetwork]
+41	android.hardware.radio.sim.IRadioSim/slot1: [android.hardware.radio.sim.IRadioSim]
+-- dumpsys telephony.registry --
+    mServiceState={mVoiceRegState=1(OUT_OF_SERVICE), mDataRegState=1(OUT_OF_SERVICE), mChannelNumber=-1, duplexMode()=0, mCellBandwidths=[], mOperatorAlphaLong=, mOperatorAlphaShort=, isManualNetworkSelection=false(automatic), getRilVoiceRadioTechnology=16(GSM), getRilDataRadioTechnology=16(GSM), mCssIndicator=unsupported, mIsEmergencyOnly=false, isUsingCarrierAggregation=false, mArfcnRsrpBoost=0, mNetworkRegistrationInfos=[NetworkRegistrationInfo{ domain=PS transportType=WLAN registrationState=UNKNOWN networkRegistrationState=UNKNOWN roamingType=NOT_ROAMING accessNetworkTechnology=UNKNOWN rejectCause=0 emergencyEnabled=false availableServices=[] cellIdentity=null voiceSpecificInfo=null dataSpecificInfo=null nrState=NONE rRplmn= isUsingCarrierAggregation=false isNonTerrestrialNetwork=TERRESTRIAL satelliteTechnology=NT_RADIO_TECHNOLOGY_UNKNOWN}, NetworkRegistrationInfo{ domain=CS transportType=WWAN registrationState=NOT_REG_SEARCHING networkRegistrationState=NOT_REG_SEARCHING roamingType=NOT_ROAMING accessNetworkTechnology=GSM rejectCause=0 emergencyEnabled=false availableServices=[] cellIdentity=null voiceSpecificInfo=VoiceSpecificRegistrationInfo { mCssSupported=false mRoamingIndicator=0 mSystemIsInPrl=0 mDefaultRoamingIndicator=0} dataSpecificInfo=null nrState=NONE rRplmn= isUsingCarrierAggregation=false isNonTerrestrialNetwork=TERRESTRIAL satelliteTechnology=NT_RADIO_TECHNOLOGY_UNKNOWN}, NetworkRegistrationInfo{ domain=PS transportType=WWAN registrationState=NOT_REG_SEARCHING networkRegistrationState=NOT_REG_SEARCHING roamingType=NOT_ROAMING accessNetworkTechnology=GSM rejectCause=0 emergencyEnabled=false availableServices=[] cellIdentity=null voiceSpecificInfo=null dataSpecificInfo=android.telephony.DataSpecificRegistrationInfo :{ maxDataCalls = 16 isDcNrRestricted = false isNrAvailable = false isEnDcAvailable = false mLteAttachResultType = 0 mLteAttachExtraInfo = 0 null } nrState=NONE rRplmn= isUsingCarrierAggregation=false isNonTerrestrialNetwork=TERRESTRIAL satelliteTechnology=NT_RADIO_TECHNOLOGY_UNKNOWN}], mNrFrequencyRange=0, mOperatorAlphaLongRaw=, mOperatorAlphaShortRaw=, mIsDataRoamingFromRegistration=false, mIsIwlanPreferred=false, mIsUsingNonTerrestrialNetwork=false}
+    mSignalStrength=SignalStrength:{mCdma=CellSignalStrengthCdma: cdmaDbm=[REDACTED] cdmaEcio=[REDACTED] evdoDbm=[REDACTED] evdoEcio=[REDACTED] evdoSnr=[REDACTED] level=0,mGsm=CellSignalStrengthGsm: rssi=-83 ber=99 mTa=[REDACTED] mLevel=4,mWcdma=CellSignalStrengthWcdma: ss=[REDACTED] ber=[REDACTED] rscp=[REDACTED] ecno=[REDACTED] level=0,mTdscdma=CellSignalStrengthTdscdma: rssi=[REDACTED] ber=[REDACTED] rscp=[REDACTED] level=0,mLte=CellSignalStrengthLte: rssi=[REDACTED] rsrp=[REDACTED] rsrq=[REDACTED] rssnr=[REDACTED] cqiTableIndex=[REDACTED] cqi=[REDACTED] ta=[REDACTED] level=0 parametersUseForLevel=0,mNr=CellSignalStrengthNr:{ csiRsrp = [REDACTED] csiRsrq = [REDACTED] csiCqiTableIndex = [REDACTED] csiCqiReport = [] ssRsrp = [REDACTED] ssRsrq = [REDACTED] ssSinr = [REDACTED] level = 0 parametersUseForLevel = 0 timingAdvance = [REDACTED] },primary=CellSignalStrengthGsm}
+    mDataConnectionState=-1
+  mRadioPowerState=1
+-- identity fields present (count only, values never printed) --
+0
+-- HAL process --
+radio         9202     1   10925636   6972 binder_ioctl_write_read 0 S radio-axon7m-test
+-- HAL log (redacted) --
+11-21 00:30:40.858  9227  9265 D RILJ    : [0045]> DATA_REGISTRATION_STATE [PHONE0]
+11-21 00:30:40.863  9227  9254 D RILJ    : [0045]< DATA_REGISTRATION_STATE RegStateResult{regState: NOT_REG_MT_SEARCHING_OP, rat: GSM, reasonForDenial: NONE, cellIdentity: CellIdentity.noinit(true), registeredPlmn: , accessTechnologySpecificInfo: AccessTechnologySpecificInfo.noinit(false)} [PHONE0]
+11-21 00:30:40.866  9227  9265 D RILJ    : [0046]> VOICE_REGISTRATION_STATE [PHONE0]
+11-21 00:30:40.868  9227  9254 D RILJ    : [0046]< VOICE_REGISTRATION_STATE RegStateResult{regState: NOT_REG_MT_SEARCHING_OP, rat: GSM, reasonForDenial: NONE, cellIdentity: CellIdentity.noinit(true), registeredPlmn: , accessTechnologySpecificInfo: AccessTechnologySpecificInfo.noinit(false)} [PHONE0]
+-- phone-process crashes --
+11-21 00:04:13.754   791  1490 I am_crash: [7933,0,com.android.phone,818429517,android.app.RemoteServiceException$CrashedByAdbException,shell-induced crash,ActivityThread.java,2581,0]
+11-21 00:12:13.580   791  1186 I am_crash: [8179,0,com.android.phone,818429517,android.app.RemoteServiceException$CrashedByAdbException,shell-induced crash,ActivityThread.java,2581,0]
+11-21 00:12:21.449   791  1037 I am_crash: [8918,0,com.android.phone,818429517,android.app.RemoteServiceException$CrashedByAdbException,shell-induced crash,ActivityThread.java,2581,0]
+11-21 00:30:38.959   791  8175 I am_crash: [8977,0,com.android.phone,818429517,android.app.RemoteServiceException$CrashedByAdbException,shell-induced crash,ActivityThread.java,2581,0]
+-- DMS operating mode --
+result 0, QMI error 0
+TLV 0x01 len 1: 00
+-- restore 17:29:03
+-- restored radio services: 5
+-- restored: svc=running stay_on=0 reach=OK

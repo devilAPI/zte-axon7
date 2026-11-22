@@ -673,8 +673,8 @@ a call implementation.
   original HAL, VINTF fragment and `com.android.phone` were restored on every
   exit path; end state `svc=running`, 5 radio services (as before),
   `stay_on_while_plugged_in=0`, `reach=OK`. Raw logs:
-  `logs/radio-bindmount-test.txt`, `logs/radio-bindmount-probe.txt`,
-  `logs/radio-bindmount-diag.txt`, `logs/radio-phone-recon2.txt`.
+  `logs/radio-bindmount-test.txt`, `logs/radio-bindmount-diag.txt`,
+  `logs/radio-phone-recon2.txt`.
 - **Old-image workaround:** the installed image predates
   `android.hardware.radio.messaging-V4-ndk.so` and
   `android.hardware.radio.voice-V4-ndk.so`; a direct start failed with
@@ -706,6 +706,10 @@ a call implementation.
   DMS/UIM responses on binder threads and are never logged; no personal
   values were written to any log or repo file. SELinux enforcing, modem
   restart, a full image and voice/data calls were not tested.
+- A follow-up probe for framework identity requests could not run: after the
+  successful test the main phone disappeared from USB (`adb devices` empty)
+  while its lock was held by another worker. No phone actions were attempted
+  after that and the failed attempt's empty logs are not kept.
 
 ## Sources
 
