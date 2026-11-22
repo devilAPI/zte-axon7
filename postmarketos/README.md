@@ -198,6 +198,19 @@ succeeded (`suspend_stats/success` 1, `dmesg`: `PM: suspend entry (s2idle)` at
 gadget suspends and comes back after the wake; the shell command that started
 the suspend therefore cannot be used to time the cycle.
 
+Test status 2026-11-22: the four patches were rebuilt on top of the LineageOS
+kernel (`kernel-los-build.log`, config check "0 option(s) differ") and a test
+boot image was written to the MAIN phone's `los_boot` with the one-shot boot
+menu entry (`kfast-sleep-20261122.log`).  After the reboot adb never came back
+within 10 minutes (the script saw TWRP once, rebooted, then timed out); the
+phone also stopped enumerating on USB.  The test kernel therefore never gave
+a shell, and no `vlow`/`vmin` count was measured.  Per the phone-safety rules
+all phone work was stopped at that point.  The boot menu is still set to
+"LineageOS once" with the unproven test kernel in `los_boot`; the saved menu
+block is `.kfast-sleep/misc-before.bin` and the known-good kernel is
+`ios/research/los24-build-51/boot.img`.  The phone needs owner attention
+(force power-off / recovery) before further tests.
+
 Test status 2026-11-21: no rpm `vlow`/`vmin` count has been measured yet.
 `fastboot -s 864463f boot boot-sleep1-root.img` returned OKAY, but after the
 boot the phone reported `Linux version 7.3.1-t7+` and uptime matching that

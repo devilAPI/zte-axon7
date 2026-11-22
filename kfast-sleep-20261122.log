@@ -1,0 +1,5 @@
+== MAIN phone 7e15695a: saving boot menu (2026-11-22T18:34:03)
+== los_boot (/dev/block/sda10) written and verified, boot menu: LineageOS once (2026-11-22T18:34:22)
+== waiting for LineageOS (2026-11-22T18:34:27)
+   in TWRP: rebooting to LineageOS
+no adb after 10 min; boot menu still points to LineageOS, backup: /media/devilapi/Secondary HDD 2TB/ai-worker/axon7/sleep/.kfast-sleep/misc-before.bin
