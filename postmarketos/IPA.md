@@ -120,6 +120,39 @@ not loaded unless the modem remoteproc is `running` (the Mi MIX port found
 that probing with the modem stopped resets the SoC). No SIM is available,
 so a WDS/WDA data-format call is only possible if a QMI client is present.
 
-## Phone evidence
+## Phone evidence (2026-11-22)
 
-(to be filled in)
+The driver was tested **without flashing any partition or rebooting** on the
+MAIN phone (7e15695a) in LineageOS 24 kernel `7.3.1-axon7m #31`: a small,
+temporary out-of-tree module applies a DT fragment that adds `ipa@680000`
+to the live device tree, then `ipa2-lite.ko` is loaded by `insmod`. Both
+modules were built against a copy of the exact prepared build tree for `#31`
+(LOS config, `CONFIG_LOCALVERSION="-axon7m"`, `CONFIG_MODVERSIONS` off);
+`modinfo` reports `vermagic=7.3.1-axon7m SMP preempt mod_unload aarch64`
+for both, matching the phone's own `qmi_helpers.ko`/`ipa.ko`. The test only
+runs with `sys.boot_completed=1`, adb root, battery >= 30 % and the `mss`
+remoteproc `running`; no boot/misc/modem partitions are touched.
+
+`test_mode=1` probe (no QMI/modem handshake), evidence in
+`ipa-phone-evidence/test-20261122-195405.log` and `dmesg-testmode.txt`:
+
+```
+[  792.108978] ipa-dt-test: apply ret=0 ovcs_id=1
+[  795.119370] ueventd: LoadWithAliases was unable to load of:NipaT(null)Cqcom,ipa-v2.5, tried: of:NipaT(null)Cqcom,ipa_v2.5
+10: ipa_lo0: <> mtu 2012 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+11: ipa_lo1: <> mtu 2012 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+12: ipa_lan0: <> mtu 2012 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+ipa2_lite 32768 0 - Live ... (O)
+qcom_common 16384 4 ipa2_lite,... ; qmi_helpers 24576 7 ipa2_lite,...
+2026-11-22T19:54:17+01:00 final state: boot_completed=1 kernel=7.3.1-axon7m battery=99 adb=device
+```
+
+So the DT node is created, the driver loads and its probe completes far
+enough to register three netdevs; there are no IPA errors, panics or resets
+in the log. (`test_mode=1` deliberately names the modem netdev `ipa_lo1`
+rather than `rmnet_ipa0`; the full-mode test is needed for that.)
+The `ueventd: LoadWithAliases` line is only Android trying to autoload a
+module by DT alias from `/vendor/lib/modules`; the module was loaded by hand
+from `/data/local/tmp`, as intended.
+
+Full-mode result: pending (the phone lock was held by another worker).
