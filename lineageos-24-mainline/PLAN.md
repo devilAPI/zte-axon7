@@ -196,7 +196,7 @@ unattended test loop).
 | Modem control | online (rmtfs, qrtr, DMS); restarts itself every 40 s for the first ~5 min after boot (since build 38) | radio AIDL HAL over QRTR/QMI (`radio/`: libminradio + DMS/UIM/NAS) | AOSP libminradio | first step done (identity, SIM state, registration, signal); SIM files, SMS, voice, data open | very high |
 | Mobile data | no IPA v2.5 driver | rmnet + IPA v2.5 port | Sireesh's RFC | 3-4 wk | very high |
 | Call audio | no q6voice upstream | q6voice/CVD port + HAL voice path | out-of-tree q6voice | 3-5 wk | very high |
-| NFC | kernel side works: PN548 answers NCI on mainline (`nfc0`) and through the new raw char driver (`/dev/nq-nci`, Nura 0070) | NXP Android HAL expects a `/dev/pn5xx` char device (or a new netlink AIDL HAL) | Nura 0070 (`pn5xx-raw.c`), ZTE 4.4 patch `0013` + stock firmware for the HAL | **kernel char driver proven on the main phone** (2026-11-22: NCI reset/init over `/dev/nq-nci`); Android HAL still missing, `AXON7_NFC=1` off by default (details §8) | 4-8 wk userspace HAL (AOSP 17 has no PN548 AIDL HAL) |
+| NFC | kernel side works: PN548 answers NCI on mainline (`nfc0`) and through the new raw char driver (`/dev/nq-nci`, LOS patch 0022) | own AIDL HAL talks raw NCI to the char driver; AOSP's libnfc-nci does the protocol | patch 0022 (`pn5xx-raw.c`), ZTE 4.4 patch `0013` for reference; no vendor firmware | **kernel char driver proven on the main phone** (NCI reset/init); own AIDL HAL written 2026-11-22, build/phone test pending, `AXON7_NFC=1` off by default (details §8) | AIDL HAL build + bind-mount test on main phone |
 | Fingerprint | TrustZone-owned | - | - | - | infeasible |
 
 ## 5. Testing without disturbing the other systems
@@ -603,12 +603,38 @@ The full built-in kernel (`CONFIG_NFC_PN5XX_CHAR=y`) also builds cleanly
 kernel-only test path with sha1 backup and automatic TWRP rollback is
 committed as `scripts/los24-nfc-kernel-test.sh` if one is ever needed.
 
-Android HAL status is unchanged: AOSP 17 `hardware/nxp/nfc/Android.bp` does
-not include `pn8x/` (the PN548 HIDL implementation); `snxxx/` is the only
-AIDL HAL and it is tied to SN1xx/SN220/SN300 firmware. `AXON7_NFC=1` stays
-off in default builds and `dumpsys nfc` has not shown an NFC service. The
-build server is reachable again, but `/srv/aosp/build.lock` was held by
-another worker whenever checked, so no image was built.
+Android HAL status is unchanged at this point: AOSP 17
+`hardware/nxp/nfc/Android.bp` does not include `pn8x/` (the PN548 HIDL
+implementation); `snxxx/` is the only AIDL HAL and it is tied to
+SN1xx/SN220/SN300 firmware. `AXON7_NFC=1` stays off in default builds and
+`dumpsys nfc` has not shown an NFC service. The build server is reachable
+again, so the HAL work below can proceed.
+
+### 2026-11-22: decision - own AIDL HAL over the raw char device
+
+Evidence for picking option (b) over porting NXP's SNxxx HAL:
+
+* `hardware/nxp/nfc/Android.bp` at `android-17.0.0_r1` lists `snxxx/` and
+  `intf/`, not `pn8x/`; `pn8x/Android.bp` is HIDL 1.x (excluded). The SNxxx
+  AIDL HAL (`snxxx/aidl/1.0/Nfc.cpp`) forwards everything to
+  `phNxpNciHal_*`, i.e. NXP's firmware downloader, configuration parser and
+  NCI-2.0 transport (`halimpl_v2/`), which the PN548 does not need: it
+  answers NCI 1.1 (`nci_ver 0x11`) and holds its own firmware.
+* `packages/modules/Nfc/libnfc-nci/src/adaptation/NfcAdaptation.cc` already
+  speaks the stable AIDL `android.hardware.nfc.INfc/default`: it calls
+  `open`/`write`/`coreInitialized`/`preDiscover`/`powerCycle` and receives
+  NCI frames through `INfcClientCallback::sendData()`. All the NCI 1.x
+  state machine, polling and tag protocols therefore stay in AOSP's stack.
+* The transport is proven: NCI `CORE_RESET`/`CORE_INIT` over `/dev/nq-nci`
+  with the module inserted into the running #31 kernel (see above).
+
+Implementation: `device/zte/axon7m/nfc/Nfc.cpp` plus `Android.bp`,
+`nfc-service-axon7m.rc` and a V1 manifest, replacing the gated
+`android.hardware.nfc-service.nxp` package in `device.mk`; the kernel patch
+is added as `kernel/patches/0022-*` with `CONFIG_NFC_PN5XX_CHAR=y` in the LOS
+config fragment (built in, inactive without `pn5xx_raw=1`). SELinux gets an
+`nfc_device` type, the HAL exec label and one allow rule. Build and phone
+test results are in the run table at the end of this file.
 
 ## 9. What is implemented, running jobs (2026-11-10)
 
