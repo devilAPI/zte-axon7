@@ -647,6 +647,29 @@ Next steps (2026-11-16, after the driver round of builds 42-45):
   after the address change + HAL serdev rebind): exact `State: ON` in every
   boot, 0 `Opcode 0x0c03 failed: -110`, 0 `QCA no reset answer`, 0 QCA reset
   paths needed. Keep kernel 0021 as protection for the earlier boot-time race.
+
+Evidence, 15 consecutive real boots of build 52 (21:20-21:45 CET, main phone,
+distinct `boot_id` per row; full log details in
+`logs/modem-20261122/RESULTS-15-boots.md`):
+
+| Boot | boot_id (first 8) | Battery | EFS shadow files | Modem | fatal / SFR | BT state | HCI/QCA fail |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `0d794f84` | 99 % | 4 | running | 0 / 0 | ON | 0 |
+| 2 | `2babcdc4` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 3 | `e960f480` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 4 | `4de22ee3` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 5 | `0b51cc38` | 99 % | 4 | running | 0 / 0 | ON | 0 |
+| 6 | `575422f1` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 7 | `5dcf503c` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 8 | `4495d82d` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 9 | `af804c5c` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 10 | `f3f4778d` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 11 | `8dc71c50` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 12 | `f244a3bc` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 13 | `ebe64654` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 14 | `ba8404c2` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+| 15 | `050901fd` | 98 % | 4 | running | 0 / 0 | ON | 0 |
+
 - USB tethering: RNDIS/NCM functions are configured; a test needs a host
   whose network may change (not the developer PC).
 - Owner checks: hall sensor with a magnet (screen off/on), GNSS fix outdoors,
