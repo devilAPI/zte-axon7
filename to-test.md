@@ -102,6 +102,11 @@ notes:
 
 ## 0. From the unattended session (2026-11-14 evening)
 
+**MAIN PHONE DOWN (2026-11-22 ~18:45), needs your hands:**
+
+- [ ] The main phone (7e15695a) is off USB (no adb, no fastboot). The sleep worker wrote an untested test kernel into its **los_boot** partition and it did not boot. Please hold **power ~10 s**, then in the boot menu (Volume Down, Power) pick **TWRP**, leave it connected and tell Claude: a worker then restores the known-good LineageOS 24 boot image from TWRP over adb. Do **not** pick LineageOS first (it would start the broken test kernel again). Saved menu block: ai-worker/axon7/sleep/.kfast-sleep/misc-before.bin.
+- [ ] Second phone (864463f): still in Nura without a sudo password. Booting it into TWRP (power 10 s, then Volume Down at start) or allowing a test sudo password unblocks the zip3 install test and the Nura-side driver tests.
+
 **Blockers for the unattended work (2026-11-21 afternoon):**
 
 - [x] **Second phone (864463f)** back in TWRP (owner, 2026-11-21 ~16:30). Open question: may Claude set its own sudo password (stored only on this PC, ~/.config/axon7, never in the repo) in that phone's Nura install, so root tests over SSH work without asking? Until then tests boot test kernels with the debug initramfs from TWRP.
