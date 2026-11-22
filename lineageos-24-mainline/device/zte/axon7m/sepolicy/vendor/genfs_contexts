@@ -1,6 +1,8 @@
 # battery and charger (health HAL)
 genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:fuel-gauge@4000/power_supply u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-02/400f000.spmi:pmic@2:charger@1000/power_supply u:object_r:sysfs_batteryinfo:s0
+# parallel charger (SMB1351) on i2c-2, also read by the health HAL
+genfscon sysfs /devices/platform/soc@0/75b5000.i2c/i2c-2/2-001d/power_supply u:object_r:sysfs_batteryinfo:s0
 # DRM device (libdrm drmGetDevice reads its uevent in every GL client)
 genfscon sysfs /devices/platform/soc@0/900000.display-subsystem/901000.display-controller u:object_r:sysfs_gpu:s0
 # panel backlight (drm_hwcomposer writes brightness and bl_power)
@@ -12,3 +14,9 @@ genfscon sysfs /devices/platform/soc@0/2080000.remoteproc u:object_r:sysfs_axon7
 genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-03/400f000.spmi:pmic@3:pwm/leds u:object_r:sysfs_leds:s0
 genfscon sysfs /devices/platform/soc@0/400f000.spmi/spmi-0/0-03/400f000.spmi:pmic@3:led-controller@d300/leds u:object_r:sysfs_leds:s0
 genfscon sysfs /bus/serial/drivers/hci_uart_qca u:object_r:sysfs_axon7m_btuart:s0
+# init: zram algorithm and the UFS queue's discard setting (platform's
+# neverallow only covers the generic sysfs label)
+genfscon sysfs /block/zram0/comp_algorithm u:object_r:sysfs_axon7m_zram:s0
+genfscon sysfs /devices/platform/soc@0/624000.ufshc/host0/target0:0:0/0:0:0:0/block/sda/queue u:object_r:sysfs_axon7m_ufshc:s0
+# axon7m-modules.sh re-enumerates the PCIe bus after the Wi-Fi firmware is up
+genfscon sysfs /bus/pci/rescan u:object_r:sysfs_axon7m_pci:s0

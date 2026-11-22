@@ -9,3 +9,19 @@ allow kernel firmware_file:dir search;
 allow kernel firmware_file:file r_file_perms;
 allow kernel firmware_file:system firmware_load;
 allow kernel vendor_file:system firmware_load;
+
+# request_firmware() reads the files copied from the phone's vendor partition
+# into /vendor/firmware (qca/rampatch, qcom/a530_pm4.fw, regulatory.db). They
+# have their own label so that the kernel cannot read arbitrary vendor files.
+allow kernel axon7m_vendor_fw_file:dir search;
+allow kernel axon7m_vendor_fw_file:file r_file_perms;
+allow kernel axon7m_vendor_fw_file:system firmware_load;
+
+# mainline devtmpfs creates/removes dynamic nodes from kernel context (dm-*,
+# snd, input, i2c-*); on a GKI kernel this is done by a separate init process.
+allow kernel device:dir { write add_name remove_name };
+allow kernel device:chr_file { create setattr };
+allow kernel device:blk_file { create setattr unlink };
+
+# modprobe's keyring, searched by kernel workqueues when a signed module loads
+allow kernel vendor_modprobe:key search;

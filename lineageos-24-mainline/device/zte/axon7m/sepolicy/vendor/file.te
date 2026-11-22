@@ -3,6 +3,10 @@
 # the mainline port does not include that policy.
 type firmware_file, file_type, contextmount_type, vendor_file_type;
 
+# The redistributable firmware files in /vendor/firmware (AXON7_FIRMWARE=phone)
+# are read by request_firmware(), never by apps.
+type axon7m_vendor_fw_file, file_type, vendor_file_type;
+
 # /dev/block/by-name/persist (Qualcomm's type, as for firmware_file)
 type persist_block_device, dev_type;
 
@@ -13,6 +17,11 @@ type axon7m_rmtfs_device, dev_type;
 type sysfs_axon7m_iio, fs_type, sysfs_type;
 type sysfs_axon7m_rmtfs, fs_type, sysfs_type;
 type sysfs_axon7m_mss, fs_type, sysfs_type;
+# init writes these two at boot (zram algorithm, UFS discard setting), and
+# axon7m-modules.sh triggers a PCI rescan for Wi-Fi
+type sysfs_axon7m_zram, fs_type, sysfs_type;
+type sysfs_axon7m_ufshc, fs_type, sysfs_type;
+type sysfs_axon7m_pci, fs_type, sysfs_type;
 
 # persist (read-only, sns.reg for the sensor registry) and the registry the
 # SLPI reads from /data/vendor/sensors

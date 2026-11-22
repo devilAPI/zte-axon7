@@ -1,0 +1,3 @@
+# Mesa's drmGetDevice() stats /dev/dri/card0 from every GL client, even though
+# only drm_hwcomposer opens it. getattr only: no client gets read/write here.
+allow { system_app platform_app priv_app bootanim } graphics_device:chr_file getattr;

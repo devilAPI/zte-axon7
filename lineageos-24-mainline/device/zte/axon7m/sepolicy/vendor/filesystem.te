@@ -1,0 +1,8 @@
+# The modem's vfat and the persist partition are mounted with context= under
+# /mnt/vendor. installd's quotaget and su's getattr are stat calls on those
+# mounts, not access to the EFS files themselves.
+allow installd { firmware_file axon7m_persist_file }:filesystem quotaget;
+allow su { firmware_file axon7m_persist_file }:filesystem getattr;
+# files created on a contextmount carry the mount's label
+allow firmware_file firmware_file:filesystem associate;
+allow axon7m_persist_file axon7m_persist_file:filesystem associate;

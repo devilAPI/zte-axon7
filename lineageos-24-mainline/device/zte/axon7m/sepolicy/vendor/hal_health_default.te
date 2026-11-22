@@ -1,0 +1,4 @@
+# The charger chip on i2c-2 publishes its type/current/voltage in sysfs;
+# genfs_contexts labels /devices/platform/soc@0/75b5000.i2c/.../power_supply
+# as sysfs_batteryinfo, which platform policy lets hal_health_server read.
+# Kept as a separate file so the hardware-specific label has an owner.

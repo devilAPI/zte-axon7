@@ -12,3 +12,7 @@ allow vendor_modprobe vendor_data_file:dir create_dir_perms;
 allow vendor_modprobe axon7m_sensors_data_file:dir create_dir_perms;
 allow vendor_modprobe axon7m_sensors_data_file:file create_file_perms;
 type_transition vendor_modprobe vendor_data_file:dir axon7m_sensors_data_file "sensors";
+# axon7m-modules.sh re-enumerates PCIe after the Wi-Fi firmware is available
+allow vendor_modprobe sysfs_axon7m_pci:file w_file_perms;
+# modprobe writes its module keyring entry; kernel workqueues search it
+allow vendor_modprobe self:key write;

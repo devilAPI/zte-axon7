@@ -1,0 +1,4 @@
+# The mainline kernel does not label memfd inodes with the memfd_file class,
+# so the AIDL audio HAL's MessageQueue fds arrive with the generic tmpfs label.
+# Only these permissions are needed; no other tmpfs access is granted.
+allow hal_audio_default tmpfs:file { read write map getattr };

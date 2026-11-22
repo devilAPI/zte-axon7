@@ -9,6 +9,11 @@ allow hal_camera_default video_device:dir r_dir_perms;
 allow hal_camera_default dmabuf_system_heap_device:chr_file r_file_perms;
 allow hal_camera_default sysfs:dir r_dir_perms;
 allow hal_camera_default sysfs:file r_file_perms;
+# libcamera's isolated soft ISP creates a user namespace for its IPA and
+# passes the statistics/parameter blocks as memfd (labelled tmpfs here)
+allow hal_camera_default self:user_namespace create;
+allow hal_camera_default self:cap_userns sys_admin;
+allow hal_camera_default tmpfs:file { read write map getattr };
 
 # libcamera runs its unsigned soft ISP IPA isolated in a child process
 type axon7m_libcamera_ipa, domain;

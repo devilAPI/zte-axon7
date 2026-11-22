@@ -1,0 +1,5 @@
+# libperfmgr power HAL: /sys/class/devfreq/b00000.gpu/governor resolves through
+# the DRM/graphics sysfs directories, which genfscon labels sysfs_gpu.
+allow hal_power_default sysfs_gpu:dir r_dir_perms;
+# memfd_message queue from the hint looper (kernel has no memfd_file class)
+allow hal_power_default tmpfs:file { read write map getattr };

@@ -1,0 +1,3 @@
+# Soft-ISP IPA child of the camera HAL: its shared statistics/parameter blocks
+# are memfds, labelled tmpfs on this kernel (no memfd_file class).
+allow axon7m_libcamera_ipa tmpfs:file { read write map getattr };

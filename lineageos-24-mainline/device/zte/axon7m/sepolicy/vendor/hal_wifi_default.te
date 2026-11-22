@@ -1,0 +1,4 @@
+# Goldfish legacy Wi-Fi HAL on ath10k: netlink route socket for interface
+# setup, and the firmware version property it publishes for the framework.
+allow hal_wifi_default self:netlink_route_socket create_socket_perms_no_ioctl;
+set_prop(hal_wifi_default, axon7m_wlan_fw_prop)

@@ -16,6 +16,12 @@
 /vendor/bin/axon7m-bootguard\.sh                            u:object_r:vendor_toolbox_exec:s0
 /vendor/bin/hw/android\.hardware\.vibrator-service\.axon7m  u:object_r:hal_vibrator_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gnss-service\.axon7m      u:object_r:hal_gnss_default_exec:s0
+# request_firmware() files copied from the phone's vendor partition: readable
+# by the kernel, not by apps
+/vendor/firmware(/.*)?                                  u:object_r:axon7m_vendor_fw_file:s0
+# shell utilities called by the vendor init scripts (no domain transition)
+/vendor/bin/tinymix                                     u:object_r:vendor_toolbox_exec:s0
+/vendor/bin/awk                                         u:object_r:vendor_toolbox_exec:s0
 # GPU and display (as dragonboard): render node for every GL client, card0
 # for the composer
 /dev/dri                                                    u:object_r:gpu_device:s0
