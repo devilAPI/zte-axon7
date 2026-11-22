@@ -100,9 +100,9 @@ int main(int argc, char **argv)
 		n = read_frame(fd, buf, sizeof(buf), 5);
 		if (n > 0) {
 			dump("NCI_CORE_RESET rsp", buf, n);
-			if (n >= 5 && buf[0] == 0x40 && buf[1] == 0x00)
-				printf("nci_ver=0x%02x config_status=0x%02x\n",
-				       buf[3], buf[4]);
+			if (n >= 6 && buf[0] == 0x40 && buf[1] == 0x00)
+				printf("status=0x%02x nci_ver=0x%02x config_status=0x%02x\n",
+				       buf[3], buf[4], buf[5]);
 			else
 				ok = 0;
 		} else {
@@ -118,9 +118,8 @@ int main(int argc, char **argv)
 		n = read_frame(fd, buf, sizeof(buf), 5);
 		if (n > 0) {
 			dump("NCI_CORE_INIT rsp", buf, n);
-			if (n >= 6 && buf[0] == 0x40 && buf[1] == 0x01)
-				printf("status=0x%02x:nci_ver=0x%02x\n",
-				       buf[3], buf[4]);
+			if (n >= 5 && buf[0] == 0x40 && buf[1] == 0x01)
+				printf("status=0x%02x\n", buf[3]);
 			else
 				ok = 0;
 		} else {

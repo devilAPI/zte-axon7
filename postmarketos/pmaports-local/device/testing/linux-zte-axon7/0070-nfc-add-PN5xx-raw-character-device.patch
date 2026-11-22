@@ -1,6 +1,6 @@
-From df136c8d0b9e05047ea95681f1e2ec6da85df487 Mon Sep 17 00:00:00 2001
+From 72429a0812658f3fcbb9b33cfc037d33e3f9d71c Mon Sep 17 00:00:00 2001
 From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
-Date: Sun, 22 Nov 2026 20:23:54 +0100
+Date: Sun, 22 Nov 2026 20:27:28 +0100
 Subject: [PATCH] nfc: add gated PN5xx raw NCI character device
 
 Expose /dev/nq-nci (plus pn5xx/pn54x aliases) on the existing PN548
@@ -12,8 +12,8 @@ Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
 ---
  drivers/nfc/Kconfig     |  12 ++
  drivers/nfc/Makefile    |   1 +
- drivers/nfc/pn5xx-raw.c | 329 ++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 342 insertions(+)
+ drivers/nfc/pn5xx-raw.c | 344 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 357 insertions(+)
  create mode 100755 drivers/nfc/pn5xx-raw.c
 
 diff --git a/drivers/nfc/Kconfig b/drivers/nfc/Kconfig
@@ -53,10 +53,10 @@ index 7b1bfde1d..4bc31e447 100644
  obj-$(CONFIG_NFC_VIRTUAL_NCI)	+= virtual_ncidev.o
 diff --git a/drivers/nfc/pn5xx-raw.c b/drivers/nfc/pn5xx-raw.c
 new file mode 100755
-index 000000000..f9a710b5a
+index 000000000..3b03ec4e1
 --- /dev/null
 +++ b/drivers/nfc/pn5xx-raw.c
-@@ -0,0 +1,329 @@
+@@ -0,0 +1,344 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * NXP PN5xx raw character device for the Android NFC HAL
@@ -165,12 +165,13 @@ index 000000000..f9a710b5a
 +{
 +	struct pn5xx_raw *raw = pn5xx_raw_from_file(filp);
 +	u8 data[PN5XX_RAW_MAX_FRAME];
-+	int ret;
++	size_t total;
++	int ret, len;
 +
 +	if (count > sizeof(data))
 +		count = sizeof(data);
-+	if (!count)
-+		return 0;
++	if (count < 3)
++		return -EINVAL;
 +
 +	if (!atomic_read(&raw->irq_pending)) {
 +		ret = wait_event_interruptible(raw->read_wq,
@@ -182,15 +183,29 @@ index 000000000..f9a710b5a
 +	/* The IRQ handler masked the level IRQ; always unmask after the read. */
 +	atomic_set(&raw->irq_pending, 0);
 +	mutex_lock(&raw->xfer_lock);
-+	ret = i2c_master_recv(raw->client, data, count);
++	/* NCI frame: 3-byte header (gid/oid/plen) followed by plen bytes. */
++	len = i2c_master_recv(raw->client, data, 3);
++	if (len == 3) {
++		total = 3 + data[2];
++		if (total > count)
++			total = count;
++		if (total > 3) {
++			ret = i2c_master_recv(raw->client, data + 3, total - 3);
++			len = ret > 0 ? 3 + ret : ret;
++		}
++	} else {
++		total = 0;
++	}
 +	mutex_unlock(&raw->xfer_lock);
 +	enable_irq(raw->client->irq);
-+	if (ret < 0)
-+		return ret;
-+	if (copy_to_user(buf, data, ret))
++	if (len < 0)
++		return len;
++	if (len < 3 || (size_t)len != total)
++		return -EBADMSG;
++	if (copy_to_user(buf, data, len))
 +		return -EFAULT;
 +
-+	return ret;
++	return len;
 +}
 +
 +static ssize_t pn5xx_raw_write(struct file *filp, const char __user *buf,
