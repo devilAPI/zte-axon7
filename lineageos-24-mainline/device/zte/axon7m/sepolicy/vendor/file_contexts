@@ -47,3 +47,9 @@
 /dev/media[0-9]*                                            u:object_r:video_device:s0
 /dev/v4l-subdev[0-9]*                                       u:object_r:video_device:s0
 /vendor/bin/libcamera/softisp_ipa_proxy                     u:object_r:axon7m_libcamera_ipa_exec:s0
+# PN548 raw NCI char device (Nura 0070, AXON7_NFC=1). AOSP's public
+# nfc_device type already has hal_nfc:chr_file rw_file_perms; only the
+# device nodes need a label (the aliases are created by the same driver).
+/dev/nq-nci                                                 u:object_r:nfc_device:s0
+/dev/pn5xx                                                  u:object_r:nfc_device:s0
+/dev/pn54x                                                  u:object_r:nfc_device:s0

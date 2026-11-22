@@ -29,6 +29,7 @@ nothing unless the `pn5xx_raw=1` kernel parameter is given:
 | `manifest_nfc.xml` | AIDL `android.hardware.nfc` + `vendor.nxp.nxpnfc_aidl` HAL fragments |
 | `init.axon7m.nfc.rc` | Creates `/data/nfc` for the HAL; the HAL service itself comes from AOSP's `nfc-service-nxp.rc` |
 | `ueventd.axon7m.rc` (in `../init/`) | `0660 nfc nfc` for the three device aliases |
+| `../sepolicy/vendor/file_contexts` | labels the three aliases `nfc_device`; AOSP's `hal_nfc` already has `rw_file_perms` on that public type |
 
 `device.mk` installs these only with `AXON7_NFC=1`, together with the `Nfc`
 app, the AIDL HAL and the NFC feature XML.
