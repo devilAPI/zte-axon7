@@ -1,0 +1,53 @@
+{
+  "front_led_off": {
+    "size": [
+      1920,
+      1080
+    ],
+    "lum_mean": 47.15,
+    "lum_std": 2.44,
+    "rgb_mean": [
+      46.91,
+      47.33,
+      46.9
+    ],
+    "extrema": [
+      18,
+      99
+    ],
+    "black_pct": 0.0,
+    "white_pct": 0.0
+  },
+  "front_led_on": {
+    "size": [
+      1920,
+      1080
+    ],
+    "lum_mean": 47.18,
+    "lum_std": 2.44,
+    "rgb_mean": [
+      47.11,
+      47.17,
+      47.41
+    ],
+    "extrema": [
+      18,
+      99
+    ],
+    "black_pct": 0.0,
+    "white_pct": 0.0
+  },
+  "front_manual_10ms_gain1": {
+    "size": [
+      1640,
+      1232
+    ],
+    "lum_mean": 0.34,
+    "lum_std": 1.86,
+    "extrema": [
+      0,
+      28
+    ],
+    "note": "libcamera lc-manual, AeEnable=false, exposure 10 ms, gain 1; camera-service auto frames had mean 47"
+  }
+}
