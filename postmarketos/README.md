@@ -365,7 +365,17 @@ the same kernel) confirms it: `BMI160 Accelerometer ... -0.017 0.178 10.594`
 in uT/m/s², i.e. norm 10.59 m/s². The same run reports
 `BMI160 Gyroscope ... -0.018 -0.004 -0.045` rad/s at rest and
 `AK09915 Magnetometer ... 10.200 -59.998 -28.798` uT (norm 67.4 uT).
-Fixed in kernel patch 0059: `smgr_accel` now uses 14211 nm/s^2 per LSB (9.81 / 690310) instead of 15328, so a flat phone reads ~9.81 m/s^2. Gyro and mag keep their 1/65536 (Q16) scale: gyro bias is not a scale issue, mag reads ~67 uT (in range).
+Fix in kernel patch 0059: `smgr_accel` now uses 14211 nm/s^2 per LSB (9.81 / 690310) instead of 15328; for the raw values above that gives 690310 * 0.000014211 = 9.81 m/s^2. Gyro and mag keep their 1/65536 (Q16) scale: gyro bias is not a scale issue, mag reads ~67 uT (in range).
+
+Verified on 2026-11-22 that the patched driver compiles into a module for the
+running LineageOS 24 kernel (`7.3.1-axon7m SMP preempt mod_unload aarch64`,
+same `vermagic` as the image's `smgr_accel.ko`): `llvm-objdump -d` of the new
+module shows `mov w8, #0x3783 // =14211` in `smgr_accel_read_raw` where the
+old module has `mov w8, #0x3be0 // =15328`. The post-fix reading on the phone
+is still outstanding: neither Axon was attached to USB when this was written.
+`postmarketos/research/accel-sensors/` has the module-swap test script (saves
+and restores the original `/vendor` module, no reboot, no boot/misc writes)
+for the next session with the main phone on adb.
 
 Read a few samples:
 
