@@ -100,6 +100,21 @@ SMP2P `ipa-ap-to-modem`/`ipa-modem-to-ap` entries. `ipa2-lite.ko` has
 `depends=qcom_common,qmi_helpers`, alias `of:N*T*Cqcom,ipa-v2.5` and
 `vermagic=7.3.1+ SMP preempt mod_unload aarch64`.
 
+## Phone test plan (2026-11-22)
+
+The SECOND phone (864463f) has no sudo password in this environment, so it
+cannot be rebooted or rooted; only unprivileged read-only SSH checks are
+possible there. The root-requiring driver test therefore runs on the MAIN
+phone (7e15695a) in LineageOS 24, with a temporary kfast-style kernel:
+save the boot-menu block of `misc` and the current `los_boot`, build a boot
+image from our Image/DTB plus the phone's own ramdisk and cmdline, write it
+to `los_boot`, set the one-shot LineageOS menu, reboot, load the module by
+hand and collect dmesg/`ip link`/remoteproc evidence, then restore both
+partitions and leave the phone in LineageOS with adb root. The module is
+not loaded unless the modem remoteproc is `running` (the Mi MIX port found
+that probing with the modem stopped resets the SoC). No SIM is available,
+so a WDS/WDA data-format call is only possible if a QMI client is present.
+
 ## Phone evidence
 
 (to be filled in)
