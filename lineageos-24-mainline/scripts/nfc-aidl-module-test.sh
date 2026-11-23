@@ -43,6 +43,7 @@ STUBENV=
 MODNAME=pn5xx_raw
 PERMS=/vendor/etc/permissions
 bound=0 inserted=0 mounted=0 hal_pid= logcat_pid= framework_restarted=0
+app_disabled=0
 sound_effects= vibrate_on=
 
 say() { echo "== $(date -u +%FT%TZ) $*"; }
@@ -63,6 +64,9 @@ cleanup() {
 	if [ -n "$hal_pid" ]; then
 		ash "kill $hal_pid 2>/dev/null || true"
 	fi
+	# Builds without AXON7_NFC=1 disable com.android.nfc at boot because the
+	# system feature is absent; restore that state after the test.
+	[ "$app_disabled" = 1 ] && ash 'pm disable com.android.nfc' >/dev/null 2>&1 || true
 	if [ $mounted = 1 ]; then
 		ash "umount $PERMS" || echo "umount $PERMS FAILED" >&2
 	fi
@@ -143,6 +147,9 @@ adb push "$ROOT/lineageos-24-mainline/device/zte/axon7m/nfc/feature-android.hard
 ash "mount -o bind $REMOTE/permissions $PERMS" || { echo "bind mount failed" >&2; exit 4; }
 mounted=1
 echo "feature file: $(ash "ls -l $PERMS/android.hardware.nfc.xml")"
+app_disabled=$(ash 'pm list packages -d | grep -q com.android.nfc && echo 1 || echo 0')
+echo "com.android.nfc disabled before test: $app_disabled"
+[ "$app_disabled" = 0 ] || ash 'pm enable com.android.nfc' >/dev/null
 
 # 3. start our HAL by hand (an init rc for real builds is in nfc/)
 say "start $HALNAME"
@@ -183,6 +190,14 @@ echo "boot_completed after framework restart=$bc (waited $((i*2))s)"
 [ "$bc" = 1 ] || { echo "framework did not come back" >&2; exit 6; }
 adb root >/dev/null 2>&1; sleep 2; adb wait-for-device
 sleep 10
+
+# BOOT_COMPLETED was broadcast long before this test; start the NFC app's
+# main process by hand so NfcApplication creates NfcService.
+say "start com.android.nfc process"
+run 'am start-service --user 0 -n com.android.nfc/.handover.PeripheralHandoverService'
+sleep 8
+echo "nfc-app-pid=$(ash 'pidof com.android.nfc')"
+ash 'service list' | grep -i '^.*nfc' || true
 
 say "dumpsys nfc (before enable)"
 ash 'dumpsys nfc' > "$DETAIL/dumpsys-before.txt" || true
