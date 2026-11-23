@@ -5,9 +5,10 @@
  *
  * What works: modem identity (IMEI, baseband version), SIM card state,
  * network registration, operator and signal strength (polled every 5 s and cached,
- * changes are indicated). Not yet: SIM file access (a present SIM never
- * finishes loading), SMS, calls (no q6voice), data (no IPA v2.5 driver).
- * The radio power switch is only reported: the modem stays online for GNSS.
+ * changes are indicated), and mobile-data calls over QMI WDS/WDA/DPM with a
+ * QMAP rmnet link on rmnet_ipa0 (ipa2-lite). Not yet: SIM file access (a
+ * present SIM never finishes loading), SMS, calls (no q6voice). The radio
+ * power switch is only reported: the modem stays online for GNSS.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,6 +19,8 @@
 #include <libminradio/modem/RadioModem.h>
 #include <libminradio/network/RadioNetwork.h>
 #include <libminradio/sim/RadioSim.h>
+
+#include "DataCall.h"
 
 #include <mutex>
 #include <optional>
@@ -34,6 +37,11 @@ class RadioConfig : public minimal::RadioConfig {
 class RadioData : public minimal::RadioData {
   public:
     using minimal::RadioData::RadioData;
+    // Bring-up hook: `setprop debug.axon7m.data_test 1` asks the HAL to place
+    // one call with an empty APN. Off by default; the framework normally
+    // decides when to set up data. Used to exercise the QMI WDS path on a
+    // phone without a SIM, where RILJ never starts a data call by itself.
+    void runDebugDataCall();
 
   protected:
     ::ndk::ScopedAStatus setupDataCall(
@@ -44,6 +52,13 @@ class RadioData : public minimal::RadioData {
             const std::vector<std::string>& dnses, int32_t pduSessionId,
             const std::optional<::aidl::android::hardware::radio::data::SliceInfo>& sliceInfo,
             bool matchAllRuleAllowed) override;
+    ::ndk::ScopedAStatus deactivateDataCall(
+            int32_t serial, int32_t cid,
+            ::aidl::android::hardware::radio::data::DataRequestReason reason) override;
+    ::ndk::ScopedAStatus getDataCallList(int32_t serial) override;
+
+  private:
+    DataCallManager mCalls;
 };
 
 class RadioModem : public minimal::RadioModem {

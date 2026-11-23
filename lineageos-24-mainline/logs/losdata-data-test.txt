@@ -1,0 +1,65 @@
+== 2026-11-23T02:38:42Z losdata: IPA + radio HAL data call (no SIM, no flashing)
+-- battery: 99%
+2026-11-23T03:38:42+01:00 preconditions OK: kernel=7.3.1-axon7m battery=99 battery-capacity=99
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/loopback [MAC_REDACTED] brd [MAC_REDACTED]
+2: dummy0: <BROADCAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/ether [MAC_REDACTED] brd [MAC_REDACTED]
+3: ifb0: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 32\    link/ether [MAC_REDACTED] brd [MAC_REDACTED]
+4: ifb1: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 32\    link/ether [MAC_REDACTED] brd [MAC_REDACTED]
+5: ip_vti0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ipip 0.0.0.0 brd 0.0.0.0
+6: ip6_vti0@NONE: <NOARP> mtu 1364 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/tunnel6 :: brd ::
+7: ip6tnl0@NONE: <NOARP> mtu 1452 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/tunnel6 :: brd ::
+8: wlan0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DORMANT group default qlen 1000\    link/ether [MAC_REDACTED] brd [MAC_REDACTED]
+10: rmnet_ipa0: <> mtu 2012 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/[519] 
+11: ipa_lan0: <> mtu 2012 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/[519] 
+2026-11-23T03:38:43+01:00 IPA module: ipa2_lite 32768 0 - Live 0x0000000000000000 (O)
+qcom_common 16384 4 ipa2_lite,qcom_q6v5_pas,qcom_q6v5_mss,slim_qcom_ngd_ctrl, Live 0x0000000000000000
+qmi_helpers 24576 7 ipa2_lite,smgr,qcom_pd_mapper,slim_qcom_ngd_ctrl,pdr_interface,qcom_pdr_msg,qcom_sysmon, Live 0x0000000000000000
+f1cd80c458d66db41e815a210340899b  /media/devilapi/Secondary HDD 2TB/ai-worker/axon7/losdata/lineageos-24-mainline/tmp-radio-test/radio-axon7m-new
+2026-11-23T03:38:43+01:00 -- stop stock HAL --
+2026-11-23T03:38:46+01:00 -- start test HAL --
+2026-11-23T03:39:28+01:00 -- trigger mobile data --
+0
+    mServiceState={mVoiceRegState=1(OUT_OF_SERVICE), mDataRegState=1(OUT_OF_SERVICE), mChannelNumber=-1, duplexMode()=0, mCellBandwidths=[], mOperatorAlphaLong=, mOperatorAlphaShort=, isManualNetworkSelection=false(automatic), getRilVoiceRadioTechnology=16(GSM), getRilDataRadioTechnology=16(GSM), mCssIndicator=unsupported, mIsEmergencyOnly=false, isUsingCarrierAggregation=false, mArfcnRsrpBoost=0, mNetworkRegistrationInfos=[NetworkRegistrationInfo{ domain=PS transportType=WLAN registrationState=UNKNOWN networkRegistrationState=UNKNOWN roamingType=NOT_ROAMING accessNetworkTechnology=UNKNOWN rejectCause=0 emergencyEnabled=false availableServices=[] cellIdentity=null voiceSpecificInfo=null dataSpecificInfo=null nrState=NONE rRplmn= isUsingCarrierAggregation=false isNonTerrestrialNetwork=TERRESTRIAL satelliteTechnology=NT_RADIO_TECHNOLOGY_UNKNOWN}, NetworkRegistrationInfo{ domain=CS transportType=WWAN registrationState=NOT_REG_SEARCHING networkRegistrationState=NOT_REG_SEARCHING roamingType=NOT_ROAMING accessNetworkTechnology=GSM rejectCause=0 emergencyEnabled=false availableServices=[] cellIdentity=null voiceSpecificInfo=VoiceSpecificRegistrationInfo { mCssSupported=false mRoamingIndicator=0 mSystemIsInPrl=0 mDefaultRoamingIndicator=0} dataSpecificInfo=null nrState=NONE rRplmn= isUsingCarrierAggregation=false isNonTerrestrialNetwork=TERRESTRIAL satelliteTechnology=NT_RADIO_TECHNOLOGY_UNKNOWN}, NetworkRegistrationInfo{ domain=PS transportType=WWAN registrationState=NOT_REG_SEARCHING networkRegistrationState=NOT_REG_SEARCHING roamingType=NOT_ROAMING accessNetworkTechnology=GSM rejectCause=0 emergencyEnabled=false availableServices=[] cellIdentity=null voiceSpecificInfo=null dataSpecificInfo=android.telephony.DataSpecificRegistrationInfo :{ maxDataCalls = 16 isDcNrRestricted = false isNrAvailable = false isEnDcAvailable = false mLteAttachResultType = 0 mLteAttachExtraInfo = 0 null } nrState=NONE rRplmn= isUsingCarrierAggregation=false isNonTerrestrialNetwork=TERRESTRIAL satelliteTechnology=NT_RADIO_TECHNOLOGY_UNKNOWN}], mNrFrequencyRange=0, mOperatorAlphaLongRaw=, mOperatorAlphaShortRaw=, mIsDataRoamingFromRegistration=false, mIsIwlanPreferred=false, mIsUsingNonTerrestrialNetwork=false}
+    mDataConnectionState=-1
+  mRadioPowerState=1
+2026-11-23T03:39:45+01:00 -- direct QMI WDS start network (independent of the framework) --
+service 1 at 0:46
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x01 len 1: 01
+service 1 at 0:46
+TLV 0x02 len 4: 01 00 46 00
+result 1, QMI error 70
+TLV 0x01 len 4: 00 00 00 00
+2026-11-23T03:39:47+01:00 -- HAL QMI WDS exchange --
+11-22 20:19:34.626 15341 15341 E RILJ    : Service DATA is available, but feature android.hardware.telephony.data is not declared [PHONE0]
+11-22 20:19:34.673 15341 15341 D RILJ    : Linked to death for service DATA [PHONE0]
+11-22 20:19:34.673 15341 15341 D RILJ    : HAL version of DATA: 2.3 [PHONE0]
+11-22 20:19:34.731 15296 15296 I radio-axon7m: radio off requested: modem stays online for GNSS
+11-22 20:19:35.688 15341 15376 E RILJ    : setUserDataEnabled not supported on service DATA < 2.4. [PHONE0]
+11-22 20:19:35.689 15341 15376 E RILJ    : setUserDataRoamingEnabled not supported on service DATA < 2.4. [PHONE0]
+11-22 20:19:35.889 15341 15377 D RILJ    : [0046]> DATA_REGISTRATION_STATE [PHONE0]
+11-22 20:19:35.895 15341 15356 D RILJ    : [0046]< DATA_REGISTRATION_STATE RegStateResult{regState: NOT_REG_MT_SEARCHING_OP, rat: GSM, reasonForDenial: NONE, cellIdentity: CellIdentity.noinit(true), registeredPlmn: , accessTechnologySpecificInfo: AccessTechnologySpecificInfo.noinit(false)} [PHONE0]
+11-22 20:19:35.985 15341 15376 D RILJ    : [0048]> SET_DATA_PROFILE with data profiles :  [PHONE0]
+11-22 20:19:35.988 15341 15367 D RILJ    : [0048]< SET_DATA_PROFILE  [PHONE0]
+11-22 20:20:09.205 15296 15306 I radio-axon7m: DATA debug trigger (debug.axon7m.data_test)
+11-22 20:20:09.206 15296 15306 I radio-axon7m: DATA setup cid=1 apn_len=0 family=4 mux=1 roaming=0 ifname=rmnet_data1
+11-22 20:20:09.244 15296 15306 E radio-axon7m: DPM_OPEN_PORT 0x0020: result=1 error=1 (unknown) tlvs=02/4 
+11-22 20:20:09.244 15296 15306 W radio-axon7m: DATA DPM open port unavailable, continuing
+11-22 20:20:09.272 15296 15306 I radio-axon7m: WDS_BIND_SUBSCRIPTION 0x00af: result=0 error=0 (unknown) tlvs=02/4 
+11-22 20:20:09.296 15296 15306 E radio-axon7m: WDA_SET_DATA_FORMAT 0x0020: result=1 error=1 (unknown) tlvs=02/4 
+11-22 20:20:09.296 15296 15306 W radio-axon7m: DATA WDA set data format unavailable, continuing
+11-22 20:20:09.316 15296 15306 E radio-axon7m: WDS_BIND_MUX_DATA_PORT 0x00a2: result=1 error=1 (unknown) tlvs=02/4 
+11-22 20:20:09.316 15296 15306 W radio-axon7m: DATA WDS mux binding unsupported (1), continuing
+11-22 20:20:09.336 15296 15306 E radio-axon7m: WDS_START_NETWORK_INTERFACE 0x0020: result=1 error=70 (INVALID_OPERATION) tlvs=01/4 02/4 
+11-22 20:20:09.336 15296 15306 E radio-axon7m: DATA debug call failed cid=1 radio_error=40 fail_cause=32
+2026-11-23T03:39:47+01:00 -- phone crashes --
+11-22 20:19:34.096 13665 13946 I am_crash: [14075,0,com.android.phone,818429517,android.app.RemoteServiceException$CrashedByAdbException,shell-induced crash,ActivityThread.java,2581,0]
+2026-11-23T03:39:47+01:00 -- IPA/rmnet kernel log --
+2026-11-23T03:39:48+01:00 -- final state --
+2026-11-23T03:39:48+01:00 boot_completed=1 kernel=7.3.1-axon7m battery=99 modem=running
+2026-11-23T03:39:47+01:00 -- IPA/rmnet kernel log --
+2026-11-23T03:39:48+01:00 -- final state --
+2026-11-23T03:39:48+01:00 boot_completed=1 kernel=7.3.1-axon7m battery=99 modem=running
+-- restore 02:39:48
+-- restored: svc=running reach=OK stay_on=0 radio_services=5

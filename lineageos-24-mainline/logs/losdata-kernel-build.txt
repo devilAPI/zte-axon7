@@ -1,0 +1,22 @@
+# Kernel build evidence (LOS 24 + Nura 0059-0062, 2026-11-23)
+
+## Local config check (7.3.1 tree, make -j4 olddefconfig)
+olddefconfig_rc=0
+/tmp/opencode/losdata-kout/.config:2521:CONFIG_QCOM_IPA2_LITE=m
+
+## Server: /srv/los24/logs/losdata-kernel2.log (excerpt)
+  CC [M]  drivers/net/ipa2-lite/ipa.o
+  CC [M]  drivers/net/ipa2-lite/ipa-qmi.o
+  LD [M]  drivers/net/ipa2-lite/ipa2-lite.o
+  CC [M]  drivers/net/ipa2-lite/ipa2-lite.mod.o
+  LD [M]  drivers/net/ipa2-lite/ipa2-lite.ko
+Image image_size: 30 MiB (limit about 48 MiB below the splash)
+
+## Server: /srv/los24/logs/losdata-kernel-stage.log
+== 2026-11-22T22:27:50Z kernel-build.sh stage, clang /srv/aosp/lineage-22.2/prebuilts/clang/host/linux-x86/clang-r536225
+staged 7.3.1-axon7m ba38e46ee +patches 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 2026-11-22T22:28:29Z: 608 modules in /srv/los24/kernel/prebuilt
+stage-exit=0
+
+## Staged module
+-rw-rw-r-- 1 build build 57144 Nov 22 22:28 /srv/los24/kernel/prebuilt/modules/ipa2-lite.ko
+2517:CONFIG_QCOM_IPA2_LITE=m

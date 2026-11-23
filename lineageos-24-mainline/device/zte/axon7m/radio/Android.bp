@@ -41,6 +41,7 @@ cc_binary {
         "minradio/sim/Filesystem.cpp",
         "minradio/sim/IccUtils.cpp",
         "minradio/sim/RadioSim.cpp",
+        "impl/DataCall.cpp",
         "impl/ModemState.cpp",
         "impl/Qmi.cpp",
         "impl/Radio.cpp",

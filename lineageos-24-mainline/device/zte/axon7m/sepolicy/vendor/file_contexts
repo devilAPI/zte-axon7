@@ -41,6 +41,7 @@
 /vendor/bin/axon7m-audio-routes\.sh                         u:object_r:vendor_toolbox_exec:s0
 /vendor/bin/axon7m-sns-reg\.sh                              u:object_r:axon7m_sns_reg_exec:s0
 /vendor/bin/axon7m-slpi-kick\.sh                            u:object_r:vendor_toolbox_exec:s0
+/vendor/bin/axon7m-ipa-load\.sh                             u:object_r:vendor_toolbox_exec:s0
 /data/vendor/sensors(/.*)?                                  u:object_r:axon7m_sensors_data_file:s0
 /dev/rfkill                                                 u:object_r:axon7m_rfkill_device:s0
 /vendor/bin/hw/android\.hardware\.light-service\.axon7m    u:object_r:hal_light_default_exec:s0

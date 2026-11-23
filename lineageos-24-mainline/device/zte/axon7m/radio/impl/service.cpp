@@ -12,6 +12,7 @@
 #include "RadioVoice.h"
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
@@ -57,7 +58,7 @@ static void main() {
 
     auto slot1 = std::make_shared<minimal::SlotContext>(1);
     publish<RadioConfig>("default", slot1);
-    publish<RadioData>("slot1", slot1);
+    auto data = publish<RadioData>("slot1", slot1);
     publish<RadioModem>("slot1", slot1);
     auto network = publish<RadioNetwork>("slot1", slot1);
     auto sim = publish<RadioSim>("slot1", slot1);
@@ -110,6 +111,18 @@ static void main() {
             if (sim) sim->poll();
             if (network) network->poll();
             std::this_thread::sleep_for(std::chrono::seconds(5));
+        }
+    }).detach();
+
+    // Bring-up only: RILJ does not place a data call without a SIM, so a
+    // property lets us exercise the same QMI WDS path in tests. One shot.
+    std::thread([data] {
+        for (;;) {
+            if (data && android::base::GetBoolProperty("debug.axon7m.data_test", false)) {
+                android::base::SetProperty("debug.axon7m.data_test", "0");
+                data->runDebugDataCall();
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }).detach();
     ABinderProcess_joinThreadPool();

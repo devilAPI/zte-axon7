@@ -1,5 +1,7 @@
-# Radio HAL over QMI (QRTR sockets need no capability)
+# Radio HAL over QMI (QRTR sockets need no capability). NET_ADMIN is only
+# needed to create the QMAP rmnet virtual link for a mobile data call.
 service vendor.radio-axon7m /vendor/bin/hw/android.hardware.radio-service.axon7m
     class hal
     user radio
     group radio inet misc log readproc wakelock system
+    capabilities NET_ADMIN

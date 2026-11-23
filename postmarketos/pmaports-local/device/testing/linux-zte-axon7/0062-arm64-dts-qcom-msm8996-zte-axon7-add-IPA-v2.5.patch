@@ -1,0 +1,67 @@
+From e926b6bfdcb98b07d1f02fe7882ddbea61ef976e Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 18:05:36 +0100
+Subject: [PATCH 4/4] arm64: dts: qcom: msm8996-zte-axon7: add IPA v2.5
+
+Describe the IPA v2.5 block at 0x680000 with its IPA and BAM interrupts,
+the RPM IPA clock, the modem remoteproc phandle and qcom,bam-remote-mode
+(the BAM is owned by the modem/TZ on MSM8996). Add the IPA entries to the
+modem SMP2P as in the downstream DT. The mpss memory region already comes
+from msm8996.dtsi.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ .../arm64/boot/dts/qcom/msm8996-zte-axon7.dts | 36 +++++++++++++++++++
+ 1 file changed, 36 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+index b2da0dda3..103a9df21 100644
+--- a/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
++++ b/arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dts
+@@ -628,6 +628,42 @@ &mss_pil {
+ 			"qcom/msm8996/zte/axon7/modem.mbn";
+ };
+ 
++/* IPA handshake entries in the modem SMP2P, as in the downstream DT */
++&{/smp2p-mpss} {
++	ipa_smp2p_out: ipa-ap-to-modem {
++		qcom,entry-name = "ipa";
++		#qcom,smem-state-cells = <1>;
++	};
++
++	ipa_smp2p_in: ipa-modem-to-ap {
++		qcom,entry-name = "ipa";
++		interrupt-controller;
++		#interrupt-cells = <2>;
++	};
++};
++
++/*
++ * Modem data path: IPA v2.5 (stock qcom,ipa-hw-ver = 5) at 0x680000,
++ * IPA IRQ 333 and BAM IRQ 432, 32-bit DMA without SMMU. The BAM is owned
++ * by the modem/TZ on MSM8996 (stock qcom,ipa-bam-remote-mode), so Linux
++ * must not reset its global registers. ipa2-lite creates rmnet_ipa0; the
++ * module must only be loaded while the modem is running.
++ */
++&soc {
++	ipa: ipa@680000 {
++		compatible = "qcom,ipa-v2.5";
++		reg = <0x00680000 0x4effc>;
++		clocks = <&rpmcc RPM_SMD_IPA_CLK>;
++		clock-names = "core";
++		interrupts = <GIC_SPI 333 IRQ_TYPE_LEVEL_HIGH>,
++			     <GIC_SPI 432 IRQ_TYPE_LEVEL_HIGH>;
++		interrupt-names = "ipa", "dma";
++		modem-remoteproc = <&mss_pil>;
++		qcom,bam-remote-mode;
++		status = "okay";
++	};
++};
++
+ &pcie0 {
+ 	status = "okay";
+ 
+-- 
+2.43.0
+

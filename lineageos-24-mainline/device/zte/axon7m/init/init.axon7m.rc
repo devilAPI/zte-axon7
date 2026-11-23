@@ -119,8 +119,21 @@ service axon7m-modem-online /vendor/bin/axon7m-modem-online
     oneshot
     disabled
 
+# IPA v2.5 is loaded only after the modem is online: probing its BAM with the
+# modem stopped resets the SoC. The DT node comes from Nura patch 0062.
+service axon7m-ipa-load /vendor/bin/axon7m-ipa-load.sh
+    class late_start
+    user root
+    group system
+    oneshot
+    disabled
+    seclabel u:r:vendor_modprobe:s0
+
 on property:init.svc.rmtfs=running
     start axon7m-modem-online
+
+on property:init.svc.axon7m-modem-online=stopped
+    start axon7m-ipa-load
 
 on property:persist.vendor.axon7m.nosuspend=1
     write /sys/power/wake_lock axon7m-nosuspend

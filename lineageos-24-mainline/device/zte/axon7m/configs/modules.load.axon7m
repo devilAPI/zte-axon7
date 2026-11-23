@@ -3,6 +3,9 @@
 # phone, that the Android kernel builds as modules (2026-11-11). An empty
 # list made the build load all 593, and the speakup synth drivers hung
 # modprobe (and init) waiting on serial ports. ueventd still loads by alias.
+# ipa2-lite.ko is NOT in this early list: the IPA BAM is owned by the modem,
+# and probing while it is down resets the SoC. axon7m-ipa-load.sh loads it
+# after the modem is online (init.axon7m.rc).
 ak7375.ko
 algif_hash.ko
 algif_skcipher.ko

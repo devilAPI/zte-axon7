@@ -1,0 +1,142 @@
+From 3d0c3521708f887d74711d6d288fb560b135b510 Mon Sep 17 00:00:00 2001
+From: Felix Seiboldt <52862870+devilAPI@users.noreply.github.com>
+Date: Sun, 22 Nov 2026 17:54:56 +0100
+Subject: [PATCH 3/4] net: ipa2-lite: QMAPv4 checksums and TX/lifetime fixes
+
+Configure the endpoints as downstream rmnet_ipa does for a checksum data
+format and expose feature/{rx,tx}_offload = "MAPv4" so ModemManager sets up
+the rmnet link with matching checksum flags. Free packets refused by the
+TX path and unregister the netdev before deleting the NAPI contexts.
+
+From the Xiaomi Mi MIX mainline tree's kernel/patches/0039 and 0043.
+
+Co-Authored-By: hy4-flash-free (opencode) <noreply@opencode.ai>
+Claude-Session: https://claude.ai/code/session_01FVN6i49UMoL3MhGT7nwMzG
+---
+ drivers/net/ipa2-lite/ipa-hw.h |  3 ++
+ drivers/net/ipa2-lite/ipa.c    | 59 ++++++++++++++++++++++++++++++----
+ 2 files changed, 55 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/net/ipa2-lite/ipa-hw.h b/drivers/net/ipa2-lite/ipa-hw.h
+index a93448b4d..3b4ea7ac9 100644
+--- a/drivers/net/ipa2-lite/ipa-hw.h
++++ b/drivers/net/ipa2-lite/ipa-hw.h
+@@ -174,6 +174,9 @@ struct __packed fifo_desc {
+ #define IPA_EP_CFG_CS_METADATA_HDR_OFFSET_BMSK		0x00000078
+ #define IPA_EP_CFG_CS_OFFLOAD_EN_BMSK			0x00000006
+ #define IPA_EP_CFG_FRAG_OFFLOAD_EN_BMSK			0x00000001
++#define IPA_EP_CFG_CS_OFFLOAD_UL			(1 << 1)
++#define IPA_EP_CFG_CS_OFFLOAD_DL			(2 << 1)
++#define IPA_EP_CFG_CS_METADATA_HDR_OFFSET(w)		((w) << 3)
+ #define REG_IPA_EP_HDR_METADATA_MASK(ep)		IPA_EP_REG(0x0220,  (ep))
+ #define REG_IPA_EP_HDR_METADATA(ep)			IPA_EP_REG(0x0270,  (ep))
+ #define IPA_EP_HDR_METADATA_MUX_ID_BMSK			0x00FF0000
+diff --git a/drivers/net/ipa2-lite/ipa.c b/drivers/net/ipa2-lite/ipa.c
+index 326be7922..6180dc982 100644
+--- a/drivers/net/ipa2-lite/ipa.c
++++ b/drivers/net/ipa2-lite/ipa.c
+@@ -268,7 +268,18 @@ static int ipa_setup_ep(struct ipa *ipa, enum ipa_ep_id id)
+ 		break;
+ 	case EP_TX:
+ 	case EP_TEST_TX:
+-		iowrite32(ipa->test_mode ? 0xc4 : 0x44, ipa->mmio + REG_IPA_EP_HDR(id));
++		if (id == EP_TX && !ipa->test_mode) {
++			/*
++			 * QMAPv4 uplink: QMAP header plus the MAP checksum header
++			 * (8 bytes), checksum offload with its metadata one word
++			 * in, as downstream rmnet_ipa with checksum egress format.
++			 */
++			iowrite32(0x48, ipa->mmio + REG_IPA_EP_HDR(id));
++			iowrite32(IPA_EP_CFG_CS_OFFLOAD_UL | IPA_EP_CFG_CS_METADATA_HDR_OFFSET(1),
++				  ipa->mmio + REG_IPA_EP_CFG(id));
++		} else {
++			iowrite32(ipa->test_mode ? 0xc4 : 0x44, ipa->mmio + REG_IPA_EP_HDR(id));
++		}
+ 		iowrite32(0x00000001, ipa->mmio + REG_IPA_EP_HDR_EXT(id));
+ 		iowrite32(0x00000005, ipa->mmio + REG_IPA_EP_STATUS(id));
+ 		iowrite32(0x00000007, ipa->mmio + REG_IPA_EP_ROUTE(id));
+@@ -279,6 +290,9 @@ static int ipa_setup_ep(struct ipa *ipa, enum ipa_ep_id id)
+ 		iowrite32(0x002800c4, ipa->mmio + REG_IPA_EP_HDR(id));
+ 		iowrite32(0x0000000b, ipa->mmio + REG_IPA_EP_HDR_EXT(id));
+ 		iowrite32(0xff000000, ipa->mmio + REG_IPA_EP_HDR_METADATA_MASK(id));
++		/* QMAPv4 downlink: the hardware appends the MAP checksum trailer */
++		if (id == EP_RX)
++			iowrite32(IPA_EP_CFG_CS_OFFLOAD_DL, ipa->mmio + REG_IPA_EP_CFG(id));
+ 		break;
+ 	default:
+ 		break;
+@@ -1028,13 +1042,16 @@ static netdev_tx_t ipa_ndev_start_xmit(struct sk_buff *skb,
+ 	struct ipa_ndev *ipa_ndev = netdev_priv(ndev);
+ 	int ret;
+ 
+-	if (skb->protocol != htons(ETH_P_MAP) || skb_linearize(skb) || !ipa_ndev->tx)
++	/* Only QMAP frames (from rmnet) go to the modem */
++	if (skb->protocol != htons(ETH_P_MAP) || skb_linearize(skb) || !ipa_ndev->tx) {
++		dev_kfree_skb_any(skb);
+ 		goto drop_tx;
++	}
+ 
+ 	ret = ipa_enqueue_skb(skb, ndev, ipa_ndev->tx);
+ 	if (ret == -EBUSY)
+ 		return NETDEV_TX_BUSY;
+-	else if (ret < 0)
++	else if (ret < 0)	/* ipa_enqueue_skb() freed it */
+ 		goto drop_tx;
+ 	else if (ret <= IPA_TX_STOP_FREE_THRESH)
+ 		netif_stop_queue(ndev);
+@@ -1076,11 +1093,8 @@ DEF_ACTION(ipa_qmi_teardown, struct ipa *ipa, ipa->qmi);
+ static void ipa_remove_netdev(void *data)
+ {
+ 	struct net_device *ndev = data;
+-	struct ipa_ndev *ipa_ndev = netdev_priv(ndev);
+ 
+-	netif_napi_del(ipa_ndev->rx->napi);
+-	if (ipa_ndev->tx)
+-		netif_napi_del(ipa_ndev->tx->napi);
++	/* Stops the device (ndo_stop disables NAPI); free_netdev() deletes NAPI */
+ 	unregister_netdev(ndev);
+ 	free_netdev(ndev);
+ }
+@@ -1334,8 +1348,39 @@ const struct attribute_group ipa_modem_group = {
+ 	.attrs		= ipa_modem_attrs,
+ };
+ 
++/*
++ * Checksum offload format, read by ModemManager (as for the mainline ipa
++ * driver) to create the rmnet link with matching MAPv4 checksum flags; the
++ * modem picks QMAPv4 when ModemManager offers it.
++ */
++static ssize_t rx_offload_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	return sysfs_emit(buf, "MAPv4\n");
++}
++static DEVICE_ATTR_RO(rx_offload);
++
++static ssize_t tx_offload_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	return sysfs_emit(buf, "MAPv4\n");
++}
++static DEVICE_ATTR_RO(tx_offload);
++
++static struct attribute *ipa_feature_attrs[] = {
++	&dev_attr_rx_offload.attr,
++	&dev_attr_tx_offload.attr,
++	NULL
++};
++
++static const struct attribute_group ipa_feature_group = {
++	.name		= "feature",
++	.attrs		= ipa_feature_attrs,
++};
++
+ const struct attribute_group *ipa_groups[] = {
+ 	&ipa_modem_group,
++	&ipa_feature_group,
+ 	NULL
+ };
+ 
+-- 
+2.43.0
+

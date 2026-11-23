@@ -42,20 +42,64 @@ ScopedAStatus RadioConfig::getSimSlotsStatus(int32_t serial) {
     return ok();
 }
 
-// ---- data: no mobile data until the kernel has an IPA v2.5 driver
+// ---- data: QMI WDS call + QMAP rmnet link (ipa2-lite, Nura patches 0059-0062)
 
-ScopedAStatus RadioData::setupDataCall(int32_t serial, ::aidl::android::hardware::radio::AccessNetwork,
-                                       const aidlData::DataProfileInfo&, bool,
-                                       aidlData::DataRequestReason,
-                                       const std::vector<aidlData::LinkAddress>&,
-                                       const std::vector<std::string>&, int32_t,
-                                       const std::optional<aidlData::SliceInfo>&, bool) {
-    LOG_CALL << "not supported: no IPA driver for mobile data";
-    aidlData::SetupDataCallResult result{};
-    result.cause = aidlData::DataCallFailCause::SERVICE_OPTION_NOT_SUPPORTED;
-    result.suggestedRetryTime = RadioConst::VALUE_UNAVAILABLE_LONG;
-    respond()->setupDataCallResponse(errorResponse(serial, RadioError::REQUEST_NOT_SUPPORTED),
-                                     result);
+ScopedAStatus RadioData::setupDataCall(
+        int32_t serial, ::aidl::android::hardware::radio::AccessNetwork accessNetwork,
+        const aidlData::DataProfileInfo& profile, bool roamingAllowed,
+        aidlData::DataRequestReason reason, const std::vector<aidlData::LinkAddress>&,
+        const std::vector<std::string>&, int32_t,
+        const std::optional<aidlData::SliceInfo>&, bool) {
+    LOG_CALL << "network=" << static_cast<int>(accessNetwork) << " reason="
+             << static_cast<int>(reason) << " apn_len=" << profile.apn.size();
+    int32_t cid = setupDataCallCid();
+    DataCallSetup call = mCalls.setup(cid, profile, roamingAllowed);
+    call.result.cid = cid;
+    if (call.ok) {
+        setupDataCallBase(call.result);  // stores it and sends dataCallListChanged
+        respond()->setupDataCallResponse(noError(serial), call.result);
+    } else {
+        // Every failure gets both a RadioError and a 3GPP-style data fail cause;
+        // DataCall.cpp logs the exact QMI WDS message, error and TLVs.
+        LOG(ERROR) << "DATA setup failed cid=" << cid << " radio_error="
+                   << static_cast<int>(call.error) << " fail_cause="
+                   << static_cast<int>(call.result.cause);
+        respond()->setupDataCallResponse(errorResponse(serial, call.error), call.result);
+    }
+    return ok();
+}
+
+void RadioData::runDebugDataCall() {
+    LOG(INFO) << "DATA debug trigger (debug.axon7m.data_test)";
+    aidlData::DataProfileInfo profile;
+    profile.apn = "";
+    profile.protocol = aidlData::PdpProtocolType::IP;
+    profile.authType = aidlData::ApnAuthType::NO_PAP_NO_CHAP;
+    int32_t cid = setupDataCallCid();
+    DataCallSetup call = mCalls.setup(cid, profile, false);
+    call.result.cid = cid;
+    if (call.ok) {
+        setupDataCallBase(call.result);
+        LOG(INFO) << "DATA debug call up cid=" << cid << " ifname=" << call.result.ifname;
+    } else {
+        LOG(ERROR) << "DATA debug call failed cid=" << cid << " radio_error="
+                   << static_cast<int>(call.error) << " fail_cause="
+                   << static_cast<int>(call.result.cause);
+    }
+}
+
+ScopedAStatus RadioData::deactivateDataCall(int32_t serial, int32_t cid,
+                                            aidlData::DataRequestReason reason) {
+    LOG_CALL << cid << " reason=" << static_cast<int>(reason);
+    RadioError error = mCalls.deactivate(cid);
+    if (error == RadioError::NONE) deactivateDataCallBase(cid);
+    respond()->deactivateDataCallResponse(errorResponse(serial, error));
+    return ok();
+}
+
+ScopedAStatus RadioData::getDataCallList(int32_t serial) {
+    LOG_CALL;
+    respond()->getDataCallListResponse(noError(serial), mCalls.list());
     return ok();
 }
 
