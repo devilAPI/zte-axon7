@@ -34,6 +34,9 @@ restore() {
 }
 trap restore EXIT
 : > "$LOG"
+: > "$L/losdata-hal-wds.txt"
+: > "$L/losdata-wds-direct.txt"
+: > "$L/losdata-dmesg.txt"
 {
 echo "== $(date -u +%FT%TZ) losdata: IPA + radio HAL data call (no SIM, no flashing)"
 echo "-- battery: $(sh cat /sys/class/power_supply/qcom-battery/capacity)%"
@@ -48,7 +51,8 @@ B=$(sh cat /sys/class/power_supply/qcom-battery/capacity)
 [ "$(sh 'cat /sys/class/remoteproc/remoteproc0/state')" = running ] || die "mss not running"
 log "preconditions OK: kernel=$K battery=$B battery-capacity=$B"
 
-if ! sh 'ip link show rmnet_ipa0' >/dev/null 2>&1; then
+# note: sh() pipes through tr, so use adb's own exit status here
+if ! adb shell 'ip link show rmnet_ipa0' >/dev/null 2>&1; then
   log "ipa2-lite: rmnet_ipa0 absent, loading test modules"
   for f in ipa-dt-test.ko ipa2-lite.ko; do
     [ -r "$M/$f" ] || die "missing $M/$f"
@@ -100,15 +104,20 @@ sleep 30
 log "-- trigger mobile data --"
 sh 'svc data enable' 2>&1 | tee -a "$LOG"
 sh 'cmd phone data enable' 2>&1 | tee -a "$LOG"
-sleep 8
+sleep 4
+# RILJ does not place a data call without a SIM; the HAL's one-shot bring-up
+# hook exercises the same setupDataCall/QMI WDS path instead.
+sh 'setprop debug.axon7m.data_test 1'
+sleep 12
 sh 'settings get global mobile_data' | tee -a "$LOG"
 sh 'dumpsys telephony.registry' | grep -E -i 'mRadioPowerState|mDataConnectionState|mServiceState=' | head -8 | sed -E 's/[0-9]{10,}/[REDACTED]/g' | tee -a "$LOG"
 log "-- direct QMI WDS start network (independent of the framework) --"
-if [ -x /data/local/tmp/qmi-raw ]; then
-  sh '/data/local/tmp/qmi-raw 1 0x20 140000190104' 2>&1 | tee -a "$L/losdata-wds-direct.txt"
-else
-  echo "qmi-raw not on phone; HAL log below is the only WDS evidence" | tee -a "$L/losdata-wds-direct.txt"
+if [ -r "$T/qmi-raw" ]; then
+  adb push "$T/qmi-raw" /data/local/tmp/qmi-raw >/dev/null 2>&1
+  sh chmod 755 /data/local/tmp/qmi-raw
 fi
+sh '/data/local/tmp/qmi-raw 1 0x22' 2>&1 | tee -a "$L/losdata-wds-direct.txt"
+sh '/data/local/tmp/qmi-raw 1 0x20 140000190104' 2>&1 | tee -a "$L/losdata-wds-direct.txt"
 sleep 2
 log "-- HAL QMI WDS exchange --"
 sh 'logcat -b radio -d -t 1200' 2>/dev/null | grep -aE 'radio-axon7m|RILJ.*(DATA|DATA_CALL|setupDataCall)' \

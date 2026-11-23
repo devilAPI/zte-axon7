@@ -1,0 +1,43 @@
+2131:device/zte/axon7m/radio/minradio/network/structs.cpp:104:39: warning: 'cdma' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2137:device/zte/axon7m/radio/minradio/network/structs.cpp:134:39: warning: 'cdma' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2153:[2140/2792] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m clang++ impl/DataCall.cpp
+2155:device/zte/axon7m/radio/impl/ModemState.cpp:72:8: warning: 'cdmaSubscriptionAppIndex' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2163:device/zte/axon7m/radio/impl/RadioMessaging.cpp:39:31: warning: 'acknowledgeLastIncomingCdmaSmsResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2169:device/zte/axon7m/radio/impl/RadioMessaging.cpp:45:31: warning: 'deleteSmsOnRuimResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2175:device/zte/axon7m/radio/impl/RadioMessaging.cpp:57:31: warning: 'getCdmaBroadcastConfigResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2181:device/zte/axon7m/radio/impl/RadioMessaging.cpp:69:31: warning: 'sendCdmaSmsResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2187:device/zte/axon7m/radio/impl/RadioMessaging.cpp:75:31: warning: 'sendCdmaSmsExpectMoreResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2193:device/zte/axon7m/radio/impl/RadioMessaging.cpp:87:31: warning: 'setCdmaBroadcastActivationResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2199:device/zte/axon7m/radio/impl/RadioMessaging.cpp:93:31: warning: 'setCdmaBroadcastConfigResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2205:device/zte/axon7m/radio/impl/RadioMessaging.cpp:111:31: warning: 'writeSmsToRuimResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2211:device/zte/axon7m/radio/impl/RadioMessaging.cpp:214:87: warning: 'messageRef' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2217:device/zte/axon7m/radio/impl/RadioMessaging.cpp:222:20: warning: 'errorCode' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2226:device/zte/axon7m/radio/impl/RadioVoice.cpp:176:31: warning: 'sendCdmaFeatureCodeResponse' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+2234:[2146/2792] //device/zte/axon7m/radio:android.hardware.radio-service.axon7m clang++ impl/Radio.cpp
+2235:device/zte/axon7m/radio/impl/Radio.cpp:206:14: warning: 'cdmaSubscriptionAppIndex' is deprecated: Legacy CDMA is unsupported. [-Wdeprecated-declarations]
+
+== summary ==
+Build command (server, user build, HOME=/home/build):
+  cd /srv/los24/lineage-24.0; source build/envsetup.sh; breakfast axon7m
+  prebuilts/build-tools/linux-x86/bin/ninja -f out/combined-lineage_axon7m.ninja -j4 \
+    android.hardware.radio-service.axon7m
+direct-ninja-exit=0 (2026-11-23T01:35:48Z, full log /srv/los24/logs/losdata-module-directninja6.log)
+Binary: out/target/product/axon7m/vendor/bin/hw/android.hardware.radio-service.axon7m
+  514176 bytes, 2026-11-23T01:35:48 (was 413064 bytes at 19:42 before this change)
+impl/DataCall.cpp compiled with no warnings; only the known legacy-CDMA
+deprecations in RadioMessaging/RadioVoice/minradio remain.
+Note: /srv/aosp/build.lock was held for hours by other workers' full images;
+this module-only build used the existing out/ graph and did not start another
+full image. siso was avoided (it wedged in futex_wait earlier).
+
+== final binary (after the failure-path and log-format fixes) ==
+Server log: /srv/los24/logs/losdata-module-directninja9.log
+direct-ninja-exit=0 (2026-11-23T02:30:59Z)
+out/target/product/axon7m/vendor/bin/hw/android.hardware.radio-service.axon7m
+  514176 bytes; md5 f1cd80c458d66db41e815a210340899b
+Recipes that did NOT work on this shared server (not used for the evidence):
+  - `m ...` under siso: wedged in futex_wait; plain ninja works.
+  - a separate OUT_DIR: Soong bootstrap was OOM-killed while another worker
+    ran a full image; the existing out/ graph was used instead.
+  - ccache failed until /home/build/.cache/ccache (a zero-length file left by
+    the environment) was replaced with a directory owned by build.

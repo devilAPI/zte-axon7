@@ -1,0 +1,21 @@
+11-22 20:19:34.626 15341 15341 E RILJ    : Service DATA is available, but feature android.hardware.telephony.data is not declared [PHONE0]
+11-22 20:19:34.673 15341 15341 D RILJ    : Linked to death for service DATA [PHONE0]
+11-22 20:19:34.673 15341 15341 D RILJ    : HAL version of DATA: 2.3 [PHONE0]
+11-22 20:19:34.731 15296 15296 I radio-axon7m: radio off requested: modem stays online for GNSS
+11-22 20:19:35.688 15341 15376 E RILJ    : setUserDataEnabled not supported on service DATA < 2.4. [PHONE0]
+11-22 20:19:35.689 15341 15376 E RILJ    : setUserDataRoamingEnabled not supported on service DATA < 2.4. [PHONE0]
+11-22 20:19:35.889 15341 15377 D RILJ    : [0046]> DATA_REGISTRATION_STATE [PHONE0]
+11-22 20:19:35.895 15341 15356 D RILJ    : [0046]< DATA_REGISTRATION_STATE RegStateResult{regState: NOT_REG_MT_SEARCHING_OP, rat: GSM, reasonForDenial: NONE, cellIdentity: CellIdentity.noinit(true), registeredPlmn: , accessTechnologySpecificInfo: AccessTechnologySpecificInfo.noinit(false)} [PHONE0]
+11-22 20:19:35.985 15341 15376 D RILJ    : [0048]> SET_DATA_PROFILE with data profiles :  [PHONE0]
+11-22 20:19:35.988 15341 15367 D RILJ    : [0048]< SET_DATA_PROFILE  [PHONE0]
+11-22 20:20:09.205 15296 15306 I radio-axon7m: DATA debug trigger (debug.axon7m.data_test)
+11-22 20:20:09.206 15296 15306 I radio-axon7m: DATA setup cid=1 apn_len=0 family=4 mux=1 roaming=0 ifname=rmnet_data1
+11-22 20:20:09.244 15296 15306 E radio-axon7m: DPM_OPEN_PORT 0x0020: result=1 error=1 (unknown) tlvs=02/4 
+11-22 20:20:09.244 15296 15306 W radio-axon7m: DATA DPM open port unavailable, continuing
+11-22 20:20:09.272 15296 15306 I radio-axon7m: WDS_BIND_SUBSCRIPTION 0x00af: result=0 error=0 (unknown) tlvs=02/4 
+11-22 20:20:09.296 15296 15306 E radio-axon7m: WDA_SET_DATA_FORMAT 0x0020: result=1 error=1 (unknown) tlvs=02/4 
+11-22 20:20:09.296 15296 15306 W radio-axon7m: DATA WDA set data format unavailable, continuing
+11-22 20:20:09.316 15296 15306 E radio-axon7m: WDS_BIND_MUX_DATA_PORT 0x00a2: result=1 error=1 (unknown) tlvs=02/4 
+11-22 20:20:09.316 15296 15306 W radio-axon7m: DATA WDS mux binding unsupported (1), continuing
+11-22 20:20:09.336 15296 15306 E radio-axon7m: WDS_START_NETWORK_INTERFACE 0x0020: result=1 error=70 (INVALID_OPERATION) tlvs=01/4 02/4 
+11-22 20:20:09.336 15296 15306 E radio-axon7m: DATA debug call failed cid=1 radio_error=40 fail_cause=32

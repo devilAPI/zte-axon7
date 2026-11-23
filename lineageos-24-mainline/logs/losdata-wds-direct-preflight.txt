@@ -1,0 +1,15 @@
+battery=99 boot=1
+== WDS GET PACKET SERVICE STATUS ==
+service 1 at 0:46
+TLV 0x02 len 4: 00 00 00 00
+result 0, QMI error 0
+TLV 0x01 len 1: 01
+== WDS START NETWORK INTERFACE (empty APN, IPv4) ==
+service 1 at 0:46
+TLV 0x02 len 4: 01 00 46 00
+result 1, QMI error 70
+TLV 0x01 len 4: 00 00 00 00
+== WDS GET CURRENT SETTINGS (mask b210) ==
+service 1 at 0:46
+TLV 0x02 len 4: 01 00 01 00
+result 1, QMI error 1

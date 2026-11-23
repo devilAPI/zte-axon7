@@ -1,6 +1,9 @@
 # Open radio HAL (RIL) for the Axon 7 on LineageOS 24: research and plan
 
-Status 2026-11-14. Research only, nothing built or run on the phone.
+Status 2026-11-23. Milestone 1 (SIM/operator/SMS) implemented and bind-mount
+tested; the mobile-data path (section 4.4) is implemented and built, and its
+QMI WDS failure path was tested on the phone without a SIM. A successful data
+call still needs a SIM and is not claimed.
 Marks: **[V]** read in the source named, **[K]** from memory of libqmi's QMI
 definitions (not in the reference trees; confirm with `qmicli -v` on Nura
 before coding), **[A]** assumption.
@@ -714,6 +717,85 @@ a call implementation.
   successful test the main phone disappeared from USB (`adb devices` empty)
   while its lock was held by another worker. No phone actions were attempted
   after that and the failed attempt's empty logs are not kept.
+
+## 4.4 2026-11-22: mobile data path (agent/losdata), implementation and build
+
+The data stub in `impl/Radio.cpp` is replaced by a real `DataCallManager`
+(`impl/DataCall.{h,cpp}`). `setupDataCall()` sends DPM Open Port 0x20,
+WDS Bind Subscription 0xAF, WDA Set Data Format 0x20 (QMAP, embedded
+endpoint 4/1), WDS Bind Mux Data Port 0xA2 (mux 1), then WDS Start Network
+Interface 0x20 (APN, IP family, embedded call type, endpoint). On success it
+asks WDS Get Current Settings 0x2D for address/gateway/DNS/MTU (TLVs
+0x1E/0x20/0x15/0x16/0x29), creates an `rmnet_dataN` link with mux id N over
+`rmnet_ipa0` through rtnetlink (MAPv4 checksum/deaggregation flags), and
+answers with that interface name, `LinkAddress`, gateways, DNSes and MTU.
+`deactivateDataCall()` sends WDS Stop Network Interface 0x21, unbinds the
+mux and removes the link. `getDataCallList()` reports the active calls.
+
+Every QMI exchange is logged with message id, result, QMI error and TLV
+inventory (APN/user/password are never logged). Failures get both a
+`RadioError` and a `DataCallFailCause`: QMI 102 NO_SIM -> SIM_ERR /
+DATA_REGISTRATION_FAIL, 13/53/24 -> NETWORK_ERR / NETWORK_FAILURE,
+17/48/28 -> INVALID_ARGUMENTS / INVALID_MANDATORY_INFO, 14 CALL_FAILED with
+its call-end-reason TLV -> the matching 3GPP cause, no answer ->
+MODEM_ERR / ERROR_UNSPECIFIED. A missing `rmnet_ipa0` -> RADIO_NOT_AVAILABLE;
+a netlink failure rolls the modem call back with WDS Stop Network.
+
+Kernel side (LOS branch): Nura patches 0059-0062 are copied into the
+`kernel-build.sh` Nura series, `CONFIG_QCOM_IPA2_LITE=m` is in both the Nura
+config copy and `kernel/android-axon7m.config`, and `ipa2-lite.ko` is
+installed with the other vendor modules but deliberately not in
+`modules.load`. A new init service loads it only after `axon7m-modem-online`
+has finished and `mss` is `running`: probing the modem-owned IPA BAM before
+that resets the SoC. The radio HAL has `capabilities NET_ADMIN` and
+netlink/sepolicy rules for creating the rmnet link.
+
+Build evidence: `m`-style module build (plain ninja on the server's existing
+out graph, `SOONG_NINJA` siso avoided), `direct-ninja-exit=0` at
+2026-11-23T02:30:59Z; `impl/DataCall.cpp` compiled with no warnings, only the
+known legacy-CDMA deprecations. The kernel rebuild compiled
+`drivers/net/ipa2-lite/ipa2-lite.ko` with `CONFIG_QCOM_IPA2_LITE=m` and staged
+it in `/srv/los24/kernel/prebuilt/modules/` (608 modules, 22:28Z).
+
+Phone evidence (MAIN 7e15695a, LOS 24 userdebug, kernel `7.3.1-axon7m`,
+battery 99 %, `boot_completed=1`, no boot/misc write, no reboot, no SIM),
+`logs/losdata-data-test.txt`, `-hal-wds.txt`, `-wds-direct.txt`:
+the IPA test modules were insmod'ed in the running kernel (`rmnet_ipa0` and
+`ipa_lan0` appeared, driver loaded with `qmi_helpers`); the rebuilt HAL was
+bind-mounted over `/vendor/bin/hw/android.hardware.radio-service.axon7m` and
+stayed up under uid `radio`. `svc data enable` / `cmd phone data enable` did
+**not** produce a framework data call: RILJ logs "feature
+android.hardware.telephony.data is not declared" and with no SIM it would not
+start one anyway. The HAL's one-shot bring-up hook
+(`debug.axon7m.data_test=1`) therefore exercised the same `setupDataCall`
+path. Its log shows the full exchange:
+
+```
+DATA setup cid=1 apn_len=0 family=4 mux=1 roaming=0 ifname=rmnet_data1
+DPM_OPEN_PORT 0x0020: result=1 error=1, continuing
+WDS_BIND_SUBSCRIPTION 0x00af: result=0 error=0
+WDA_SET_DATA_FORMAT 0x0020: result=1 error=1, continuing
+WDS_BIND_MUX_DATA_PORT 0x00a2: result=1 error=1, continuing
+WDS_START_NETWORK_INTERFACE 0x0020: result=1 error=70 (INVALID_OPERATION) tlvs=01/4 02/4
+DATA debug call failed cid=1 radio_error=40 (MODEM_ERR) fail_cause=32 (SERVICE_OPTION_NOT_SUPPORTED)
+```
+
+An independent `qmi-raw 1 0x20 140000190104` got the same QMI error 70 from
+WDS (packet service status still answers success with connection status 1).
+So the modem refuses the call exactly as expected without a SIM, and the
+HAL's error path is exercised end to end. **Not proven:** WDS Get Current
+Settings, IP/DNS/MTU parsing, the rtnetlink `rmnet_dataN` creation and a
+successful call: the modem never accepted a call, so those code paths were
+not reached. The QMAP/DPM/mux/format calls answer error 1 on this firmware
+and are treated as optional; the real endpoint setup still needs a SIM test.
+
+No unexpected `com.android.phone` crash after the trigger (the only am_crash
+line is the test's deliberate `am crash` before it). The phone was restored:
+`init.svc.vendor.radio-axon7m=running`, 5 radio services, `boot_completed=1`,
+modem `running`, `stay_on_while_plugged_in=0`, battery 99 %, adb reachable.
+The main phone repeatedly flapped on USB during the long build window; two
+earlier test attempts were aborted by a disconnect and are not counted. No
+boot/kernel partition was written and no image was flashed in this task.
 
 ## Sources
 

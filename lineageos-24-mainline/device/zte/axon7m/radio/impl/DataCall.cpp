@@ -98,8 +98,8 @@ void logQmi(const char* op, uint16_t msg, const std::optional<QmiResponse>& r) {
     if (!r) {
         o << "NO ANSWER";
     } else {
-        o << "result=" << r->result << " error=" << r->error << " (" << qmiErrorName(r->error)
-          << ") tlvs=";
+        o << std::dec << "result=" << r->result << " error=" << r->error << " ("
+          << qmiErrorName(r->error) << ") tlvs=";
         for (const auto& [type, value] : r->tlvs) {
             o << std::hex << std::setw(2) << std::setfill('0') << (int)type << "/" << std::dec
               << value.size() << " ";
@@ -396,16 +396,12 @@ DataCallSetup DataCallManager::setup(int32_t cid, const aidlData::DataProfileInf
         putTlvU8(&t, 0x11, muxId);
         auto r = qmi(kWds, "WDS_BIND_MUX_DATA_PORT", 0xA2, t);
         if (!r || !r->ok()) {
-            // Some firmware has no mux binding; the modem then still answers
-            // START_NETWORK_INTERFACE, which gives us the real failure cause.
-            if (r && (r->error == kQmiNotSupported || r->error == kQmiInvalidOperation)) {
-                LOG(WARNING) << "DATA WDS mux binding unsupported, continuing";
-            } else {
-                auto f = failureFor(r);
-                out.error = f.radio;
-                out.result.cause = f.cause;
-                return out;
-            }
+            // This 2016 MPSS answers error 1 (INVALID) to the mux/DPM/format
+            // binding calls; qmicli's IPA setup does not need them to bring
+            // up a call. Continue so START_NETWORK_INTERFACE tells us the real
+            // reason (e.g. NO_SIM) instead of failing on an optional call.
+            LOG(WARNING) << "DATA WDS mux binding unsupported (" << (r ? r->error : 0xffff)
+                         << "), continuing";
         }
     }
 

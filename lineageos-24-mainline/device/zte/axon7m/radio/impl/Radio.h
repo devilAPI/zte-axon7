@@ -37,6 +37,11 @@ class RadioConfig : public minimal::RadioConfig {
 class RadioData : public minimal::RadioData {
   public:
     using minimal::RadioData::RadioData;
+    // Bring-up hook: `setprop debug.axon7m.data_test 1` asks the HAL to place
+    // one call with an empty APN. Off by default; the framework normally
+    // decides when to set up data. Used to exercise the QMI WDS path on a
+    // phone without a SIM, where RILJ never starts a data call by itself.
+    void runDebugDataCall();
 
   protected:
     ::ndk::ScopedAStatus setupDataCall(

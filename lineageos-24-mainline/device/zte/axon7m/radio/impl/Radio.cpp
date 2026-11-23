@@ -61,14 +61,36 @@ ScopedAStatus RadioData::setupDataCall(
     } else {
         // Every failure gets both a RadioError and a 3GPP-style data fail cause;
         // DataCall.cpp logs the exact QMI WDS message, error and TLVs.
+        LOG(ERROR) << "DATA setup failed cid=" << cid << " radio_error="
+                   << static_cast<int>(call.error) << " fail_cause="
+                   << static_cast<int>(call.result.cause);
         respond()->setupDataCallResponse(errorResponse(serial, call.error), call.result);
     }
     return ok();
 }
 
+void RadioData::runDebugDataCall() {
+    LOG(INFO) << "DATA debug trigger (debug.axon7m.data_test)";
+    aidlData::DataProfileInfo profile;
+    profile.apn = "";
+    profile.protocol = aidlData::PdpProtocolType::IP;
+    profile.authType = aidlData::ApnAuthType::NO_PAP_NO_CHAP;
+    int32_t cid = setupDataCallCid();
+    DataCallSetup call = mCalls.setup(cid, profile, false);
+    call.result.cid = cid;
+    if (call.ok) {
+        setupDataCallBase(call.result);
+        LOG(INFO) << "DATA debug call up cid=" << cid << " ifname=" << call.result.ifname;
+    } else {
+        LOG(ERROR) << "DATA debug call failed cid=" << cid << " radio_error="
+                   << static_cast<int>(call.error) << " fail_cause="
+                   << static_cast<int>(call.result.cause);
+    }
+}
+
 ScopedAStatus RadioData::deactivateDataCall(int32_t serial, int32_t cid,
                                             aidlData::DataRequestReason reason) {
-    LOG_CALL << cid << " " << reason;
+    LOG_CALL << cid << " reason=" << static_cast<int>(reason);
     RadioError error = mCalls.deactivate(cid);
     if (error == RadioError::NONE) deactivateDataCallBase(cid);
     respond()->deactivateDataCallResponse(errorResponse(serial, error));
