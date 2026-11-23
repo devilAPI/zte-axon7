@@ -85,11 +85,12 @@ cleanup() {
 	fi
 	if [ $bound = 1 ] || ash 'grep -q "^pn5xx_raw " /proc/modules' >/dev/null 2>&1; then
 		# Binding can race with the module's own unbind work; wait for nfc0.
-		for i in $(seq 1 10); do
+		for i in $(seq 1 30); do
 			ash "echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind" >/dev/null 2>&1 || true
 			[ "$(ash "test -e /sys/class/nfc/nfc0 && echo present || echo MISSING")" = present ] && break
 			sleep 2
 		done
+		echo "rebind attempts: $i, driver=$(ash "basename \$(readlink -f /sys/bus/i2c/devices/$DEV/driver)" 2>/dev/null)"
 	fi
 	say "after cleanup: boot_completed=$(ash 'getprop sys.boot_completed') battery=$(ash 'cat /sys/class/power_supply/qcom-battery/capacity')%"
 	say "nfc0=$(ash "test -e /sys/class/nfc/nfc0 && echo present || echo MISSING") char=$(ash 'test -e /dev/nq-nci && echo PRESENT || echo gone')"
@@ -149,7 +150,6 @@ mounted=1
 echo "feature file: $(ash "ls -l $PERMS/android.hardware.nfc.xml")"
 app_disabled=$(ash 'pm list packages -d | grep -q com.android.nfc && echo 1 || echo 0')
 echo "com.android.nfc disabled before test: $app_disabled"
-[ "$app_disabled" = 0 ] || ash 'pm enable com.android.nfc' >/dev/null
 
 # 3. start our HAL by hand (an init rc for real builds is in nfc/)
 say "start $HALNAME"
@@ -196,7 +196,13 @@ sleep 10
 # is rejected as a background start, but launching one of its activities
 # starts the same process and runs Application.onCreate().
 say "start com.android.nfc process"
-run 'am start --user 0 -n com.android.nfc/.NfcEnableAllowlistActivity'
+echo "app disabled after framework restart: $(ash 'pm list packages -d | grep -q com.android.nfc && echo 1 || echo 0')"
+for i in $(seq 1 3); do
+	ash 'pm enable com.android.nfc' >/dev/null
+	out=$(ash 'am start --user 0 -n com.android.nfc/.NfcEnableAllowlistActivity' 2>&1)
+	echo "am start ($i): $out"
+	case "$out" in *"does not exist"*) sleep 3 ;; *) break ;; esac
+done
 sleep 10
 echo "nfc-app-pid=$(ash 'pidof com.android.nfc')"
 ash 'service list' | grep -i '^.*nfc' || true
