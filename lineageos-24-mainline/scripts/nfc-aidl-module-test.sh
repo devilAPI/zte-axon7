@@ -48,7 +48,6 @@ sound_effects= vibrate_on=
 
 say() { echo "== $(date -u +%FT%TZ) $*"; }
 ash() { adb shell "$@" | tr -d '\r'; }
-ashrc() { adb shell "$@" >/dev/null 2>&1; }   # exit status of the shell command
 run() { echo "+ $*"; adb shell "$@"; }
 
 save_settings() {
@@ -198,17 +197,30 @@ sleep 10
 # starts the same process and runs Application.onCreate().
 say "start com.android.nfc process"
 echo "app disabled after framework restart: $(ash 'pm list packages -d | grep -q com.android.nfc && echo 1 || echo 0')"
-for i in $(seq 1 3); do
+# ActivityStarter can still have a null PermissionPolicyInternal right after
+# a system_server restart (r8: NullPointerException); wait for ATMS first.
+for i in $(seq 1 30); do
+	ash 'service list' | grep -q 'activity' && break
+	sleep 2
+done
+echo "activity service after $((i*2))s: $(ash 'service list' | grep -c 'activity')"
+for i in $(seq 1 5); do
 	ash 'pm enable com.android.nfc' >/dev/null
 	out=$(ash 'am start --user 0 -n com.android.nfc/.NfcEnableAllowlistActivity' 2>&1)
-	echo "am start ($i): $out"
-	case "$out" in *"does not exist"*) sleep 3 ;; *) break ;; esac
+	echo "am start ($i): $(echo "$out" | head -3 | tr '\n' ' ')"
+	case "$out" in
+		*"does not exist"*|*"Exception occurred"*) sleep 5 ;;
+		*"Starting: Intent"*) break ;;
+		*) sleep 3 ;;
+	esac
 done
 # NfcService can take ~50 s to come up (APEX dexopt); do not issue svc nfc
 # enable against a null NfcAdapter like the r7 attempt did.
 svc_ready=0
 for i in $(seq 1 60); do
-	if ashrc 'dumpsys nfc >/dev/null 2>&1'; then svc_ready=1; break; fi
+	# dumpsys exits 0 even when it prints "Can't find service: nfc", so
+	# require an actual mState line from NfcService.
+	if ash 'dumpsys nfc 2>/dev/null' | grep -q '^mState='; then svc_ready=1; break; fi
 	sleep 2
 done
 echo "nfc-app-pid=$(ash 'pidof com.android.nfc') NfcService ready=$svc_ready (waited $((i*2))s)"
