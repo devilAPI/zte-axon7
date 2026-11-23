@@ -192,10 +192,12 @@ adb root >/dev/null 2>&1; sleep 2; adb wait-for-device
 sleep 10
 
 # BOOT_COMPLETED was broadcast long before this test; start the NFC app's
-# main process by hand so NfcApplication creates NfcService.
+# main process by hand so NfcApplication creates NfcService. start-service
+# is rejected as a background start, but launching one of its activities
+# starts the same process and runs Application.onCreate().
 say "start com.android.nfc process"
-run 'am start-service --user 0 -n com.android.nfc/.handover.PeripheralHandoverService'
-sleep 8
+run 'am start --user 0 -n com.android.nfc/.NfcEnableAllowlistActivity'
+sleep 10
 echo "nfc-app-pid=$(ash 'pidof com.android.nfc')"
 ash 'service list' | grep -i '^.*nfc' || true
 
