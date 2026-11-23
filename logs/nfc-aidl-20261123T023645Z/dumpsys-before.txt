@@ -1,0 +1,39 @@
+mState=off
+mAlwaysOnState=off
+mScreenState=OFF_UNLOCKED
+mIsSecureNfcEnabled=false
+mIsReaderOptionEnabled=true
+mIsAlwaysOnSupported=false
+SnoopLogMode=FILTERED
+VendorDebugEnabled=false
+mPowerSavingState=1
+mIsObserveModeSupported=false
+mIsObserveModeEnabled=false
+listenTech=0xf
+pollTech=0x2f
+mTechMask: 0
+mEnableLPD: true
+mEnableReader: false
+mEnableHostRouting: false
+
+mOverrideIntent=null
+mOverrideFilters=null
+mOverrideTechLists=null
+Registered android.nfc.action.TECH_DISCOVERED services for current user: 
+mIsTagAppPrefSupported =true
+TagAppPreference:
+===== Nfc Event Log =====
+2026-11-22 20:09:04.440:  bootup_state { enabled: true }
+2026-11-22 20:09:26.770:  state_change { app_info { package_name: "android" uid: 0 } enabled: false }
+2026-11-22 20:12:21.730:  bootup_state { enabled: false }
+2026-11-22 20:19:06.254:  bootup_state { enabled: false }
+===== Nfc Event Log =====
+enable_cplt_flags=0x0, enable_cplt_mask=0x0
+--- BEGIN:NFCSNOOP_LOG_SUMMARY (0 bytes in) ---
+AQAAAAAAAAAA
+--- END:NFCSNOOP_LOG_SUMMARY ---
+--- BEGIN:NFCSNOOP_VS_LOG_SUMMARY (0 bytes in) ---
+AQAAAAAAAAAA
+--- END:NFCSNOOP_VS_LOG_SUMMARY ---
+Firmware version=<Unknown>
+Native Proprietary Caps=null

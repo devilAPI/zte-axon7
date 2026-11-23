@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copy of frameworks/native/data/etc/android.hardware.nfc.xml at
+     android-17.0.0_r1, used by scripts/nfc-aidl-module-test.sh to make
+     com.android.nfc start in a running system without a rebuild. -->
+<permissions>
+    <feature name="android.hardware.nfc" />
+    <feature name="android.hardware.nfc.any" />
+</permissions>

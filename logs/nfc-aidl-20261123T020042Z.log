@@ -1,0 +1,32 @@
+== 2026-11-23T02:00:42Z preconditions
+boot_completed=1 battery=99% uname=#31 SMP PREEMPT Fri Nov 20 01:58:00 CET 2026
+nfc0 before: present
+driver before: /sys/bus/i2c/drivers/nxp-nci_i2c
+nci config files:
+ls: /vendor/etc/libnfc*: No such file or directory;-rw-r--r-- 1 root root 4965 2026-11-11 08:11 /system/etc/libnfc-nci.conf;== 2026-11-23T02:00:46Z insert pn5xx-raw module
++ mkdir -p /data/local/tmp/nfcaidl
++ chmod 755 /data/local/tmp/nfcaidl/android.hardware.nfc-service.axon7m
+insmod: ok 
+/dev/nq-nci: present
+/dev/pn5xx: present
+/dev/pn54x: present
+driver after: /sys/bus/i2c/drivers/pn5xx-raw
+== 2026-11-23T02:00:49Z bind-mount /vendor/etc/permissions with android.hardware.nfc.xml
+feature file: -rwxrwxrwx 1 root root 370 2026-11-22 21:12 /vendor/etc/permissions/android.hardware.nfc.xml
+vintf fragment: -rwxrwxrwx 1 root root 522 2026-11-22 21:22 /vendor/etc/vintf/manifest/android.hardware.nfc.xml
+== 2026-11-23T02:00:50Z restart servicemanager so it rereads VINTF
+servicemanager pid 303 -> 4837 (waited 5s), state=running
+== 2026-11-23T02:00:56Z start android.hardware.nfc-service.axon7m
+HAL pid=4853
+NO NFC SERVICE registered
+== 2026-11-23T02:01:10Z HAL log at start
+== 2026-11-23T02:01:10Z restart system_server (no reboot)
+system_server pid=
+no system_server
+== 2026-11-23T02:01:10Z cleanup (rc=5)
+cmd: Can't find service: settings
+cmd: Can't find service: settings
+== 2026-11-23T02:01:11Z after cleanup: boot_completed=1 battery=99%
+== 2026-11-23T02:01:11Z nfc0=MISSING char=gone
+Failed to get power manager.
+== 2026-11-23T02:01:13Z LOG=/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/nfcaidl/logs/nfc-aidl-20261123T020042Z.log DETAIL=/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/nfcaidl/logs/nfc-aidl-20261123T020042Z

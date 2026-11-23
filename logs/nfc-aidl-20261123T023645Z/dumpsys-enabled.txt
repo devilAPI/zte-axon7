@@ -1,0 +1,62 @@
+mState=on
+mAlwaysOnState=off
+mScreenState=OFF_UNLOCKED
+mIsSecureNfcEnabled=false
+mIsReaderOptionEnabled=true
+mIsAlwaysOnSupported=false
+SnoopLogMode=FILTERED
+VendorDebugEnabled=false
+mPowerSavingState=1
+mIsObserveModeSupported=false
+mIsObserveModeEnabled=false
+listenTech=0xf
+pollTech=0x2f
+mTechMask: default
+mEnableLPD: true
+mEnableReader: false
+mEnableHostRouting: false
+
+mOverrideIntent=null
+mOverrideFilters=null
+mOverrideTechLists=null
+Registered android.nfc.action.TECH_DISCOVERED services for current user: 
+--- dumpRoutingTable: start ---
+RoutingTableSize=20/720
+	Entry                               	NFCEE_ID	Power State	Block Ctrl	Extra Info
+	PROTOCOL_T3T                        	    0x00	0x01       	False     	          
+	PROTOCOL_ISO_DEP                    	    0x00	0x01       	False     	          
+	TECHNOLOGY_A                        	    0x00	0x01       	False     	          
+	TECHNOLOGY_F                        	    0x00	0x01       	False     	          
+--- dumpRoutingTable:  end  ---
+--- dumpRfDiscoverConfigurations: start ---
+Rf Discover Configs=00 01 01 01 02 01 80 01 06 01 
+Number of Discover Configs=5
+	Technology                          	Frequency         
+	NFC_A_PASSIVE_POLL_MODE             	0x01              
+	NFC_B_PASSIVE_POLL_MODE             	0x01              
+	NFC_F_PASSIVE_POLL_MODE             	0x01              
+	NFC_A_PASSIVE_LISTEN_MODE           	0x01              
+	NFC_V_PASSIVE_POLL_MODE             	0x01              
+--- dumpRfDiscoverConfigurations:  end  ---
+mIsTagAppPrefSupported =true
+TagAppPreference:
+===== Nfc Event Log =====
+2026-11-22 20:09:04.440:  bootup_state { enabled: true }
+2026-11-22 20:09:26.770:  state_change { app_info { package_name: "android" uid: 0 } enabled: false }
+2026-11-22 20:12:21.730:  bootup_state { enabled: false }
+2026-11-22 20:19:06.254:  bootup_state { enabled: false }
+2026-11-22 20:19:09.876:  state_change { app_info { package_name: "android" uid: 0 } enabled: true }
+===== Nfc Event Log =====
+enable_cplt_flags=0x7c, enable_cplt_mask=0x7c
+--- BEGIN:NFCSNOOP_LOG_SUMMARY (668 bytes in) ---
+AQ8lpDDjYAYAeJxNUk1LHFEQrOp+7+2YXT9WRbN+rF/xFMSPQCIxBxUCwYvJHsSjeBdE8T4m94Dk5wSC/gPx5tmzkENugWy63zqyPTAMXfXqdXVNQK55kAknZwC3oWhS
+MZf7xAzOB73NFrStKEDR8vLrN7mVriB8GuHcC5yqkRdQk6ASVQPCOzuzA6KJ6SwkQ/Kl4L9urkOeRnSWXVYECHa/1aINEXExYe1dCFjgIdj3MSKtELEszqKQAT8mnWbt
+AbzNF4SkdKiGvWEXDgFdqmLWUYUkfK9b/8ho9mDRpa2teN0jhISb932EdqoI688Kv6b7CKuxIrzqEeoJSx/7CPfPCp0eIRW4Gus5uhaW5nvjyTcSfo72HbUd5KMRW41q
+HREHg25UhZ0CmzNuUiPYoVm9KgxabdA0L6cM2W8wtvC79Fg4gWBiWdg2Zy8fhhLwt+Up2RJrWNGcUmDLQ9h6WWVTQxtPSOnIm8kKGbNfIyMjcY1hndjg/Cbx2ZN6/FCx
+CvstMisS8scExqcqaAjN5PNp3Vx4diWTzXfni9hR4j/e9DPJ
+--- END:NFCSNOOP_LOG_SUMMARY ---
+--- BEGIN:NFCSNOOP_VS_LOG_SUMMARY (0 bytes in) ---
+AQAAAAAAAAAA
+--- END:NFCSNOOP_VS_LOG_SUMMARY ---
+Firmware version=<Unknown>
+Native Proprietary Caps=NfcProprietaryCaps{passiveObserveMode=NOT_SUPPORTED, isPollingFrameNotificationSupported=false, isPowerSavingModeSupported=false, isAutotransactPollingLoopFilterSupported=false, numberOfExitFramesSupported=0, mIsReaderModeAnnotationSupported=false}

@@ -1,0 +1,45 @@
+mState=off
+mAlwaysOnState=off
+mScreenState=OFF_UNLOCKED
+mIsSecureNfcEnabled=false
+mIsReaderOptionEnabled=true
+mIsAlwaysOnSupported=false
+SnoopLogMode=FILTERED
+VendorDebugEnabled=false
+mPowerSavingState=1
+mIsObserveModeSupported=false
+mIsObserveModeEnabled=false
+listenTech=0xf
+pollTech=0x2f
+mTechMask: 0
+mEnableLPD: true
+mEnableReader: false
+mEnableHostRouting: false
+
+mOverrideIntent=null
+mOverrideFilters=null
+mOverrideTechLists=[]
+Registered android.nfc.action.TECH_DISCOVERED services for current user: 
+mIsTagAppPrefSupported =true
+TagAppPreference:
+===== Nfc Event Log =====
+2026-11-22 20:09:04.440:  bootup_state { enabled: true }
+2026-11-22 20:09:26.770:  state_change { app_info { package_name: "android" uid: 0 } enabled: false }
+2026-11-22 20:12:21.730:  bootup_state { enabled: false }
+2026-11-22 20:19:06.254:  bootup_state { enabled: false }
+2026-11-22 20:19:09.876:  state_change { app_info { package_name: "android" uid: 0 } enabled: true }
+2026-11-22 20:19:12.692:  state_change { app_info { package_name: "android" uid: 0 } enabled: false }
+===== Nfc Event Log =====
+enable_cplt_flags=0x7c, enable_cplt_mask=0x7c
+--- BEGIN:NFCSNOOP_LOG_SUMMARY (679 bytes in) ---
+AX3FyjDjYAYAeJxNUkFLVGEUPefe7/vm5YzmZGijNk6WbiJMBZV0oUEQbbRZREtxb0ji/ql7QfwD/o8g6h9Eu9atBRftAsd7v/HJ3AePxz3nO98997yAXB2QCftfAW5C
+0aRiJveJaRwOe5staFtRgKLl8cmp/JKeILwf5cwQDtTIz1CToBJVA8KqndkC0cRUFpIR+VjwppfrMw8iunMuKwIEu99q1oaIOBq39lsIWOBvsO89RFohYk6cRSEDLiac
+Zu0HWMkXhKR0qIYPD104BPSoiqeOKiThrG79XaPZg1mXtrbiZZ8QEn6+GSC0U0VYvFf4PjVAWIgV4UWfUE94/m6A8OdeodsnpALnY31HP4Sl+V66842Eb48GjtoO8tGI
+9Ua1johPw25Uhd0Ca9NuUiPYpVk9LwxaaNA0jycN2W4wtnBdeiwcRzCxLGybs5cPQwn43/KUbIk1vNKcUmDLQ1h/UmVTQxt3SOnI8kSFjNmvkZHR+JphkVhiZ43Y8aSu
+NipWYb9FZkVC/pnA48kKGkEz+XxaNxeeXclk8/32RWypW/lyOW94Im4BI3A1KQ==
+--- END:NFCSNOOP_LOG_SUMMARY ---
+--- BEGIN:NFCSNOOP_VS_LOG_SUMMARY (0 bytes in) ---
+AQAAAAAAAAAA
+--- END:NFCSNOOP_VS_LOG_SUMMARY ---
+Firmware version=<Unknown>
+Native Proprietary Caps=NfcProprietaryCaps{passiveObserveMode=NOT_SUPPORTED, isPollingFrameNotificationSupported=false, isPowerSavingModeSupported=false, isAutotransactPollingLoopFilterSupported=false, numberOfExitFramesSupported=0, mIsReaderModeAnnotationSupported=false}

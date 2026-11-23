@@ -1,0 +1,4 @@
+# AIDL NFC HAL in device/zte/axon7m/nfc/: raw NCI frames over the kernel's
+# pn5xx-raw character device. The domain itself comes from AOSP's
+# system/sepolicy/vendor/hal_nfc_default.te.
+allow hal_nfc_default nfc_device:chr_file rw_file_perms;
