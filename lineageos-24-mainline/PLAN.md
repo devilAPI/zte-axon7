@@ -652,6 +652,47 @@ Soong bootstrap with `failed to load @config//main.star: open main.star: no
 such file or directory` (custom OUT_DIR; `module-build2-exit 1`), so a normal
 Soong module build is still desirable before an image build.
 
+### 2026-11-23: Soong module build and end-to-end phone proof
+
+* **Soong build is now green.** The first retry failed for an environment
+  reason only: `m` was run as root, so nsjail rejected the ccache bind mount
+  and product config (`nfcaidl-module-build-exit 1`,
+  `logs/nfcaidl-soong-build-r2.log`). Running the same script as user `build`
+  in the normal OUT_DIR, with `SOONG_NINJA=ninja`, `-j4` and `/srv/aosp/build.lock`,
+  built 2524/2524 steps in 18 min 21 s (`nfcaidl-module-build-exit 0`,
+  `logs/nfcaidl-soong-build-r3.log`): `vendor/bin/hw/android.hardware.nfc-service.axon7m`
+  (52 KB, `llvm-readelf -d` needs only `android.hardware.nfc-V2-ndk.so`,
+  `libbase`, `libbinder_ndk`, `liblog`, `libc++`, `libc`, `libm`, `libdl`) and
+  `vendor/lib64/android.hardware.nfc-V2-ndk.so`.
+* **Phone proof** (`logs/nfc-aidl-20261123T023645Z.log` and detail files):
+  module inserted into the running #31 kernel (`pn5xx-raw 3-0028: PN548 raw
+  mode: /dev/nq-nci`, irq 119), service registered (`service list`:
+  `android.hardware.nfc.INfc/default`; logcat `nfc-service.axon7m: registered
+  android.hardware.nfc.INfc/default`). NfcService connected with
+  `INfcAidl::fromBinder returned ver(2)`, opened `/dev/nq-nci` fd 6, logged
+  `coreInitialized: no vendor patch download needed` and
+  `NCI_Version: 16` (0x10). `dumpsys nfc`: `mState=off` before,
+  `mState=on` after `svc nfc enable` with `pollTech=0x2f`, five RF discovery
+  configs (A/B/F poll, A listen, V poll), `enable_cplt_flags=0x7c` and a
+  668-byte NFCSNOOP log; `mState=off` again after `svc nfc disable`.
+  The inflated snoop contains NCI `START_DISCOVERY_CMD` (OID `0x2103`,
+  `21 03 0b 05 00 01 01 01 02 01 80 01 06 01`) — polling really started
+  (`nfcsnoop-analysis.txt`, `nfcsnoop-inflated.bin`).
+* **Test-only constraints (no image change):** the #31 build has `AXON7_NFC=0`,
+  so com.android.nfc is disabled at boot, the feature XML is absent and the
+  HAL is not in the device VINTF manifest. The test bind-mounts the feature,
+  re-enables/starts the app, and preloads a tiny shim that suppresses the
+  generated binder's `AIBinder_markVintfStability()` call so servicemanager
+  accepts the service. No shim is needed when `AXON7_NFC=1` installs
+  `manifest_nfc.xml`. **Never restart servicemanager for this test**: its
+  `.rc` `onrestart` restarts all main/HAL classes and rebooted the phone
+  once (r2, 2026-11-23).
+* Cleanup restored the original state: HAL stopped, module removed,
+  `nxp-nci_i2c` rebound (`nfc0=present`), NFC app disabled again, feature
+  mount removed, `svc power stayon false`, phone booted with 99 % battery.
+  No boot image was written, so the main-phone sha1/rollback rule was not
+  triggered.
+
 ## 9. What is implemented, running jobs (2026-11-10)
 
 | What | Where | State |
@@ -719,7 +760,8 @@ Soong module build is still desirable before an image build.
 | Radio HAL milestone 1 (2026-11-21/22, branch agent/radio) | `device/zte/axon7m/radio/`, `RIL-PLAN.md` 4.2/4.3, `logs/radio-module-build.txt`, `logs/radio-bindmount-test.txt` | Own IRadioMessaging (QMI WMS 3GPP SMS, transfer-only routes), IRadioVoice stub (all requests REQUEST_NOT_SUPPORTED, `config_voice_capable=false`), shared QMI listener for DMS/NAS/UIM/WMS/WDS indications, DMS operating-mode read/set, FCM target 202504 (`checkvintf` COMPATIBLE with the seven-HAL fragment). Module build clean (`module-build-exit 0` 2026-11-22T16:56Z, one AIDL enum typo fixed). Bind-mount test on the main phone (battery 99 %, no remount): new HAL stayed up, RILJ registration state NOT_REG_MT_SEARCHING_OP over GSM, `mRadioPowerState=1`, GSM rssi -83 dBm level 4, DMS mode online, no phone crash; phone restored to the original HAL with adb and stay-on off. Only 5 radio services were registered: servicemanager caches VINTF declarations at boot, so messaging/voice need a boot with the new seven-HAL fragment and the two new V4 NDK libs (old image needed an LD_LIBRARY_PATH wrapper). No SIM ("no ATR"), so SIM state changes and SMS remain untested; voice/data are stubs. |
 
 | NFC root proof + raw char driver (2026-11-21) | `logs/nfc-proof-*.txt` (this worktree), `tools/axon7-nfc-netlink.c`, `device/zte/axon7m/nfc/README.md` | **Kernel NCI side proven as root on the main phone** (LineageOS 24, battery 99 %, `adb root`): `info 0` found the nfc family; `cycle 0` printed `DEV_UP ok`, `START_POLL ok (protocols 0xfe)`, `STOP_POLL ok`, `DEV_DOWN ok` on one netlink socket (separate processes cannot stop polling: the kernel stops it at `NETLINK_URELEASE`). dmesg: `nci_ver 0x11, config_status 0x1`, `manufact_id 0x4`, `manufact_specific_info 0x1f011048`, `nfc_rf_disc_rsp status 0x0`, `nfc_rf_deactivate_rsp status 0x0`. Phone left on LOS 24, `svc power stayon false`. NDK r30 on `root@compiler` is unreachable (TCP 22 open, SSH banner times out); the tool was built locally as a static aarch64 binary with NDK 27. New `pn5xx-raw` driver (Nura patch 0070, `CONFIG_NFC_PN5XX_CHAR`, param `pn5xx_raw=1` for LOS only) and the gated `AXON7_NFC=1` device-tree files are written; kernel test boot and HAL build pending. At `android-17.0.0_r1` AOSP only builds the SNxxx NFC HAL, so the HAL cannot be enabled yet |
-| PN548 AIDL HAL (2026-11-22, branch agent/nfcaidl) | `device/zte/axon7m/nfc/`, `kernel/patches/0022-*`, `android-axon7m.config`, `scripts/nfc-aidl-module-test.sh`, `3eba1c9` | **Built, phone test blocked**: own `android.hardware.nfc-service.axon7m` implements AIDL INfc V2 on `/dev/nq-nci` (open/close/write/coreInitialized/powerCycle/preDiscover/getConfig/controlGranted + callback with an NCI reader thread); AOSP libnfc-nci keeps the NCI 1.x protocol. NDK r30 compile+link of `Nfc.cpp` with generated V2 AIDL sources: exit 0, 4.6 MB binary, NEEDED only system libs; syntax pass fixed bionic's missing `pthread_cancel` (SIGUSR1 instead). `patch --dry-run` for 0022 on the LOS kernel: 3/3 files OK. Soong target build could not finish: a separate OUT_DIR `m -j4` wedged in `soong_ui --dumpvar-mode` under load >30 and a retry failed in bootstrap with `@config//main.star: no such file or directory`; `/srv/aosp/build.lock` was held by other workers. Phone test not run: main phone 7e15695a was off USB from another worker's hung sleep test kernel (`coordinator-briefs/feed/coordinator-feed.log`, 22:32/22:59), so `dumpsys nfc`, `svc nfc enable/disable` and polling have **no evidence yet**. Test script waits for the phone, takes its lock, inserts the char module, bind-mounts the NFC feature and restores everything. `AXON7_NFC=0` in default builds; do not enable in CI yet |
+| PN548 AIDL HAL (2026-11-22, branch agent/nfcaidl) | `device/zte/axon7m/nfc/`, `kernel/patches/0022-*`, `android-axon7m.config`, `scripts/nfc-aidl-module-test.sh`, `3eba1c9` | **Built; phone test blocked at the time (superseded 2026-11-23)**: own `android.hardware.nfc-service.axon7m` implements AIDL INfc V2 on `/dev/nq-nci` (open/close/write/coreInitialized/powerCycle/preDiscover/getConfig/controlGranted + callback with an NCI reader thread); AOSP libnfc-nci keeps the NCI 1.x protocol. NDK r30 compile+link of `Nfc.cpp` with generated V2 AIDL sources: exit 0, 4.6 MB binary, NEEDED only system libs; syntax pass fixed bionic's missing `pthread_cancel` (SIGUSR1 instead). `patch --dry-run` for 0022 on the LOS kernel: 3/3 files OK. Soong target build could not finish: a separate OUT_DIR `m -j4` wedged in `soong_ui --dumpvar-mode` under load >30 and a retry failed in bootstrap with `@config//main.star: no such file or directory`; `/srv/aosp/build.lock` was held by other workers. Phone test not run: main phone 7e15695a was off USB from another worker's hung sleep test kernel (`coordinator-briefs/feed/coordinator-feed.log`, 22:32/22:59), so `dumpsys nfc`, `svc nfc enable/disable` and polling have **no evidence yet**. Test script waits for the phone, takes its lock, inserts the char module, bind-mounts the NFC feature and restores everything. `AXON7_NFC=0` in default builds; do not enable in CI yet |
+| PN548 AIDL HAL: end-to-end test (2026-11-23, branch agent/nfcaidl) | `scripts/nfc-aidl-module-test.sh`, `logs/nfc-aidl-20261123T023645Z*`, `logs/nfcaidl-soong-build-r{2,3}.log`, `7ac6325` | **Working on the MAIN phone with the test-only shim**: Soong `m -j4 android.hardware.nfc-service.axon7m` exit 0 (2524 steps, 18 min 21 s, as user build with `SOONG_NINJA=ninja`); `pn5xx-raw.ko` loaded in the running #31 kernel, `service list` showed `android.hardware.nfc.INfc/default`, NfcService connected at AIDL ver 2, opened `/dev/nq-nci`, `NCI_Version: 16`. `dumpsys nfc`: off -> `svc nfc enable` -> `mState=on`, `pollTech=0x2f`, 5 RF discovery configs, `enable_cplt_flags=0x7c`, 668-byte NCI snoop with `START_DISCOVERY_CMD` (`21 03 0b ...`) -> `svc nfc disable` -> `mState=off`. Phone restored (nfc0 present, app disabled, HAL/mounts gone, 99 % battery), no boot image written. A real `AXON7_NFC=1` image (HAL + manifest + feature + `pn5xx_raw=1`) still needs a build; do not enable in CI until that image is tested |
 
 Check from the PC: `ssh root@compiler 'su - build -c "tmux ls"; tail -3 /srv/los24/logs/build-after.log /srv/los24/logs/build-latest.log'`.
 `build-latest.log` points at the queued rebuild once it starts.

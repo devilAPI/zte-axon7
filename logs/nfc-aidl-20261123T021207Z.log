@@ -1,0 +1,124 @@
+== 2026-11-23T02:12:07Z preconditions
+boot_completed=1 battery=99% uname=#31 SMP PREEMPT Fri Nov 20 01:58:00 CET 2026
+nfc0 before: present
+driver before: /sys/bus/i2c/drivers/nxp-nci_i2c
+nci config files:
+ls: /vendor/etc/libnfc*: No such file or directory;-rw-r--r-- 1 root root 4965 2026-11-11 08:11 /system/etc/libnfc-nci.conf;== 2026-11-23T02:12:11Z insert pn5xx-raw module
++ mkdir -p /data/local/tmp/nfcaidl
++ chmod 755 /data/local/tmp/nfcaidl/android.hardware.nfc-service.axon7m
+insmod: ok 
+/dev/nq-nci: present
+/dev/pn5xx: present
+/dev/pn54x: present
+driver after: /sys/bus/i2c/drivers/pn5xx-raw
+== 2026-11-23T02:12:14Z bind-mount /vendor/etc/permissions with android.hardware.nfc.xml
+feature file: -rwxrwxrwx 1 root root 370 2026-11-22 21:12 /vendor/etc/permissions/android.hardware.nfc.xml
+== 2026-11-23T02:12:14Z start android.hardware.nfc-service.axon7m
+test-only VINTF shim: 1a486db6d4c9ae9cc365448f20cdd98d852ca0cf623f1bcb2716ade58d8a9d23
+HAL pid=2588
+35	android.hardware.nfc.INfc/default: [android.hardware.nfc.INfc]
+35	android.hardware.nfc.INfc/default: [android.hardware.nfc.INfc]
+== 2026-11-23T02:12:18Z HAL log at start
+== 2026-11-23T02:12:18Z restart system_server (no reboot)
+system_server pid=809
+boot_completed after framework restart=1 (waited 2s)
+== 2026-11-23T02:12:32Z dumpsys nfc (before enable)
+Can't find service: nfc
+== 2026-11-23T02:12:32Z svc nfc enable
++ svc nfc enable
+Got a null NfcAdapter, is the system running?
+Can't find service: nfc
+settings nfc_on=null
+== 2026-11-23T02:12:54Z NFC logcat
+07-26 12:04:27.533     0     0 I apexd-bootstrap: Found pre-installed APEX /system/apex/com.android.nfcservices.capex
+07-26 12:04:40.491     0     0 I apexd   : Found pre-installed APEX /system/apex/com.android.nfcservices.capex
+07-26 12:04:41.172     0     0 I apexd   : Processing compressed APEX /system/apex/com.android.nfcservices.capex
+07-26 12:04:41.190     0     0 I apexd   : Skipping decompression for /system/apex/com.android.nfcservices.capex
+07-26 12:05:01.699   809   809 D PackageManager: Directories scanned as system partitions: [/system:0, /vendor:524288, /odm:4194304, /oem:262144, /product:1048576, /system_ext:2097152, /apex/com.android.apex.cts.shim:41943040, /apex/com.android.adbd:41943040, /apex/com.android.hardware.biometrics.fingerprint.virtual:44040192, /apex/com.android.bt:41943040, /apex/com.android.runtime:41943040, /apex/com.android.cellbroadcast:41943040, /apex/com.android.tzdata:41943040, /apex/com.android.uwb:41943040, /apex/com.android.nfcservices:41943040, /apex/com.android.devicelock:41943040, /apex/com.android.media:41943040, /apex/com.android.conscrypt:41943040, /apex/com.android.uprobestats:41943040, /apex/com.android.wifi:41943040, /apex/com.android.configinfrastructure:41943040, /apex/com.android.sdkext:41943040, /apex/com.android.crashrecovery:41943040, /apex/com.android.rkpd:41943040, /apex/com.android.webapp:41943040, /apex/com.android.ipsec:41943040, /apex/com.android.os.statsd:41943040, /apex/com.android.adservices:41943040, /apex/com.android.hardware.thermal:42467328, /apex/com.android.healthfitness:41943040, /apex/com.android.i18n:41943040, /apex/com.android.tethering:41943040, /apex/com.android.npumanager:41943040, /apex/com.android.virt:41943040, /apex/com.android.media.swcodec:41943040, /apex/com.android.telephonycore:41943040, /apex/com.android.hardware.audio:42467328, /apex/com.android.appsearch:41943040, /apex/com.android.extservices:41943040, /apex/com.android.profiling:41943040, /apex/com.android.permission:41943040, /apex/com.android.resolv:41943040, /apex/com.android.hardware.graphics.composer:42467328, /apex/com.android.scheduling:41943040, /apex/com.android.mediaprovider:41943040, /apex/com.android.neuralnetworks:41943040, /apex/com.android.hardware.cas:42467328, /apex/com.android.ondevicepersonalization:41943040, /apex/com.android.art:41943040]
+07-26 12:05:01.776   809   870 D PackageCacher: Feature flags for package /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex: {android.permission.flags.access_local_network_permission_enabled=true}
+07-26 12:05:01.946   809   809 I PackageManager: /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex changed; collecting certs
+07-26 12:05:02.194   809   870 D PackageCacher: Feature flags for package /apex/com.android.nfcservices/priv-app/NfcNciApex@CP2A.260605.016: {android.permission.flags.access_local_network_permission_enabled=true}
+07-26 12:05:02.458   809   809 I ApexManager: Registering com.android.nfc as apk-in-apex of com.android.nfcservices
+07-26 12:05:03.231   809   872 W PackageManager: Skipping preparing app data for com.android.nfcservices
+11-22 19:44:54.649   809   833 W PackageManager: Skipping preparing app data for com.android.nfcservices
+11-22 19:44:55.445  1618  1618 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:44:57.159  1816  1816 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:44:57.687  1864  1864 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:44:57.925  1891  1891 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:44:58.349  1924  1924 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:44:58.829  1976  1976 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:44:59.327  2025  2025 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:49:31.754  2114  2114 I AconfigPackage: com.android.nfc.module.flags is mapped to com.android.nfcservices
+11-22 19:49:31.754  2114  2114 I AconfigPackage: com.android.nfc.module.nonexported.flags is mapped to com.android.nfcservices
+11-22 19:50:15.157  2204  2204 I AconfigPackage: com.android.nfc.module.flags is mapped to com.android.nfcservices
+11-22 19:50:15.157  2204  2204 I AconfigPackage: com.android.nfc.module.nonexported.flags is mapped to com.android.nfcservices
+11-22 19:52:40.306  2491  2491 I AconfigPackage: com.android.nfc.module.flags is mapped to com.android.nfcservices
+11-22 19:52:40.306  2491  2491 I AconfigPackage: com.android.nfc.module.nonexported.flags is mapped to com.android.nfcservices
+11-22 19:52:46.894   659   659 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:chmod 755 /data/local/tmp/nfcaidl/android.hardware.nfc-service.axon7m'
+11-22 19:52:48.074   659   659 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:timeout 30 insmod /data/local/tmp/nfcaidl/pn5xx-raw.ko pn5xx_raw=1 2>&1'
+11-22 19:52:48.195    37    37 I auditd  : type=1400 audit(0.0:397): avc:  denied  { add_name } for  comm="kdevtmpfs" name="nq-nci" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+11-22 19:52:48.195    37    37 I kdevtmpfs: type=1400 audit(0.0:397): avc:  denied  { add_name } for  name="nq-nci" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+11-22 19:52:48.212     0     0 I pn5xx-raw 3-0028: PN548 raw mode: /dev/nq-nci, /dev/pn5xx, /dev/pn54x, irq 119
+11-22 19:52:48.195    37    37 I auditd  : type=1400 audit(0.0:398): avc:  denied  { create } for  comm="kdevtmpfs" name="nq-nci" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+11-22 19:52:48.195    37    37 I kdevtmpfs: type=1400 audit(0.0:398): avc:  denied  { create } for  name="nq-nci" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+11-22 19:52:48.199    37    37 I auditd  : type=1400 audit(0.0:399): avc:  denied  { setattr } for  comm="kdevtmpfs" name="nq-nci" dev="devtmpfs" ino=387 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+11-22 19:52:48.199    37    37 I kdevtmpfs: type=1400 audit(0.0:399): avc:  denied  { setattr } for  name="nq-nci" dev="devtmpfs" ino=387 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+11-22 19:52:49.261   659   659 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:test -e /dev/nq-nci && echo present || echo MISSING'
+11-22 19:52:49.326   659   659 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:test -e /dev/pn5xx && echo present || echo MISSING'
+11-22 19:52:50.136   659   659 I adbd    : adbd service requested 'shell,v2,TERM=xterm-256color,raw:export LD_LIBRARY_PATH=/data/local/tmp/nfcaidl; export LD_PRELOAD=/data/local/tmp/nfcaidl/nfc-no-vintf-stub.so; nohup /data/local/tmp/nfcaidl/android.hardware.nfc-service.axon7m >/data/local/tmp/nfcaidl/hal.log 2>&1 & echo $! >/data/local/tmp/nfcaidl/hal.pid'
+11-22 19:52:50.301  2588  2588 I nfc-service.axon7m: Axon 7 PN548 NFC AIDL HAL starting
+11-22 19:52:50.307  2588  2588 I nfc-service.axon7m: registered android.hardware.nfc.INfc/default
+11-22 19:52:58.565  2651  2651 I AconfigPackage: com.android.nfc.module.flags is mapped to com.android.nfcservices
+11-22 19:52:58.565  2651  2651 I AconfigPackage: com.android.nfc.module.nonexported.flags is mapped to com.android.nfcservices
+11-22 19:53:01.579  2721  2721 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:01.913  2721  2738 I SystemConfig: Reading permissions from /apex/com.android.nfcservices/etc/sysconfig/preinstalled-packages-com.android.nfc.xml
+11-22 19:53:01.914  2721  2738 I SystemConfig: Reading permissions from /apex/com.android.nfcservices/etc/permissions/com.android.nfc.xml
+11-22 19:53:02.375     0     0 I apexd   : Found pre-installed APEX /system/apex/com.android.nfcservices.capex
+11-22 19:53:02.678     0     0 I apexd   : Found "/apex/com.android.nfcservices@370399999" backed by file /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex
+11-22 19:53:03.300  2721  2721 D CompatConfig: No directory /apex/com.android.nfcservices/etc/compatconfig, skipping
+11-22 19:53:03.943  2721  2721 W PackageManager: No package known for package restrictions com.android.nfcservices
+11-22 19:53:04.078  2721  2721 D PackageManager: Directories scanned as system partitions: [/system:0, /vendor:524288, /odm:4194304, /oem:262144, /product:1048576, /system_ext:2097152, /apex/com.android.resolv:41943040, /apex/com.android.neuralnetworks:41943040, /apex/com.android.adservices:41943040, /apex/com.android.permission:41943040, /apex/com.android.cellbroadcast:41943040, /apex/com.android.hardware.thermal:42467328, /apex/com.android.os.statsd:41943040, /apex/com.android.nfcservices:41943040, /apex/com.android.healthfitness:41943040, /apex/com.android.adbd:41943040, /apex/com.android.apex.cts.shim:41943040, /apex/com.android.rkpd:41943040, /apex/com.android.extservices:41943040, /apex/com.android.devicelock:41943040, /apex/com.android.scheduling:41943040, /apex/com.android.mediaprovider:41943040, /apex/com.android.bt:41943040, /apex/com.android.tethering:41943040, /apex/com.android.crashrecovery:41943040, /apex/com.android.uwb:41943040, /apex/com.android.hardware.cas:42467328, /apex/com.android.uprobestats:41943040, /apex/com.android.wifi:41943040, /apex/com.android.i18n:41943040, /apex/com.android.conscrypt:41943040, /apex/com.android.hardware.graphics.composer:42467328, /apex/com.android.webapp:41943040, /apex/com.android.media:41943040, /apex/com.android.hardware.biometrics.fingerprint.virtual:44040192, /apex/com.android.tzdata:41943040, /apex/com.android.runtime:41943040, /apex/com.android.sdkext:41943040, /apex/com.android.configinfrastructure:41943040, /apex/com.android.art:41943040, /apex/com.android.telephonycore:41943040, /apex/com.android.media.swcodec:41943040, /apex/com.android.ondevicepersonalization:41943040, /apex/com.android.appsearch:41943040, /apex/com.android.hardware.audio:42467328, /apex/com.android.ipsec:41943040, /apex/com.android.virt:41943040, /apex/com.android.profiling:41943040, /apex/com.android.npumanager:41943040]
+11-22 19:53:04.191  2721  2830 D PackageCacher: Feature flags for package /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex: {android.permission.flags.access_local_network_permission_enabled=true}
+11-22 19:53:04.463  2721  2721 I PackageManager: /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex changed; collecting certs
+11-22 19:53:04.678  2721  2721 D PackageManager: No files in app dir /apex/com.android.nfcservices/app
+11-22 19:53:04.823  2721  2829 D PackageCacher: Feature flags for package /apex/com.android.nfcservices/priv-app/NfcNciApex@CP2A.260605.016: {android.permission.flags.access_local_network_permission_enabled=true}
+11-22 19:53:05.114  2721  2721 I ApexManager: Registering com.android.nfc as apk-in-apex of com.android.nfcservices
+11-22 19:53:05.598  2721  2832 W PackageManager: Skipping preparing app data for com.android.nfcservices
+11-22 19:53:08.975  2870  2870 I AconfigPackage: com.android.nfc.module.flags is mapped to com.android.nfcservices
+11-22 19:53:08.975  2870  2870 I AconfigPackage: com.android.nfc.module.nonexported.flags is mapped to com.android.nfcservices
+11-22 19:53:11.763  3114  3114 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:12.688  2721  3149 I ActivityManager:   ntv      ??     965       -1       -1: android.hardware.nfc-service.axon7m (pid 2588) native
+11-22 19:53:12.876  3241  3241 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:13.654  3292  3292 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:20.916     0     0 I apexd   : Found pre-installed APEX /system/apex/com.android.nfcservices.capex
+11-22 19:53:21.212     0     0 I apexd   : Found "/apex/com.android.nfcservices@370399999" backed by file /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex
+11-22 19:53:21.908  3540  3540 D vold_prepare_subdirs: Setting up mode 771 uid 0 gid 1000 context u:object_r:apex_module_data_file:s0 on path: /data/misc_ce/0/apexdata/com.android.nfcservices
+11-22 19:53:21.942  2721  2742 W PackageManager: Skipping preparing app data for com.android.nfcservices
+11-22 19:53:21.988  3537  3537 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:22.079  3542  3542 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:22.693  3587  3587 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:24.459  3804  3804 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:25.161  3847  3847 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:25.346  3875  3875 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:25.747  3899  3899 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:26.228  3955  3955 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+11-22 19:53:26.694  4003  4003 D nativeloader:   com_android_nfcservices: libnfc_nci_jni.so
+== 2026-11-23T02:12:54Z svc nfc disable
++ svc nfc disable
+Got a null NfcAdapter, is the system running?
+Can't find service: nfc
+== 2026-11-23T02:13:05Z HAL log at end
+== 2026-11-23T02:13:05Z kernel dmesg
+[  538.640536] type=1400 audit(1795377168.195:397): avc:  denied  { add_name } for  comm="kdevtmpfs" name="nq-nci" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=dir permissive=1
+[  538.641473] pn5xx-raw 3-0028: PN548 raw mode: /dev/nq-nci, /dev/pn5xx, /dev/pn54x, irq 119
+[  538.657409] type=1400 audit(1795377168.195:398): avc:  denied  { create } for  comm="kdevtmpfs" name="nq-nci" scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[  538.676120] ueventd: LoadWithAliases was unable to load of:NnfcT(null)Cnxp,nxp-nci-i2c, tried: of:NnfcT(null)Cnxp,nxp_nci_i2c
+[  538.682427] type=1400 audit(1795377168.199:399): avc:  denied  { setattr } for  comm="kdevtmpfs" name="nq-nci" dev="devtmpfs" ino=387 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[  552.804413] apexd: Found pre-installed APEX /system/apex/com.android.nfcservices.capex
+[  553.107608] apexd: Found "/apex/com.android.nfcservices@370399999" backed by file /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex
+[  571.345000] apexd: Found pre-installed APEX /system/apex/com.android.nfcservices.capex
+[  571.641211] apexd: Found "/apex/com.android.nfcservices@370399999" backed by file /data/apex/decompressed/com.android.nfcservices@370399999.decompressed.apex
+== 2026-11-23T02:13:05Z cleanup (rc=0)
+== 2026-11-23T02:13:06Z after cleanup: boot_completed=1 battery=99%
+== 2026-11-23T02:13:06Z nfc0=MISSING char=gone
+== 2026-11-23T02:13:08Z LOG=/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/nfcaidl/logs/nfc-aidl-20261123T021207Z.log DETAIL=/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/nfcaidl/logs/nfc-aidl-20261123T021207Z

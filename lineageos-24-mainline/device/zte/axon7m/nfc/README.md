@@ -64,8 +64,14 @@ only with `AXON7_NFC=1`; normal builds are unchanged.
 * Kernel side: raw driver proven as a module in the running LOS #31 kernel
   and added to the LOS kernel patches as `0022` (not yet built into a boot
   image here).
-* HAL: source compiles and links cleanly (NDK r30, generated V2 AIDL
-  sources); see `PLAN.md` for the build notes. The bind-mount test on the
-  main phone could not run on 2026-11-22 because that phone was off USB
-  after another worker's test kernel hung it. Default builds keep
-  `AXON7_NFC=0`; do not enable it in CI before `dumpsys nfc` shows polling.
+* HAL: the Soong module builds cleanly (`m -j4
+  android.hardware.nfc-service.axon7m`, exit 0, 2026-11-23). The bind-mount
+  test on the main phone passed the same day: with the raw module inserted,
+  NfcService connected at AIDL ver 2, opened `/dev/nq-nci`, `dumpsys nfc`
+  went from `mState=off` to `mState=on` (`svc nfc enable`) with five RF
+  discovery configs and an NCI `START_DISCOVERY_CMD` in the snoop, then
+  back to off (`svc nfc disable`). Evidence: `logs/nfc-aidl-20261123T023645Z*/`.
+  The test needs a temporary feature bind mount and a test-only VINTF
+  shim because the running #31 image was built with `AXON7_NFC=0`; an
+  `AXON7_NFC=1` image installs the feature and manifest itself and needs
+  its own test before CI enables it. Default builds keep `AXON7_NFC=0`.

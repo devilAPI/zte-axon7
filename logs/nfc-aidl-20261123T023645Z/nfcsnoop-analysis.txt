@@ -1,0 +1,28 @@
+Evidence from the final run logs/nfc-aidl-20261123T023645Z (main phone
+7e15695a, LOS 24 #31, AXON7_NFC=0 build with bind-mounted NFC feature and
+test-only LD_PRELOAD VINTF shim).
+
+dumpsys-enabled.txt contains a 668-byte NFCSNOOP summary: a 9-byte record
+header followed by a zlib stream. Decoded with Python base64.b64decode on
+the summary lines, then zlib.decompress(raw[9:]); the result is saved as
+nfcsnoop-inflated.bin. Walking 3-byte NCI headers (OID + length) gives:
+
+  18 CORE_RESET_CMD        40 00 03 00 11 01 03 00
+  31 CORE_INIT_CMD         20 01 00 1c ...
+  41 CORE_RESET_RSP        40 01 19 00 03 1e 03 00 08 00 01 02 03 ...
+ 104 SET_CONFIG_CMD        20 02 0e 02 51 08 01 fe ff ff ff ff ff ff 58 01
+ 526 SET_CONFIG_CMD        20 02 04 01 19 01 01
+ 552 SET_CONFIG_CMD        20 02 04 01 80 01 01
+ 578 SET_CONFIG_CMD        20 02 10 05 30 01 04 31 01 00 32 01 20 38 01 00 50 01 00
+ 616 SET_CONFIG_CMD        20 02 05 01 00 02 f4 01
+ 643 START_DISCOVERY_CMD   21 03 0b 05 00 01 01 01 02 01 80 01 06 01
+
+OID 0x2103 is NCI START_DISCOVERY with five discovery configurations:
+NFC-A/B/F passive poll, NFC-A passive listen and NFC-V passive poll. This is
+direct evidence that AOSP's libnfc-nci started RF polling through the HAL.
+
+State transitions from the same run:
+  dumpsys-before.txt:  mState=off
+  after svc nfc enable: mState=on, pollTech=0x2f, 668 bytes of NCI snoop,
+                        enable_cplt_flags=0x7c, enable_cplt_mask=0x7c
+  after svc nfc disable: mState=off, state_change event enabled: false

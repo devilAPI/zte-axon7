@@ -1,0 +1,41 @@
+== queued for /srv/aosp/build.lock 2026-11-22T22:50:26Z
+== nfcaidl module build start 2026-11-23T00:46:32Z
+[W][2026-11-23T00:57:48+0000][476808] logParams():315 Process will be UID/EUID=0 in the global user namespace, and will have user root-level access to files
+[W][2026-11-23T00:57:48+0000][476808] logParams():325 Process will be GID/EGID=0 in the global user namespace, and will have group root-level access to files
+[W][2026-11-23T00:57:48+0000][1] remountPt():280 mount('/srv/los24/ccache', flags:MS_REMOUNT|MS_BIND|MS_RELATIME): Invalid argument
+[F][2026-11-23T00:57:48+0000][1] runChild():485 Launching child process failed
+[W][2026-11-23T00:57:48+0000][476808] runChild():505 Received error message from the child process before it has been executed
+[E][2026-11-23T00:57:48+0000][476808] standaloneMode():275 Couldn't launch the child process
+00:57:48 Error getting 'pre product config' release config: exit status 255
+Device axon7m not found. Attempting to retrieve device repository from LineageOS Github (http://github.com/LineageOS).
+Repository for axon7m not found in the LineageOS Github repository list. If this is in error, you may need to manually add it to your local_manifests/roomservice.xml.
+[W][2026-11-23T00:57:52+0000][476937] logParams():315 Process will be UID/EUID=0 in the global user namespace, and will have user root-level access to files
+[W][2026-11-23T00:57:52+0000][476937] logParams():325 Process will be GID/EGID=0 in the global user namespace, and will have group root-level access to files
+[W][2026-11-23T00:57:52+0000][1] remountPt():280 mount('/srv/los24/ccache', flags:MS_REMOUNT|MS_BIND|MS_RELATIME): Invalid argument
+[F][2026-11-23T00:57:52+0000][1] runChild():485 Launching child process failed
+[W][2026-11-23T00:57:52+0000][476937] runChild():505 Received error message from the child process before it has been executed
+[E][2026-11-23T00:57:52+0000][476937] standaloneMode():275 Couldn't launch the child process
+00:57:52 Error getting 'pre product config' release config: exit status 255
+[W][2026-11-23T00:57:54+0000][477070] logParams():315 Process will be UID/EUID=0 in the global user namespace, and will have user root-level access to files
+[W][2026-11-23T00:57:54+0000][477070] logParams():325 Process will be GID/EGID=0 in the global user namespace, and will have group root-level access to files
+[W][2026-11-23T00:57:54+0000][1] remountPt():280 mount('/srv/los24/ccache', flags:MS_REMOUNT|MS_BIND|MS_RELATIME): Invalid argument
+[F][2026-11-23T00:57:54+0000][1] runChild():485 Launching child process failed
+[W][2026-11-23T00:57:54+0000][477070] runChild():505 Received error message from the child process before it has been executed
+[E][2026-11-23T00:57:54+0000][477070] standaloneMode():275 Couldn't launch the child process
+00:57:54 Error getting 'pre product config' release config: exit status 255
+
+** Don't have a product spec for: 'lineage_axon7m'
+** Do you have the right repo manifest?
+
+[W][2026-11-23T00:57:56+0000][477198] logParams():315 Process will be UID/EUID=0 in the global user namespace, and will have user root-level access to files
+[W][2026-11-23T00:57:56+0000][477198] logParams():325 Process will be GID/EGID=0 in the global user namespace, and will have group root-level access to files
+[W][2026-11-23T00:57:56+0000][1] remountPt():280 mount('/srv/los24/ccache', flags:MS_REMOUNT|MS_BIND|MS_RELATIME): Invalid argument
+[F][2026-11-23T00:57:56+0000][1] runChild():485 Launching child process failed
+[W][2026-11-23T00:57:56+0000][477198] runChild():505 Received error message from the child process before it has been executed
+[E][2026-11-23T00:57:56+0000][477198] standaloneMode():275 Couldn't launch the child process
+00:57:56 Error getting 'pre product config' release config: exit status 255
+
+#### failed to build some targets (2 seconds) ####
+
+nfcaidl-module-build-exit 1 2026-11-23T00:57:56Z
+wrapper-exit=1 2026-11-23T00:57:56Z
