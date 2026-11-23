@@ -102,6 +102,10 @@ notes:
 
 ## 0. From the unattended session (2026-11-14 evening)
 
+**MAIN PHONE DOWN (2026-11-23 ~08:43), needs your hands:**
+
+- [ ] The selinux worker's SELinux-enforcing test boot did not finish and the phone is off USB. Please hold **power ~10 s**, pick **TWRP** in the boot menu, leave it plugged in and tell Claude (the saved LineageOS boot image goes back from TWRP).
+
 **MAIN PHONE DOWN AGAIN (2026-11-22 22:32), needs your hands:**
 
 - [x] (fixed 2026-11-23: owner reset to TWRP, Claude restored the saved los_boot, LOS #31 boots) The sleep worker's guarded test kernel booted LineageOS, then hung in a CPU idle state about a minute later (no adb/fastboot since 22:32; the automatic restore cannot run on a hung phone). Please hold **power ~10 s**, pick **TWRP** in the boot menu, leave it plugged in and tell Claude; the saved LineageOS boot image is put back from TWRP. Deep-sleep kernel tests on the main phone are stopped until you are around.
