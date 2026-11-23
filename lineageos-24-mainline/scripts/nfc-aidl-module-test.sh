@@ -31,7 +31,8 @@ HALNAME=android.hardware.nfc-service.axon7m
 LIBNAME=android.hardware.nfc-V2-ndk.so
 MODNAME=pn5xx_raw
 PERMS=/vendor/etc/permissions
-bound=0 inserted=0 mounted=0 hal_pid= logcat_pid= framework_restarted=0
+VINTF=/vendor/etc/vintf/manifest
+bound=0 inserted=0 mounted=0 vintf_mounted=0 hal_pid= logcat_pid= framework_restarted=0
 sound_effects= vibrate_on=
 
 say() { echo "== $(date -u +%FT%TZ) $*"; }
@@ -55,6 +56,9 @@ cleanup() {
 	if [ $mounted = 1 ]; then
 		ash "umount $PERMS" || echo "umount $PERMS FAILED" >&2
 	fi
+	if [ $vintf_mounted = 1 ]; then
+		ash "umount $VINTF" || echo "umount $VINTF FAILED" >&2
+	fi
 	# Restore the original (silent) settings if we changed them.
 	[ -n "$sound_effects" ] && [ "$sound_effects" != null ] && \
 		ash "settings put system sound_effects_enabled $sound_effects" || true
@@ -69,9 +73,13 @@ cleanup() {
 		}
 	fi
 	if [ $bound = 1 ] || ash 'grep -q "^pn5xx_raw " /proc/modules' >/dev/null 2>&1; then
-		ash "timeout 20 sh -c 'echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind'" || true
+		# Binding can race with the module's own unbind work; wait for nfc0.
+		for i in $(seq 1 10); do
+			ash "echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/bind" >/dev/null 2>&1 || true
+			[ "$(ash "test -e /sys/class/nfc/nfc0 && echo present || echo MISSING")" = present ] && break
+			sleep 2
+		done
 	fi
-	sleep 2
 	say "after cleanup: boot_completed=$(ash 'getprop sys.boot_completed') battery=$(ash 'cat /sys/class/power_supply/qcom-battery/capacity')%"
 	say "nfc0=$(ash "test -e /sys/class/nfc/nfc0 && echo present || echo MISSING") char=$(ash 'test -e /dev/nq-nci && echo PRESENT || echo gone')"
 	ash 'svc power stayon false' || true
@@ -128,6 +136,28 @@ ash "mount -o bind $REMOTE/permissions $PERMS" || { echo "bind mount failed" >&2
 mounted=1
 echo "feature file: $(ash "ls -l $PERMS/android.hardware.nfc.xml")"
 
+# 2b. servicemanager only allows AIDL HAL services declared in VINTF. Add the
+#     same fragment the real build installs with AXON7_NFC=1 (Android.bp's
+#     vintf_fragments), without touching /vendor.
+ash "rm -rf $REMOTE/vintf-manifest; mkdir -p $REMOTE/vintf-manifest"
+ash "cp -a $VINTF/. $REMOTE/vintf-manifest/"
+adb push "$ROOT/lineageos-24-mainline/device/zte/axon7m/nfc/manifest_nfc.xml" \
+	"$REMOTE/vintf-manifest/android.hardware.nfc.xml" >/dev/null
+ash "mount -o bind $REMOTE/vintf-manifest $VINTF" || { echo "vintf bind mount failed" >&2; exit 4; }
+vintf_mounted=1
+echo "vintf fragment: $(ash "ls -l $VINTF/android.hardware.nfc.xml")"
+say "restart servicemanager so it rereads VINTF"
+sm_old=$(ash 'pidof servicemanager' | awk '{print $1}')
+ash 'setprop ctl.restart servicemanager'
+for i in $(seq 1 30); do
+	sleep 1
+	sm_new=$(ash 'pidof servicemanager' | awk '{print $1}')
+	[ -n "$sm_new" ] && [ "$sm_new" != "$sm_old" ] && break
+done
+echo "servicemanager pid $sm_old -> $sm_new (waited ${i}s), state=$(ash 'getprop init.svc.servicemanager')"
+[ -n "$sm_new" ] && [ "$sm_new" != "$sm_old" ] || { echo "servicemanager did not restart" >&2; exit 6; }
+ash 'service list' >/dev/null || { echo "servicemanager not reachable" >&2; exit 6; }
+
 # 3. start our HAL by hand (an init rc for real builds is in nfc/)
 say "start $HALNAME"
 ash "rm -f $REMOTE/hal.log $REMOTE/hal.pid"
@@ -135,6 +165,10 @@ ash "export LD_LIBRARY_PATH=$REMOTE; nohup $REMOTE/$HALNAME >$REMOTE/hal.log 2>&
 sleep 2
 hal_pid=$(ash "cat $REMOTE/hal.pid")
 echo "HAL pid=$hal_pid"
+for i in $(seq 1 10); do
+	ash 'service list' | grep -i 'android.hardware.nfc' && break
+	sleep 1
+done
 ash 'service list' | grep -i 'android.hardware.nfc' || echo "NO NFC SERVICE registered" >&2
 say "HAL log at start"
 ash "cat $REMOTE/hal.log" > "$DETAIL/hal-start.txt" || true
