@@ -48,6 +48,7 @@ sound_effects= vibrate_on=
 
 say() { echo "== $(date -u +%FT%TZ) $*"; }
 ash() { adb shell "$@" | tr -d '\r'; }
+ashrc() { adb shell "$@" >/dev/null 2>&1; }   # exit status of the shell command
 run() { echo "+ $*"; adb shell "$@"; }
 
 save_settings() {
@@ -203,9 +204,15 @@ for i in $(seq 1 3); do
 	echo "am start ($i): $out"
 	case "$out" in *"does not exist"*) sleep 3 ;; *) break ;; esac
 done
-sleep 10
-echo "nfc-app-pid=$(ash 'pidof com.android.nfc')"
-ash 'service list' | grep -i '^.*nfc' || true
+# NfcService can take ~50 s to come up (APEX dexopt); do not issue svc nfc
+# enable against a null NfcAdapter like the r7 attempt did.
+svc_ready=0
+for i in $(seq 1 60); do
+	if ashrc 'dumpsys nfc >/dev/null 2>&1'; then svc_ready=1; break; fi
+	sleep 2
+done
+echo "nfc-app-pid=$(ash 'pidof com.android.nfc') NfcService ready=$svc_ready (waited $((i*2))s)"
+[ "$svc_ready" = 1 ] || { echo "NfcService did not come up" >&2; exit 7; }
 
 say "dumpsys nfc (before enable)"
 ash 'dumpsys nfc' > "$DETAIL/dumpsys-before.txt" || true
@@ -213,8 +220,12 @@ head -60 "$DETAIL/dumpsys-before.txt"
 
 say "svc nfc enable"
 run 'svc nfc enable'
-sleep 20
-ash 'dumpsys nfc' > "$DETAIL/dumpsys-enabled.txt" || true
+for i in $(seq 1 30); do
+	ash 'dumpsys nfc' > "$DETAIL/dumpsys-enabled.txt" 2>/dev/null || true
+	grep -q '^mState=on' "$DETAIL/dumpsys-enabled.txt" && break
+	sleep 2
+done
+echo "enabled state after $((i*2))s: $(head -1 "$DETAIL/dumpsys-enabled.txt")"
 head -80 "$DETAIL/dumpsys-enabled.txt"
 echo "settings nfc_on=$(ash 'settings get global nfc_on')"
 
@@ -225,11 +236,15 @@ cat "$DETAIL/logcat-nfc.txt"
 
 say "svc nfc disable"
 run 'svc nfc disable'
-sleep 8
-# Android 17 freezes idle app processes; a frozen NfcService makes dumpsys
-# return BR_FROZEN_REPLY (FAILED_TRANSACTION). Unfreeze for the final dump.
-ash 'am unfreeze com.android.nfc' >/dev/null 2>&1 || true
-ash 'dumpsys nfc' > "$DETAIL/dumpsys-disabled.txt" || true
+for i in $(seq 1 30); do
+	# Android 17 freezes idle app processes; a frozen NfcService makes
+	# dumpsys return BR_FROZEN_REPLY (FAILED_TRANSACTION).
+	ash 'am unfreeze com.android.nfc' >/dev/null 2>&1 || true
+	ash 'dumpsys nfc' > "$DETAIL/dumpsys-disabled.txt" 2>/dev/null || true
+	grep -q '^mState=off' "$DETAIL/dumpsys-disabled.txt" && break
+	sleep 2
+done
+echo "disabled state after $((i*2))s: $(head -1 "$DETAIL/dumpsys-disabled.txt")"
 head -60 "$DETAIL/dumpsys-disabled.txt"
 
 say "HAL log at end"
