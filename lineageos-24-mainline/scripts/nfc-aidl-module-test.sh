@@ -123,7 +123,7 @@ adb push "$HAL" "$REMOTE/$HALNAME" >/dev/null
 [ -z "$LIB" ] || adb push "$LIB" "$REMOTE/$LIBNAME" >/dev/null
 run "chmod 755 $REMOTE/$HALNAME"
 ash "echo $DEV > /sys/bus/i2c/drivers/$NXPDRV/unbind"
-bound=0
+bound=1  # always restore nxp-nci_i2c in cleanup, even if insmod succeeds
 sleep 1
 if out=$(ash "timeout 30 insmod $REMOTE/pn5xx-raw.ko pn5xx_raw=1 2>&1"); then
 	echo "insmod: ok $out"
@@ -226,6 +226,9 @@ cat "$DETAIL/logcat-nfc.txt"
 say "svc nfc disable"
 run 'svc nfc disable'
 sleep 8
+# Android 17 freezes idle app processes; a frozen NfcService makes dumpsys
+# return BR_FROZEN_REPLY (FAILED_TRANSACTION). Unfreeze for the final dump.
+ash 'am unfreeze com.android.nfc' >/dev/null 2>&1 || true
 ash 'dumpsys nfc' > "$DETAIL/dumpsys-disabled.txt" || true
 head -60 "$DETAIL/dumpsys-disabled.txt"
 
