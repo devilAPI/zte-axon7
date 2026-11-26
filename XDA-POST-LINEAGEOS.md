@@ -142,7 +142,7 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [SIZE=5][B]Changelog[/B][/SIZE]
 [SPOILER="2026-11-26"]
 [LIST]
-[*][B]Monthly updater tooling (no new zip yet)[/B]: one script now syncs lineage-22.2 upstream, re-applies our five AOSP patches, checks that all 57 device and 38 kernel port patches still apply, rebuilds the standalone TWRP zip with -j4 and reports the security patch level before/after plus the zip's SHA-256. The upstream manifest has moved to the 2026-11 ASB; the rebuild is still waiting for the shared build lock. The published 20261109 zip remains at platform patch level 2026-10-01 (the vendor blob level stays 2018-12-01).
+[*][B]Monthly updater tooling (no new zip yet)[/B]: one script now syncs lineage-22.2 upstream, re-applies our five AOSP patches, checks that all 57 device and 38 kernel port patches still apply, rebuilds the standalone TWRP zip with -j4 and reports the security patch level before/after plus the zip's SHA-256. On 2026-11-26 all 57 device and all 38 kernel patches were confirmed to apply cleanly. The upstream manifest has moved to the 2026-11 ASB; the rebuild is still waiting for the shared build lock. The published 20261109 zip remains at platform patch level 2026-10-01 (the vendor blob level stays 2018-12-01).
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-21"]

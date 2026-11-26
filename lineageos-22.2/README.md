@@ -117,4 +117,13 @@ stays at the level of the 2018 Oreo blobs (`2018-12-01`); only the platform
 patch level follows upstream. No phone is touched: flashing the new zip is
 a human step.
 
+2026-11-26 run (recorded before the rebuild): the tree in `/srv/aosp/lineage-22.2`
+still had manifest `10ba61c` and platform patch `2026-10-01`; upstream
+`lineage-22.2` was at `353894c` ("manifest: Track forks for 2026-11 ASB").
+The port patches were checked in throwaway repos: 57/57 device patches apply
+to `b125362` and 38/38 kernel patches to `535079d` (server logs
+`verify-r3/{device,kernel}.log`). The rebuild was queued behind other builds
+on `/srv/aosp/build.lock`; its result is in `monthly-run-r3.log` and the
+`monthly-*.summary` file in that scratch directory.
+
 ROM zips, recovery images and vendor blobs are not in this repository.
