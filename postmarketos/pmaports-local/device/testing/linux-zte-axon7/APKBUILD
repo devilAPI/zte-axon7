@@ -5,10 +5,14 @@
 # the Hi-Fi audio drivers (AK4490, AK8157, ISL98608), the AK4961 and the
 # OV8856 front camera and the SMBCHG charger as modules; PSCI cpuidle and
 # PM debug (suspend); the SMB1351 parallel charger and the IPA v2.x data driver as modules.
+# Patches 0001-0063 are the same series as the kernel tree at
+# aae3898efa01da06a3fe6443b63d7bff59c87498 (v7.3.1 + Nura patches), the base
+# of LineageOS 24's 7.3.1-axon7m #1. 0063 corrects the accelerometer scale
+# (9.84 m/s^2 lying flat on LOS 24 build 58); sleep draft patches stay out.
 _flavor="zte-axon7"
 pkgname=linux-$_flavor
 pkgver=7.3.1
-pkgrel=31
+pkgrel=32
 pkgdesc="Mainline kernel for ZTE Axon 7"
 arch="aarch64"
 _carch="arm64"

@@ -12,6 +12,28 @@ To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
 menu (Volume Down, then Power), or make it the default from Nura with
 `sudo axon7-bootmenu default pmos 5` (back: `sudo axon7-bootmenu default los 5`).
 
+## Nura r32 (2026-11-26): Wi-Fi and accelerometer checks
+
+The r32 packages were prepared locally but were not built or booted in this
+run: no phone was connected and the PC build stopped at noninteractive sudo
+authentication. After installing a r32 image/boot package:
+
+- [ ] Boot Nura, `journalctl -u axon7-firmware -u axon7-wifi-rescan -b`:
+      the firmware service should list `board.bin` among the files from the
+      modem partition; the rescan service should not print "no Wi-Fi chip on
+      PCIe". It may print "ath10k_pci loaded after the rescan" on a boot where
+      the link came up late. Do not post the SSID, password or MAC address.
+- [ ] `ip link show wlan0`, then connect to a known network with `nmcli`:
+      `nmcli device status` should show `connected`. On a boot with a late link
+      this is the case that the new modprobe step is meant to rescue.
+- [ ] Flat on the table, screen up, read the accelerometer magnitude from
+      `iio-sensor-proxy` (`monitor-sensor`) or the raw sysfs values times
+      `in_accel_scale`: expect about 9.8 m/s² (not 10.6). Turn the phone once
+      by hand to check that the axis mapping still reports "face-up".
+- [ ] `sudo dmesg | grep -iE 'ath10k|firmware.*fail|smgr_accel'` should have
+      no new `ath10k` firmware errors. Redact any SSID/BSSID/MAC before
+      pasting logs.
+
 ## A2017U (US) hardware checklist (2026-11-21)
 
 For the reporter of [issue #1](https://github.com/devilAPI/zte-axon7/issues/1)
