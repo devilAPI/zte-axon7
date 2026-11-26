@@ -17,8 +17,11 @@ dest=${AXON7_RELEASES:-/srv/aosp/releases}
 out=$tree/out/target/product/axon7
 
 # one build at a time in this tree (manual builds use the same lock)
-exec 9>/srv/aosp/build.lock
-echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
+# (AXON7_HAVE_LOCK=1: the caller already holds it)
+if [ -z "${AXON7_HAVE_LOCK:-}" ]; then
+	exec 9>/srv/aosp/build.lock
+	echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
+fi
 
 cd "$tree"
 # shellcheck disable=SC1090
@@ -47,6 +50,9 @@ build_one() {	# $1 = vendor|stock
 	echo "== kernel $(git -c safe.directory='*' -C kernel/zte/msm8996 log --oneline -1)"
 	m -j4 bacon
 	cp "$(ls -t "$out"/lineage-22.2-*-UNOFFICIAL-axon7.zip | head -1)" "$parts/$1.zip"
+	# raw images for ci/verify-stock-image.sh (the out/ copies are overwritten by the next build)
+	cp "$out/system.img" "$parts/$1-system.img"
+	[ "$1" != vendor ] || cp "$out/vendor.img" "$parts/vendor-vendor.img"
 }
 
 case $layouts in
