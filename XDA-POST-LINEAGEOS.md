@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-21 (A2017U/US notes: user reports 22.2 boots, the
+Last update: 2026-11-26 (A2017U/US notes: documented two gotchas from issue #1 — f2fs /data trap and dead PARTY/sgdisk replacement)
 stock-B35 no-fastboot route, the TWRP f2fs `/data` trap and the dead PARTY
 download; cellular still untested). Before: 2026-11-16 (the owner's posted version: "Does not work" lists
 only the SIM report; the wake/lock, black camera and second-start boot loop
@@ -138,6 +138,11 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-26"]
+[LIST]
+[*][B]A2017U gotchas documented[/B]: added Gotcha 1 (TWRP f2fs trap, ext4 requirement) and Gotcha 2 (PARTY dead, sgdisk replacement) to INSTALL.md, docs/variant-a2017u.md and the A2017U section of XDA-POST-LINEAGEOS.md. Last update refreshed.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-21"]
 [LIST]
 [*][B]A2017U (US) support notes[/B] (no new zip): a user reports 22.2-20261109 booting on an A2017U 4/64 with TZ.BF.4.0.1-00353. Added the stock-B35 no-fastboot route (EDL B15-NEW aboot+fbop, then reflash TWRP), the model-specific modem rule, the TWRP-3.7 f2fs [I]/data[/I] trap and the ext4 check after Format Data, and the dead-PARTY/[I]sgdisk[/I] replacement (read-only planner [I]tools/axon7-make-vendor.sh[/I]). Cellular on A2017U is [B]untested[/B]; the SIM report on A2017G stays open.
