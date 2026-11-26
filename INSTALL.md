@@ -21,3 +21,23 @@ ext4, and that the PARTY download is dead (a `sgdisk` replacement works).
 LineageOS 22.2 boots on that phone; calls/SMS/data are **untested** on
 A2017U. Read [docs/variant-a2017u.md](docs/variant-a2017u.md) first and run
 `tools/axon7-preflight.sh` before flashing.
+
+**Gotcha 1: TWRP formats /data as f2fs, fstab requires ext4**
+"twrp format data" on 3.7.0_9-0 produces f2fs here. fstab.qcom wants ext4 with
+fileencryption=ice,quota, so first boot fails to mount /data with "invalid
+magic", root stays read-only, apexd cannot create /data/apex/sessions, aborts,
+and reboot_on_failure loops the phone in a way that looks like a bootloader
+fault. `mke2fs -t ext4` on userdata fixed it. The symptom points nowhere near
+the cause.
+
+**Gotcha 2: PARTY is no longer obtainable**
+The link in the install notes (AFH fid 1322778262903995063) returns no mirrors,
+and the XDA attachment was not archived. Equivalent using TWRP's own sgdisk,
+vendor = 512 MiB from the tail of system:
+
+    sgdisk --delete=13 /dev/block/sde
+    sgdisk --new=13:<system_start>:<old_end-131072> --change-name=13:system /dev/block/sde
+    sgdisk --new=28:<old_end-131071>:<old_end> --change-name=28:vendor /dev/block/sde
+
+Also: the bootstack zip overwrites recovery, so TWRP must be written back after
+flashing it.
