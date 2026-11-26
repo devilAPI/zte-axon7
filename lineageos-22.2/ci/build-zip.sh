@@ -13,9 +13,14 @@ tree=${AXON7_TREE:-/srv/aosp/lineage-22.2}
 dest=${AXON7_RELEASES:-/srv/aosp/releases}
 out=$tree/out/target/product/axon7
 
-# one build at a time in this tree (manual builds use the same lock)
-exec 9>/srv/aosp/build.lock
-echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
+# One build at a time in this tree (manual builds use the same lock). The
+# monthly updater holds fd 9 already; taking the lock twice would deadlock.
+if [[ ${AXON7_BUILD_LOCK_FD:-} != 9 ]]; then
+	exec 9>/srv/aosp/build.lock
+	echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
+else
+	echo "== build lock held by the monthly updater $(date +%T)"
+fi
 
 cd "$tree"
 # shellcheck disable=SC1090
@@ -36,7 +41,7 @@ breakfast axon7 >/dev/null
 set -u
 echo "== $(date) device $(git -c safe.directory='*' -C device/zte/axon7 log --oneline -1)"
 echo "== kernel $(git -c safe.directory='*' -C kernel/zte/msm8996 log --oneline -1)"
-m -j8 bacon
+m -j4 bacon
 
 zip=$(ls -t "$out"/lineage-22.2-*-UNOFFICIAL-axon7.zip | head -1)
 mkdir -p "$dest"

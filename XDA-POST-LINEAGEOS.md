@@ -8,9 +8,12 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-21 (A2017U/US notes: user reports 22.2 boots, the
-stock-B35 no-fastboot route, the TWRP f2fs `/data` trap and the dead PARTY
-download; cellular still untested). Before: 2026-11-16 (the owner's posted version: "Does not work" lists
+Last update: 2026-11-26 (added a repeatable monthly security-patch updater;
+the 2026-11 upstream sync and rebuild are queued on the shared build server,
+so there is **no new zip to flash yet**). Before: 2026-11-21 (A2017U/US notes:
+user reports 22.2 boots, the stock-B35 no-fastboot route, the TWRP f2fs
+`/data` trap and the dead PARTY download; cellular still untested). Before
+that: 2026-11-16 (the owner's posted version: "Does not work" lists
 only the SIM report; the wake/lock, black camera and second-start boot loop
 items were removed from the thread)
 
@@ -137,6 +140,11 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-26"]
+[LIST]
+[*][B]Monthly updater tooling (no new zip yet)[/B]: one script now syncs lineage-22.2 upstream, re-applies our five AOSP patches, checks that all 57 device and 38 kernel port patches still apply, rebuilds the standalone TWRP zip with -j4 and reports the security patch level before/after plus the zip's SHA-256. The upstream manifest has moved to the 2026-11 ASB; the rebuild is still waiting for the shared build lock. The published 20261109 zip remains at platform patch level 2026-10-01 (the vendor blob level stays 2018-12-01).
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-21"]
 [LIST]
 [*][B]A2017U (US) support notes[/B] (no new zip): a user reports 22.2-20261109 booting on an A2017U 4/64 with TZ.BF.4.0.1-00353. Added the stock-B35 no-fastboot route (EDL B15-NEW aboot+fbop, then reflash TWRP), the model-specific modem rule, the TWRP-3.7 f2fs [I]/data[/I] trap and the ext4 check after Format Data, and the dead-PARTY/[I]sgdisk[/I] replacement (read-only planner [I]tools/axon7-make-vendor.sh[/I]). Cellular on A2017U is [B]untested[/B]; the SIM report on A2017G stays open.

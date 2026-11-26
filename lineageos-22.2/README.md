@@ -80,11 +80,41 @@ To check on the next build (needs the build server):
 - Second start: with a SIM inserted, a `com.android.phone` crash loop would
   make RescueParty reboot (looks like a boot loop); `adb logcat -b crash`.
 
+## Monthly security updates
+
+[`ci/monthly-security-update.sh`](ci/monthly-security-update.sh) is the one-shot
+script for the monthly LineageOS 22.2 security update on the build server. It
+takes `/srv/aosp/build.lock`, checks that all 57 device-tree and 38 kernel
+patches apply to their bases, saves the local commits, runs
+`repo sync -c -j4`, restores the device/kernel/vendor branches, re-applies the
+five AOSP patches, rebuilds the standalone TWRP zip with `m -j4`, and writes a
+summary with the before/after security patch levels, manifest revisions and
+SHA-256 hashes to `/srv/aosp/axon7-monthly-22.2/monthly-<stamp>.summary`.
+Copy `ci/` and the `port-22.2/` + `kernel-4.4-patches/` directories from this
+repository to `/srv/aosp/axon7-monthly-22.2/` first (the script header has the
+commands). A flash test of the new zip still needs a person and a spare phone.
+
 | File | Contents |
 | --- | --- |
 | [FLASHING-PLAN.md](FLASHING-PLAN.md) | installing LineageOS 18.1 (or crDroid 7.39) on an A2017G: files, checksums, what the installer checks, backups, EDL rescue |
 | [BUILD-PLAN-LOS22.md](BUILD-PLAN-LOS22.md) | what porting LineageOS 22.2 (Android 15) takes: a 4.4 kernel port (as gemini / LG msm8996 got), device tree forward-port, blob shims, and a build setup for an 8-thread / 31 GB / 400 GB machine |
 | `build/local_manifests/axon7.xml` | repo local manifest for the build |
 | [port-22.2/](port-22.2/) | the device tree forward-port to 22.2 (patch series, not built yet) |
+| [ci/monthly-security-update.sh](ci/monthly-security-update.sh) | one script for the monthly upstream security-patch update (below) |
+
+## Monthly security-patch updates
+
+`ci/monthly-security-update.sh` runs on the build server as user `build`;
+copy it together with `port-22.2/` and `kernel-4.4-patches/` into one scratch
+directory (the script documents the exact commands). It waits for
+`/srv/aosp/build.lock`, records the old `ro.build.version.security_patch`,
+old zip and sha256, proves that all 57 device and 38 kernel patches apply to
+their bases, saves the three forked project heads, syncs `lineage-22.2`
+(`repo sync`, `-j4`), restores the forks, re-applies the five AOSP patches,
+rebuilds the standalone zip (`AXON7_STANDALONE=1`, `-j4`), and writes a
+summary with before/after patch levels and hashes. The vendor patch string
+stays at the level of the 2018 Oreo blobs (`2018-12-01`); only the platform
+patch level follows upstream. No phone is touched: flashing the new zip is
+a human step.
 
 ROM zips, recovery images and vendor blobs are not in this repository.
