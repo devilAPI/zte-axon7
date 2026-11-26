@@ -1,0 +1,41 @@
+@HEADER@
+package_extract_dir("install", "/tmp/install");
+set_metadata_recursive("/tmp/install", "uid", 0, "gid", 0, "dmode", 0755, "fmode", 0644);
+set_metadata_recursive("/tmp/install/bin", "uid", 0, "gid", 0, "dmode", 0755, "fmode", 0755);
+
+# Decide the partition layout BEFORE anything is written (read-only check).
+ui_print("Checking the partition layout...");
+run_program("/tmp/install/bin/axon7-layout.sh");
+ui_print(read_file("/tmp/axon7-layout.txt"));
+
+if file_getprop("/tmp/axon7-layout.prop", "layout") == "vendor" then
+  ui_print("Installing for the vendor-partition layout.");
+  run_program("/tmp/install/bin/backuptool.sh", "backup", "/dev/block/platform/soc/624000.ufshc/by-name/system", "ext4");
+  ui_print("Patching system image unconditionally...");
+  show_progress(0.800000, 0);
+  block_image_update("/dev/block/platform/soc/624000.ufshc/by-name/system", package_extract_file("system.transfer.list"), "system.new.dat.br", "system.patch.dat") ||
+    abort("E1001: Failed to update system image.");
+  ui_print("Patching vendor image unconditionally...");
+  show_progress(0.100000, 0);
+  block_image_update("/dev/block/platform/soc/624000.ufshc/by-name/vendor", package_extract_file("vendor.transfer.list"), "vendor.new.dat.br", "vendor.patch.dat") ||
+    abort("E2001: Failed to update vendor image.");
+  show_progress(0.020000, 10);
+  run_program("/tmp/install/bin/backuptool.sh", "restore", "/dev/block/platform/soc/624000.ufshc/by-name/system", "ext4");
+  package_extract_file("boot.img", "/dev/block/bootdevice/by-name/boot");
+else
+  if file_getprop("/tmp/axon7-layout.prop", "layout") == "stock" then
+    ui_print("Installing for the stock layout (no vendor partition): vendor goes into system.");
+    run_program("/tmp/install/bin/backuptool.sh", "backup", "/dev/block/platform/soc/624000.ufshc/by-name/system", "ext4");
+    ui_print("Patching system image (with vendor) unconditionally...");
+    show_progress(0.900000, 0);
+    block_image_update("/dev/block/platform/soc/624000.ufshc/by-name/system", package_extract_file("system-nv.transfer.list"), "system-nv.new.dat.br", "system-nv.patch.dat") ||
+      abort("E1002: Failed to update system image (stock layout).");
+    show_progress(0.020000, 10);
+    run_program("/tmp/install/bin/backuptool.sh", "restore", "/dev/block/platform/soc/624000.ufshc/by-name/system", "ext4");
+    package_extract_file("boot-nv.img", "/dev/block/bootdevice/by-name/boot");
+  else
+    abort("E3010: Unsupported partition layout, nothing was written. See the message above.");
+  endif;
+endif;
+show_progress(0.100000, 10);
+set_progress(1.000000);

@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-21 (A2017U/US notes: user reports 22.2 boots, the
+Last update: 2026-11-26 (installer detects the partition layout: ZTE's original layout without a vendor partition is supported, vendor inside system; untested on hardware). Before: 2026-11-21 (A2017U/US notes: user reports 22.2 boots, the
 stock-B35 no-fastboot route, the TWRP f2fs `/data` trap and the dead PARTY
 download; cellular still untested). Before: 2026-11-16 (the owner's posted version: "Does not work" lists
 only the SIM report; the wake/lock, black camera and second-start boot loop
@@ -85,18 +85,18 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 [*]This ROM only works with the [B]Oreo "universal" bootloader[/B] (TrustZone TZ.BF.4.0.1-00353, the bootstack LineageOS 15.1 to 18.1 needed) and the [B]modem package for your model[/B]. The installer checks the bootloader and stops if it is missing. If LineageOS 18.1 or crDroid 7.x installs on your phone, you have it (their installers check the same version).
 [*]Tested with [B]TWRP 3.3.0-0[/B] only. TWRP 3.7.0_9-0 has been reported to restart by itself on this phone; older TWRP builds (3.2.x, e.g. the 3.2.1 "TREBLE" build) are untested.
 [*]Installing [B]erases internal storage[/B] (Format Data, see below). Copy your photos and files to a computer first.
-[*]It needs the [B]community vendor partition[/B] (512 MB after system, the same as LineageOS 16 to 18.1). The original ZTE partition layout without a vendor partition is [B]not supported[/B]. With the vendor partition you cannot flash official ZTE firmware until you remove it again (PARTY or the sgdisk replacement below).
+[*]Partition layout: the installer detects it and needs [B]no repartitioning[/B]. With the [B]community vendor partition[/B] (512 MB after system, as LineageOS 16 to 18.1) it installs system + vendor as before. On the [B]original ZTE layout without a vendor partition[/B] it puts the vendor files inside the system image (new, [B]untested on real hardware[/B] so far). If neither works it stops before writing anything. With a vendor partition you cannot flash official ZTE firmware until you remove it again (PARTY or the sgdisk replacement below).
 [*]Developed and tested on the [B]A2017G[/B]. [B]A2017U[/B] (US): a user reports 22.2-20261109 booting on a 4/64 A2017U (Android 15, orange verified boot, TZ.BF.4.0.1-00353); read the A2017U section below, [B]cellular is untested[/B]. A2017 (China): untested.
 [*]Any failure while flashing or repartitioning can brick the phone. Make a backup and keep EDL in mind.
 [/LIST]
 
 [SIZE=5][B]Coming from stock ZTE firmware (Nougat or Oreo)?[/B][/SIZE]
-The stock ZTE partition layout has [B]no vendor partition[/B], and this ROM needs one. Check first, in TWRP → Advanced → Terminal (read-only, changes nothing):
+The stock ZTE partition layout has [B]no vendor partition[/B]; the installer then uses the vendor-inside-system image (no PARTY/sgdisk needed). Check first, in TWRP → Advanced → Terminal (read-only, changes nothing):
 [CODE]cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING
 ls -l /dev/block/bootdevice/by-name/vendor[/CODE]
 [LIST]
 [*]The first line must contain [B]TZ.BF.4.0.1-00353[/B]. If not (Nougat or older bootloader), install the Oreo universal bootloader and the modem for your model first (step 1 below).
-[*]The second line must show a link to a block device. [I]No such file or directory[/I] means no vendor partition: create it with PARTY or the sgdisk procedure (step 2 below). Without it the ROM install stops with an error (after it has already overwritten system).
+[*]The second line shows a link to a block device if you have the vendor partition; [I]No such file or directory[/I] means the stock layout, which is fine: the installer picks the vendor-inside-system image and does not touch any other partition. Creating the vendor partition (step 2 below) is only needed if you want the vendor-partition layout.
 [*]Note the baseband version of your current ROM (Settings → About phone) for a problem report.
 [/LIST]
 A good first test of firmware and partitions: install [B]LineageOS 18.1[/B] (rcky844's unofficial build, see his XDA thread) and check that calls, mobile data and the camera work there. If they do, your firmware is fine for this ROM too. Going back to stock ZTE firmware later needs the vendor partition removed again (PARTY) or a full stock package for your model; keep your TWRP backup and EFS backup.
@@ -137,6 +137,11 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-26"]
+[LIST]
+[*][B]Stock partition layout supported (not yet released, untested on hardware)[/B]: the next zip carries a second system image with the vendor files inside and chooses it when there is no usable vendor partition. The layout check runs before anything is written and aborts cleanly (system/boot missing or system smaller than 5.5 GiB). No repartitioning; only system, boot and userdata are written.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-21"]
 [LIST]
 [*][B]A2017U (US) support notes[/B] (no new zip): a user reports 22.2-20261109 booting on an A2017U 4/64 with TZ.BF.4.0.1-00353. Added the stock-B35 no-fastboot route (EDL B15-NEW aboot+fbop, then reflash TWRP), the model-specific modem rule, the TWRP-3.7 f2fs [I]/data[/I] trap and the ext4 check after Format Data, and the dead-PARTY/[I]sgdisk[/I] replacement (read-only planner [I]tools/axon7-make-vendor.sh[/I]). Cellular on A2017U is [B]untested[/B]; the SIM report on A2017G stays open.
