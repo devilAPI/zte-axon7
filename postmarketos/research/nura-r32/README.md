@@ -58,6 +58,68 @@ base; 0063 is the accelerometer scale fix. The LOS kernel build log
 kernel as `7.3.1-axon7m aae3898ef +patches 0002 ... 0022`, i.e. the same Nura
 base plus the Android-only patches and config fragment.
 
+## Patch identity: the LOS scaler/DDR patches are already in the series
+
+The resume note asked to add LineageOS 24 kernel 0013 (DPU QSEED2 scaler)
+and 0014 (GPU DDR bandwidth per OPP) as new Nura patches. They are already
+in the series as 0052/0053, taken over in r27 (commit 82a7953,
+2026-11-19); `git patch-id --stable` gives the same id for the Nura file
+and the LOS file:
+
+| LOS 24 | Nura r32 | patch-id |
+| --- | --- | --- |
+| `0013-drm-msm-dpu-qseed2-scaler-for-vig-pipes.patch` | `0052-drm-msm-dpu-QSEED2-scaler-for-VIG-pipes.patch` | `a4d9d5064b5e767da03f9483aaa3ab9206a1b592` |
+| `0014-arm64-dts-qcom-msm8996-gpu-ddr-bandwidth-per-opp.patch` | `0053-arm64-dts-qcom-msm8996-DDR-bandwidth-for-the-GPU-OPP.patch` | `b1165a05b038421aa3867e64f07758543451c76d` |
+
+So no 0064/0065 were added: they would not apply on top of 0052/0053. The
+APKBUILD header now maps 0052/0053 to LOS 0013/0014.
+
+## Apply test 0001-0063 (2026-11-26)
+
+Clean `v7.3.1` worktree (`79a907609`) from `~/axon7-kbuild/linux`; all 63
+patch files applied in order with `git am` (63/63, no rejects). The result
+has the same tree as the LOS kernel base `aae3898ef`:
+
+```
+HEAD tree: cf97ccf6e99fc1cb170d1e21b57f2055b8f2cb15
+base tree: cf97ccf6e99fc1cb170d1e21b57f2055b8f2cb15
+git diff --quiet aae3898ef HEAD -> 0
+```
+
+In addition, every patch's `git patch-id` equals the corresponding commit's
+in `v7.3.1..aae3898ef` (63/63, 0 mismatches).
+
+## Stale config checksum fixed
+
+Commit 182a21d added `CONFIG_QCOM_IPA2_LITE=m` to
+`config-zte-axon7.aarch64` without updating the APKBUILD `sha512sums`, so
+`abuild` would have rejected the package with a checksum error. The entry
+now matches the file (`51b50838...`; `sha512sum -c` OK for every locally
+present file, the kernel.org tarball is not kept in the repo).
+
+## Local kernel Image + dtbs build (2026-11-26)
+
+`make -j4 Image dtbs`, `ARCH=arm64 LLVM=1` with clang r536225, the applied
+tree and the repo `config-zte-axon7.aarch64` as input
+(`CONFIG_DEBUG_INFO_BTF=y`, pahole 1.25), inside
+`systemd-run --user --scope --slice=ios3ds.slice`: **build-exit 0,
+2026-11-26T15:41:32+01:00 -> 15:51:44+01:00 (10 min 12 s), 0 compiler
+warnings, 0 errors**. `olddefconfig` only rewrote compiler/pahole
+capability symbols (local clang 19 and pahole 1.25 against the file's
+clang 23 and pahole 1.32) and the feature defaults that follow from them
+(e.g. `ARM64_BTI_KERNEL`); no device-driver option changed, and the repo
+config file was not edited.
+
+```
+arch/arm64/boot/Image                              31,605,248 B  sha256 ca684e56...
+arch/arm64/boot/dts/qcom/msm8996-zte-axon7.dtb          86,296 B  sha256 6156a23e...
+```
+
+Artifacts, the config used and the full log are on the HDD in
+`nurasync-build/artifacts-20261126/`. Host extras (pahole 1.25, libelf
+headers) came from user-space Ubuntu `.deb` extractions because the PC has
+no root; the repo config was not changed for the build.
+
 ## Kernel config
 
 The Nura config is deliberately not the Android config (no SELinux, no EROFS
