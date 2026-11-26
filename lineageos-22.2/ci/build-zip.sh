@@ -34,8 +34,15 @@ parts=$dest/parts
 mkdir -p "$parts"
 
 build_one() {	# $1 = vendor|stock
-	local flavour
-	[ "$1" = vendor ] && flavour=1 || flavour=novendor
+	local flavour out=$tree/out/target/product/axon7
+	if [ "$1" = vendor ]; then
+		flavour=1; unset OUT_DIR
+	else
+		# The vendor-in-system tree has /system/vendor as a real directory, the
+		# vendor build has it as a symlink to /vendor: they cannot share an out/.
+		flavour=novendor; export OUT_DIR=out-novendor
+		out=$tree/out-novendor/target/product/axon7
+	fi
 	export AXON7_STANDALONE=$flavour
 	# Files that developer/test builds copied into out/ stay there otherwise.
 	rm -f "$out"/vendor/etc/init/init.axon7-test.rc "$out"/vendor/etc/axon7-misc-pmos.bin \
@@ -57,11 +64,13 @@ build_one() {	# $1 = vendor|stock
 
 case $layouts in
 	vendor) build_one vendor ;;
-	both) build_one vendor; build_one stock ;;
+	both)	# AXON7_REUSE_VENDOR=1: keep an existing parts/vendor.zip (same source tree)
+		if [ -z "${AXON7_REUSE_VENDOR:-}" ] || [ ! -f "$parts/vendor.zip" ]; then build_one vendor; fi
+		build_one stock ;;
 	*) echo "AXON7_LAYOUTS must be vendor or both" >&2; exit 2 ;;
 esac
 
-name=$(basename "$(ls -t "$out"/lineage-22.2-*-UNOFFICIAL-axon7.zip | head -1)")
+name=$(unzip -p "$parts/vendor.zip" META-INF/com/android/metadata | sed -n "s/^post-timestamp=//p" | xargs -I{} date -u -d @{} +lineage-22.2-%Y%m%d-UNOFFICIAL-axon7.zip)
 mkdir -p "$dest"
 if [ "$layouts" = both ]; then
 	here=$(cd "$(dirname "$0")" && pwd)
