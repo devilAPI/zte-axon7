@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-22 (r31: accelerometer scale corrected and measured at rest: 9.85 m/s² instead of 10.63). Before: 2026-11-22 (r31: audio restarts no longer leave the sound off). Before: 2026-11-21 (A2017U/US notes; images unchanged). Before: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
+Last update: 2026-11-26 (r32: packages synced with the LOS 24 #1 kernel base (0063 accelerometer scale, measured 9.84 m/s² flat on LOS build 58); Wi-Fi now reloads ath10k_pci after a late PCIe rescan, and the board data comes from the phone's modem partition as before). Before: 2026-11-22 (r31: accelerometer scale corrected and measured at rest: 9.85 m/s² instead of 10.63). Before: 2026-11-22 (r31: audio restarts no longer leave the sound off). Before: 2026-11-21 (A2017U/US notes; images unchanged). Before: 2026-11-20 (r30: Bluetooth start fixed in the kernel). Before: 2026-11-19 (r29: Bluetooth comes up on every start). Before: 2026-11-19 (r28: suspend works, SMB1351 second charger chip driver (off by default until tested), CPU idle states). Before: 2026-11-19 (r27: kernel 0049-0053 from LineageOS 24: display scaling (QSEED2), GPU memory bandwidth, three crash fixes; GPU acceleration listed under Works). Before: 2026-11-16 (cameras and sensors moved to Works on the owner's call: for Linux the hardware working counts, no app needed; r26 published as nura-20261116 / nura-latest: GPU buffer and vsync fixes, GPU firmware on the stock layout)
 
 First image release published 2026-11-09 (nura-20261109), tested on the
 phone from a freshly written card: first start with the firmware copy, the
@@ -27,7 +27,7 @@ publish it after testing and the `nura-latest` link in this post follows.
 Nura is a Linux system for the ZTE Axon 7, built on [URL='https://nura.eco']Nura[/URL] (the distribution formerly called postmarketOS) with a current mainline kernel (Linux 7.3.1) instead of the old Android kernel. It lives on the microSD card; your internal storage is not touched.
 Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (see below).
 
-[SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
+[SIZE=5][B]Status (2026-11-26)[/B][/SIZE]
 [SPOILER="Works"]
 [LIST]
 [*]Display
@@ -51,6 +51,8 @@ Phase: [B]beta[/B]. What works, works reliably so far; a lot is still missing (s
 [/SPOILER]
 [B]New, still to be confirmed by eye or ear:[/B]
 [LIST]
+[*]Accelerometer scale: kernel patch 0063 now uses 9.81 / 690310 instead of 9.81 / 640000. With the same patch in the LineageOS 24 #1 kernel (build 58) the phone reads 9.84 m/s² lying flat, down from 10.6. The Nura r32 kernel carries the patch; a Nura-side reading is still to be confirmed.
+[*]Wi-Fi on a late PCIe link: [I]axon7-wifi-rescan[/I] now loads ath10k_pci after a successful bus rescan; the Wi-Fi board file is still copied from the phone's own modem partition at first start. Needs a boot where the link comes up late to confirm on Nura.
 [*]Waking up from suspend with the power key or by plugging in a charger
 [*]Headphone audio through the Hi-Fi DAC (AK4490)
 [*]Flashlight (torch)
@@ -85,6 +87,13 @@ Nura contains no Qualcomm/ZTE firmware: at the first start it copies the firmwar
 Full guide with Wi-Fi setup, updates and the way back to Android: [URL='https://github.com/devilAPI/zte-axon7/blob/main/INSTALL-NURA.md']INSTALL-NURA.md[/URL]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-26, r32"]
+[LIST]
+[*]Kernel (linux-zte-axon7 r32): the Nura patch series 0001-0063 is the same source as the LineageOS 24 [B]7.3.1-axon7m #1[/B] kernel base [I]aae3898ef[/I] (Linux 7.3.1 plus the Nura patches, no sleep drafts). It includes kernel patch 0063: the accelerometer scale is 9.81 / 690310 instead of 9.81 / 640000. On LOS 24 build 58 the phone reads [B]9.84 m/s²[/B] lying flat (was 10.6). The kernel config keeps ath10k_pci, smgr_accel and IPA v2.5 as modules, as in the LOS kernel.
+[*]Wi-Fi (device-zte-axon7 r27): the board file (bdwlan30.bin) has always been read from the phone's own [I]modem[/I] partition by [I]axon7-firmware[/I]; the PCIe rescan helper now also loads ath10k_pci if the chip appeared after the driver was skipped at boot. From the LOS 24 wifi24 work: a rescan alone leaves the chip unbound when the module was not loaded by modalias. Uses the sysfs symlink check (-L) so it does not follow into the device directory.
+[*]The kernel config check against the LOS kernel fragment reports 0 device-driver option differences. The package's config checksum was stale after the sync and is fixed; the whole 0001-0063 series re-applies cleanly to vanilla Linux 7.3.1 (63/63, resulting tree identical to [I]aae3898ef[/I]) and `Image` plus the Axon 7 dtb build with the Nura config. The r32 packages are prepared for the next local build; they have not been boot-tested on Nura in this snapshot. No sleep draft patches are included.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-22, r31"]
 [LIST]
 [*]Sensors: accelerometer magnitude was ~8 % high at rest (10.58 m/s^2 instead of 9.81). The SLPI applies the factory calibration from /persist/sensors/sns.reg, so 1 g comes out as ~690310 counts rather than the 640000 a plain Q16 scale assumes; the driver scale is corrected to 9.81 / 690310. Gyroscope and magnetometer keep their Q16 scale (gyro bias is not a scale issue; magnetometer reads ~67 uT, in range).

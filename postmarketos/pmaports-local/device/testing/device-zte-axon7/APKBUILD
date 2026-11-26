@@ -2,7 +2,7 @@
 pkgname=device-zte-axon7
 pkgdesc="ZTE Axon 7"
 pkgver=1
-pkgrel=26
+pkgrel=27
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -106,7 +106,9 @@ package() {
 	install -Dm644 "$srcdir"/axon7-sns-reg.service "$pkgdir"/usr/lib/systemd/system/axon7-sns-reg.service
 	install -Dm644 "$srcdir"/axon7-sensors.conf "$pkgdir"/usr/lib/modules-load.d/axon7-sensors.conf
 	install -Dm644 "$srcdir"/61-axon7-sensors.rules "$pkgdir"/usr/lib/udev/rules.d/61-axon7-sensors.rules
-	# Wi-Fi: rescan PCIe when the link came up after the driver gave up
+	# Wi-Fi: board data from the phone's modem partition (axon7-firmware),
+	# rescan PCIe when the link came up after the driver gave up and load
+	# ath10k_pci if the rescan found the chip without a driver
 	install -Dm755 "$srcdir"/axon7-wifi-rescan "$pkgdir"/usr/libexec/axon7-wifi-rescan
 	install -Dm644 "$srcdir"/axon7-wifi-rescan.service "$pkgdir"/usr/lib/systemd/system/axon7-wifi-rescan.service
 	install -Dm755 "$srcdir"/axon7-audio-kick "$pkgdir"/usr/libexec/axon7-audio-kick
@@ -156,7 +158,7 @@ f4ac20573950dc34d4d181347351c3add94cb9adaa43a469108ec8a7109a751ae664097da3d70b31
 45278ad5bb06052375523667c5e0200b425dcf56328dd0a545197d5c419ef6e3c24d1a3f200323bcf71376efdc93171c71cd2f51a0ac5a8138109d05a7127a7c  axon7-sns-registry
 376f4b6c9dddcd0bbf94236c623d92ff6fd798577ca6c02298d7c1707ae9688ca5aad6d808e7781c0f6ee56f4341fb51f37da7387e80fdd17474181c06fb869a  axon7-sns-reg.service
 f90b8cfc5db97fb49a7c3519a73b34c72e6355600fa3a1d07a890f398e9bea26d68f66f26ac2dafd0ede643fe72f630aab821d4da1701522a9692bdf8dc0206a  axon7-sensors.conf
-468c6fd93ef674c2614336316e4cce583310a83123077865ad42447c47ba209af0f4f1681b03973f4e8e2211b1441963915ae732e6ab6f35da19bade4a86265e  axon7-wifi-rescan
+78ad89bf95ea29c894f6c270e5c5234fb9362bd28bc88e8af38a6453a72ae49616e044cd866edd844fc59d9ac4c96bd88504df5b8e52029b9a8b37ebb80e66ba  axon7-wifi-rescan
 d72af6975d658f6241a39b783ce0a397af7c9fe21909baa12363ebb2c716a2739618928d4ba532d7ecdd5f24921f9e88c174eaa38a1db740d437d5570c6de6d2  axon7-wifi-rescan.service
 c95d58453876314d3a61b251eaa1622761ce5f6687eb6dc23035f9b85c54c59842f8f28be6a7788adeeb7814d6457671fcaf8570f75a173f27f1ddcf241cfbce  axon7-audio-kick
 f8edb8157ea7d3e2eea04adf9ec6795f65567fa211df6923fbf8a365ae91c07fadd6545ce12a1ac6e4326433bbc424e6353a8bd17cbffabd927e1d5fec3e6e2a  axon7-audio-kick.service

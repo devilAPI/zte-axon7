@@ -12,6 +12,57 @@ To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
 menu (Volume Down, then Power), or make it the default from Nura with
 `sudo axon7-bootmenu default pmos 5` (back: `sudo axon7-bootmenu default los 5`).
 
+## Nura r32 (2026-11-26): Wi-Fi and accelerometer checks
+
+The r32 packages were prepared locally but were not built or booted in this
+run: no phone was connected and the PC build stopped at noninteractive sudo
+authentication. On 2026-11-26 the stale config checksum in the package was
+fixed (the `CONFIG_QCOM_IPA2_LITE=m` line had been added without updating
+`sha512sums`; all 63 patch sums verify). The two LineageOS 24 patches
+0013/0014 (QSEED2 scaler, GPU DDR bandwidth) were already in the series as
+Nura 0052/0053 since r27 and have identical patch-ids, so no new numbers
+were added. The full series 0001-0063 was re-applied with `git am` on a
+clean Linux 7.3.1 tree (63/63 clean; resulting tree `cf97ccf6e99f`,
+identical to `aae3898ef`), and `make Image dtbs` with the Nura config built
+both (Image 31605248 bytes, `msm8996-zte-axon7.dtb` 86296 bytes, 0 compiler
+warnings).
+
+**Build the packages (needs the PC sudo password, owner):**
+
+```sh
+# from the zte-axon7 repo root
+D=~/.local/var/pmbootstrap/cache_git/pmaports/device/testing
+rm -rf "$D"/{linux-zte-axon7,device-zte-axon7,firmware-zte-axon7}
+cp -r postmarketos/pmaports-local/device/testing/* "$D"/
+python3 "/media/devilapi/Secondary HDD 2TB/ai-worker/axon7/nurasync-build/pmbootstrap/pmbootstrap.py" \
+      build --lax --arch aarch64 --force linux-zte-axon7 device-zte-axon7
+```
+
+The system `pmbootstrap` 3.10.3 is too old for this pmaports tree; the
+3.12.1 clone above is the one that gets past that check and stops only at
+`sudo` (the first call is `sudo cp` for the APKINDEX, before any compiling).
+The local `~/.config/pmbootstrap_v3.cfg` names `xiaomi-miatoll`, but the
+command builds one explicit package for `--arch aarch64` and installs
+nothing, so the device setting does not choose what is built. The built
+packages land in `~/.local/var/pmbootstrap/packages/edge/aarch64/`.
+Then install a r32 image/boot package and check:
+
+- [ ] Boot Nura, `journalctl -u axon7-firmware -u axon7-wifi-rescan -b`:
+      the firmware service should list `board.bin` among the files from the
+      modem partition; the rescan service should not print "no Wi-Fi chip on
+      PCIe". It may print "ath10k_pci loaded after the rescan" on a boot where
+      the link came up late. Do not post the SSID, password or MAC address.
+- [ ] `ip link show wlan0`, then connect to a known network with `nmcli`:
+      `nmcli device status` should show `connected`. On a boot with a late link
+      this is the case that the new modprobe step is meant to rescue.
+- [ ] Flat on the table, screen up, read the accelerometer magnitude from
+      `iio-sensor-proxy` (`monitor-sensor`) or the raw sysfs values times
+      `in_accel_scale`: expect about 9.8 m/s² (not 10.6). Turn the phone once
+      by hand to check that the axis mapping still reports "face-up".
+- [ ] `sudo dmesg | grep -iE 'ath10k|firmware.*fail|smgr_accel'` should have
+      no new `ath10k` firmware errors. Redact any SSID/BSSID/MAC before
+      pasting logs.
+
 ## A2017U (US) hardware checklist (2026-11-21)
 
 For the reporter of [issue #1](https://github.com/devilAPI/zte-axon7/issues/1)

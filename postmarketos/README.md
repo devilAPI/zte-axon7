@@ -449,6 +449,12 @@ HAL were restored (scale back to 0.000015328, HAL running, adb up, battery
 `postmarketos/research/accel-sensors/RESULTS-2026-11-22.md`. Only one
 orientation was measured: an unattended run cannot turn the phone.
 
+The same patch is in the LineageOS 24 #1 kernel (build 58, 2026-11-26): flat
+on the phone the sensors service reads 9.84 m/s² with the shipped module,
+instead of 10.6 with the old scale (`XDA-POST-LINEAGEOS-24.md`, build 58
+changelog). Nura r32 ships the same 0001-0063 series; its own phone reading is
+still to be confirmed.
+
 Read a few samples:
 
 ```sh
@@ -475,7 +481,14 @@ Wi-Fi: the QCA6174's PCIe link sometimes comes up only after `qcom-pcie`
 has given up at boot ("Device found, but not active"; 3 of 16 boots before
 the SLPI was enabled, more often since). The root port then shows the link
 active; `axon7-wifi-rescan.service` rescans the bus and the chip appears
-(5 of 5 test boots with Wi-Fi, 3 of them rescued).
+(5 of 5 test boots with Wi-Fi, 3 of them rescued). Since r27 the helper also
+runs `modprobe ath10k_pci` after a successful rescan: on LOS 24 wifi24 the
+chip was found but stayed unbound when ueventd had skipped the module because
+its firmware comes from the modem partition first. Nura's board data is that
+partition's `image/bdwlan30.bin`, copied to
+`/usr/lib/firmware/postmarketos/ath10k/QCA6174/hw3.0/board.bin` by
+`axon7-firmware` at first start; the helper checks the sysfs symlink (`-L`)
+instead of following it (`-e`).
 
 Speaker stereo is open: with the bottom amplifier on "Right" its output was
 nearly silent in a measurement (the TFA9890 in DSP bypass may ignore the

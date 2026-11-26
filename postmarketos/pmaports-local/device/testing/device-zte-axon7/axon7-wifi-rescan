@@ -3,16 +3,37 @@
 # driver has given up at boot ("Device found, but not active"): the root
 # port then reports the link active, but the Wi-Fi chip was never
 # enumerated, so there is no wlan0. A bus rescan picks it up.
+#
+# The board file comes from the phone's own modem partition: axon7-firmware
+# copies image/bdwlan30.bin to
+# /usr/lib/firmware/postmarketos/ath10k/QCA6174/hw3.0/board.bin. A rescan
+# alone is not enough when ath10k_pci was not loaded at boot (as on LOS 24,
+# where ueventd cannot load it by modalias before the firmware is present):
+# the chip then appears with no driver. Load it here as well.
+#
+# -L checks the sysfs symlink itself, not the device directory it points to.
+log() { echo "axon7-wifi-rescan: $*"; }
 dev=/sys/bus/pci/devices/0000:01:00.0
 i=0
-while [ ! -e "$dev" ] && [ $i -lt 5 ]; do
+while [ ! -L "$dev" ] && [ $i -lt 5 ]; do
 	echo 1 > /sys/bus/pci/rescan
 	sleep 2
 	i=$((i + 1))
 done
-if [ -e "$dev" ]; then
-	[ $i -gt 0 ] && echo "axon7-wifi-rescan: Wi-Fi chip found after $i rescan(s)"
-	exit 0
+if [ ! -L "$dev" ]; then
+	log "no Wi-Fi chip on PCIe after $i rescan(s)" >&2
+	exit 1
 fi
-echo "axon7-wifi-rescan: no Wi-Fi chip on PCIe" >&2
-exit 1
+[ $i -gt 0 ] && log "Wi-Fi chip found after $i rescan(s)"
+
+# Loading the driver twice is a no-op. If it was not loaded at boot, the
+# device found by the rescan would otherwise stay unbound.
+if ! grep -q '^ath10k_pci ' /proc/modules; then
+	if /sbin/modprobe -q ath10k_pci; then
+		log "ath10k_pci loaded after the rescan"
+	else
+		log "ath10k_pci could not be loaded" >&2
+		exit 1
+	fi
+fi
+exit 0

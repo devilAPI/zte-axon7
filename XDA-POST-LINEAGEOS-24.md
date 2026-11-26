@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-22 (accelerometer scale fix from Nura patch 0063 measured on build #31 with a runtime module swap; not in a release kernel yet). Before: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
+Last update: 2026-11-26 (changelog note corrected: the QSEED2 display scaler and the GPU DDR votes are kernel patches 0013/0014, present since build 47; no ROM change). Before: 2026-11-22 (accelerometer scale fix from Nura patch 0063 measured on build #31 with a runtime module swap; not in a release kernel yet). Before: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -18,6 +18,11 @@ the firmware read from the phone's partitions (new in this release). Encryption 
 this alpha.
 
 Changelog notes:
+- 2026-11-26: corrected the 2026-11-16 note below, which still called the
+  display scaler a TODO. dpu has programmed msm8996's QSEED2 scaler since
+  kernel 0013 and the GPU votes its DDR bandwidth per OPP since 0014 (both in
+  builds from 47 on; Nura patches 0052/0053). No ROM change; the note is
+  fixed so it does not contradict the performance section.
 - 2026-11-22: the accelerometer scale fix from Nura kernel patch 0063 was
   measured on the main phone's LineageOS 24 build #31 kernel by loading the
   patched module at runtime (the release kernel is unchanged): lying flat,
@@ -25,8 +30,9 @@ Changelog notes:
   original module was restored. Gyro and magnetometer scales are unchanged.
 - 2026-11-16: builds 40-47 (PLAN.md runs 40-47). Vibration counted by the
   driver, not felt; camera frames come through, picture not looked at (phone
-  in the dark); hall sensor closed state needs a magnet. Animations still
-  janky (no hardware scaling on msm8996: QSEED2 TODO in dpu), being fixed.
+  in the dark); hall sensor closed state needs a magnet. Animations were
+  still janky then because dpu did not program msm8996's QSEED2 scaler; kernel
+  0013 adds that scaler (the follow-up below; Nura patch 0052).
 - 2026-11-16 (later): kernel 0013 (QSEED2 scaler in dpu) and 0014 (GPU DDR
   votes) measured on build 47 with los24-anim.sh and los24-bench.sh (kfast
   kernel #23). Wallpaper zoom off (RRO) is in build 48, not confirmed yet,
