@@ -29,7 +29,9 @@ different stock software/modern path. A user reports LineageOS 22.2 booting
 on an A2017U, the stock-B35 no-fastboot situation, the TWRP f2fs `/data`
 trap and a working replacement for the dead PARTY tool. Cellular is
 **untested** on A2017U. Start at [docs/variant-a2017u.md](docs/variant-a2017u.md);
-`tools/axon7-preflight.sh` checks the blockers read-only.
+`tools/axon7-preflight.sh` checks the flashing blockers read-only and
+`tools/axon7-cellular-diag.sh` checks (read-only, no SIM) whether the modem
+and radio come up on the booted ROM.
 
 ## What is not in this repository
 

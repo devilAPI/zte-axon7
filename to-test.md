@@ -154,6 +154,7 @@ Wi-Fi names (SSIDs) or MAC addresses; redact them from logs.
 - [ ] `tools/axon7-preflight.sh --rom los22` (or `los24`/`nura`) -> paste the whole output. It reports the `/data` filesystem (ext4/f2fs), the vendor partition size and the TZ. From TWRP: `adb push tools/axon7-preflight.sh /tmp/ && adb shell sh /tmp/axon7-preflight.sh --rom los22`.
 - [ ] `ls -l /dev/block/bootdevice/by-name/{system,vendor,userdata}` and `for p in system vendor userdata; do b=$(readlink -f /dev/block/bootdevice/by-name/$p); echo "$p $(( $(cat /sys/class/block/${b##*/}/size) / 2048 )) MiB"; done`.
 - [ ] `tools/axon7-make-vendor.sh` (no `--apply`) -> paste the plan; it must show the phone's own sector numbers, not a copied example.
+- [ ] `tools/axon7-cellular-diag.sh --rom los22` (or `--rom los24` on the LOS 24 multi-boot slot) -> paste the whole output. Read-only; no SIM needed; it detects the variant, the modem firmware version (`gsm.version.baseband`) and the radio stack (rild / rmtfs+qrtr+radio HAL). No FAIL lines + a baseband value means the modem/Radio came up far enough to answer.
 
 If `--rom los22` says `FAIL /data is f2fs`: that is the issue-#1 trap. In
 TWRP, **Wipe > Advanced Wipe > Data > Repair or Change File System > EXT4**

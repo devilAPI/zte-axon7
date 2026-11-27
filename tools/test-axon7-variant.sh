@@ -1,7 +1,8 @@
 #!/bin/sh
-# Static tests for tools/axon7-preflight.sh and tools/axon7-make-vendor.sh.
-# No phone and no root: the scripts' fixtures live under a temporary folder
-# (AXON7_ROOT / --table / --props). Run: tools/test-axon7-variant.sh
+# Static tests for tools/axon7-preflight.sh, tools/axon7-make-vendor.sh and
+# tools/axon7-cellular-diag.sh. No phone and no root: the scripts' fixtures
+# live under a temporary folder (AXON7_ROOT / --table / --props). Run:
+# tools/test-axon7-variant.sh
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/axon7-tools.XXXXXX") || exit 1
@@ -26,6 +27,20 @@ check_fails() {
 		printf '  ok    %s\n' "$d"; pass=$((pass + 1))
 	fi
 }
+
+check_rc() {	# check_rc WANTED_STATUS DESCRIPTION COMMAND...
+	want=$1
+	d=$2
+	shift 2
+	if "$@" >"$tmp/out" 2>"$tmp/err"; then got=0; else got=$?; fi
+	if [ "$got" = "$want" ]; then
+		printf '  ok    %s\n' "$d"; pass=$((pass + 1))
+	else
+		printf '  FAIL  %s (exit %d, want %d)\n' "$d" "$got" "$want"
+		sed 's/^/        /' "$tmp/out" "$tmp/err" | tail -20
+		fail=$((fail + 1))
+	fi
+}
 check_grep() {	# check_grep DESCRIPTION PATTERN COMMAND... (exit status ignored)
 	d=$1; p=$2; shift 2
 	"$@" >"$tmp/out" 2>"$tmp/err"
@@ -40,7 +55,7 @@ check_grep() {	# check_grep DESCRIPTION PATTERN COMMAND... (exit status ignored)
 
 # --- syntax ---------------------------------------------------------------
 printf 'syntax\n'
-for s in axon7-preflight.sh axon7-make-vendor.sh; do
+for s in axon7-preflight.sh axon7-make-vendor.sh axon7-cellular-diag.sh; do
 	check "sh -n $s" sh -n "$here/$s"
 	check "dash -n $s" dash -n "$here/$s"
 	if command -v busybox >/dev/null 2>&1; then
@@ -73,6 +88,31 @@ ro.product.device=ailsa_ii
 ro.product.model=A2017U
 ro.lineage.version=22.2-20261109-UNOFFICIAL-axon7
 ro.bootloader=unknown
+EOF
+props_g=$tmp/props-a2017g
+cat > "$props_g" <<'EOF'
+ro.product.device=ailsa_ii
+ro.product.model=A2017G
+ro.lineage.version=24.0-...
+EOF
+props_noband=$tmp/props-noband
+cat > "$props_noband" <<'EOF'
+ro.product.device=ailsa_ii
+ro.product.model=A2017U
+EOF
+props_boot=$tmp/props-boot
+cat > "$props_boot" <<'EOF'
+ro.boot.product.device=ailsa_ii
+ro.boot.product.model=A2017U
+ro.boot.bootloader=TZ.BF.4.0.1-00353
+EOF
+props_band=$tmp/props-a2017u-band
+cat > "$props_band" <<'EOF'
+ro.product.device=ailsa_ii
+ro.product.model=A2017U
+ro.lineage.version=22.2-20261109-UNOFFICIAL-axon7
+ro.bootloader=TZ.BF.4.0.1-00353
+gsm.version.baseband=4-M8996FAAAANAZM-2 1 [Nov 02 2017]
 EOF
 
 r1=$tmp/r1
@@ -111,6 +151,23 @@ check_fails "los24 refuses a missing los_data" \
 	env AXON7_ROOT="$r3" "$here/axon7-preflight.sh" --props "$props" --rom los24
 check "generic does not fail on f2fs (Nura/iOS do not use it)" \
 	env AXON7_ROOT="$r1" "$here/axon7-preflight.sh" --props "$props"
+
+# --- cellular diag ---------------------------------------------------------
+printf 'cellular-diag\n'
+check "cellular-diag --help" "$here/axon7-cellular-diag.sh" --help
+check_rc 2 "cellular-diag rejects an unknown ROM" "$here/axon7-cellular-diag.sh" --rom bogus
+check_rc 0 "cellular-diag: A2017U los22 with modem up -> clean" \
+	"$here/axon7-cellular-diag.sh" --rom los22 --props "$props_band"
+check_grep "cellular-diag: A2017U is recognised" "variant: A2017U" \
+	"$here/axon7-cellular-diag.sh" --rom los22 --props "$props"
+check_grep "cellular-diag: reports the modem firmware version" "modem firmware version: 4-M8996" \
+	"$here/axon7-cellular-diag.sh" --rom los22 --props "$props_band"
+check_fails "cellular-diag: A2017U los22 without modem (empty gsm.version.baseband) -> FAIL" \
+	"$here/axon7-cellular-diag.sh" --rom los22 --props "$props_noband"
+check_grep "cellular-diag: A2017G / los24 recognised" "variant: A2017G" \
+	"$here/axon7-cellular-diag.sh" --rom los24 --props "$props_g"
+check_grep "cellular-diag: boot properties win over runtime props" "variant: A2017U" \
+	"$here/axon7-cellular-diag.sh" --rom los22 --props "$props_boot"
 
 # --- make-vendor ----------------------------------------------------------
 # Real A2017G table from the PARTY thread, before the vendor partition was

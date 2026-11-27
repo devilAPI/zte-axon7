@@ -8,14 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-27 (TWRP restart report tested on the second phone, not reproduced; also: new standalone zip lineage-22.2-20261126 built from
-the upstream 2026-11 ASB: platform security patch 2026-11-01, SHA-256
-570d8408…609e; flash test still pending). Before: 2026-11-26 (added a
-repeatable monthly security-patch updater; A2017U/US notes: documented two
-gotchas from issue #1, the f2fs /data trap and the dead PARTY/sgdisk replacement). Before that: 2026-11-21 (A2017U/US notes:
-user reports 22.2 boots, the stock-B35 no-fastboot route, the TWRP f2fs
-`/data` trap and the dead PARTY download; cellular still untested). Before
-that: 2026-11-16 (the owner's posted version: "Does not work" lists
+Last update: 2026-11-27 (TWRP restart report tested on the second phone, not reproduced; also: new standalone zip lineage-22.2-20261126 built from the upstream 2026-11 ASB: platform security patch 2026-11-01, SHA-256 570d8408…609e; flash test still pending). Before: 2026-11-26 (host-side A2017U support: new read-only tools/axon7-cellular-diag.sh modem/radio diagnostic and ro.boot.* device detection for LOS 22.2 and LOS 24, cellular still untested; added a repeatable monthly security-patch updater; A2017U/US notes: documented two gotchas from issue #1, the f2fs /data trap and the dead PARTY/sgdisk replacement). Before: 2026-11-21 (A2017U/US notes: user reports 22.2 boots, the stock-B35 no-fastboot route, the TWRP f2fs `/data` trap and the dead PARTY download; cellular still untested). Before: 2026-11-16 (the owner's posted version: "Does not work" lists
 only the SIM report; the wake/lock, black camera and second-start boot loop
 items were removed from the thread)
 
@@ -159,6 +152,7 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [SPOILER="2026-11-21"]
 [LIST]
 [*][B]A2017U (US) support notes[/B] (no new zip): a user reports 22.2-20261109 booting on an A2017U 4/64 with TZ.BF.4.0.1-00353. Added the stock-B35 no-fastboot route (EDL B15-NEW aboot+fbop, then reflash TWRP), the model-specific modem rule, the TWRP-3.7 f2fs [I]/data[/I] trap and the ext4 check after Format Data, and the dead-PARTY/[I]sgdisk[/I] replacement (read-only planner [I]tools/axon7-make-vendor.sh[/I]). Cellular on A2017U is [B]untested[/B]; the SIM report on A2017G stays open.
+[*][B]2026-11-26: host-side A2017U support[/B] (no new zip, no new build): new read-only [I]tools/axon7-cellular-diag.sh[/I] for the reporter - device/variant detection from the bootloader properties (`ro.boot.*`, fallback `ro.product.*`), modem firmware version from the `gsm.version.baseband` property, radio stack check (rild / rmtfs+qrtr+radio HAL) and MBN firmware set listing; no writes, no SIM needed; `--rom los22` for the reporter's ROM and `--rom los24` for our mainline build. `tools/axon7-preflight.sh` now reads the `ro.boot.*` device properties first. Cellular on A2017U is still untested.
 [/LIST]
 [/SPOILER]
 [SPOILER="2026-11-09"]
