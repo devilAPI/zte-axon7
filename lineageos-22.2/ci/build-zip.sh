@@ -23,6 +23,24 @@ else
 fi
 
 cd "$tree"
+# The monthly updater passes the fork heads it restored. Re-check immediately
+# before the build: an untracked port file or a wrong HEAD must abort, not
+# produce a zip from a half-restored tree.
+if [[ -n ${AXON7_EXPECT_DEVICE_SHA:-} ]]; then
+	dev_head=$(git -c safe.directory='*' -C device/zte/axon7 rev-parse HEAD)
+	kernel_head=$(git -c safe.directory='*' -C kernel/zte/msm8996 rev-parse HEAD)
+	if [[ $dev_head != "$AXON7_EXPECT_DEVICE_SHA" || $kernel_head != "$AXON7_EXPECT_KERNEL_SHA" ]]; then
+		echo "ERROR: wrong fork heads: device=$dev_head (want $AXON7_EXPECT_DEVICE_SHA), kernel=$kernel_head (want $AXON7_EXPECT_KERNEL_SHA)" >&2
+		exit 1
+	fi
+	for p in device/zte/axon7 kernel/zte/msm8996 vendor/zte; do
+		if [[ -n $(git -c safe.directory='*' -C "$p" status --porcelain) ]]; then
+			echo "ERROR: $p is dirty (untracked port files?) before the build" >&2
+			exit 1
+		fi
+	done
+	echo "== verified fork heads device=$dev_head kernel=$kernel_head, trees clean $(date +%T)"
+fi
 # shellcheck disable=SC1090
 . ~/.profile
 ulimit -n 65536

@@ -15,7 +15,10 @@
 # all local commits; repo syncs lineage-22.2; restores the device/kernel/vendor
 # branches and re-applies the AOSP patches; rebuilds the standalone release zip;
 # and writes a summary with the before/after security patch levels and hashes.
-# Nothing here touches a phone.
+# Untracked port files left by an interrupted restore are moved aside, compared
+# with the fork's versions and dropped only if identical; the build refuses to
+# run unless every fork is back at its saved head and clean. Nothing touches a
+# phone.
 set -euo pipefail
 
 TREE=${AXON7_TREE:-/srv/aosp/lineage-22.2}
@@ -32,12 +35,16 @@ echo "== monthly update start $(date -u) stamp=$STAMP"
 mkdir -p "$PATCHES"
 cd "$TREE"
 
-# One build at a time on the server. The build script inherits fd 9 and does
-# not take the lock a second time (flock would deadlock in the same process).
-exec 9>/srv/aosp/build.lock
-echo "== waiting for /srv/aosp/build.lock $(date +%T)"
-flock 9
-echo "== got the build lock $(date +%T)"
+# One build at a time on the server. A caller that already holds the lock on
+# fd 9 (e.g. a recovery wrapper) passes it down; the build script does the same.
+if [[ ${AXON7_BUILD_LOCK_FD:-} != 9 ]]; then
+  exec 9>/srv/aosp/build.lock
+  echo "== waiting for /srv/aosp/build.lock $(date +%T)"
+  flock 9
+  echo "== got the build lock $(date +%T)"
+else
+  echo "== build lock held by caller on fd 9 $(date +%T)"
+fi
 
 PROP=$OUT/system/build.prop
 OLD_ZIP=$(ls -t "$DEST"/lineage-22.2-*-UNOFFICIAL-axon7.zip 2>/dev/null | head -1 || true)
@@ -65,6 +72,43 @@ AOSP_PROJECTS=(frameworks/av frameworks/base system/core system/libhidl)
 } >> "$STATE"
 
 head_sha() { git -C "$TREE/$1" rev-parse HEAD; }
+
+# A previous interrupted restore can leave the port files in the worktree as
+# untracked files while HEAD is on upstream: git checkout then refuses to
+# switch branches. Keep a copy, clean the worktree, and after the checkout
+# prove every saved file is byte-identical to the fork's tracked version.
+# On any mismatch the backup is kept and the script aborts before the build.
+backup_untracked() {
+  local proj=$1 bak=$PATCHES/untracked-backup-$(echo "$proj" | tr / _)-$STAMP
+  local files
+  files=$(git -C "$TREE/$proj" ls-files --others --exclude-standard)
+  [[ -n $files ]] || return 0
+  mkdir -p "$bak"
+  while IFS= read -r f; do
+    mkdir -p "$bak/$(dirname "$f")"
+    cp -p "$TREE/$proj/$f" "$bak/$f"
+  done <<< "$files"
+  git -C "$TREE/$proj" clean -fdq
+  echo "== $proj: moved $(printf '%s\n' "$files" | wc -l) untracked file(s) aside to $bak"
+}
+
+verify_untracked_backup() {
+  local proj=$1 sha=$2 bak=$3 tmp=$PATCHES/.fork-file-$STAMP-$$
+  [[ -d $bak ]] || return 0
+  local f
+  while IFS= read -r f; do
+    if ! git -C "$TREE/$proj" cat-file -e "$sha:$f" 2>/dev/null ||
+       ! git -C "$TREE/$proj" show "$sha:$f" > "$tmp" ||
+       ! cmp -s "$bak/$f" "$tmp"; then
+      echo "ERROR: $proj/$f differs from the fork ($sha); backup kept at $bak" >&2
+      rm -f "$tmp"
+      return 1
+    fi
+  done < <(cd "$bak" && find . -type f -printf '%P\n')
+  rm -f "$tmp"
+  rm -rf "$bak"
+  echo "== $proj: untracked files matched the fork versions; backup removed"
+}
 
 for i in "${!CUSTOM_PROJECTS[@]}"; do
   proj=${CUSTOM_PROJECTS[$i]}
@@ -159,12 +203,22 @@ for i in "${!CUSTOM_PROJECTS[@]}"; do
   branch=${CUSTOM_BRANCHES[$i]}
   key=$(echo "$proj" | tr / _)
   sha=$(grep "^${key}_SHA=" "$STATE" | cut -d= -f2-)
-  git -C "$TREE/$proj" checkout --quiet --detach "$sha"
+  # repo sync checks out the upstream revision; files that were tracked on our
+  # branch (torch init/sepolicy) become untracked and block checkout. Back them
+  # up, compare after the checkout, and only then drop the backup.
+  backup=$(backup_untracked "$proj")
+  if ! git -C "$TREE/$proj" checkout --quiet --detach "$sha"; then
+    echo "ERROR: checkout of $proj at $sha failed; untracked backup kept" >&2
+    exit 1
+  fi
   git -C "$TREE/$proj" reset --quiet --hard "$sha"
   git -C "$TREE/$proj" clean -fdq
   git -C "$TREE/$proj" update-ref "refs/heads/$branch" "$sha"
   [[ $(head_sha "$proj") == "$sha" ]] || { echo "ERROR: restore of $proj failed" >&2; exit 1; }
-  echo "== restored $proj at $sha"
+  [[ -z $(git -C "$TREE/$proj" status --porcelain) ]] || {
+    echo "ERROR: $proj is dirty after restore" >&2; exit 1; }
+  verify_untracked_backup "$proj" "$sha" "$backup"
+  echo "== restored $proj at $sha (clean)"
 done
 
 aosp_patch() {
@@ -179,7 +233,17 @@ aosp_patch() {
     echo "ERROR: $(basename "$f") no longer applies to $proj after repo sync" >&2
     return 1
   fi
-  git -C "$TREE/$proj" am --whitespace=nowarn "$f"
+  # A stale root-owned fanout directory in .git/objects (seen on 2026-11-26)
+  # makes git am fail with "insufficient permission"; fail early and clearly.
+  if ! printf 'sec22-object-write-test\n' | git -C "$TREE/$proj" hash-object -w --stdin >/dev/null 2>&1; then
+    echo "ERROR: cannot write git objects in $proj; fix .git/objects ownership" >&2
+    return 1
+  fi
+  if ! git -C "$TREE/$proj" am --whitespace=nowarn "$f"; then
+    git -C "$TREE/$proj" am --abort >/dev/null 2>&1 || true
+    echo "ERROR: git am failed for $proj ($(basename "$f")); in-progress am aborted" >&2
+    return 1
+  fi
   echo "== $proj: applied $(basename "$f") -> $(head_sha "$proj")"
 }
 
@@ -196,9 +260,15 @@ for i in "${!CUSTOM_PROJECTS[@]}"; do
   key=$(echo "$proj" | tr / _)
   sha=$(grep "^${key}_SHA=" "$STATE" | cut -d= -f2-)
   [[ $(head_sha "$proj") == "$sha" ]] || { echo "ERROR: $proj changed after restore" >&2; exit 1; }
+  [[ -z $(git -C "$TREE/$proj" status --porcelain) ]] || {
+    echo "ERROR: $proj is dirty before the build" >&2; exit 1; }
 done
-echo "== device/kernel/vendor patches: all files apply to their bases, heads restored"
+echo "== device/kernel/vendor patches: all files apply to their bases, heads restored, trees clean"
 
+# build-zip.sh re-checks these heads after its own setup, so a wrong tree cannot
+# reach "m -j4 bacon" even if something changes between the two checks.
+export AXON7_EXPECT_DEVICE_SHA=$(grep '^device_zte_axon7_SHA=' "$STATE" | cut -d= -f2-)
+export AXON7_EXPECT_KERNEL_SHA=$(grep '^kernel_zte_msm8996_SHA=' "$STATE" | cut -d= -f2-)
 # The build script uses fd 9 instead of taking the lock again; m -j4.
 AXON7_BUILD_LOCK_FD=9 bash "$PATCHES/ci/build-zip.sh"
 
@@ -230,6 +300,7 @@ NEW_VENDOR_PATCH=$(grep -m1 '^ro.vendor.build.security_patch=' "$OUT/vendor/buil
   echo "device_head=$(head_sha device/zte/axon7)"
   echo "kernel_head=$(head_sha kernel/zte/msm8996)"
   echo "vendor_head=$(head_sha vendor/zte)"
+  echo "fork_heads_verified=yes; trees_clean=yes; untracked_port_files_matched_fork=yes"
 } > "$SUMMARY"
 
 echo "== monthly update done $(date -u)"

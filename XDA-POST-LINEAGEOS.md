@@ -8,9 +8,10 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-26 (added a repeatable monthly security-patch updater;
-the 2026-11 upstream sync and rebuild are queued on the shared build server,
-so there is **no new zip to flash yet**). Before: 2026-11-21 (A2017U/US notes:
+Last update: 2026-11-27 (new standalone zip lineage-22.2-20261126 built from
+the upstream 2026-11 ASB: platform security patch 2026-11-01, SHA-256
+570d8408…609e; flash test still pending). Before: 2026-11-26 (added a
+repeatable monthly security-patch updater). Before that: 2026-11-21 (A2017U/US notes:
 user reports 22.2 boots, the stock-B35 no-fastboot route, the TWRP f2fs
 `/data` trap and the dead PARTY download; cellular still untested). Before
 that: 2026-11-16 (the owner's posted version: "Does not work" lists
@@ -57,7 +58,8 @@ checks for both, and how to collect logs while it still boots.
 A port of LineageOS 22.2 (Android 15) to the ZTE Axon 7. The newest official LineageOS for the phone is 18.1; this one runs on the msm8996 4.4 kernel with ZTE's own drivers (audio codec, fingerprint, NFC, camera parts) ported from ZTE's 3.18 kernel, and Android 15 shims for the old vendor blobs.
 An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the status below), as a TWRP-flashable zip.
 
-[SIZE=5][B]Status (2026-11-09)[/B][/SIZE]
+[SIZE=5][B]Status (last phone-tested build: 2026-11-09)[/B][/SIZE]
+Newest release: [I]lineage-22.2-20261126-UNOFFICIAL-axon7.zip[/I] (built 2026-11-27 from the upstream 2026-11 ASB, platform security patch 2026-11-01, vendor blob level 2018-12-01; SHA-256 [I]570d84087ac0f2f3c03fb4dd83b8c3297d716c82abe90b0a3d91470d8cea609e[/I]). It has [B]not been flashed or tested by us yet[/B]; the status below is from the 20261109 build.
 [SPOILER="Works"]
 [LIST]
 [*]Boots to the home screen; SELinux enforcing
@@ -140,6 +142,11 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-27"]
+[LIST]
+[*][B]2026-11 security update built (not flashed or published yet)[/B]: [I]lineage-22.2-20261126-UNOFFICIAL-axon7.zip[/I] was rebuilt with -j4 from upstream manifest 353894cd (2026-11 ASB). [B]ro.build.version.security_patch[/B] is now 2026-11-01 (was 2026-10-01); the vendor blob level stays 2018-12-01. All 57 device and 38 kernel port patches were checked to apply, and the five AOSP patches were re-applied. SHA-256: [CODE]570d84087ac0f2f3c03fb4dd83b8c3297d716c82abe90b0a3d91470d8cea609e[/CODE], verified against the [I].sha256[/I] file. The updater now also refuses to build if a restore left untracked port files or a fork at the wrong commit. No phone was touched: this zip has not been flashed or boot-tested, and the release link still serves the older published zip.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-26"]
 [LIST]
 [*][B]Monthly updater tooling (no new zip yet)[/B]: one script now syncs lineage-22.2 upstream, re-applies our five AOSP patches, checks that all 57 device and 38 kernel port patches still apply, rebuilds the standalone TWRP zip with -j4 and reports the security patch level before/after plus the zip's SHA-256. On 2026-11-26 all 57 device and all 38 kernel patches were confirmed to apply cleanly. The upstream manifest has moved to the 2026-11 ASB; the rebuild is still waiting for the shared build lock. The published 20261109 zip remains at platform patch level 2026-10-01 (the vendor blob level stays 2018-12-01).
