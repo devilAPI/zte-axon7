@@ -24,7 +24,7 @@ the hands-and-eyes part.
 Nura r32 section below). The workers cannot type your password. Afterwards
 Claude boot-tests Nura r32 on the main phone (Wi-Fi rescan, accelerometer).
 
-### B. Second phone (864463f), plug it in: three install tests
+### B. Second phone, plug it in: three install tests
 Claude installs, you look at the screen. Battery above 50 %.
 - [ ] **LineageOS 22.2 on the stock layout** (no vendor partition; branch
   `agent/stock22`), once its server build is done. Expect: installer says
@@ -237,14 +237,14 @@ notes:
 
 **MAIN PHONE DOWN (2026-11-22 ~18:45), needs your hands:**
 
-- [x] (fixed 2026-11-22 19:40: owner reset to TWRP, Claude restored the #31 LOS 24 kernel, boots) The main phone (7e15695a) was off USB (no adb, no fastboot). The sleep worker wrote an untested test kernel into its **los_boot** partition and it did not boot. Please hold **power ~10 s**, then in the boot menu (Volume Down, Power) pick **TWRP**, leave it connected and tell Claude: a worker then restores the known-good LineageOS 24 boot image from TWRP over adb. Do **not** pick LineageOS first (it would start the broken test kernel again). Saved menu block: ai-worker/axon7/sleep/.kfast-sleep/misc-before.bin.
-- [ ] Second phone (864463f): still in Nura without a sudo password. Booting it into TWRP (power 10 s, then Volume Down at start) or allowing a test sudo password unblocks the zip3 install test and the Nura-side driver tests.
+- [x] (fixed 2026-11-22 19:40: owner reset to TWRP, Claude restored the #31 LOS 24 kernel, boots) The main phone (the main phone) was off USB (no adb, no fastboot). The sleep worker wrote an untested test kernel into its **los_boot** partition and it did not boot. Please hold **power ~10 s**, then in the boot menu (Volume Down, Power) pick **TWRP**, leave it connected and tell Claude: a worker then restores the known-good LineageOS 24 boot image from TWRP over adb. Do **not** pick LineageOS first (it would start the broken test kernel again). Saved menu block: ai-worker/axon7/sleep/.kfast-sleep/misc-before.bin.
+- [ ] Second phone: still in Nura without a sudo password. Booting it into TWRP (power 10 s, then Volume Down at start) or allowing a test sudo password unblocks the zip3 install test and the Nura-side driver tests.
 
 **Blockers for the unattended work (2026-11-21 afternoon):**
 
-- [x] **Second phone (864463f)** back in TWRP (owner, 2026-11-21 ~16:30). Open question: may Claude set its own sudo password (stored only on this PC, ~/.config/axon7, never in the repo) in that phone's Nura install, so root tests over SSH work without asking? Until then tests boot test kernels with the debug initramfs from TWRP.
+- [x] **Second phone** back in TWRP (owner, 2026-11-21 ~16:30). Open question: may Claude set its own sudo password (stored only on this PC, ~/.config/axon7, never in the repo) in that phone's Nura install, so root tests over SSH work without asking? Until then tests boot test kernels with the debug initramfs from TWRP.
 - [x] **Build server** back (owner restarted it, 2026-11-21 ~17:40).
-- [x] **Second phone (864463f) was stuck in fastboot (2026-11-21 ~17:55–18:30);
+- [x] **Second phone was stuck in fastboot (2026-11-21 ~17:55–18:30);
       owner power-reset it and reported TWRP at 18:31.** It had enumerated on USB as `18d1:d001 ZTE Axon 7`, but
       `fastboot devices` / `fastboot getvar product` do not see it at all
       ("waiting for any device") and `adb devices` lists only the main phone.
@@ -265,7 +265,7 @@ Nura needs its password). Your old setting was postmarketOS after 5 s. Back to
 it from Nura: `sudo axon7-bootmenu default pmos 5` (the original block is
 also saved as `ios/research/axon7/manual-boot/misc-before.bin`).
 
-**Second phone (serial 864463f) runs Nura r25 now** (2026-11-15, from its
+**Second phone (serial the second phone) runs Nura r25 now** (2026-11-15, from its
 internal storage: the card image is in its userdata partition, boot.img with
 two startup fixes for 4096-byte UFS sectors, see
 ios/research/phone2/nura-userdata/). Boots, display on, touch bus at 400 kHz,
