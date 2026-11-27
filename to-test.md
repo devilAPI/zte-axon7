@@ -151,7 +151,7 @@ Wi-Fi names (SSIDs) or MAC addresses; redact them from logs.
 
 - [ ] `getprop ro.product.device` -> `ailsa_ii`; `getprop ro.product.model` -> A2017U; `getprop ro.lineage.version` and `getprop gsm.version.baseband` (baseband is the modem version, safe to post).
 - [ ] `cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING` -> `QC_IMAGE_VERSION_STRING=TZ.BF.4.0.1-00353`.
-- [ ] `tools/axon7-preflight.sh --rom los22` (or `los24`/`nura`) -> paste the whole output. It reports the `/data` filesystem (ext4/f2fs), the vendor partition size and the TZ.
+- [ ] `tools/axon7-preflight.sh --rom los22` (or `los24`/`nura`) -> paste the whole output. It reports the `/data` filesystem (ext4/f2fs), the vendor partition size and the TZ. From TWRP: `adb push tools/axon7-preflight.sh /tmp/ && adb shell sh /tmp/axon7-preflight.sh --rom los22`.
 - [ ] `ls -l /dev/block/bootdevice/by-name/{system,vendor,userdata}` and `for p in system vendor userdata; do b=$(readlink -f /dev/block/bootdevice/by-name/$p); echo "$p $(( $(cat /sys/class/block/${b##*/}/size) / 2048 )) MiB"; done`.
 - [ ] `tools/axon7-make-vendor.sh` (no `--apply`) -> paste the plan; it must show the phone's own sector numbers, not a copied example.
 

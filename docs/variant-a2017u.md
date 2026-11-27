@@ -151,6 +151,8 @@ partition. It never writes EFS/persist/modem/bootloader.
 
 ```sh
 tools/axon7-preflight.sh --rom los22     # or los24, nura, ios, generic
+# from TWRP, push it first:
+adb push tools/axon7-preflight.sh /tmp/ && adb shell sh /tmp/axon7-preflight.sh --rom los22
 ```
 
 Read-only; exit 1 if it finds a blocker (f2fs where ext4 is required, missing
