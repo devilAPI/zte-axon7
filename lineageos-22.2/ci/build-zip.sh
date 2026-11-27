@@ -7,6 +7,7 @@
 # (combine-zip.py) into one zip that detects the layout at install time:
 #   AXON7_STANDALONE=1        community layout: vendor partition (512 MiB after system)
 #   AXON7_STANDALONE=novendor ZTE's original layout: vendor files inside system
+# AXON7_REUSE_VENDOR=1 keeps an existing $AXON7_RELEASES/parts/vendor.zip (same tree).
 # Set AXON7_LAYOUTS=vendor to build only the first (the old single-layout zip).
 #
 # Output: /srv/aosp/releases/lineage-22.2-DATE-UNOFFICIAL-axon7.zip + .sha256;
@@ -17,8 +18,8 @@ dest=${AXON7_RELEASES:-/srv/aosp/releases}
 out=$tree/out/target/product/axon7
 
 # one build at a time in this tree (manual builds use the same lock)
-# (AXON7_HAVE_LOCK=1: the caller already holds it)
-if [ -z "${AXON7_HAVE_LOCK:-}" ]; then
+# (AXON7_HAVE_LOCK=1 or AXON7_BUILD_LOCK_FD=9: the caller already holds it)
+if [ -z "${AXON7_HAVE_LOCK:-}" ] && [ "${AXON7_BUILD_LOCK_FD:-}" != 9 ]; then
 	exec 9>/srv/aosp/build.lock
 	echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
 fi
@@ -40,8 +41,9 @@ build_one() {	# $1 = vendor|stock
 	else
 		# The vendor-in-system tree has /system/vendor as a real directory, the
 		# vendor build has it as a symlink to /vendor: they cannot share an out/.
-		flavour=novendor; export OUT_DIR=out-novendor
-		out=$tree/out-novendor/target/product/axon7
+		# absolute: vendor/lineage's kernel O= prefix logic only copes with the standard out/
+		flavour=novendor; export OUT_DIR=${AXON7_STOCK_OUT_DIR:-/srv/aosp/out-novendor}
+		out=$OUT_DIR/target/product/axon7
 	fi
 	export AXON7_STANDALONE=$flavour
 	# Files that developer/test builds copied into out/ stay there otherwise.
