@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/sbin/sh
 # Axon 7 LineageOS 22.2 installer: decide which partition layout to install to.
 # Runs first in the TWRP zip (edify run_program), READ-ONLY: it opens nothing
 # for writing except its own two result files under $AXON7_OUT (/tmp).
