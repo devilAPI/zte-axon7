@@ -11,8 +11,9 @@ bash tests/installer/test_los24_preflight.sh
 
 - **LineageOS 22.2** (`test_los22_preflight.py`, `los22-releasetools.py`):
   checks that the TrustZone assertion is emitted before writes, that the
-  device model is asserted in the device tree, and that no `vendor`
-  partition assertion was reintroduced. `agent/stock22` supports ZTE's
+  device model is asserted in the device tree (including the A2017U/A2017
+  model strings TWRP reports), and that no `vendor` partition assertion was
+  reintroduced. `agent/stock22` supports ZTE's
   original layout with no vendor partition, so d6890eb's 0058 "vendor
   partition required" patch and its tests are deliberately not here. The
   fixture mirrors main's releasetools (patch 0020, TZ assertion only); it is

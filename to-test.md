@@ -151,17 +151,21 @@ Wi-Fi names (SSIDs) or MAC addresses; redact them from logs.
 
 - [ ] `getprop ro.product.device` -> `ailsa_ii`; `getprop ro.product.model` -> A2017U; `getprop ro.lineage.version` and `getprop gsm.version.baseband` (baseband is the modem version, safe to post).
 - [ ] `cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING` -> `QC_IMAGE_VERSION_STRING=TZ.BF.4.0.1-00353`.
-- [ ] `tools/axon7-preflight.sh --rom los22` (or `los24`/`nura`) -> paste the whole output. It reports the `/data` filesystem (ext4/f2fs), the vendor partition size and the TZ.
+- [ ] `tools/axon7-preflight.sh --rom los22` (or `los24`/`nura`) -> paste the whole output. It reports the `/data` filesystem (ext4/f2fs), the vendor partition size and the TZ. From TWRP: `adb push tools/axon7-preflight.sh /tmp/ && adb shell sh /tmp/axon7-preflight.sh --rom los22`.
 - [ ] `ls -l /dev/block/bootdevice/by-name/{system,vendor,userdata}` and `for p in system vendor userdata; do b=$(readlink -f /dev/block/bootdevice/by-name/$p); echo "$p $(( $(cat /sys/class/block/${b##*/}/size) / 2048 )) MiB"; done`.
 - [ ] `tools/axon7-make-vendor.sh` (no `--apply`) -> paste the plan; it must show the phone's own sector numbers, not a copied example.
+- [ ] `tools/axon7-cellular-diag.sh --rom los22` (or `--rom los24` on the LOS 24 multi-boot slot) -> paste the whole output. Read-only; no SIM needed; it detects the variant, the modem firmware version (`gsm.version.baseband`) and the radio stack (rild / rmtfs+qrtr+radio HAL). No FAIL lines + a baseband value means the modem/Radio came up far enough to answer.
 
 If `--rom los22` says `FAIL /data is f2fs`: that is the issue-#1 trap. In
 TWRP, **Wipe > Advanced Wipe > Data > Repair or Change File System > EXT4**
 (or `mke2fs -t ext4` *erases internal storage*), then reboot to recovery and
 run the check again. Do not flash a ROM while it still says f2fs.
 
-If it says no vendor partition: create it on purpose, after the plan looks
-right and you have copied the printed GPT backup off the phone:
+If `--rom los24` says `FAIL no vendor partition`, or you want the vendor
+partition for a 22.2 build that requires it, create it on purpose, after the
+plan looks right and you have copied the printed GPT backup off the phone:
+(`--rom los22` now only warns about a missing vendor: the stock-layout zip
+from `agent/stock22` installs without one.)
 
 ```sh
 tools/axon7-make-vendor.sh --apply --yes     # then reboot to recovery

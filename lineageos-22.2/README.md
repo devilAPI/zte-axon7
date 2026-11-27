@@ -26,15 +26,18 @@ stream configuration (0x0, the camera app crashes; the front camera's is
 complete), audible sound and fingerprint enrolment untested,
 screen colours on one half after waking, calls/data with a SIM (untested).
 
-**A2017U (US):** the device tree asserts `ailsa_ii`/`axon7`, which the U
-also reports, and a user reports 22.2-20261109 booting on an A2017U 4/64.
-Three U-specific traps are documented in
+**A2017U (US):** the device tree's OTA assert accepts `ailsa_ii`/`axon7`
+plus the `A2017U`/`ZTE_A2017U` and `A2017`/`ZTE_A2017` model strings (our
+phones report model `ZTE_A2017U`, device `ailsa_ii` in TWRP), and a user
+reports 22.2-20261109 booting on an A2017U 4/64. Three U-specific traps are
+documented in
 [../docs/variant-a2017u.md](../docs/variant-a2017u.md): stock B35 has no
 fastboot (restore it with the B15-NEW EDL `aboot`+`fbop`, then reflash TWRP),
 TWRP 3.7 can format `/data` as f2fs while this ROM needs ext4, and PARTY's
 download is dead (`tools/axon7-make-vendor.sh` replaces it). Cellular is
 **untested** on A2017U. The read-only `tools/axon7-preflight.sh --rom los22`
-checks these before flashing.
+checks these before flashing; it warns (not fails) when vendor is absent,
+ready for the stock-layout 22.2 zip from `agent/stock22`.
 
 Old vendor blobs on Android 15, and what makes them run (2026-11-08):
 

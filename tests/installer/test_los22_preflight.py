@@ -108,10 +108,16 @@ class TestLos22ReleasetoolsPreflight(unittest.TestCase):
     def test_model_assert_device_declared(self):
         # Model/unknown-device refusal is enforced by TARGET_OTA_ASSERT_DEVICE
         # in BoardConfig.mk (the build system emits a getprop ro.product.device
-        # assert) and by the device's OTA assert device list.
+        # assert) and by the device's OTA assert device list. The list also
+        # carries the A2017G/A2017U/A2017 model strings: TWRP reports model
+        # ZTE_A2017U on both our phones while the device is ailsa_ii.
         bc = PORT / "0001-axon7-BoardConfig-fstab-and-init-for-lineage-22.2.patch"
         text = bc.read_text(errors="ignore")
-        self.assertIn("TARGET_OTA_ASSERT_DEVICE := ailsa_ii,axon7", text)
+        line = next(l[1:] for l in text.splitlines()
+                    if l.startswith("+TARGET_OTA_ASSERT_DEVICE :="))
+        declared = line.split(":=", 1)[1].strip().split(",")
+        for accepted in ("ailsa_ii", "axon7", "A2017U", "ZTE_A2017U", "A2017", "ZTE_A2017"):
+            self.assertIn(accepted, declared)
 
     def test_board_info_trustzone_present(self):
         notes = ROOT / "lineageos-22.2" / "FLASHING-PLAN.md"

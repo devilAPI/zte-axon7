@@ -10,8 +10,9 @@
 #   - the filesystem on userdata (TWRP 3.7 can format it as f2fs, while
 #     LineageOS 22.2's fstab requires ext4: first boot fails with
 #     "invalid magic", apexd aborts and the phone restarts in a loop)
-#   - whether the community vendor partition exists (LineageOS 22.2 stops
-#     after writing system; LineageOS 24 reads its GPU firmware from it)
+#   - whether the community vendor partition exists (LineageOS 22.2 works
+#     with or without it: the zip picks the stock layout; LineageOS 24 reads
+#     its GPU firmware from it)
 #   - for LineageOS 24: the multi-boot partitions (los_boot, los_metadata,
 #     los_data) and the boot menu
 #
@@ -30,7 +31,7 @@ root=${AXON7_ROOT:-}
 while [ $# -gt 0 ]; do
 	case $1 in
 		--help|-h)
-			sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+			sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'
 			exit 0
 			;;
 		--rom) rom=${2:-}; shift 2 || { echo "usage: $0 [--rom generic|los22|los24|nura|ios]" >&2; exit 2; } ;;
@@ -50,12 +51,30 @@ warn() { printf '  WARN  %s\n' "$*"; warnings=$((warnings + 1)); }
 bad()  { printf '  FAIL  %s\n' "$*"; blockers=$((blockers + 1)); }
 
 prop() {
-	# $1 key. Reads --props first, then getprop, then nothing.
+	# $1 key, $2 fallback key (optional). Reads --props first, then getprop, then
+	# nothing. The bootloader-written ro.boot.* properties are the authoritative
+	# device identity source; the runtime ro.product.* are the fallback (some
+	# boots/profiles only set the runtime names).
+	k=$1
+	fb=${2:-}
+	v=
 	if [ -n "$props_file" ]; then
-		sed -n "s/^$1=//p" "$props_file" | head -1
-	elif command -v getprop >/dev/null 2>&1; then
-		getprop "$1" 2>/dev/null
+		v=$(sed -n "s/^$k=//p" "$props_file" | head -1)
+		if [ -z "$v" ] && [ -n "$fb" ]; then
+			v=$(sed -n "s/^$fb=//p" "$props_file" | head -1)
+		fi
+		[ -n "$v" ] && { echo "$v"; return 0; }
+		return 0
 	fi
+	if command -v getprop >/dev/null 2>&1; then
+		if [ -n "$fb" ]; then
+			v=$(getprop "$fb" 2>/dev/null)
+			[ -n "$v" ] && { echo "$v"; return 0; }
+		fi
+		v=$(getprop "$k" 2>/dev/null)
+		[ -n "$v" ] && { echo "$v"; return 0; }
+	fi
+	return 0
 }
 
 # TWRP for ailsa_ii has no /dev/block/by-name; the platform path is the one
@@ -107,21 +126,28 @@ say "ZTE Axon 7 preflight (read-only), ROM profile: $rom"
 say ""
 
 # --- identity -------------------------------------------------------------
-dev=$(prop ro.product.device)
-model=$(prop ro.product.model)
+# Device detection: ro.boot.* (bootloader-written, travel with the boot/recovery
+# images) first, ro.product.* (runtime) as fallback.
+dev=$(prop ro.boot.product.device ro.product.device)
+model=$(prop ro.boot.product.model ro.product.model)
+hw=$(prop ro.boot.hardware ro.product.hardware)
 lineage=$(prop ro.lineage.version)
 bootloader=$(prop ro.bootloader)
 baseband=$(prop gsm.version.baseband)
 say "Device"
-[ -n "$dev" ] && say "  ro.product.device:  $dev" || warn "ro.product.device is empty (not booted into Android/TWRP, or no getprop)"
-[ -n "$model" ] && say "  ro.product.model:   $model"
+[ -n "$dev" ] && say "  ro.boot.product.device: $dev" || warn "ro.product.device is empty (not booted into Android/TWRP, or no getprop)"
+[ -n "$model" ] && say "  ro.boot.product.model:  $model"
+[ -n "$hw" ] && say "  ro.boot.hardware:        $hw"
 [ -n "$lineage" ] && say "  ro.lineage.version: $lineage"
 [ -n "$bootloader" ] && say "  ro.bootloader:      $bootloader"
 [ -n "$baseband" ] && say "  baseband:           $baseband"
 case $dev in
 	ailsa_ii|axon7) ok "codename is ailsa_ii/axon7 (A2017G, A2017U and A2017 share it); the ROM installers' device assert passes" ;;
-	"") ;;
-	*) warn "unexpected device '$dev': this project only supports ailsa_ii/axon7" ;;
+	*)
+		if [ -n "$dev" ]; then
+			warn "unexpected device '$dev': this project only supports ailsa_ii/axon7"
+		fi
+		;;
 esac
 case $model in
 	*A2017U*) say "  variant: A2017U (US) reported"
@@ -192,17 +218,16 @@ if v=$(part vendor); then
 	fi
 	case $rom in
 		los24) say "        LineageOS 24 reads a530_zap (GPU firmware) from it read-only; do not wipe Vendor" ;;
-		los22) say "        LineageOS 22.2 writes system/vendor here; keep it" ;;
+		los22) say "        LineageOS 22.2 writes system/vendor here when it is >= 512 MiB; keep it" ;;
 		nura)  say "        Nura also falls back to the system partition if there is no vendor" ;;
 	esac
 else
 	case $rom in
-		los22) bad "no vendor partition: LineageOS 22.2 stops after it has overwritten system"
-		       say "        Create one with tools/axon7-make-vendor.sh (the PARTY replacement; 512 MiB from"
-		       say "        the end of system). Read its plan first and use the phone's real sector numbers." ;;
+		los22) warn "no vendor partition (ZTE's original layout): the 22.2 zip detects this and installs the"
+		       say "        stock-layout image (vendor files inside system); no repartitioning needed" ;;
 		los24) bad "no vendor partition: LineageOS 24 loads its GPU firmware from it (black screen without it)"
 		       say "        Create one with tools/axon7-make-vendor.sh, or install LineageOS 22.2 first." ;;
-		*) warn "no vendor partition (fine for Nura/iOS; the project's Android ROMs need one)" ;;
+		*) warn "no vendor partition (fine for Nura/iOS and the 22.2 stock-layout zip; LOS 24 needs one)" ;;
 	esac
 fi
 say ""

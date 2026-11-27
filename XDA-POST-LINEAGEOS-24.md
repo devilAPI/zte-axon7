@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-27 (TWRP 3.7.0_9-0 restart report tested on our second phone: the official 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 images flashed to recovery each booted and stayed up 10 minutes without a restart, so the report is unconfirmed; 3.3.0-0 stays the version this ROM is tested with. See docs/twrp-ailsa_ii-3.7.0-restart.md). Before: 2026-11-26 (changelog note corrected: the QSEED2 display scaler and the GPU DDR votes are kernel patches 0013/0014, present since build 47; no ROM change). Before: 2026-11-22 (accelerometer scale fix from Nura patch 0063 measured on build #31 with a runtime module swap; not in a release kernel yet). Before: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
+Last update: 2026-11-27 (TWRP 3.7.0_9-0 restart report tested on our second phone: the official 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 images flashed to recovery each booted and stayed up 10 minutes without a restart, so the report is unconfirmed; 3.3.0-0 stays the version this ROM is tested with. See docs/twrp-ailsa_ii-3.7.0-restart.md). Before: 2026-11-26 (host-side A2017U support: new read-only tools/axon7-cellular-diag.sh and ro.boot.* detection in tools/axon7-preflight.sh, no new build; changelog note corrected: the QSEED2 display scaler and the GPU DDR votes are kernel patches 0013/0014, present since build 47; no ROM change). Before: 2026-11-22 (accelerometer scale fix from Nura patch 0063 measured on build #31 with a runtime module swap; not in a release kernel yet). Before: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -43,6 +43,12 @@ Changelog notes:
   first start 231-325 s to the setup wizard. The installer's boot-menu check
   was fixed first (it refused to install). Power HAL boosts, suspend while
   unplugged (not measured on battery yet).
+- 2026-11-26: host-side support for the A2017U (US) on this ROM line
+  (no build change): new read-only [I]tools/axon7-cellular-diag.sh[/I]
+  (`--rom los24`) that reports whether the modem and the radio come up
+  (modem firmware version, radio stack, MBN firmware set) and the
+  `ro.boot.*` device detection added to [I]tools/axon7-preflight.sh[/I].
+  Cellular on the US variant remains untested.
 - 2026-11-15: first alpha. Multi-boot slot only (system + los_boot,
   los_metadata/los_data wiped). No SIM detected so far (UIM: no ATR in both
   slots, SIM presence asked in to-test.md).

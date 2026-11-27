@@ -147,15 +147,67 @@ partition. It never writes EFS/persist/modem/bootloader.
 | **LineageOS 22.2** | The only ROM with an A2017U report: 22.2-20261109 boots (4 GB / 64 GB, Android 15, orange verified boot, TZ.BF.4.0.1-00353). Requires the Oreo bootstack, the 512 MiB vendor partition and **ext4** userdata. SIM/calls/data untested on U. Read [XDA-POST-LINEAGEOS.md](../XDA-POST-LINEAGEOS.md) and run the preflight. |
 | **LineageOS 24** (mainline) | Untested on U. It is a multi-boot-only TWRP zip: it needs the `axon7-tripleboot-gpt` layout and a vendor partition for the GPU zap firmware (from LineageOS 16-18.1/22.2). Its own `ci/update-binary` already accepts `ailsa_ii`/`axon7`/`A2017U` and checks the partition sizes and read-back before touching anything. No radio HAL yet, so cellular is not applicable. |
 
+## Cellular diagnostic for the A2017U (issue #1 follow-up)
+
+The reporter of [issue #1](https://github.com/devilAPI/zte-axon7/issues/1)
+asked what would help testing the U's cellular. The host-side answer is the
+new read-only diagnostic
+[tools/axon7-cellular-diag.sh](../tools/axon7-cellular-diag.sh) (same `tools/`
+folder as `axon7-preflight.sh` and `axon7-make-vendor.sh`).
+
+Run it with the phone on adb (the A2017U owner has adb from the LOS 22.2 boot;
+`ANDROID_SERIAL` selects the phone if more than one is attached):
+
+```sh
+tools/axon7-cellular-diag.sh --rom los22      # LineageOS 22.2 booted (issue #1's ROM)
+tools/axon7-cellular-diag.sh --rom los24      # LineageOS 24 (mainline kernel)
+tools/axon7-cellular-diag.sh --rom nura       # Nura (Linux)
+tools/axon7-cellular-diag.sh --rom generic
+```
+
+The script is read-only (no reboot, no flash, no restart, no `adb remount`, no
+mount write; only getprop, `service list`, dmesg, ls and other reads), needs no
+SIM card (the SIM-dependent answers are informational only, never a blocker),
+and tells whether the modem and the radio come up:
+
+1. device + variant detection from `ro.boot.product.*` (fallback
+   `ro.product.*`), so an A2017U is classified even when only the runtime
+   properties are set;
+2. modem firmware version from `gsm.version.baseband` (the modem firmware
+   string, safe to post);
+3. the radio stack: `rild` on LineageOS 22.2, `rmtfs` + `qrtr` + the radio HAL
+   (`vendor.radio-axon7m`) on LineageOS 24, via `service list` and the modem /
+   radio lines of `dmesg`;
+4. the modem firmware (MBN) set mounted for the kernel (`/mnt/vendor/firmware_mnt/image`
+   on LOS 24, `/lib/firmware/...` on Nura).
+
+Exit status 0 = no FAIL, 1 = at least one FAIL (no modem version / radio stack
+not up).
+
+The U-specific expectation: the modem firmware must come from the **A2017U**
+package, never the A2017G one. Paste the whole diagnostic output back; the
+baseband value is the modem version and safe to post, redact the rest before
+posting.
+
+For flashing blockers on the U, run `tools/axon7-preflight.sh --rom los22`
+(and `--rom los24`) as before; it now also reads the `ro.boot.*` device
+properties first, with `ro.product.*` as fallback.
+
 ## Before flashing: shared checks
 
 ```sh
 tools/axon7-preflight.sh --rom los22     # or los24, nura, ios, generic
+# from TWRP, push it first:
+adb push tools/axon7-preflight.sh /tmp/ && adb shell sh /tmp/axon7-preflight.sh --rom los22
 ```
 
 Read-only; exit 1 if it finds a blocker (f2fs where ext4 is required, missing
-vendor, missing multi-boot partitions, wrong TZ for 22.2). Run it in TWRP or
-as root. It is one script for all four ROMs, deliberately not copied into
+multi-boot partitions for LOS 24, wrong TZ for 22.2). A missing vendor
+partition is only a **warning** for `--rom los22`: the stock-layout 22.2 zip
+(branch `agent/stock22`, not merged into main yet) installs the vendor files
+inside system without repartitioning. For `--rom los24` it remains a blocker
+because that ROM reads the GPU firmware from vendor. Run it in TWRP or as
+root. It is one script for all four ROMs, deliberately not copied into
 each tree.
 
 The hardware-only checks (real first boot, modem path, calls/SMS/data, TZ
