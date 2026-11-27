@@ -8,7 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-26 (changelog note corrected: the QSEED2 display scaler and the GPU DDR votes are kernel patches 0013/0014, present since build 47; no ROM change). Before: 2026-11-22 (accelerometer scale fix from Nura patch 0063 measured on build #31 with a runtime module swap; not in a release kernel yet). Before: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
+Last update: 2026-11-27 (TWRP 3.7.0_9-0 restart report tested on our second phone: the official 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 images flashed to recovery each booted and stayed up 10 minutes without a restart, so the report is unconfirmed; 3.3.0-0 stays the version this ROM is tested with. See docs/twrp-ailsa_ii-3.7.0-restart.md). Before: 2026-11-26 (changelog note corrected: the QSEED2 display scaler and the GPU DDR votes are kernel patches 0013/0014, present since build 47; no ROM change). Before: 2026-11-22 (accelerometer scale fix from Nura patch 0063 measured on build #31 with a runtime module swap; not in a release kernel yet). Before: 2026-11-21 (A2017U/US notes; no new build). Before: 2026-11-20 (install path tested with the CI-built zip: TWRP 3.3.0-0, adb sideload; power HAL with touch boosts, suspend while unplugged; before: recommendation LineageOS 22.2 for now; builds 40-47; kernel 0013/0014)
 
 First alpha (lineageos-24-YYYYMMDD draft release, published by hand after
 testing). Everything in "Works" was seen on our phone in the unattended test
@@ -130,6 +130,11 @@ Build type userdebug, SELinux [B]permissive[/B] (the policy is being written).
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-27"]
+[LIST]
+[*][B]TWRP 3.7.0_9-0 restart report[/B]: tested on our second phone (stock layout) on 2026-11-26/27. The official 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 images were each flashed to the recovery partition (read-back SHA256 matched) and started with [I]adb reboot recovery[/I]; each stayed up for 10 minutes (end uptimes 611-627 s), and 3.7.0_9-0 was also left for another 10 minutes in its main menu (active page for the 10-minute run, behind the screen-timeout lock) with no restart, no panic and no watchdog bite. The bootloader log in [I]pstore[/I] shows the ramdisk size of the image just flashed, so each start came from the recovery partition. The "only starts via [I]fastboot boot[/I]" observation did not reproduce: the recovery partition already contained the official 3.7.0_9-0 image and booted normally when flashed again. The restart report is unconfirmed; 3.3.0-0 stays the tested version for this ROM. Details: docs/twrp-ailsa_ii-3.7.0-restart.md.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-21"]
 [LIST]
 [*][B]A2017U (US) notes[/B] (no new build): same hardware/codename but untested. The TWRP zip needs neither fastboot nor the stock bootloader, but it does need the multi-boot layout and a vendor partition for the GPU firmware. Stock-B35 unlock is the EDL B15-NEW aboot+fbop route (B29 alone was not enough; reflash TWRP afterwards). Cellular is not implemented on any model, so nothing is claimed for A2017U. Read [I]docs/variant-a2017u.md[/I] and run [I]tools/axon7-preflight.sh --rom los24[/I].

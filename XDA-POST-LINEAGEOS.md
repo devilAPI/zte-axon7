@@ -8,11 +8,7 @@ To update the thread: copy everything between the two marker lines into the
 XDA editor (switch the editor to BBCode mode with the `[ ]` button first),
 replacing the old text, then save.
 
-Last update: 2026-11-26 (A2017U/US notes: documented two gotchas from issue #1 — f2fs /data trap and dead PARTY/sgdisk replacement)
-stock-B35 no-fastboot route, the TWRP f2fs `/data` trap and the dead PARTY
-download; cellular still untested). Before: 2026-11-16 (the owner's posted version: "Does not work" lists
-only the SIM report; the wake/lock, black camera and second-start boot loop
-items were removed from the thread)
+Last update: 2026-11-27 (TWRP 3.7.0_9-0 restart report tested on our second phone: the official 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 images flashed to recovery each booted and stayed up 10 minutes without a restart, so the report is unconfirmed; 3.3.0-0 stays the version this zip is tested with. See docs/twrp-ailsa_ii-3.7.0-restart.md). Before: 2026-11-26 (A2017U/US notes: documented two gotchas from issue #1 — f2fs /data trap and dead PARTY/sgdisk replacement). Before: 2026-11-21 (A2017U/US notes: user reports 22.2 boots, the stock-B35 no-fastboot route, the TWRP f2fs `/data` trap and the dead PARTY download; cellular still untested). Before: 2026-11-16 (the owner's posted version: "Does not work" lists only the SIM report; the wake/lock, black camera and second-start boot loop items were removed from the thread)
 
 First release published 2026-11-09 (lineageos-22.2-20261109; the download
 link in the post points to lineageos-latest, which follows each published
@@ -83,7 +79,7 @@ An [B]unofficial LineageOS 22.2 release[/B]: almost everything works (see the st
 [SIZE=5][B]Warning[/B][/SIZE]
 [LIST]
 [*]This ROM only works with the [B]Oreo "universal" bootloader[/B] (TrustZone TZ.BF.4.0.1-00353, the bootstack LineageOS 15.1 to 18.1 needed) and the [B]modem package for your model[/B]. The installer checks the bootloader and stops if it is missing. If LineageOS 18.1 or crDroid 7.x installs on your phone, you have it (their installers check the same version).
-[*]Tested with [B]TWRP 3.3.0-0[/B] only. TWRP 3.7.0_9-0 has been reported to restart by itself on this phone; older TWRP builds (3.2.x, e.g. the 3.2.1 "TREBLE" build) are untested.
+[*]Tested with [B]TWRP 3.3.0-0[/B] only. A user reported TWRP 3.7.0_9-0 restarting by itself in its main menu; on our second phone (stock layout) the official 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 images flashed to recovery each booted and stayed up 10 minutes (2026-11-27), so the report is unconfirmed. Older TWRP builds (3.2.x, e.g. the 3.2.1 "TREBLE" build) are untested.
 [*]Installing [B]erases internal storage[/B] (Format Data, see below). Copy your photos and files to a computer first.
 [*]It needs the [B]community vendor partition[/B] (512 MB after system, the same as LineageOS 16 to 18.1). The original ZTE partition layout without a vendor partition is [B]not supported[/B]. With the vendor partition you cannot flash official ZTE firmware until you remove it again (PARTY or the sgdisk replacement below).
 [*]Developed and tested on the [B]A2017G[/B]. [B]A2017U[/B] (US): a user reports 22.2-20261109 booting on a 4/64 A2017U (Android 15, orange verified boot, TZ.BF.4.0.1-00353); read the A2017U section below, [B]cellular is untested[/B]. A2017 (China): untested.
@@ -131,13 +127,18 @@ Not needed: the multi-boot with iOS and Nura is a developer setup, not part of t
 
 [SIZE=5][B]Problems?[/B][/SIZE]
 [LIST]
-[*][B]TWRP restarts by itself[/B]: use TWRP 3.3.0-0 (above). Flash the ROM only with a TWRP that runs stably.
+[*][B]TWRP restarts by itself[/B]: a user reported this for TWRP 3.7.0_9-0; on our second phone the flashed 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 were stable for 10 minutes each (2026-11-27), so the report is unconfirmed. Use TWRP 3.3.0-0 (above) and flash the ROM only with a TWRP that runs stably.
 [*][B]Boot loop or stuck at the logo[/B]: did you Format Data (typed [I]yes[/I]) and is /data EXT4? If not, do it and install again. Otherwise hold [B]Power + Volume Up[/B] about 10 s to get to TWRP, and right away (before starting anything else) save the kernel log of the failed start: with a computer, [I]adb pull /sys/fs/pstore/ los-pstore[/I]; or with a microSD card in the phone, Advanced → Terminal: [I]cat /sys/fs/pstore/console-ramoops* > /external_sd/los-ramoops.txt[/I] (not to internal storage: TWRP cannot read Android 15's encrypted /data). If adb works during the start, [I]adb logcat > logcat.txt[/I] helps too.
 [*][B]It starts, but something does not work[/B] (SIM, camera, ...): before rebooting, switch on Settings → About phone → tap Build number 7 times, then System → Developer options → USB debugging, connect a computer and run [I]adb logcat -b all -d > logcat.txt[/I], [I]adb shell dmesg > dmesg.txt[/I] and [I]adb shell getprop > props.txt[/I]. For a SIM problem, also say which slot the SIM is in and your carrier/country.
 [*]When you report a problem, please post: the ROM you came from and whether it was encrypted, whether you did Format Data, your TWRP version, your model and modem/baseband version, the kernel log above and TWRP's log ([I]adb pull /tmp/recovery.log[/I], or Advanced → Copy Log to the microSD card, right after installing the zip).
 [/LIST]
 
 [SIZE=5][B]Changelog[/B][/SIZE]
+[SPOILER="2026-11-27"]
+[LIST]
+[*][B]TWRP 3.7.0_9-0 restart report[/B]: tested on our second phone (stock layout) on 2026-11-26/27. The official 3.7.0_9-0, 3.6.2_9-0 and 3.3.1-0 images were each flashed to the recovery partition (read-back SHA256 matched) and started with [I]adb reboot recovery[/I]; each stayed up for 10 minutes (end uptimes 611-627 s), and 3.7.0_9-0 was also left for another 10 minutes in its main menu (active page for the 10-minute run, behind the screen-timeout lock) with no restart, no panic and no watchdog bite. The bootloader log in [I]pstore[/I] shows the ramdisk size of the image just flashed, so each start came from the recovery partition. The "only starts via [I]fastboot boot[/I]" observation did not reproduce: the recovery partition already contained the official 3.7.0_9-0 image and booted normally when flashed again. The restart report is unconfirmed; 3.3.0-0 stays the version this zip is tested with. Details: docs/twrp-ailsa_ii-3.7.0-restart.md.
+[/LIST]
+[/SPOILER]
 [SPOILER="2026-11-26"]
 [LIST]
 [*][B]A2017U gotchas documented[/B]: added Gotcha 1 (TWRP f2fs trap, ext4 requirement) and Gotcha 2 (PARTY dead, sgdisk replacement) to INSTALL.md, docs/variant-a2017u.md and the A2017U section of XDA-POST-LINEAGEOS.md. Last update refreshed.
