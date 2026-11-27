@@ -1,4 +1,4 @@
-From 6a9a0d89daa9cfe479ae913541a5398be21554ab Mon Sep 17 00:00:00 2001
+From 7bebfbde68caf63e438bb47a60d3b1b2261eac8b Mon Sep 17 00:00:00 2001
 From: axon7-port <axon7-port@localhost>
 Date: Fri, 27 Nov 2026 10:10:02 +0100
 Subject: [PATCH] axon7: stock layout, SELinux labels and fs_config for
@@ -10,34 +10,51 @@ Found by comparing the stock-layout system image with the vendor image
   were plain vendor_file (the qcom legacy sepolicy labels the /vendor path
   only): sepolicy/novendor/file_contexts;
 - the daemons of config.fs (vendor/bin/...) lost their owner and file
-  capabilities (the entries match the vendor/ prefix only):
-  config.novendor.fs with the system/vendor/ prefix.
+  capabilities: without a vendor image the build does not install
+  fs_config_{dirs,files}_vendor; install them (libcutils aliases
+  system/vendor/<x> to vendor/<x>).
 Only for AXON7_STANDALONE=novendor; the vendor-partition build is unchanged.
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 ---
- BoardConfig.mk                  |  6 +++
- config.novendor.fs              | 77 +++++++++++++++++++++++++++++++++
- sepolicy/novendor/file_contexts |  8 ++++
- 3 files changed, 91 insertions(+)
- create mode 100644 config.novendor.fs
+ Android.mk                      | 17 +++++++++++++++++
+ BoardConfig.mk                  |  3 +++
+ device.mk                       | 10 ++++++++++
+ sepolicy/novendor/file_contexts |  8 ++++++++
+ 4 files changed, 38 insertions(+)
  create mode 100644 sepolicy/novendor/file_contexts
 
+diff --git a/Android.mk b/Android.mk
+index 1916789..d3e5e46 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -28,4 +28,21 @@ LOCAL_PATH := $(call my-dir)
+ 
+ ifeq ($(TARGET_DEVICE),axon7)
+ include $(call all-makefiles-under,$(LOCAL_PATH))
++
++# Stock partition layout (AXON7_STANDALONE=novendor): the host fs_config tool that
++# writes META/filesystem_config.txt (owners, modes, file capabilities of the system
++# image) reads the vendor entries from $(PRODUCT_OUT)/vendor/etc/fs_config_*, the
++# place of a separate vendor partition. Here they are installed into system/vendor/etc
++# (device.mk), so copy them there before the system's own fs_config files, a
++# prerequisite of the target files, are done.
++ifeq ($(AXON7_STANDALONE),novendor)
++$(PRODUCT_OUT)/vendor/etc/fs_config_dirs: $(TARGET_OUT_VENDOR)/etc/fs_config_dirs
++	@mkdir -p $(dir $@)
++	$(hide) cp -f $< $@
++$(PRODUCT_OUT)/vendor/etc/fs_config_files: $(TARGET_OUT_VENDOR)/etc/fs_config_files
++	@mkdir -p $(dir $@)
++	$(hide) cp -f $< $@
++$(TARGET_OUT)/etc/fs_config_dirs: $(PRODUCT_OUT)/vendor/etc/fs_config_dirs
++$(TARGET_OUT)/etc/fs_config_files: $(PRODUCT_OUT)/vendor/etc/fs_config_files
++endif
+ endif
 diff --git a/BoardConfig.mk b/BoardConfig.mk
-index a2e7cf9..5e7dda7 100644
+index a2e7cf9..0d6bc33 100644
 --- a/BoardConfig.mk
 +++ b/BoardConfig.mk
-@@ -160,6 +160,9 @@ LOC_HIDL_VERSION := 3.0
- 
- # Filesystem
- TARGET_FS_CONFIG_GEN := $(PLATFORM_PATH)/config.fs
-+ifeq ($(AXON7_STANDALONE),novendor)
-+TARGET_FS_CONFIG_GEN += $(PLATFORM_PATH)/config.novendor.fs
-+endif
- 
- # Keystore
- TARGET_PROVIDES_KEYMASTER := true
-@@ -224,6 +227,9 @@ VENDOR_SECURITY_PATCH := 2018-12-01
+@@ -224,6 +224,9 @@ VENDOR_SECURITY_PATCH := 2018-12-01
  include device/qcom/sepolicy-legacy-um/SEPolicy.mk
  
  BOARD_VENDOR_SEPOLICY_DIRS += $(PLATFORM_PATH)/sepolicy/vendor
@@ -47,89 +64,24 @@ index a2e7cf9..5e7dda7 100644
  SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(PLATFORM_PATH)/sepolicy/private
  
  # Treble
-diff --git a/config.novendor.fs b/config.novendor.fs
-new file mode 100644
-index 0000000..419083f
---- /dev/null
-+++ b/config.novendor.fs
-@@ -0,0 +1,77 @@
-+# Stock layout (AXON7_STANDALONE=novendor): the vendor files are installed under
-+# system/vendor, where the entries of config.fs (written for the vendor partition's
-+# vendor/ prefix) match nothing, so the daemons lost their owner and file capabilities
-+# (found by ci/verify-stock-image.py). Same entries for the system/vendor prefix.
+diff --git a/device.mk b/device.mk
+index c05ba08..c51ca3d 100644
+--- a/device.mk
++++ b/device.mk
+@@ -520,3 +520,13 @@ endif
+ # Flashlight strength slider (QS flashlight tile, long press)
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/init/init.axon7-torch.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/init.axon7-torch.rc
 +
-+
-+[system/vendor/bin/hw/android.hardware.bluetooth@1.0-service-qti]
-+mode: 0755
-+user: AID_BLUETOOTH
-+group: AID_BLUETOOTH
-+caps: BLOCK_SUSPEND NET_ADMIN
-+
-+[system/vendor/bin/pm-service]
-+mode: 0755
-+user: AID_SYSTEM
-+group: AID_SYSTEM
-+caps: NET_BIND_SERVICE
-+
-+[system/vendor/bin/pd-mapper]
-+mode: 0755
-+user: AID_SYSTEM
-+group: AID_SYSTEM
-+caps: NET_BIND_SERVICE
-+
-+[system/vendor/bin/imsdatadaemon]
-+mode: 0755
-+user: AID_SYSTEM
-+group: AID_SYSTEM
-+caps: NET_BIND_SERVICE
-+
-+[system/vendor/bin/ims_rtp_daemon]
-+mode: 0755
-+user: AID_SYSTEM
-+group: AID_RADIO
-+caps: NET_BIND_SERVICE
-+
-+[system/vendor/bin/imsrcsd]
-+mode: 0755
-+user: AID_SYSTEM
-+group: AID_RADIO
-+caps: NET_BIND_SERVICE BLOCK_SUSPEND WAKE_ALARM
-+
-+[system/vendor/bin/cnd]
-+mode: 0755
-+user: AID_SYSTEM
-+group: AID_SYSTEM
-+caps: NET_BIND_SERVICE BLOCK_SUSPEND NET_ADMIN
-+
-+[system/vendor/bin/slim_daemon]
-+mode: 0755
-+user:  AID_GPS
-+group: AID_GPS
-+caps: NET_BIND_SERVICE
-+
-+[system/vendor/bin/loc_launcher]
-+mode: 0755
-+user:  AID_GPS
-+group: AID_GPS
-+caps: SETUID SETGID
-+
-+[system/vendor/bin/xtwifi-client]
-+mode: 0755
-+user:  AID_GPS
-+group: AID_GPS
-+caps: NET_BIND_SERVICE BLOCK_SUSPEND
-+
-+[system/vendor/bin/sensors.qti]
-+mode: 0755
-+user: AID_SYSTEM
-+group: AID_SYSTEM
-+caps: NET_BIND_SERVICE
-+
-+[system/vendor/firmware_mnt/image/*]
-+mode: 0771
-+user: AID_SYSTEM
-+group: AID_SYSTEM
-+caps: 0
++# Stock partition layout (AXON7_STANDALONE=novendor): without a vendor image the build
++# does not install the vendor fs_config files, so config.fs (vendor/bin/... owners and
++# file capabilities) would not apply to /system/vendor. libcutils aliases
++# system/vendor/<x> to vendor/<x> when matching, so installing them is enough.
++ifeq ($(AXON7_STANDALONE),novendor)
++PRODUCT_PACKAGES += \
++    fs_config_dirs_vendor \
++    fs_config_files_vendor
++endif
 diff --git a/sepolicy/novendor/file_contexts b/sepolicy/novendor/file_contexts
 new file mode 100644
 index 0000000..aded424

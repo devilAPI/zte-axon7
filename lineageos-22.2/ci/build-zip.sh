@@ -28,7 +28,7 @@ cd "$tree"
 # shellcheck disable=SC1090
 . ~/.profile
 ulimit -n 65536
-export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=/srv/aosp/.ccache SOONG_GOMEMLIMIT=22GiB
+export USE_CCACHE=1 CCACHE_EXEC=/usr/bin/ccache CCACHE_DIR=/srv/aosp/.ccache SOONG_GOMEMLIMIT=${SOONG_GOMEMLIMIT:-22GiB}
 export AXON7_ADB_KEYS= AXON7_TEST=
 layouts=${AXON7_LAYOUTS:-both}
 parts=$dest/parts
