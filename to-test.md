@@ -12,6 +12,76 @@ To get into Nura from LineageOS: reboot and pick **postmarketOS** in the boot
 menu (Volume Down, then Power), or make it the default from Nura with
 `sudo axon7-bootmenu default pmos 5` (back: `sudo axon7-bootmenu default los 5`).
 
+## Open now (2026-11-27): what only a person can do
+
+In order of how much they unblock. No SIM card exists, so calls, SMS and
+mobile data are not on this list. Tell Claude when you start an item; for
+every phone item Claude does the flashing and the adb checks, you only do
+the hands-and-eyes part.
+
+### A. PC, no phone (10 min): Nura package build needs your sudo
+`pmbootstrap build linux-zte-axon7 device-zte-axon7` (exact command in the
+Nura r32 section below). The workers cannot type your password. Afterwards
+Claude boot-tests Nura r32 on the main phone (Wi-Fi rescan, accelerometer).
+
+### B. Second phone (864463f), plug it in: three install tests
+Claude installs, you look at the screen. Battery above 50 %.
+- [ ] **LineageOS 22.2 on the stock layout** (no vendor partition; branch
+  `agent/stock22`), once its server build is done. Expect: installer says
+  "stock layout", setup wizard appears, display/touch/Wi-Fi fine.
+- [ ] **LineageOS 22.2 November security update**
+  (`lineage-22.2-20261126`, security patch 2026-11-01): needs the vendor
+  partition, so it goes on after the stock-layout test only if you agree to
+  create one (Claude would use the sgdisk steps from INSTALL.md), or on any
+  phone that already has it. Check Settings > About phone > Android
+  security update = 2026-11-01.
+- [ ] **LineageOS 24 standalone release zip** (`lineage-24-20261126`, 1.05 GB):
+  same vendor-partition need. Expect: no boot menu, setup wizard, NFC toggle.
+  Afterwards decide whether Claude may publish it as a **draft GitHub
+  pre-release** (it will not publish without your OK).
+
+### C. Main phone, you nearby: sleep kernel `icc` unplugged (15 min)
+`icc` is the only sleep patch that survived suspend (rtc and clk hung the
+phone). Deep sleep can only be measured with USB unplugged:
+1. Say "start sleep icc unplugged". Claude writes the icc kernel and arms a
+   60 s and a 600 s alarm.
+2. Pull the USB cable when Claude says so; plug it back after ~11 minutes.
+3. If the screen stays dark more than 5 minutes after replugging: hold
+   Power ~10 s, pick TWRP in the boot menu, tell Claude.
+
+### D. Nura, second charger chip SMB1351 (3 A charging), someone present
+Driver exists (Nura patches 0056/0057) but is off by default until this
+passes. Real 3 A wall charger, battery below 80 %.
+1. `dmesg | grep smb1351` shows "input suspended"; baseline
+   `cat /sys/class/power_supply/qcom-battery/current_now` (about -2000000).
+2. `echo 1 | sudo tee /sys/module/smb1351_charger/parameters/enable`
+3. Within a minute: dmesg "parallel charging on", `current_now` about
+   -3000000.
+4. Feel the phone every 5 minutes; `qcom-battery/temp` must stay at or
+   below 400 (40 °C).
+- **Stop** (`echo 0 | sudo tee .../enable`, unplug) if: too hot to hold,
+  temperature above 40 °C, charger sags or the phone resets, I2C/charger
+  errors in dmesg, more than 3.2 A, or above 4.25 V with the chip still on.
+5. Unplug mid-charge: dmesg "parallel charging off". `sudo rmmod
+   smb1351_charger`: normal 2 A charging continues.
+
+### E. Display scaler (eyes only, LineageOS 24 or Nura)
+Play a video in a small window and scroll Settings and the app drawer:
+- [ ] no one-pixel smear at the edges, no seam down the middle of the screen
+- [ ] app open/close animations without flicker at the screen edges
+
+### F. For the A2017U reporter (issue #1), not for us
+Ask them to run, with LineageOS 22.2 booted and USB debugging on:
+`tools/axon7-cellular-diag.sh --rom los22` (read-only) and paste the output
+into issue #1 after checking it for IMEI/ICCID (the script redacts them).
+
+### Done without you (2026-11-26/27, for reference)
+LOS 24 build 57/58 (Wi-Fi fixed, enforcing boots, NFC on, accelerometer 9.84
+m/s²) passed on the main phone; TWRP 3.7.0/3.6.2/3.3.1 each stayed up 10 min
+flashed on the second phone (restart not reproduced; 3.3.1-0 left flashed);
+sleep: rtc and clk hang, icc passes on USB; build 59 (zero-denial enforcing)
+builds and tests itself once the server is free.
+
 ## Nura r32 (2026-11-26): Wi-Fi and accelerometer checks
 
 The r32 packages were prepared locally but were not built or booted in this
