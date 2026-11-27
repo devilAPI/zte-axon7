@@ -13,11 +13,34 @@ tree=${AXON7_TREE:-/srv/aosp/lineage-22.2}
 dest=${AXON7_RELEASES:-/srv/aosp/releases}
 out=$tree/out/target/product/axon7
 
-# one build at a time in this tree (manual builds use the same lock)
-exec 9>/srv/aosp/build.lock
-echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
+# One build at a time in this tree (manual builds use the same lock). The
+# monthly updater holds fd 9 already; taking the lock twice would deadlock.
+if [[ ${AXON7_BUILD_LOCK_FD:-} != 9 ]]; then
+	exec 9>/srv/aosp/build.lock
+	echo "== waiting for the build lock $(date +%T)"; flock 9; echo "== got it $(date +%T)"
+else
+	echo "== build lock held by the monthly updater $(date +%T)"
+fi
 
 cd "$tree"
+# The monthly updater passes the fork heads it restored. Re-check immediately
+# before the build: an untracked port file or a wrong HEAD must abort, not
+# produce a zip from a half-restored tree.
+if [[ -n ${AXON7_EXPECT_DEVICE_SHA:-} ]]; then
+	dev_head=$(git -c safe.directory='*' -C device/zte/axon7 rev-parse HEAD)
+	kernel_head=$(git -c safe.directory='*' -C kernel/zte/msm8996 rev-parse HEAD)
+	if [[ $dev_head != "$AXON7_EXPECT_DEVICE_SHA" || $kernel_head != "$AXON7_EXPECT_KERNEL_SHA" ]]; then
+		echo "ERROR: wrong fork heads: device=$dev_head (want $AXON7_EXPECT_DEVICE_SHA), kernel=$kernel_head (want $AXON7_EXPECT_KERNEL_SHA)" >&2
+		exit 1
+	fi
+	for p in device/zte/axon7 kernel/zte/msm8996 vendor/zte; do
+		if [[ -n $(git -c safe.directory='*' -C "$p" status --porcelain) ]]; then
+			echo "ERROR: $p is dirty (untracked port files?) before the build" >&2
+			exit 1
+		fi
+	done
+	echo "== verified fork heads device=$dev_head kernel=$kernel_head, trees clean $(date +%T)"
+fi
 # shellcheck disable=SC1090
 . ~/.profile
 ulimit -n 65536
@@ -36,7 +59,7 @@ breakfast axon7 >/dev/null
 set -u
 echo "== $(date) device $(git -c safe.directory='*' -C device/zte/axon7 log --oneline -1)"
 echo "== kernel $(git -c safe.directory='*' -C kernel/zte/msm8996 log --oneline -1)"
-m -j8 bacon
+m -j4 bacon
 
 zip=$(ls -t "$out"/lineage-22.2-*-UNOFFICIAL-axon7.zip | head -1)
 mkdir -p "$dest"

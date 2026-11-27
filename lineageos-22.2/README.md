@@ -86,5 +86,37 @@ To check on the next build (needs the build server):
 | [BUILD-PLAN-LOS22.md](BUILD-PLAN-LOS22.md) | what porting LineageOS 22.2 (Android 15) takes: a 4.4 kernel port (as gemini / LG msm8996 got), device tree forward-port, blob shims, and a build setup for an 8-thread / 31 GB / 400 GB machine |
 | `build/local_manifests/axon7.xml` | repo local manifest for the build |
 | [port-22.2/](port-22.2/) | the device tree forward-port to 22.2 (patch series, not built yet) |
+| [ci/monthly-security-update.sh](ci/monthly-security-update.sh) | one script for the monthly upstream security-patch update (below) |
+
+## Monthly security-patch updates
+
+`ci/monthly-security-update.sh` runs on the build server as user `build`;
+copy it together with `port-22.2/` and `kernel-4.4-patches/` into one scratch
+directory (the script documents the exact commands). It waits for
+`/srv/aosp/build.lock`, records the old `ro.build.version.security_patch`,
+old zip and sha256, proves that all 57 device and 38 kernel patches apply to
+their bases, saves the three forked project heads, syncs `lineage-22.2`
+(`repo sync`, `-j4`), restores the forks, re-applies the five AOSP patches,
+rebuilds the standalone zip (`AXON7_STANDALONE=1`, `-j4`), and writes a
+summary with before/after patch levels and hashes. The vendor patch string
+stays at the level of the 2018 Oreo blobs (`2018-12-01`); only the platform
+patch level follows upstream. No phone is touched: flashing the new zip is
+a human step.
+
+2026-11-26/27 run: the tree started at manifest `10ba61c` and platform patch
+`2026-10-01`; upstream `lineage-22.2` moved to `353894c` ("manifest: Track
+forks for 2026-11 ASB"). The port patches were checked in throwaway repos:
+57/57 device patches apply to `b125362` and 38/38 kernel patches to `535079d`
+(server logs `verify-r3/{device,kernel}.log`). After `repo sync -j4` the
+device, kernel and vendor forks were restored byte-for-byte (including the
+untracked port files) and the five AOSP patches were re-applied. The standalone
+zip `lineage-22.2-20261126-UNOFFICIAL-axon7.zip` was rebuilt successfully with
+`m -j4`: platform patch `2026-10-01` → `2026-11-01`, vendor blob patch still
+`2018-12-01`. Its SHA-256 is
+`570d84087ac0f2f3c03fb4dd83b8c3297d716c82abe90b0a3d91470d8cea609e`
+(`sha256sum -c` passed against the `.sha256` file on the server). Full run
+evidence: `/srv/aosp/axon7-monthly-22.2/sec22-resume.log` and
+`monthly-20261126-211513.summary`. No phone was touched; flashing the new zip
+is a human step.
 
 ROM zips, recovery images and vendor blobs are not in this repository.
