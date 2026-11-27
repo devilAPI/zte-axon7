@@ -65,10 +65,11 @@ real_of() { readlink -f "$BYNAME/$1" 2>/dev/null; }
 [ -d "$BYNAME" ] || fail "$BYNAME does not exist (not TWRP on an Axon 7?)"
 
 sys_b=$(part_bytes system) || fail "no usable 'system' partition (by-name/system)"
+# TWRP 3.3.1 busybox [ -ge ] is 32-bit: compare in $((...)) (64-bit).
 boot_b=$(part_bytes boot) || fail "no usable 'boot' partition (by-name/boot)"
-[ "$boot_b" -ge 33554432 ] || fail "'boot' is only $boot_b bytes (expected 64 MiB)"
+[ "$(($boot_b >= 33554432))" = 1 ] || fail "'boot' is only $boot_b bytes (expected 64 MiB)"
 
-[ "$sys_b" -ge "$SYSTEM_BYTES" ] || fail "'system' is $sys_b bytes; the ROM image needs $SYSTEM_BYTES"
+[ "$(($sys_b >= SYSTEM_BYTES))" = 1 ] || fail "'system' is $sys_b bytes; the ROM image needs $SYSTEM_BYTES"
 
 # system and boot must be two different devices, and neither may be a
 # partition the installer must never touch
@@ -88,7 +89,7 @@ if [ -e "$BYNAME/vendor" ]; then
 		ven_real=$(real_of vendor)
 		[ "$ven_real" != "$sys_real" ] && [ "$ven_real" != "$boot_real" ] \
 			|| fail "'vendor' resolves to the system or boot device; refusing"
-		if [ "$ven_b" -ge "$VENDOR_BYTES" ]; then
+		if [ "$(($ven_b >= VENDOR_BYTES))" = 1 ]; then
 			layout=vendor
 			reason="vendor partition of $ven_b bytes"
 		else
