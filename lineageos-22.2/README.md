@@ -123,3 +123,12 @@ evidence: `/srv/aosp/axon7-monthly-22.2/sec22-resume.log` and
 is a human step.
 
 ROM zips, recovery images and vendor blobs are not in this repository.
+
+**Partition layouts (2026-11-26):** the release zip is built twice from one tree
+(`ci/build-zip.sh`: `AXON7_STANDALONE=1` with a vendor image, `AXON7_STANDALONE=novendor`
+with the vendor files inside system and `/vendor -> /system/vendor`) and combined by
+`ci/combine-zip.py`. Its updater-script first runs the read-only `ci/axon7-layout.sh`
+(vendor partition >= 512 MiB: community layout; else stock layout; system/boot unusable:
+abort before any write). Offline tests: `ci/test-layout.sh`, `ci/test-combine.py`
+(with `EDIFY_SIM`, the real AOSP edify interpreter, built by `ci/edify-sim/build.sh`).
+Device tree: `port-22.2/device_zte_axon7/0058`.

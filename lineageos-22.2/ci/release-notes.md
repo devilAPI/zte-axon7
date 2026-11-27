@@ -5,8 +5,8 @@
 - **A2017G** (tested on 4 GB / 64 GB). **A2017U** (US): one user reports 22.2-20261109 booting; cellular is untested (see below). **A2017** (China): untested.
 - Unlocked bootloader, **TWRP 3.3.0-0** (`twrp-3.3.0-0-ailsa_ii.img` from https://dl.twrp.me/ailsa_ii/; the version this zip was tested with). TWRP 3.7.0_9-0 has been reported to restart by itself on this phone; 3.2.x builds are untested.
 - The **Oreo "universal" bootstack** (TrustZone `TZ.BF.4.0.1-00353`), the same as LineageOS 15.1–18.1 needed. The installer checks it and stops if it is missing. If LineageOS 18.1 or crDroid 7.x installs on your phone, you have it.
-- **The community vendor partition** (512 MiB after system), as for LineageOS 16–18.1. If you came from one of those, you have it. If not, create it with Oki's **PARTY** tool (TWRP zip, https://xdaforums.com/t/tool-treble-party-v0-5-vendor-partition-manager-2018-08-31.3831517/) first. The original ZTE layout without a vendor partition is **not** supported.
-- With the vendor partition, official ZTE firmware can't be flashed until it is removed again (PARTY tool). Any failure while flashing or repartitioning can brick the phone.
+- **Either partition layout.** The zip carries two image sets and the installer picks one **before writing anything**: with the community vendor partition (512 MiB after system, as for LineageOS 16–18.1) it installs system + vendor; with ZTE's original layout (no vendor partition) it puts the vendor files **inside the system image** and does not repartition. If neither fits (no usable system/boot partition, system smaller than 5.5 GiB) it stops with an error and writes nothing. Stock-layout phones keep the option to flash official ZTE firmware later; no PARTY/sgdisk step is needed.
+- Any failure while flashing can brick the phone. Back up first.
 
 **A2017U (US) owners:** the hardware and codename (`ailsa_ii`/`axon7`) are the same, but five things differ:
 
@@ -18,7 +18,7 @@
 
 Run `tools/axon7-preflight.sh --rom los22` in TWRP before flashing; it is read-only and stops on f2fs or the wrong TrustZone. A missing vendor partition is now only a warning (the stock-layout 22.2 zip from `agent/stock22` installs without one), but the published zip in this release still needs the vendor partition above. More: `docs/variant-a2017u.md`.
 
-**Coming from stock ZTE firmware?** Check in TWRP → Advanced → Terminal (read-only): `cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING` must contain `TZ.BF.4.0.1-00353`, and `ls -l /dev/block/bootdevice/by-name/vendor` must show a block device (otherwise create the vendor partition with PARTY first; without it the install stops with an error after system has been written). A good first test of firmware and partitions is LineageOS 18.1: if calls, data and the camera work there, the firmware is fine for this ROM.
+**Coming from stock ZTE firmware?** Check in TWRP → Advanced → Terminal (read-only): `cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING` must contain `TZ.BF.4.0.1-00353`, (a vendor partition is **not** needed: without one the installer uses the stock layout; the stock-layout path is new and untested on real hardware at the time of writing). A good first test of firmware and partitions is LineageOS 18.1: if calls, data and the camera work there, the firmware is fine for this ROM.
 
 ### Known issues
 

@@ -1,0 +1,155 @@
+From 07f57f7ff571854a89b2ed4f894041e69ced3bb1 Mon Sep 17 00:00:00 2001
+From: axon7-port <axon7-port@localhost>
+Date: Thu, 26 Nov 2026 15:06:06 +0100
+Subject: [PATCH] axon7: stock layout (no vendor partition):
+ AXON7_STANDALONE=novendor builds vendor into the system image
+
+ZTE's original partition table has no vendor partition. With
+AXON7_STANDALONE=novendor there is no vendor image: TARGET_COPY_OUT_VENDOR
+defaults to system/vendor, the build makes /vendor a symlink to /system/vendor
+in the ramdisk root (create_root_structure.mk) and the fstab
+(fstab.standalone-novendor.qcom) first-stage mounts system only. The system
+image keeps its size (6 GiB stock system - 512 MiB), so it also fits where
+the vendor partition exists.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ BoardConfig.mk                      |  9 ++++++++
+ axon7-fstab.mk                      |  8 ++++++-
+ init/Android.bp                     |  8 +++++--
+ init/fstab.standalone-novendor.qcom | 33 +++++++++++++++++++++++++++++
+ 4 files changed, 55 insertions(+), 3 deletions(-)
+ create mode 100644 init/fstab.standalone-novendor.qcom
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 28fc808..a2e7cf9 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -174,15 +174,24 @@ BOARD_CACHEIMAGE_PARTITION_SIZE := 838860800
+ BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
+ BOARD_SYSTEMIMAGE_PARTITION_SIZE := 5905580032
+ BOARD_USERDATAIMAGE_PARTITION_SIZE := 56276234240
++# Stock partition layout (AXON7_STANDALONE=novendor): no vendor image, the
++# vendor files go to /system/vendor (TARGET_COPY_OUT_VENDOR defaults to that
++# when no vendor image is configured) and the build makes /vendor a symlink
++# in the root. The system image keeps the size of the layout with the vendor
++# partition (6 GiB stock system - 512 MiB), so it fits both.
++ifneq ($(AXON7_STANDALONE),novendor)
+ BOARD_VENDORIMAGE_PARTITION_SIZE := 536870912
+ BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
++endif
+ BOARD_FLASH_BLOCK_SIZE := 262144
+ BOARD_ROOT_EXTRA_SYMLINKS := \
+     /mnt/vendor/persist:/persist \
+     /vendor/dsp:/dsp \
+     /vendor/firmware_mnt:/firmware \
+     /vendor/bt_firmware:/bt_firmware
++ifneq ($(AXON7_STANDALONE),novendor)
+ TARGET_COPY_OUT_VENDOR := vendor
++endif
+ TARGET_USES_MKE2FS := true
+ 
+ # Power
+diff --git a/axon7-fstab.mk b/axon7-fstab.mk
+index ef37987..d77dffe 100644
+--- a/axon7-fstab.mk
++++ b/axon7-fstab.mk
+@@ -1,11 +1,15 @@
+ # Which fstab the build uses (included by BoardConfig.mk and device.mk;
+ # product makefiles are read before BoardConfig.mk).
+ # fstab: multi-boot (default), standalone TWRP zip (AXON7_STANDALONE=1) or the
+-# standalone image tested on the multi-boot phone (AXON7_STANDALONE=devtest)
++# standalone image tested on the multi-boot phone (AXON7_STANDALONE=devtest) or
++# the standalone zip for ZTE's original layout without a vendor partition, with
++# vendor inside the system image (AXON7_STANDALONE=novendor; BoardConfig.mk)
+ ifeq ($(AXON7_STANDALONE),1)
+ AXON7_FSTAB := fstab.standalone.qcom
+ else ifeq ($(AXON7_STANDALONE),devtest)
+ AXON7_FSTAB := fstab.standalone-devtest.qcom
++else ifeq ($(AXON7_STANDALONE),novendor)
++AXON7_FSTAB := fstab.standalone-novendor.qcom
+ else
+ AXON7_FSTAB := fstab.qcom
+ endif
+@@ -13,4 +17,6 @@ ifeq ($(AXON7_STANDALONE),1)
+ $(call soong_config_set,axon7,standalone,release)
+ else ifeq ($(AXON7_STANDALONE),devtest)
+ $(call soong_config_set,axon7,standalone,devtest)
++else ifeq ($(AXON7_STANDALONE),novendor)
++$(call soong_config_set,axon7,standalone,novendor)
+ endif
+diff --git a/init/Android.bp b/init/Android.bp
+index 86c1d71..203a368 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -17,7 +17,8 @@ cc_library_static {
+ }
+ 
+ // fstab.qcom: multi-boot (default), standalone TWRP zip (AXON7_STANDALONE=1)
+-// or the standalone image on the multi-boot dev phone (AXON7_STANDALONE=devtest)
++// the standalone image on the multi-boot dev phone (AXON7_STANDALONE=devtest)
++// or the stock partition layout, vendor inside system (AXON7_STANDALONE=novendor)
+ soong_config_module_type {
+     name: "axon7_fstab_prebuilt_etc",
+     module_type: "prebuilt_etc",
+@@ -28,7 +29,7 @@ soong_config_module_type {
+ 
+ soong_config_string_variable {
+     name: "standalone",
+-    values: ["release", "devtest"],
++    values: ["release", "devtest", "novendor"],
+ }
+ 
+ axon7_fstab_prebuilt_etc {
+@@ -42,6 +43,9 @@ axon7_fstab_prebuilt_etc {
+             devtest: {
+                 src: "fstab.standalone-devtest.qcom",
+             },
++            novendor: {
++                src: "fstab.standalone-novendor.qcom",
++            },
+         },
+     },
+     soc_specific: true,
+diff --git a/init/fstab.standalone-novendor.qcom b/init/fstab.standalone-novendor.qcom
+new file mode 100644
+index 0000000..9ad4bca
+--- /dev/null
++++ b/init/fstab.standalone-novendor.qcom
+@@ -0,0 +1,33 @@
++# Android fstab file.
++# The filesystem that contains the filesystem e2fsck binary (typically /system) cannot
++# specify 'check', and must come before any filesystems that do specify 'check'
++
++# 22.2 (as msm8996-common): system/vendor first-stage mounted from here (no
++# DT fstab), /data ext4 with file-based encryption: moving from 18.1's
++# footer encryption needs a format of userdata.
++# STOCK LAYOUT (AXON7_STANDALONE=novendor): ZTE's original partition table has no
++# vendor partition. /vendor is a symlink to /system/vendor (the build makes it
++# when there is no vendor image) and the vendor files are inside the system
++# image, so first stage init mounts only system. Nothing is written outside
++# system/boot/userdata; the vendor partition, if the phone has one, stays
++# unused. Same as fstab.standalone.qcom except for the missing vendor line.
++# Standalone (AXON7_STANDALONE=1, the TWRP zip): /data is userdata and the
++# microSD card is adoptable/portable storage. Partition layout: ZTE's plus the
++# community vendor partition (512 MiB after system, Oki's PARTY tool).
++# system/vendor: the platform by-name path exists both in first stage init and in
++# TWRP (which has no /dev/block/by-name), so the TWRP zip finds the partitions.
++#<src>                                       <mnt_point>        <type>  <mnt_flags and options>                                     <fs_mgr_flags>
++/dev/block/bootdevice/by-name/boot           /boot              emmc    defaults                                                    recoveryonly
++/dev/block/bootdevice/by-name/recovery       /recovery          emmc    defaults                                                    recoveryonly
++/dev/block/bootdevice/by-name/cache          /cache             ext4    nosuid,nodev,noatime,barrier=1                              wait,check,formattable
++/dev/block/bootdevice/by-name/userdata       /data              ext4    nosuid,nodev,noatime,barrier=1,noauto_da_alloc              latemount,wait,check,fileencryption=ice,quota,formattable
++/dev/block/platform/soc/624000.ufshc/by-name/system /system            ext4    ro,barrier=1                                                wait,first_stage_mount
++/dev/block/bootdevice/by-name/persist        /mnt/vendor/persist     ext4    nosuid,nodev,noatime,barrier=1                                                                    wait
++/dev/block/bootdevice/by-name/dsp            /vendor/dsp             ext4    ro,nosuid,nodev,barrier=1,context=u:object_r:adsprpcd_file:s0                                     wait,nofail
++/dev/block/bootdevice/by-name/modem          /vendor/firmware_mnt    vfat    ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0      wait
++/dev/block/bootdevice/by-name/bluetooth      /vendor/bt_firmware     vfat    ro,shortname=lower,uid=1002,gid=3002,dmask=227,fmask=337,context=u:object_r:bt_firmware_file:s0   wait
++/dev/block/bootdevice/by-name/misc           /misc              emmc    defaults                                                    defaults
++/dev/block/zram0                             none               swap    defaults                                                    zramsize=536870912,max_comp_streams=4
++
++/devices/soc/74a4900.sdhci/mmc_host*                                auto               auto    defaults                                                    voldmanaged=sdcard1:auto
++/devices/soc/6a00000.ssusb/6a00000.dwc3/xhci-hcd.0.auto/usb*        auto               auto    defaults                                                    voldmanaged=usbdisk:auto
+-- 
+2.43.0
+
