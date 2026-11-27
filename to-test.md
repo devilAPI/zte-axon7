@@ -161,8 +161,11 @@ TWRP, **Wipe > Advanced Wipe > Data > Repair or Change File System > EXT4**
 (or `mke2fs -t ext4` *erases internal storage*), then reboot to recovery and
 run the check again. Do not flash a ROM while it still says f2fs.
 
-If it says no vendor partition: create it on purpose, after the plan looks
-right and you have copied the printed GPT backup off the phone:
+If `--rom los24` says `FAIL no vendor partition`, or you want the vendor
+partition for a 22.2 build that requires it, create it on purpose, after the
+plan looks right and you have copied the printed GPT backup off the phone:
+(`--rom los22` now only warns about a missing vendor: the stock-layout zip
+from `agent/stock22` installs without one.)
 
 ```sh
 tools/axon7-make-vendor.sh --apply --yes     # then reboot to recovery

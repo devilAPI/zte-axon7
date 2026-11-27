@@ -16,7 +16,7 @@
 - **Cellular is UNTESTED on A2017U.** The reporter says the U variant uses a different modem path and has not verified calls, SMS or data. Do not assume they work.
 - **PARTY is no longer downloadable** (AFH `fid=1322778262903995063` has no mirrors). The equivalent is TWRP's own `sgdisk`: delete partition 13, recreate it 512 MiB shorter, and create partition 28 `vendor` in the freed space, using the phone's real 4096-byte-sector numbers. `tools/axon7-make-vendor.sh` (in the repository) prints a read-only plan and writes only with `--apply --yes`.
 
-Run `tools/axon7-preflight.sh --rom los22` in TWRP before flashing; it is read-only and stops on f2fs, a missing vendor partition or the wrong TrustZone. More: `docs/variant-a2017u.md`.
+Run `tools/axon7-preflight.sh --rom los22` in TWRP before flashing; it is read-only and stops on f2fs or the wrong TrustZone. A missing vendor partition is now only a warning (the stock-layout 22.2 zip from `agent/stock22` installs without one), but the published zip in this release still needs the vendor partition above. More: `docs/variant-a2017u.md`.
 
 **Coming from stock ZTE firmware?** Check in TWRP → Advanced → Terminal (read-only): `cat /dev/block/bootdevice/by-name/tz | tr -c '[:print:]' '\n' | grep QC_IMAGE_VERSION_STRING` must contain `TZ.BF.4.0.1-00353`, and `ls -l /dev/block/bootdevice/by-name/vendor` must show a block device (otherwise create the vendor partition with PARTY first; without it the install stops with an error after system has been written). A good first test of firmware and partitions is LineageOS 18.1: if calls, data and the camera work there, the firmware is fine for this ROM.
 

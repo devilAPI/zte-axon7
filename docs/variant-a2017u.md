@@ -202,8 +202,12 @@ adb push tools/axon7-preflight.sh /tmp/ && adb shell sh /tmp/axon7-preflight.sh 
 ```
 
 Read-only; exit 1 if it finds a blocker (f2fs where ext4 is required, missing
-vendor, missing multi-boot partitions, wrong TZ for 22.2). Run it in TWRP or
-as root. It is one script for all four ROMs, deliberately not copied into
+multi-boot partitions for LOS 24, wrong TZ for 22.2). A missing vendor
+partition is only a **warning** for `--rom los22`: the stock-layout 22.2 zip
+(branch `agent/stock22`, not merged into main yet) installs the vendor files
+inside system without repartitioning. For `--rom los24` it remains a blocker
+because that ROM reads the GPU firmware from vendor. Run it in TWRP or as
+root. It is one script for all four ROMs, deliberately not copied into
 each tree.
 
 The hardware-only checks (real first boot, modem path, calls/SMS/data, TZ

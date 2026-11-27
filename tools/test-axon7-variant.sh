@@ -135,6 +135,10 @@ r3=$tmp/r3	# los24 without los_data
 cp -r "$r1" "$r3"
 rm -f "$r3/dev/block/bootdevice/by-name/los_data" "$r3/sys/class/block/los_data/size"
 
+r4=$tmp/r4	# stock layout: ext4 userdata, no vendor partition
+cp -r "$r2" "$r4"
+rm -f "$r4/dev/block/bootdevice/by-name/vendor" "$r4/sys/class/block/vendor/size"
+
 # --- preflight ------------------------------------------------------------
 printf 'preflight\n'
 check_grep "A2017U is recognised" "variant: A2017U" \
@@ -145,6 +149,12 @@ check_grep "f2fs message names the first-boot symptom" "invalid magic" \
 	env AXON7_ROOT="$r1" "$here/axon7-preflight.sh" --props "$props" --rom los22
 check "los22 passes with ext4 /data and vendor" \
 	env AXON7_ROOT="$r2" "$here/axon7-preflight.sh" --props "$props" --rom los22
+check "los22 passes without vendor (stock layout; warning only)" \
+	env AXON7_ROOT="$r4" "$here/axon7-preflight.sh" --props "$props" --rom los22
+check_grep "los22 warns about the missing vendor partition" "stock-layout image" \
+	env AXON7_ROOT="$r4" "$here/axon7-preflight.sh" --props "$props" --rom los22
+check_fails "los24 still refuses a missing vendor partition" \
+	env AXON7_ROOT="$r4" "$here/axon7-preflight.sh" --props "$props" --rom los24
 check "los24 passes with the multi-boot partitions" \
 	env AXON7_ROOT="$r1" "$here/axon7-preflight.sh" --props "$props" --rom los24
 check_fails "los24 refuses a missing los_data" \
