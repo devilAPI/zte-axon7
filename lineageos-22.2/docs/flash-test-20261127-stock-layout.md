@@ -47,3 +47,19 @@ Build host needs GOMEMLIMIT=20GiB GOGC=40 through a temporary soong_build wrappe
 
 The old zip asserted only ailsa_ii/axon7 (vendor-layout set reused from an older build) and the layout
 script's 32-bit compare rejected the 6 GiB system partition. Nothing was written.
+
+## Runtime checks (2026-11-27, USB debugging enabled by hand)
+
+| Check | Result |
+|---|---|
+| Uptime without reboot | 2 h 39 min (stable) |
+| sys.boot_completed | 1 |
+| Version / security patch | 22.2-20261127-UNOFFICIAL-axon7 / 2026-11-01 |
+| /vendor | symlink to /system/vendor |
+| SELinux | Enforcing, 0 avc denials (logcat all buffers + dmesg) |
+| Wi-Fi | enabled, scan finds networks |
+| Audio / camera / composer / sensors / Wi-Fi HALs | running |
+| Tombstones / crash buffer | 0 / 0 |
+| Service deaths | only idmap (lazy service, normal) |
+
+Verdict: PASS. Zip sha256 d6aca4d2c0ec1f69c7688e7085541b8c59cf3170501d1987d8a849a0e4a1bea6.
